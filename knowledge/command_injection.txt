@@ -1,0 +1,29 @@
+主題：命令注入（Command Injection）
+
+定義：
+命令注入（Command Injection）是攻擊者將惡意系統指令插入應用程式輸入中，讓伺服器執行未預期命令的攻擊。
+
+別名：
+1. Command Injection
+2. OS Command Injection
+3. Shell Injection
+4. 系統指令注入
+
+常見特徵：
+1. 輸入中出現 ;、&&、|、` `、$( ) 等命令串接符號
+2. 使用者輸入被直接拼接到 shell 指令
+3. 系統出現未預期的命令輸出
+4. 伺服器產生異常外連或下載行為
+5. request 中出現 cat、ls、whoami、ping、curl、wget 等系統指令
+
+常見危害：
+1. 執行未授權系統命令
+2. 讀取敏感檔案
+3. 下載惡意程式
+4. 取得更高權限
+
+防禦方式：
+1. 避免直接拼接 shell 指令
+2. 使用安全 API
+3. 白名單驗證
+4. 限制權限
