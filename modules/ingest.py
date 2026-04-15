@@ -1,23 +1,41 @@
-# src/ingestor.py
-import re
+import os
+from langchain_community.document_loaders import TextLoader
+from langchain_community.embeddings import HuggingFaceEmbeddings
+from langchain_community.vectorstores import Chroma
+from langchain_text_splitters import RecursiveCharacterTextSplitter
+from config import CHROMA_PATH, EMBED_MODEL
 
-class LogIngestor:
-    def __init__(self, file_path):
-        self.file_path = file_path
-        # 使用 Regex 解析 Common Log Format
-        self.log_pattern = re.compile(
-            r'(?P<ip>\d+\.\d+\.\d+\.\d+) - - \[(?P<timestamp>.*?)\] "(?P<method>\w+) (?P<path>.*?) HTTP/.*?" (?P<status>\d+) (?P<size>\d+)'
+class KnowledgeIngestor:
+    def __init__(self):
+        self.embeddings = HuggingFaceEmbeddings(model_name=EMBED_MODEL)
+
+    def load_documents(self, folder_path):
+        all_docs = []
+        for f in os.listdir(folder_path):
+            if f.endswith(".txt"):
+                loader = TextLoader(os.path.join(folder_path, f), encoding="utf-8")
+                all_docs.extend(loader.load())
+        return all_docs
+
+    def ingest_knowledge(self, input_folder="knowledge", db_dir=CHROMA_PATH):
+        docs = self.load_documents(input_folder)
+
+        print(f"📂 載入 {len(docs)} 份文件")
+
+        # 切分文檔
+        splitter = RecursiveCharacterTextSplitter(
+            chunk_size=200,
+            chunk_overlap=40
+        )
+        split_docs = splitter.split_documents(docs)
+
+        print(f"✂️ 切成 {len(split_docs)} chunks")
+
+        # 建立向量資料庫
+        Chroma.from_documents(
+            documents=split_docs,
+            embedding=self.embeddings,
+            persist_directory=db_dir
         )
 
-    def parse_logs(self):
-        parsed_data = []
-        try:
-            with open(self.file_path, 'r') as file:
-                for line in file:
-                    match = self.log_pattern.match(line)
-                    if match:
-                        parsed_data.append(match.groupdict())
-            return parsed_data
-        except FileNotFoundError:
-            print(f"Error: File {self.file_path} not found.")
-            return []
+        print("✅ Chroma DB 建立完成！")
