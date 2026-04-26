@@ -169,6 +169,12 @@ class SecurityAgent:
             self._update_state(state, query, answer, keep_focus=True)
             return answer
 
+        if self.followup_handler.is_contextual_followup(query, state):
+            focus = state["last_focus"] if state["last_focus"] else state["last_answer"]
+            answer = self.rag_qa.handle_natural_followup(focus, query)
+            self._update_state(state, query, answer, keep_focus=True)
+            return answer
+
         return None
 
     def _handle_attack_flow(self, query, detector_result, state):

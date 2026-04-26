@@ -18,47 +18,57 @@ class KnowledgeIngestor:
         except Exception as exc:
             self.init_error = exc
 
+    def _load_file(self, file_path):
+        for encoding in ("utf-8", "utf-8-sig", "cp950"):
+            try:
+                loader = TextLoader(file_path, encoding=encoding)
+                return loader.load()
+            except Exception:
+                continue
+        return []
+
     def load_documents(self, folder_path):
         if not os.path.isdir(folder_path):
             return []
 
         all_docs = []
-        for filename in os.listdir(folder_path):
-            if not filename.endswith(".txt"):
-                continue
+        for root, _dirs, files in os.walk(folder_path):
+            for filename in sorted(files):
+                if not filename.lower().endswith((".txt", ".md")):
+                    continue
 
-            file_path = os.path.join(folder_path, filename)
-            try:
-                loader = TextLoader(file_path, encoding="utf-8")
-                all_docs.extend(loader.load())
-            except Exception as exc:
-                print(f"略過無法讀取的檔案 {file_path}: {exc}")
+                file_path = os.path.join(root, filename)
+                docs = self._load_file(file_path)
+                if docs:
+                    all_docs.extend(docs)
+                else:
+                    print(f"Failed to load file: {file_path}")
 
         return all_docs
 
     def ingest_knowledge(self, input_folder="knowledge", db_dir=CHROMA_PATH):
         if self.embeddings is None:
-            print(f"無法初始化 embedding 模型：{self.init_error}")
+            print(f"Failed to initialize embeddings: {self.init_error}")
             return False
 
         if not os.path.isdir(input_folder):
-            print(f"找不到知識資料夾：{input_folder}")
+            print(f"Knowledge folder not found: {input_folder}")
             return False
 
         docs = self.load_documents(input_folder)
         if not docs:
-            print("找不到可匯入的 txt 文件。")
+            print("No .txt or .md knowledge files were loaded.")
             return False
 
-        print(f"載入 {len(docs)} 份文件")
+        print(f"Loaded {len(docs)} documents")
 
         splitter = RecursiveCharacterTextSplitter(
-            chunk_size=200,
-            chunk_overlap=40,
+            chunk_size=600,
+            chunk_overlap=100,
         )
         split_docs = splitter.split_documents(docs)
 
-        print(f"切成 {len(split_docs)} 個 chunks")
+        print(f"Split into {len(split_docs)} chunks")
 
         try:
             Chroma.from_documents(
@@ -67,8 +77,8 @@ class KnowledgeIngestor:
                 persist_directory=db_dir,
             )
         except Exception as exc:
-            print(f"建立 Chroma DB 失敗：{exc}")
+            print(f"Failed to build Chroma DB: {exc}")
             return False
 
-        print("Chroma DB 建立完成。")
+        print("Chroma DB created successfully")
         return True

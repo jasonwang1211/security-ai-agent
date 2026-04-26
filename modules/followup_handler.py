@@ -15,6 +15,27 @@ class FollowupHandler:
             r"為什麼",
         ]
     ]
+    CONTEXTUAL_HINTS = [
+        "詳細說明",
+        "更詳細",
+        "展開說明",
+        "補充說明",
+        "可以舉例嗎",
+        "為什麼",
+        "怎麼判斷",
+        "這是什麼意思",
+        "什麼意思",
+    ]
+    NEW_TOPIC_KEYWORDS = [
+        "xss",
+        "sql injection",
+        "csrf",
+        "command injection",
+        "path traversal",
+        "zero-day",
+        "zero day",
+        "anomaly detection",
+    ]
 
     def __init__(self):
         pass
@@ -28,6 +49,30 @@ class FollowupHandler:
         if not query:
             return False
         return any(pattern.search(query) for pattern in self.NATURAL_PATTERNS)
+
+    def is_contextual_followup(self, query: str, state: dict) -> bool:
+        normalized = str(query or "").strip()
+        if not normalized or not isinstance(state, dict):
+            return False
+
+        has_context = bool(state.get("last_answer") or state.get("last_focus"))
+        if not has_context:
+            return False
+
+        lowered = normalized.lower()
+        if any(keyword in lowered for keyword in self.NEW_TOPIC_KEYWORDS):
+            return False
+
+        short_or_brief = len(normalized) <= 20 or len(normalized.split()) <= 4
+        looks_context_dependent = (
+            any(hint in normalized for hint in self.CONTEXTUAL_HINTS)
+            or normalized.endswith(("嗎", "呢", "？", "?"))
+        )
+
+        if self.is_point_followup(normalized):
+            return False
+
+        return short_or_brief and looks_context_dependent
 
     def extract_index(self, query: str):
         if not query:

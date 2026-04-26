@@ -67,6 +67,53 @@ class RAGQA:
 """
         )
 
+        self.main_prompt = ChatPromptTemplate.from_template(
+            """
+你是資安知識問答助手，請根據提供的內容回答問題。
+重要規則：
+1. 回答必須只使用繁體中文。
+2. 不可輸出簡體中文；若術語或表述常見為簡體寫法，請先轉換為繁體中文再回答。
+3. 優先依據提供內容作答，保持準確、精簡、清楚。
+4. 若內容不足以支持明確結論，請明確說明資訊不足，不要臆測。
+
+參考內容：
+{context}
+
+問題：{question}
+"""
+        )
+
+        self.point_follow_prompt = ChatPromptTemplate.from_template(
+            """
+你是資安知識問答助手，請針對指定重點做延伸說明。
+重要規則：
+1. 回答必須只使用繁體中文。
+2. 不可輸出簡體中文；若術語或表述常見為簡體寫法，請先轉換為繁體中文再回答。
+3. 先直接解釋重點，再補充其風險、判讀方式或防禦意義。
+4. 內容要清楚、精簡，避免離題。
+
+重點：{target}
+"""
+        )
+
+        self.natural_follow_prompt = ChatPromptTemplate.from_template(
+            """
+你是資安知識問答助手，請根據既有主題回答後續追問。
+重要規則：
+1. 回答必須只使用繁體中文。
+2. 不可輸出簡體中文；若術語或表述常見為簡體寫法，請先轉換為繁體中文再回答。
+3. 回答要緊扣目前主題與使用者追問，避免偏離上下文。
+4. 若資訊不足，請明確說明資訊不足，不要自行補造結論。
+
+目前主題：
+{focus}
+
+追問：{question}
+
+請直接作答。
+"""
+        )
+
         self._initialize_components()
 
     def _initialize_components(self):
@@ -105,12 +152,24 @@ class RAGQA:
             "sql injection",
             "xss",
             "csrf",
+            "anomaly",
+            "anomaly detection",
+            "unknown attack",
+            "unknown threat",
             "zero-day",
             "zero day",
             "command injection",
             "path traversal",
+            "log analysis",
+            "risk scoring",
             "session",
             "cookie",
+            "異常",
+            "異常偵測",
+            "未知攻擊",
+            "未知威脅",
+            "日誌",
+            "風險評分",
             "漏洞",
             "攻擊",
             "防禦",
@@ -201,17 +260,25 @@ class RAGQA:
         if not context or not query:
             return context
 
+        normalized_query = (query or "").lower()
         section_keywords = []
-        if "特徵" in query or "跡象" in query:
+        if (
+            "偵測" in query
+            or "偵測邏輯" in query
+            or "detection" in normalized_query
+            or "detection logic" in normalized_query
+        ):
+            section_keywords = ["偵測邏輯", "Detection Logic"]
+        elif "特徵" in query or "跡象" in query:
             section_keywords = ["特徵", "跡象"]
         elif "防禦" in query or "怎麼防" in query or "如何防" in query:
             section_keywords = ["防禦", "預防", "緩解"]
         elif "危害" in query or "影響" in query or "風險" in query:
             section_keywords = ["危害", "影響", "風險"]
-        elif "定義" in query or "是什麼" in query:
-            section_keywords = ["定義", "說明"]
         elif "處理" in query or "怎麼辦" in query:
             section_keywords = ["處理", "修補", "應對"]
+        elif "定義" in query or "是什麼" in query:
+            section_keywords = ["定義", "說明"]
 
         if not section_keywords:
             return context
@@ -222,17 +289,12 @@ class RAGQA:
 
         for raw_line in lines:
             line = raw_line.strip()
-            if not line:
-                if capture:
-                    extracted.append("")
-                continue
-
-            if any(keyword in line for keyword in section_keywords):
+            if line.startswith("#") and any(keyword in line for keyword in section_keywords):
                 capture = True
                 extracted.append(line)
                 continue
 
-            if capture and re.match(r"^[#0-9一二三四五六七八九十]+[.)、:：\s]", line):
+            if capture and line.startswith("#"):
                 break
 
             if capture:
