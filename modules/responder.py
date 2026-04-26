@@ -4,47 +4,60 @@ class Responder:
 
     def provide_recommendations(self, attack_type, details):
         """
-        根據攻擊類型提供修補建議
+        Provide defensive recommendations for the detected attack type.
         """
         recommendations = {
             "SQL Injection": [
-                "使用參數化查詢或預編譯語句",
-                "對用戶輸入進行適當的清理和驗證",
-                "使用 ORM 框架避免直接拼接 SQL"
+                "使用參數化查詢或 prepared statements，避免字串拼接 SQL。",
+                "驗證與限制使用者輸入格式，避免危險字元直接進入查詢。",
+                "優先使用 ORM 或安全的資料存取層來降低手寫 SQL 風險。",
             ],
             "XSS": [
-                "對所有用戶輸入進行 HTML 編碼",
-                "使用 Content Security Policy (CSP)",
-                "驗證和清理用戶提供的數據"
+                "輸出到 HTML 前先做適當跳脫，避免惡意腳本被瀏覽器執行。",
+                "啟用 Content Security Policy (CSP) 限制可執行腳本來源。",
+                "避免直接信任使用者輸入，特別是可回顯到頁面的欄位。",
             ],
             "Path Traversal": [
-                "驗證和清理文件路徑輸入",
-                "使用白名單限制可訪問的文件",
-                "避免直接使用用戶輸入作為文件路徑"
-            ]
+                "限制可存取的檔案路徑，避免直接使用使用者提供的路徑。",
+                "對路徑做正規化與白名單驗證，拒絕包含 ../ 或 ..\\ 的輸入。",
+                "讓應用程式只在受控目錄下讀寫，避免碰觸系統敏感檔案。",
+            ],
         }
 
-        return recommendations.get(attack_type, ["請參考資安最佳實務"])
+        return recommendations.get(attack_type, ["請參考資安最佳實務並進一步人工確認。"])
 
     def plan_response_steps(self, incident):
         """
-        規劃後續處理步驟
+        Return a small, reusable incident response checklist.
         """
-        steps = [
-            "1. 立即隔離受影響系統",
-            "2. 收集和分析攻擊證據",
-            "3. 通知相關利益相關者",
-            "4. 執行修補措施",
-            "5. 監控系統恢復情況",
-            "6. 進行事後檢討和改進"
+        return [
+            "1. 先確認影響範圍並保留相關請求、日誌與證據。",
+            "2. 暫時阻擋或限制可疑來源、輸入點或受影響功能。",
+            "3. 檢查是否已有資料外洩、權限提升或檔案讀取跡象。",
+            "4. 修補對應弱點後再重新驗證是否仍可重現。",
+            "5. 補上監控、告警與輸入驗證，避免同類事件再次發生。",
         ]
-        return steps
+
+    def build_response_package(self, attack_types, details=None):
+        unique_attack_types = list(dict.fromkeys(attack_types or []))
+        recommendation_map = {
+            attack_type: self.provide_recommendations(attack_type, details)
+            for attack_type in unique_attack_types
+        }
+
+        summary = "未偵測到明確攻擊特徵。"
+        if unique_attack_types:
+            summary = "偵測到可能的攻擊類型：" + ", ".join(unique_attack_types)
+
+        return {
+            "summary": summary,
+            "recommendations": recommendation_map,
+            "response_steps": self.plan_response_steps(details),
+        }
 
     def trigger_automated_defense(self, action):
         """
-        預留自動化防禦接口
+        Keep the original placeholder automation hook.
         """
-        # 這裡可以實現自動化防禦邏輯
-        # 例如：封鎖 IP、更新防火牆規則等
-        print(f"觸發自動防禦動作: {action}")
+        print(f"已觸發自動化防禦動作：{action}")
         return True
