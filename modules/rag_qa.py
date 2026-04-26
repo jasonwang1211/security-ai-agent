@@ -6,6 +6,11 @@ from langchain_community.embeddings import HuggingFaceEmbeddings
 from langchain_community.vectorstores import Chroma
 from langchain_core.prompts import ChatPromptTemplate
 
+try:
+    from opencc import OpenCC
+except Exception:
+    OpenCC = None
+
 from config import CHROMA_PATH, EMBED_MODEL, MODEL_NAME, TOP_K
 
 
@@ -102,8 +107,15 @@ class RAGQA:
 重要規則：
 1. 回答必須只使用繁體中文。
 2. 不可輸出簡體中文；若術語或表述常見為簡體寫法，請先轉換為繁體中文再回答。
-3. 回答要緊扣目前主題與使用者追問，避免偏離上下文。
-4. 若資訊不足，請明確說明資訊不足，不要自行補造結論。
+3. 回答必須緊扣目前主題，不能轉成一般程式教學、SQL 教學或與主題無關的背景知識。
+4. 請從藍隊、防禦、偵測、風險判讀、日誌分析或事件應變的角度回答。
+5. 不可提供任何程式碼、正則表示式、腳本、查詢語句範例或 exploit 建構步驟。
+6. 若使用者要求舉例，只能提供高信心的安全日誌跡象、可疑 Payload 樣式、藍隊偵測觀察與防禦判讀。
+7. 不可使用一般程式語法、正常 SQL 語法或單一常見關鍵字當作例子，例如 `SELECT * FROM`、`INSERT INTO`、分號本身，因為這些單獨出現時不具高判斷力。
+8. 若主題是 SQL Injection，優先使用這類例子：請求包含 `' OR '1'='1`、`UNION SELECT` 且伴隨異常參數、使用者可控輸入後方出現 `'--` 或註解標記、資料庫錯誤日誌重複增加、回應大小異常、登入成功率異常、回應延遲異常且疑似 time-based injection。
+9. 要明確說明單一關鍵字通常不足以判定攻擊，必須結合上下文與多種跡象交叉判讀。
+10. 回答要精簡。
+11. 若資訊不足，請明確說明資訊不足，不要自行補造結論。
 
 目前主題：
 {focus}
@@ -313,6 +325,39 @@ class RAGQA:
         except Exception:
             return fallback_message
 
+    def _to_traditional(self, text: str) -> str:
+        if not text or OpenCC is None:
+            return text
+
+        try:
+            return OpenCC("s2t").convert(text)
+        except Exception:
+            return text
+
+    def _filter_followup_examples(self, text: str) -> str:
+        if not text:
+            return text
+
+        generic_patterns = ("select *", "insert into", "update", "delete from")
+        high_signal_patterns = ("' or '1'='1", "union select", "'--")
+
+        filtered_lines = []
+        for raw_line in text.splitlines():
+            lowered = raw_line.lower()
+            has_generic = any(pattern in lowered for pattern in generic_patterns)
+            has_high_signal = any(pattern in lowered for pattern in high_signal_patterns)
+
+            if has_generic and not has_high_signal:
+                continue
+
+            filtered_lines.append(raw_line)
+
+        result = "\n".join(filtered_lines).strip()
+        if not result:
+            return text
+
+        return re.sub(r"\n{3,}", "\n\n", result)
+
     def generate_answer(self, query: str, context: str):
         if not query:
             return "請先輸入問題。"
@@ -321,10 +366,12 @@ class RAGQA:
 
         focused_context = self.extract_relevant_section(context, query)
         chain = self.main_prompt | self.llm
-        return self._safe_invoke(
-            chain,
-            {"context": focused_context, "question": query},
-            "回答生成失敗，請稍後再試。",
+        return self._to_traditional(
+            self._safe_invoke(
+                chain,
+                {"context": focused_context, "question": query},
+                "回答生成失敗，請稍後再試。",
+            )
         )
 
     def explain_point(self, target: str):
@@ -332,10 +379,12 @@ class RAGQA:
             return "目前沒有可延伸說明的重點。"
 
         chain = self.point_follow_prompt | self.llm
-        return self._safe_invoke(
-            chain,
-            {"target": target},
-            "延伸說明生成失敗，請稍後再試。",
+        return self._to_traditional(
+            self._safe_invoke(
+                chain,
+                {"target": target},
+                "延伸說明生成失敗，請稍後再試。",
+            )
         )
 
     def handle_natural_followup(self, focus: str, question: str):
@@ -343,8 +392,11 @@ class RAGQA:
             return "目前缺少足夠的上下文來回答追問。"
 
         chain = self.natural_follow_prompt | self.llm
-        return self._safe_invoke(
-            chain,
-            {"focus": focus, "question": question},
-            "追問回答生成失敗，請稍後再試。",
+        answer = self._to_traditional(
+            self._safe_invoke(
+                chain,
+                {"focus": focus, "question": question},
+                "追問回答生成失敗，請稍後再試。",
+            )
         )
+        return self._filter_followup_examples(answer)
