@@ -4,7 +4,7 @@ import re
 from langchain_community.chat_models import ChatOllama
 from langchain_core.prompts import ChatPromptTemplate
 
-from config import MODEL_NAME
+from config import AGENT_MODEL_NAME
 
 
 class LLMSecurityAnalyzer:
@@ -49,7 +49,7 @@ Inputs:
 
     def _initialize_llm(self):
         try:
-            self.llm = ChatOllama(model=MODEL_NAME, temperature=0)
+            self.llm = ChatOllama(model=AGENT_MODEL_NAME, temperature=0)
         except Exception as exc:
             self.init_error = exc
             self.llm = None

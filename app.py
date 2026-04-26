@@ -3,6 +3,7 @@ from modules.decision_engine import DecisionEngine
 from modules.defense_simulator import DefenseSimulator
 from modules.detector import RuleBasedDetector
 from modules.followup_handler import FollowupHandler
+from modules.llm_analyzer import LLMSecurityAnalyzer
 from modules.rag_qa import RAGQA
 from modules.risk_scorer import RiskScorer
 from modules.responder import Responder
@@ -20,6 +21,7 @@ def main():
     risk_scorer = RiskScorer()
     decision_engine = DecisionEngine()
     defense_simulator = DefenseSimulator()
+    llm_analyzer = LLMSecurityAnalyzer()
     agent = SecurityAgent(
         followup_handler=followup_handler,
         detector=detector,
@@ -28,6 +30,7 @@ def main():
         risk_scorer=risk_scorer,
         decision_engine=decision_engine,
         defense_simulator=defense_simulator,
+        llm_analyzer=llm_analyzer,
     )
 
     if rag_qa.is_ready():

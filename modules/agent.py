@@ -1,3 +1,6 @@
+from modules.llm_analyzer import LLMSecurityAnalyzer
+
+
 class SecurityAgent:
     NON_SECURITY_MESSAGE = "請提出資安相關問題，或直接貼上可疑 payload 讓我協助判斷。"
     KB_UNAVAILABLE_MESSAGE = "知識庫目前不可用，請先執行 ingest_knowledge.py 建立 Chroma DB。"
@@ -15,6 +18,7 @@ class SecurityAgent:
         risk_scorer,
         decision_engine,
         defense_simulator,
+        llm_analyzer=None,
     ):
         self.followup_handler = followup_handler
         self.detector = detector
@@ -23,6 +27,7 @@ class SecurityAgent:
         self.risk_scorer = risk_scorer
         self.decision_engine = decision_engine
         self.defense_simulator = defense_simulator
+        self.llm_analyzer = llm_analyzer
 
     def preprocess_query(self, query):
         return " ".join(str(query or "").split())
@@ -92,6 +97,31 @@ class SecurityAgent:
                 lines.append(f"- {item}")
         return lines or ["- 無額外建議"]
 
+    def _format_ai_assisted_analysis(self, llm_result):
+        if not llm_result:
+            return []
+
+        attack_types = [
+            str(item).strip()
+            for item in (llm_result.get("possible_attack_types") or [])
+            if str(item).strip()
+        ]
+        reasoning = str(llm_result.get("reasoning") or "").strip() or "No additional analysis available."
+        recommended_decision = str(llm_result.get("recommended_decision") or "N/A").strip()
+
+        try:
+            confidence_text = f"{float(llm_result.get('confidence')):.2f}"
+        except (TypeError, ValueError):
+            confidence_text = "N/A"
+
+        return [
+            "AI-Assisted Analysis",
+            f"Reasoning: {reasoning}",
+            f"Possible Attack Types: {', '.join(attack_types) if attack_types else 'None'}",
+            f"Recommended Decision: {recommended_decision}",
+            f"Confidence: {confidence_text}",
+        ]
+
     def _build_attack_report(self, detector_result, response_package, risk_result, decision_result, defense_result):
         lines = [
             "藍隊分析報告",
@@ -144,6 +174,27 @@ class SecurityAgent:
     def _handle_attack_flow(self, query, detector_result, state):
         risk_result = self.risk_scorer.score(detector_result["attack_types"])
         decision_result = self.decision_engine.decide(risk_result["risk_level"])
+        context, ok = "", False
+        if self.rag_qa is not None:
+            try:
+                context, ok = self.rag_qa.retrieve_context(query)
+            except Exception:
+                context, ok = "", False
+
+        llm_result = None
+        if self.llm_analyzer is not None:
+            try:
+                llm_result = self.llm_analyzer.analyze(
+                    query,
+                    detector_result,
+                    context if ok else "",
+                    risk_result,
+                    decision_result,
+                    state,
+                )
+            except Exception:
+                llm_result = None
+
         defense_result = self.defense_simulator.simulate(
             decision_result["decision"],
             detector_result,
@@ -170,6 +221,9 @@ class SecurityAgent:
                 rag_query = f"{query}\n\n攻擊類型：{', '.join(detector_result['attack_types'])}"
             rag_answer = self.build_rag_answer(rag_query)
             parts.append(f"補充說明：\n{rag_answer}")
+
+        if llm_result:
+            parts.append("\n".join(self._format_ai_assisted_analysis(llm_result)))
 
         answer = "\n\n".join(parts)
         self._update_state(state, query, answer, keep_focus=False)
