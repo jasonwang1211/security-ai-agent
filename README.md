@@ -53,9 +53,6 @@ The goal is to create a system that is **more explainable, safer, and more stabl
 
 ![System Architecture](docs/architecture_en.png)
 
-### 中文系統架構
-
-![系統架構](docs/architecture_zh.png)
 
 ---
 
@@ -403,9 +400,6 @@ Completed:
 
 ![系統架構](docs/architecture_zh.png)
 
-### English Architecture
-
-![System Architecture](docs/architecture_en.png)
 
 ---
 
