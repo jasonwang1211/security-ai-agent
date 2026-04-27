@@ -147,7 +147,9 @@ Blue-Team Report / Simulated Response
 | Normal Input | `user login success` | Not treated as high-risk |
 | Anomaly / Possible Zero-Day | `xJ12#@!$ unusual pattern ??? exec??` | Anomaly-based detection, possible zero-day |
 | LLM Down | Brute force log while Ollama is off | Fail-safe fallback suspicious report |
+For full demo outputs and evaluation details, see:
 
+[Demo & Evaluation Report](REPORT.md)
 ---
 
 ## Example Output
@@ -343,7 +345,7 @@ Completed:
 
 ## Future Work
 
-- Add `REPORT.md` with full demo cases and evaluation results
+- Expand `REPORT.md` with more benchmark cases and raw test logs
 - Add more realistic log input formats
 - Add structured JSON incident reports
 - Add a web dashboard for analysts
@@ -490,7 +492,9 @@ RAG 知識檢索
 | 正常輸入 | `user login success` | 不應誤判為高風險 |
 | 疑似未知攻擊 | `xJ12#@!$ unusual pattern ??? exec??` | 觸發 anomaly-based detection |
 | LLM 關閉 | 關閉 Ollama 後輸入 Brute Force log | 啟用 fallback suspicious report |
+完整 demo 輸出與測試結果請參考：
 
+[Demo & Evaluation Report](REPORT.md)
 ---
 
 ## 執行方式
@@ -605,7 +609,7 @@ python app.py
 
 ## 未來規劃
 
-- 補上 `REPORT.md`，整理完整 demo 與測試結果
+- 擴充 `REPORT.md`，加入更多 benchmark case 與原始測試紀錄
 - 支援更真實的 log input 格式
 - 支援 JSON incident report
 - 加入 Web dashboard

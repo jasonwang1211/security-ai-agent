@@ -1,0 +1,8 @@
+langchain
+langchain-community
+langchain-core
+langchain-text-splitters
+chromadb
+sentence-transformers
+opencc-python-reimplemented
+ollama
