@@ -1,4 +1,62 @@
+import re
+
 from modules.llm_analyzer import LLMSecurityAnalyzer
+
+
+def extract_signals(query):
+    normalized = (query or "").lower()
+
+    encoding_candidates = ["%3c", "%3e", "%27", "%22", "%2f", "%5c", "%3d", "%28", "%29"]
+    suspicious_keywords = [
+        "union select",
+        "alert",
+        "../",
+        "..\\",
+        "drop table",
+        "script",
+        "onerror",
+        "or '1'='1",
+    ]
+    repetition_candidates = ["same ip", "same source", "repeated", "multiple", "many attempts"]
+    anomaly_candidates = [
+        "login failed",
+        "failed login",
+        "failed logins",
+        "error spike",
+        "abnormal",
+        "anomaly",
+        "unusual",
+        "brute force",
+    ]
+
+    keywords = []
+    patterns = []
+    anomaly_signals = []
+
+    for pattern in encoding_candidates:
+        if pattern in normalized:
+            patterns.append(pattern)
+
+    for keyword in suspicious_keywords:
+        if keyword in normalized:
+            keywords.append(keyword)
+
+    for phrase in repetition_candidates:
+        if phrase in normalized:
+            anomaly_signals.append(phrase)
+
+    for match in re.findall(r"\b\d+\s+times\b", normalized):
+        anomaly_signals.append(match)
+
+    for indicator in anomaly_candidates:
+        if indicator in normalized:
+            anomaly_signals.append(indicator)
+
+    return {
+        "keywords": list(dict.fromkeys(keywords)),
+        "patterns": list(dict.fromkeys(patterns)),
+        "anomaly_signals": list(dict.fromkeys(anomaly_signals)),
+    }
 
 
 class SecurityAgent:
@@ -135,7 +193,7 @@ class SecurityAgent:
 
         return confidence >= 0.75
 
-    def _build_llm_suspicious_report(self, llm_judgment):
+    def _build_llm_suspicious_report(self, llm_judgment, signals=None):
         attack_types = [
             str(item).strip()
             for item in (llm_judgment.get("suggested_attack_types") or [])
@@ -147,17 +205,41 @@ class SecurityAgent:
         except (TypeError, ValueError):
             confidence_text = "N/A"
 
-        return "\n".join(
+        lines = [
+            "LLM-assisted suspicious finding",
+            f"Suggested Attack Types: {', '.join(attack_types) if attack_types else 'None'}",
+            f"Recommended Risk: {llm_judgment.get('recommended_risk', 'N/A')}",
+            f"Recommended Action: {llm_judgment.get('recommended_action', 'N/A')}",
+            f"Confidence: {confidence_text}",
+            f"Reasoning: {llm_judgment.get('reasoning', 'No reasoning provided.')}",
+            f"LLM Status: {llm_judgment.get('llm_status', 'FALLBACK')}",
+        ]
+
+        try:
+            confidence = float(llm_judgment.get("confidence"))
+        except (TypeError, ValueError):
+            confidence = 0.0
+
+        if confidence >= 0.85:
+            lines.append("Decision influenced by AI analysis")
+
+        signals = signals or {}
+        detected_signals = []
+        for key in ("keywords", "patterns", "anomaly_signals"):
+            detected_signals.extend(signals.get(key) or [])
+
+        lines.extend(
             [
-                "LLM-assisted suspicious finding",
-                f"Suggested Attack Types: {', '.join(attack_types) if attack_types else 'None'}",
-                f"Recommended Risk: {llm_judgment.get('recommended_risk', 'N/A')}",
-                f"Recommended Action: {llm_judgment.get('recommended_action', 'N/A')}",
-                f"Confidence: {confidence_text}",
-                f"Reasoning: {llm_judgment.get('reasoning', 'No reasoning provided.')}",
-                f"LLM Status: {llm_judgment.get('llm_status', 'FALLBACK')}",
+                "",
+                "Threat Intelligence Analysis",
+                f"Why Suspicious: {llm_judgment.get('reasoning', 'The input contains signals associated with suspicious activity.')}",
+                f"Detected Signals: {', '.join(detected_signals) if detected_signals else 'None'}",
+                f"Attack Pattern Explanation: {', '.join(attack_types) if attack_types else 'No specific attack pattern identified; behavior is anomalous.'}",
+                f"Risk Reasoning: Recommended risk is {llm_judgment.get('recommended_risk', 'N/A')} based on confidence {confidence_text} and observed signals.",
             ]
         )
+
+        return "\n".join(lines)
 
     def _is_log_like_security(self, query):
         normalized = (query or "").lower()
@@ -344,6 +426,7 @@ class SecurityAgent:
             return followup_answer
 
         detector_result = self.detector.inspect_text(query)
+        signals = extract_signals(query)
         llm_judgment = None
         if self.llm_threat_judge is not None:
             try:
@@ -351,6 +434,7 @@ class SecurityAgent:
                     query,
                     detector_result,
                     rag_context="",
+                    signals=signals,
                     state=state,
                 )
             except Exception:
@@ -360,7 +444,7 @@ class SecurityAgent:
             return self._handle_attack_flow(query, detector_result, state)
 
         if self._should_use_llm_suspicious_finding(llm_judgment):
-            answer = self._build_llm_suspicious_report(llm_judgment)
+            answer = self._build_llm_suspicious_report(llm_judgment, signals)
             self._update_state(state, query, answer, keep_focus=False)
             return answer
 

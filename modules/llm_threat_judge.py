@@ -51,6 +51,7 @@ Inputs:
 - Query: {query}
 - Detector result: {detector_result}
 - RAG context: {rag_context}
+- Extracted signals: {signals}
 - State: {state}
 """
         )
@@ -63,7 +64,7 @@ Inputs:
             self.init_error = exc
             self.llm = None
 
-    def judge(self, query, detector_result, rag_context="", state=None):
+    def judge(self, query, detector_result, rag_context="", signals=None, state=None):
         fallback = self._build_fallback_result(query, detector_result)
 
         if self.llm is None:
@@ -73,6 +74,7 @@ Inputs:
             "query": self._trim_text(query, 1000),
             "detector_result": self._safe_dump(detector_result),
             "rag_context": self._trim_text(rag_context, 2000),
+            "signals": self._safe_dump(signals or {}),
             "state": self._safe_dump(state or {}),
         }
 
