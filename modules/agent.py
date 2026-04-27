@@ -220,7 +220,15 @@ class SecurityAgent:
         except (TypeError, ValueError):
             confidence = 0.0
 
-        if confidence >= 0.85:
+        llm_status = str(llm_judgment.get("llm_status") or "FALLBACK").upper()
+        llm_influenced_decision = llm_status != "FALLBACK" and confidence >= 0.85
+        final_risk = llm_judgment.get("recommended_risk", "MEDIUM") if llm_influenced_decision else "MEDIUM"
+        final_decision = llm_judgment.get("recommended_action", "MONITOR") if llm_influenced_decision else "MONITOR"
+
+        lines.append(f"Final Risk: {final_risk}")
+        lines.append(f"Final Decision: {final_decision}")
+
+        if llm_influenced_decision:
             lines.append("Decision influenced by AI analysis")
 
         signals = signals or {}
