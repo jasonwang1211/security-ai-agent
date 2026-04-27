@@ -16,6 +16,8 @@
 
 This report documents the current demo and evaluation results of the AI-driven Security Threat Detection and Response System.
 
+Raw terminal outputs are available in [demo_outputs.md](demo_outputs.md).
+
 The system is designed as a blue-team security analysis prototype. It combines:
 
 - Rule-based detection for known attack patterns
@@ -409,6 +411,8 @@ Recommended next development tasks:
 ## 1. 報告概述
 
 本文件記錄目前 AI 驅動之資安威脅偵測與應變系統的 demo 測試案例與結果。
+
+原始終端機輸出紀錄請參考：[demo_outputs.md](demo_outputs.md)。
 
 本系統是一個藍隊導向的資安分析 prototype，整合：
 

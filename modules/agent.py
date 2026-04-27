@@ -59,6 +59,42 @@ def extract_signals(query):
     }
 
 
+def is_security_knowledge_question(query: str) -> bool:
+    normalized = (query or "").lower()
+    if not normalized:
+        return False
+
+    security_topics = [
+        "xss",
+        "sql injection",
+        "zero-day",
+        "zero day",
+        "anomaly detection",
+        "anomaly",
+        "csrf",
+        "command injection",
+        "path traversal",
+    ]
+    question_markers = [
+        "什麼是",
+        "是什麼",
+        "怎麼",
+        "如何",
+        "為什麼",
+        "偵測邏輯",
+        "說明",
+        "解釋",
+        "what is",
+        "explain",
+        "how to",
+        "why",
+    ]
+
+    has_security_topic = any(topic in normalized for topic in security_topics)
+    has_question_marker = any(marker in normalized for marker in question_markers)
+    return has_security_topic and has_question_marker
+
+
 class SecurityAgent:
     NON_SECURITY_MESSAGE = "請提出資安相關問題，或直接貼上可疑 payload 讓我協助判斷。"
     KB_UNAVAILABLE_MESSAGE = "知識庫目前不可用，請先執行 ingest_knowledge.py 建立 Chroma DB。"
@@ -448,6 +484,14 @@ class SecurityAgent:
             return followup_answer
 
         detector_result = self.detector.inspect_text(query)
+        if detector_result["status"] == "ALERT":
+            return self._handle_attack_flow(query, detector_result, state)
+
+        if is_security_knowledge_question(query):
+            answer = self.build_rag_answer(query)
+            self._update_state(state, query, answer, keep_focus=True)
+            return answer
+
         signals = extract_signals(query)
         llm_judgment = None
         if self.llm_threat_judge is not None:
@@ -461,9 +505,6 @@ class SecurityAgent:
                 )
             except Exception:
                 llm_judgment = None
-
-        if detector_result["status"] == "ALERT":
-            return self._handle_attack_flow(query, detector_result, state)
 
         if self._should_use_llm_suspicious_finding(llm_judgment):
             answer = self._build_llm_suspicious_report(llm_judgment, signals)
