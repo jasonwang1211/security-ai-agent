@@ -5,7 +5,7 @@
 Status: Passed
 
 ```text
-(venv) PS C:\Users\jason\Desktop\sentinel_project> python app.py
+(venv) PS <project_path>> python app.py
 正在啟動 Security AI...
 Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
 Loading weights: 100%|███████████████████████████████████████████████████████████████| 103/103 [00:00<00:00, 7718.80it/s]
