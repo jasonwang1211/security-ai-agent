@@ -220,16 +220,30 @@ class SecurityAgent:
         except (TypeError, ValueError):
             confidence = 0.0
 
+        try:
+            anomaly_score = float(llm_judgment.get("anomaly_score"))
+        except (TypeError, ValueError):
+            anomaly_score = 0.0
+
         llm_status = str(llm_judgment.get("llm_status") or "FALLBACK").upper()
         llm_influenced_decision = llm_status != "FALLBACK" and confidence >= 0.85
+        anomaly_triggered = anomaly_score >= 0.8
         final_risk = llm_judgment.get("recommended_risk", "MEDIUM") if llm_influenced_decision else "MEDIUM"
         final_decision = llm_judgment.get("recommended_action", "MONITOR") if llm_influenced_decision else "MONITOR"
+
+        if anomaly_triggered:
+            final_risk = "HIGH"
+            if final_decision == "ALLOW":
+                final_decision = "MONITOR"
 
         lines.append(f"Final Risk: {final_risk}")
         lines.append(f"Final Decision: {final_decision}")
 
         if llm_influenced_decision:
             lines.append("Decision influenced by AI analysis")
+
+        if anomaly_triggered:
+            lines.append("Anomaly-based detection triggered (possible zero-day)")
 
         signals = signals or {}
         detected_signals = []

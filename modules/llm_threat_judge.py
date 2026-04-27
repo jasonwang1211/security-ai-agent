@@ -39,10 +39,14 @@ Required JSON schema:
   "is_suspicious": true,
   "suggested_attack_types": ["SQL Injection"],
   "confidence": 0.0,
+  "anomaly_score": 0.0,
   "reasoning": "short explanation",
   "recommended_risk": "LOW",
   "recommended_action": "ALLOW"
 }}
+
+Set anomaly_score from 0.0 to 1.0 based on unusual patterns, unexpected structure,
+high entropy input, and abnormal behavior descriptions.
 
 Allowed recommended_risk values: LOW, MEDIUM, HIGH.
 Allowed recommended_action values: ALLOW, MONITOR, BLOCK.
@@ -105,6 +109,7 @@ Inputs:
                 "is_suspicious": True,
                 "suggested_attack_types": attack_types,
                 "confidence": 0.9,
+                "anomaly_score": 0.7,
                 "reasoning": " ".join(reasoning_parts),
                 "recommended_risk": "HIGH",
                 "recommended_action": "BLOCK",
@@ -119,6 +124,7 @@ Inputs:
             "is_suspicious": False,
             "suggested_attack_types": attack_types,
             "confidence": 0.5,
+            "anomaly_score": 0.0,
             "reasoning": reasoning,
             "recommended_risk": "LOW",
             "recommended_action": "ALLOW",
@@ -149,11 +155,13 @@ Inputs:
 
         reasoning = str(llm_result.get("reasoning") or "").strip() or fallback["reasoning"]
         confidence = self._normalize_confidence(llm_result.get("confidence"), fallback["confidence"])
+        anomaly_score = self._normalize_confidence(llm_result.get("anomaly_score"), fallback["anomaly_score"])
 
         return {
             "is_suspicious": is_suspicious,
             "suggested_attack_types": attack_types,
             "confidence": confidence,
+            "anomaly_score": anomaly_score,
             "reasoning": reasoning,
             "recommended_risk": recommended_risk,
             "recommended_action": recommended_action,
