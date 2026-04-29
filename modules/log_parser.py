@@ -16,7 +16,9 @@ FIELDS = (
     "status",
 )
 
+KNOWN_KEY_VALUE_FIELDS = ("timestamp", "src_ip", "event", "user", "endpoint", "status")
 ISO_TIMESTAMP_RE = re.compile(r"^\d{4}-\d{2}-\d{2}T\S+$")
+WEB_REQUEST_RE = re.compile(r"^(?P<method>[A-Z]+)\s+(?P<target>.+)\s+HTTP/\S+$")
 
 WEB_ACCESS_RE = re.compile(
     r'^(?P<src_ip>\S+)\s+\S+\s+\S+\s+\[(?P<timestamp>[^\]]+)\]\s+'
@@ -45,7 +47,7 @@ def _parse_key_values(parts):
 
 def _apply_known_values(result, values):
     # Copy only fields used by the normalized parser output.
-    for field in ("timestamp", "src_ip", "event", "user", "endpoint", "status"):
+    for field in KNOWN_KEY_VALUE_FIELDS:
         if field in values:
             result[field] = values[field]
 
@@ -80,7 +82,7 @@ def _parse_simple_auth_log(line):
 
 def _parse_web_request(request):
     # Capture the target lazily so spaces inside suspicious URLs are preserved.
-    match = re.match(r"^(?P<method>[A-Z]+)\s+(?P<target>.+)\s+HTTP/\S+$", request)
+    match = WEB_REQUEST_RE.match(request)
 
     if not match:
         return None, None
@@ -125,11 +127,7 @@ def parse_log_line(line: str) -> dict:
             return _empty_result(raw)
 
         # Try the most specific structured formats before falling back.
-        for parser in (
-            _parse_web_access_log,
-            _parse_key_value_log,
-            _parse_simple_auth_log,
-        ):
+        for parser in LOG_PARSERS:
             parsed = parser(stripped)
             if parsed is not None:
                 parsed["raw"] = raw
@@ -138,3 +136,10 @@ def parse_log_line(line: str) -> dict:
         pass
 
     return _empty_result(raw)
+
+
+LOG_PARSERS = (
+    _parse_web_access_log,
+    _parse_key_value_log,
+    _parse_simple_auth_log,
+)

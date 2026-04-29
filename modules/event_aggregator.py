@@ -1,3 +1,6 @@
+from collections import defaultdict
+
+
 BRUTE_FORCE_THRESHOLD = 10
 
 
@@ -26,7 +29,7 @@ def aggregate_events(events: list[dict]) -> list[dict]:
         return []
 
     output = []
-    auth_failures = {}
+    auth_failures = defaultdict(list)
 
     for event in events:
         if not isinstance(event, dict):
@@ -43,7 +46,7 @@ def aggregate_events(events: list[dict]) -> list[dict]:
         if not source_ip or not target:
             continue
 
-        auth_failures.setdefault((source_ip, target), []).append(event)
+        auth_failures[(source_ip, target)].append(event)
 
     for (source_ip, target), related_events in auth_failures.items():
         # Promote repeated failures from the same source against the same target.

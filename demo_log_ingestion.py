@@ -7,6 +7,7 @@ from modules.log_parser import parse_log_line
 
 
 USAGE = "python demo_log_ingestion.py demo_logs/auth_bruteforce.log"
+SECTION_TITLES = ("Parsed Logs", "Normalized Events", "Aggregated Events")
 
 
 def _print_section(title, data):
@@ -18,6 +19,14 @@ def _read_log_lines(file_path):
     # Keep line parsing simple and skip blank lines from demo files.
     with open(file_path, "r", encoding="utf-8") as log_file:
         return [line.rstrip("\n") for line in log_file if line.strip()]
+
+
+def _process_lines(lines):
+    parsed_logs = [parse_log_line(line) for line in lines]
+    normalized_events = [normalize_event(parsed) for parsed in parsed_logs]
+    aggregated_events = aggregate_events(normalized_events)
+
+    return parsed_logs, normalized_events, aggregated_events
 
 
 def main():
@@ -33,13 +42,8 @@ def main():
         print(f"Failed to read log file: {exc}")
         return 1
 
-    parsed_logs = [parse_log_line(line) for line in lines]
-    normalized_events = [normalize_event(parsed) for parsed in parsed_logs]
-    aggregated_events = aggregate_events(normalized_events)
-
-    _print_section("Parsed Logs", parsed_logs)
-    _print_section("Normalized Events", normalized_events)
-    _print_section("Aggregated Events", aggregated_events)
+    for title, data in zip(SECTION_TITLES, _process_lines(lines)):
+        _print_section(title, data)
 
     return 0
 

@@ -11,18 +11,24 @@ SUSPICIOUS_MARKERS = (
     "drop table",
 )
 
+AUTH_FAILURE_STATUSES = ("401", "403")
+NORMALIZED_EVENT_FIELDS = (
+    "event_type",
+    "source_ip",
+    "target",
+    "user",
+    "method",
+    "status",
+    "payload",
+    "raw",
+)
+
 
 def _blank_event(raw):
-    return {
-        "event_type": "generic_event",
-        "source_ip": None,
-        "target": None,
-        "user": None,
-        "method": None,
-        "status": None,
-        "payload": None,
-        "raw": raw,
-    }
+    event = {field: None for field in NORMALIZED_EVENT_FIELDS}
+    event["event_type"] = "generic_event"
+    event["raw"] = raw
+    return event
 
 
 def _first_present(*values):
@@ -34,7 +40,7 @@ def _first_present(*values):
 
 
 def _is_auth_status(status):
-    return str(status) in ("401", "403")
+    return str(status) in AUTH_FAILURE_STATUSES
 
 
 def _contains_login(target):
@@ -57,11 +63,15 @@ def normalize_event(parsed_log: dict) -> dict:
     query = parsed_log.get("query")
 
     event = _blank_event(raw)
-    event["source_ip"] = parsed_log.get("src_ip")
-    event["target"] = target
-    event["user"] = parsed_log.get("user")
-    event["method"] = parsed_log.get("method")
-    event["status"] = parsed_log.get("status")
+    event.update(
+        {
+            "source_ip": parsed_log.get("src_ip"),
+            "target": target,
+            "user": parsed_log.get("user"),
+            "method": parsed_log.get("method"),
+            "status": parsed_log.get("status"),
+        }
+    )
 
     # Prefer query payloads, then preserve suspicious paths as payloads.
     if query not in (None, ""):
