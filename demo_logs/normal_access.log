@@ -1,0 +1,4 @@
+192.168.1.30 - - [28/Apr/2026:10:10:01 +0800] "GET / HTTP/1.1" 200
+192.168.1.31 - - [28/Apr/2026:10:10:08 +0800] "GET /dashboard HTTP/1.1" 200
+192.168.1.32 - - [28/Apr/2026:10:10:15 +0800] "GET /profile HTTP/1.1" 200
+timestamp=2026-04-28T10:10:22Z src_ip=192.168.1.33 event=login_success user=analyst endpoint=/login status=200
