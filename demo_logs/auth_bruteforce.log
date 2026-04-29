@@ -1,0 +1,10 @@
+2026-04-28T10:00:01Z login_failed src_ip=192.168.1.10 user=admin endpoint=/login
+2026-04-28T10:00:04Z login_failed src_ip=192.168.1.10 user=admin endpoint=/login
+2026-04-28T10:00:07Z login_failed src_ip=192.168.1.10 user=admin endpoint=/login
+2026-04-28T10:00:10Z login_failed src_ip=192.168.1.10 user=admin endpoint=/login
+2026-04-28T10:00:13Z login_failed src_ip=192.168.1.10 user=admin endpoint=/login
+2026-04-28T10:00:16Z login_failed src_ip=192.168.1.10 user=admin endpoint=/login
+2026-04-28T10:00:19Z login_failed src_ip=192.168.1.10 user=admin endpoint=/login
+2026-04-28T10:00:22Z login_failed src_ip=192.168.1.10 user=admin endpoint=/login
+2026-04-28T10:00:25Z login_failed src_ip=192.168.1.10 user=admin endpoint=/login
+2026-04-28T10:00:28Z login_failed src_ip=192.168.1.10 user=admin endpoint=/login
