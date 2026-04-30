@@ -2,6 +2,8 @@ import json
 from collections import Counter
 
 from demo_log_ingestion import SECTION_TITLES, _process_lines, _read_log_lines
+from modules.event_to_agent_input import events_to_agent_inputs
+from modules.skills import get_agent_state
 
 SUMMARY_TITLE = "[Log Ingestion Summary]"
 DETECTED_EVENT_TYPES_TITLE = "Detected Event Types:"
@@ -13,6 +15,7 @@ CURRENT_STAGE_LINES = [
 ]
 BRUTE_FORCE_EVENT_TYPE = "brute_force_candidate"
 WEB_REQUEST_EVENT_TYPE = "web_request"
+LOG_AGENT_ANALYSIS_EMPTY_MESSAGE = "No aggregated events available for SecurityAgent analysis."
 
 
 def _format_section(title, data):
@@ -117,28 +120,63 @@ def _format_detailed_json(parsed_logs, normalized_events, aggregated_events):
     return "\n".join(sections)
 
 
-def run_log_ingestion(log_path: str, include_json: bool = False) -> str:
-    # Thin wrapper around the existing log ingestion demo pipeline.
+def _read_and_process_log(log_path):
     try:
         lines = _read_log_lines(log_path)
     except OSError as exc:
-        return f"\n讀取 log 檔案失敗: {exc}\n"
+        return f"\n讀取 log 檔案失敗: {exc}\n", None
 
     parsed_logs, normalized_events, aggregated_events = _process_lines(lines)
-    output = _format_summary(
-        log_path,
-        lines,
-        parsed_logs,
-        normalized_events,
-        aggregated_events,
-    )
+    return None, (lines, parsed_logs, normalized_events, aggregated_events)
 
-    if include_json:
-        output = "\n\n".join(
-            [
-                output,
-                _format_detailed_json(parsed_logs, normalized_events, aggregated_events),
-            ]
+
+def run_log_ingestion(log_path: str, include_json: bool = False, include_summary: bool = True) -> str:
+    # Thin wrapper around the existing log ingestion demo pipeline.
+    error, result = _read_and_process_log(log_path)
+    if error:
+        return error
+
+    lines, parsed_logs, normalized_events, aggregated_events = result
+    output_parts = []
+    if include_summary:
+        output_parts.append(
+            _format_summary(
+                log_path,
+                lines,
+                parsed_logs,
+                normalized_events,
+                aggregated_events,
+            )
         )
 
-    return output
+    if include_json:
+        output_parts.append(_format_detailed_json(parsed_logs, normalized_events, aggregated_events))
+
+    return "\n\n".join(output_parts)
+
+
+def run_log_agent_analysis(agent, log_path: str) -> str:
+    # Adapter bridge: aggregated log events are converted, then analyzed by the existing agent flow.
+    error, result = _read_and_process_log(log_path)
+    if error:
+        return error
+
+    _, _, _, aggregated_events = result
+    agent_inputs = events_to_agent_inputs(aggregated_events)
+    if not agent_inputs:
+        return LOG_AGENT_ANALYSIS_EMPTY_MESSAGE
+
+    state = get_agent_state(agent)
+    sections = []
+    for index, agent_input in enumerate(agent_inputs, start=1):
+        analysis = agent.handle_query(agent_input, state)
+        sections.append(
+            "\n".join(
+                [
+                    f"[SecurityAgent Analysis for Log Event {index}]",
+                    analysis,
+                ]
+            )
+        )
+
+    return "\n\n".join(sections)

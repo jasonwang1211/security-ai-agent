@@ -10,7 +10,7 @@ from modules.risk_scorer import RiskScorer
 from modules.responder import Responder
 from modules.skills.followup_skill import run_followup
 from modules.skills.knowledge_qa_skill import run_knowledge_qa
-from modules.skills.log_ingestion_skill import run_log_ingestion
+from modules.skills.log_ingestion_skill import run_log_agent_analysis, run_log_ingestion
 from modules.skills.payload_analysis_skill import run_payload_analysis
 
 EXIT_COMMANDS = {"exit", "quit", "離開"}
@@ -109,14 +109,26 @@ def main():
 
         try:
             if choice == "2":
+                summary_output = run_log_ingestion(user_input)
+                print(summary_output)
+                if summary_output.startswith("\n讀取 log 檔案失敗"):
+                    continue
+
+                agent_choice = input("Send aggregated events to SecurityAgent? (y/n): ").strip()
+                if _is_exit_command(agent_choice):
+                    print("再見。")
+                    break
+
+                if agent_choice.lower() == "y":
+                    print(run_log_agent_analysis(agent, user_input))
+
                 json_choice = input("Show detailed JSON output? (y/n): ").strip()
                 if _is_exit_command(json_choice):
                     print("再見。")
                     break
 
-                show_json = json_choice.lower() == "y"
-                output = run_log_ingestion(user_input, include_json=show_json)
-                print(output)
+                if json_choice.lower() == "y":
+                    print(run_log_ingestion(user_input, include_json=True, include_summary=False))
                 continue
 
             if handler["show_analyzing"]:
