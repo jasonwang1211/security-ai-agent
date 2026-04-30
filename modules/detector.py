@@ -1,12 +1,19 @@
 class RuleBasedDetector:
+    DETECTOR_NAME = "rule_based_detector"
+    DETECTOR_TYPE = "rule_based"
+    ATTACK_SIGNATURES = {
+        "Path Traversal": ["/etc/passwd", "../", "..\\"],
+        "XSS": ["<script>", "alert(", "onerror="],
+        "SQL Injection": ["' or '1'='1", "'--", "union select", "drop table"],
+    }
+
     def __init__(self):
-        self.detector_name = "rule_based_detector"
-        self.detector_type = "rule_based"
+        self.detector_name = self.DETECTOR_NAME
+        self.detector_type = self.DETECTOR_TYPE
         # Keep the detector intentionally simple and rule-based.
         self.attack_signatures = {
-            "Path Traversal": ["/etc/passwd", "../", "..\\"],
-            "XSS": ["<script>", "alert(", "onerror="],
-            "SQL Injection": ["' or '1'='1", "'--", "union select", "drop table"],
+            attack_type: list(signatures)
+            for attack_type, signatures in self.ATTACK_SIGNATURES.items()
         }
 
     def get_metadata(self):
@@ -25,8 +32,11 @@ class RuleBasedDetector:
             "detector": self.get_metadata(),
         }
 
-    def _scan_text(self, text, original_input):
-        normalized = str(text or "").lower()
+    def _normalize_text(self, text):
+        return str(text or "").lower()
+
+    def _find_matches(self, text):
+        normalized = self._normalize_text(text)
         attack_types = []
         matched_signatures = {}
 
@@ -36,6 +46,10 @@ class RuleBasedDetector:
                 attack_types.append(attack_type)
                 matched_signatures[attack_type] = matched
 
+        return attack_types, matched_signatures
+
+    def _scan_text(self, text, original_input):
+        attack_types, matched_signatures = self._find_matches(text)
         return self._build_result(attack_types, matched_signatures, original_input)
 
     def inspect_text(self, text):
