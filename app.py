@@ -67,7 +67,7 @@ def main():
         },
         "2": {
             "prompt": "\n請輸入 log 檔案路徑: ",
-            "runner": run_log_ingestion,
+            "runner": None,
             "show_analyzing": False,
         },
         "3": {
@@ -108,6 +108,17 @@ def main():
             continue
 
         try:
+            if choice == "2":
+                json_choice = input("Show detailed JSON output? (y/n): ").strip()
+                if _is_exit_command(json_choice):
+                    print("再見。")
+                    break
+
+                show_json = json_choice.lower() == "y"
+                output = run_log_ingestion(user_input, include_json=show_json)
+                print(output)
+                continue
+
             if handler["show_analyzing"]:
                 print("分析中...")
 
