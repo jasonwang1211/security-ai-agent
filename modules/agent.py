@@ -229,6 +229,15 @@ class SecurityAgent:
 
         return confidence >= 0.75
 
+    def _should_send_clean_input_to_llm(self, query, signals):
+        signals = signals or {}
+        has_payload_signal = bool(signals.get("keywords") or signals.get("patterns"))
+        has_anomaly_indicator = bool(signals.get("anomaly_signals"))
+
+        # Historical state may support analysis, but must not be the only trigger
+        # for classifying a clean current input as suspicious.
+        return has_payload_signal or self._is_log_like_security(query) or has_anomaly_indicator
+
     def _build_llm_suspicious_report(self, llm_judgment, signals=None):
         attack_types = [
             str(item).strip()
@@ -494,7 +503,8 @@ class SecurityAgent:
 
         signals = extract_signals(query)
         llm_judgment = None
-        if self.llm_threat_judge is not None:
+        should_use_llm_judge = self._should_send_clean_input_to_llm(query, signals)
+        if should_use_llm_judge and self.llm_threat_judge is not None:
             try:
                 llm_judgment = self.llm_threat_judge.judge(
                     query,
