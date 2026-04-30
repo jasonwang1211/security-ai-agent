@@ -8,8 +8,26 @@ from modules.llm_threat_judge import LLMThreatJudge
 from modules.rag_qa import RAGQA
 from modules.risk_scorer import RiskScorer
 from modules.responder import Responder
+from modules.skills.followup_skill import run_followup
+from modules.skills.knowledge_qa_skill import run_knowledge_qa
+from modules.skills.log_ingestion_skill import run_log_ingestion
+from modules.skills.payload_analysis_skill import run_payload_analysis
 
 EXIT_COMMANDS = {"exit", "quit", "離開"}
+MENU_EXIT_COMMANDS = EXIT_COMMANDS | {"0"}
+
+MENU_TEXT = """
+請選擇模式：
+1. Payload / event analysis
+2. Log file ingestion demo
+3. Security knowledge Q&A
+4. Follow-up / more details
+0. Exit
+"""
+
+
+def _is_exit_command(value):
+    return (value or "").strip().lower() in MENU_EXIT_COMMANDS
 
 
 def main():
@@ -41,27 +59,60 @@ def main():
     else:
         print("\nSecurity AI 已啟動，但知識庫目前不可用，仍可進行攻擊偵測與防禦建議。")
 
-    state = {
-        "last_question": "",
-        "last_answer": "",
-        "last_points": [],
-        "last_focus": "",
+    mode_handlers = {
+        "1": {
+            "prompt": "\n請輸入 payload 或事件描述: ",
+            "runner": lambda user_input: run_payload_analysis(agent, user_input),
+            "show_analyzing": True,
+        },
+        "2": {
+            "prompt": "\n請輸入 log 檔案路徑: ",
+            "runner": run_log_ingestion,
+            "show_analyzing": False,
+        },
+        "3": {
+            "prompt": "\n請輸入資安知識問題: ",
+            "runner": lambda user_input: run_knowledge_qa(agent, user_input),
+            "show_analyzing": True,
+        },
+        "4": {
+            "prompt": "\n請輸入追問或想了解的細節: ",
+            "runner": lambda user_input: run_followup(agent, user_input),
+            "show_analyzing": True,
+        },
     }
 
     while True:
-        query = input("\n你: ").strip()
+        print(MENU_TEXT)
+        choice = input("請輸入模式編號: ").strip()
 
-        if query.lower() in EXIT_COMMANDS:
+        if _is_exit_command(choice):
             print("再見。")
             break
 
-        if not query:
+        if not choice:
+            continue
+
+        handler = mode_handlers.get(choice)
+        if handler is None:
+            print("\n無效的模式編號，請重新選擇。\n")
+            continue
+
+        user_input = input(handler["prompt"]).strip()
+
+        if _is_exit_command(user_input):
+            print("再見。")
+            break
+
+        if not user_input:
             continue
 
         try:
-            print("分析中...")
-            answer = agent.handle_query(query, state)
-            print(f"\nAI: {answer}\n")
+            if handler["show_analyzing"]:
+                print("分析中...")
+
+            output = handler["runner"](user_input)
+            print(output)
         except Exception as exc:
             print(f"\n系統錯誤: {exc}\n")
 
