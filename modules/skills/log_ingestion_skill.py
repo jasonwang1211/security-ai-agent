@@ -1,7 +1,11 @@
 import json
+import threading
+import time
 from collections import Counter
 
 from demo_log_ingestion import SECTION_TITLES, _process_lines, _read_log_lines
+from modules.event_to_agent_input import events_to_agent_inputs
+from modules.skills import get_agent_state
 
 SUMMARY_TITLE = "[Log Ingestion Summary]"
 DETECTED_EVENT_TYPES_TITLE = "Detected Event Types:"
@@ -13,6 +17,39 @@ CURRENT_STAGE_LINES = [
 ]
 BRUTE_FORCE_EVENT_TYPE = "brute_force_candidate"
 WEB_REQUEST_EVENT_TYPE = "web_request"
+LOG_AGENT_ANALYSIS_EMPTY_MESSAGE = "No analyzable log events were produced."
+PROGRESS_INTERVAL_SECONDS = 5
+
+
+def run_with_progress(target, label):
+    result = {}
+    error = {}
+
+    def worker():
+        try:
+            result["value"] = target()
+        except Exception as exc:
+            error["exception"] = exc
+            error["traceback"] = exc.__traceback__
+
+    thread = threading.Thread(target=worker)
+    thread.start()
+
+    started_at = time.monotonic()
+    print(f"{label} started...", flush=True)
+
+    while thread.is_alive():
+        thread.join(timeout=PROGRESS_INTERVAL_SECONDS)
+        if thread.is_alive():
+            elapsed = int(time.monotonic() - started_at)
+            print(f"{label} still running... elapsed {elapsed}s", flush=True)
+
+    print(f"{label} complete.", flush=True)
+
+    if "exception" in error:
+        raise error["exception"].with_traceback(error["traceback"])
+
+    return result.get("value")
 
 
 def _format_section(title, data):
@@ -117,28 +154,92 @@ def _format_detailed_json(parsed_logs, normalized_events, aggregated_events):
     return "\n".join(sections)
 
 
-def run_log_ingestion(log_path: str, include_json: bool = False) -> str:
-    # Thin wrapper around the existing log ingestion demo pipeline.
+def _read_and_process_log(log_path):
     try:
         lines = _read_log_lines(log_path)
     except OSError as exc:
-        return f"\n讀取 log 檔案失敗: {exc}\n"
+        return f"\n讀取 log 檔案失敗: {exc}\n", None
 
     parsed_logs, normalized_events, aggregated_events = _process_lines(lines)
-    output = _format_summary(
-        log_path,
-        lines,
-        parsed_logs,
-        normalized_events,
-        aggregated_events,
-    )
+    return None, (lines, parsed_logs, normalized_events, aggregated_events)
 
-    if include_json:
-        output = "\n\n".join(
-            [
-                output,
-                _format_detailed_json(parsed_logs, normalized_events, aggregated_events),
-            ]
+
+def run_log_ingestion(log_path: str, include_json: bool = False, include_summary: bool = True) -> str:
+    # Thin wrapper around the existing log ingestion demo pipeline.
+    error, result = _read_and_process_log(log_path)
+    if error:
+        return error
+
+    lines, parsed_logs, normalized_events, aggregated_events = result
+    output_parts = []
+    if include_summary:
+        output_parts.append(
+            _format_summary(
+                log_path,
+                lines,
+                parsed_logs,
+                normalized_events,
+                aggregated_events,
+            )
         )
 
-    return output
+    if include_json:
+        output_parts.append(_format_detailed_json(parsed_logs, normalized_events, aggregated_events))
+
+    return "\n\n".join(output_parts)
+
+
+def _select_agent_inputs(agent_inputs, scope):
+    if scope == "first":
+        return agent_inputs[:1]
+    return agent_inputs
+
+
+def _format_agent_analysis_section(index, analysis):
+    return "\n".join(
+        [
+            f"[SecurityAgent Analysis for Log Event {index}]",
+            analysis,
+        ]
+    )
+
+
+def _format_progress(index, total, agent_input):
+    return "\n".join(
+        [
+            f"[Analyzing Log Event {index}/{total}]",
+            f"Input: {agent_input}",
+        ]
+    )
+
+
+def run_log_agent_analysis(agent, log_path: str, scope="all", progress_callback=None, result_callback=None) -> str:
+    # Adapter bridge: aggregated log events are converted, then analyzed by the existing agent flow.
+    error, result = _read_and_process_log(log_path)
+    if error:
+        return error
+
+    _, _, _, aggregated_events = result
+    all_agent_inputs = events_to_agent_inputs(aggregated_events)
+    agent_inputs = _select_agent_inputs(all_agent_inputs, scope)
+    if not all_agent_inputs:
+        return LOG_AGENT_ANALYSIS_EMPTY_MESSAGE
+
+    state = get_agent_state(agent)
+    sections = []
+    total = len(all_agent_inputs)
+    for index, agent_input in enumerate(agent_inputs, start=1):
+        if progress_callback:
+            progress_callback(_format_progress(index, total, agent_input))
+
+        analysis = run_with_progress(
+            lambda: agent.handle_query(agent_input, state),
+            f"Processing Log Event {index}/{total}",
+        )
+        section = _format_agent_analysis_section(index, analysis)
+        if result_callback:
+            result_callback(section)
+        else:
+            sections.append(section)
+
+    return "\n\n".join(sections)

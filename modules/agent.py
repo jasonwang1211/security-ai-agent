@@ -175,49 +175,6 @@ class SecurityAgent:
         else:
             state["last_focus"] = ""
 
-    def _format_signatures(self, matched_signatures):
-        if not matched_signatures:
-            return ["- 無"]
-
-        lines = []
-        for attack_type, signatures in matched_signatures.items():
-            joined = ", ".join(signatures) if signatures else "無"
-            lines.append(f"- {attack_type}: {joined}")
-        return lines
-
-    def _format_recommendations(self, recommendations):
-        lines = []
-        for attack_type, items in recommendations.items():
-            lines.append(f"{attack_type}:")
-            for item in items:
-                lines.append(f"- {item}")
-        return lines or ["- 無額外建議"]
-
-    def _format_ai_assisted_analysis(self, llm_result):
-        if not llm_result:
-            return []
-
-        attack_types = [
-            str(item).strip()
-            for item in (llm_result.get("possible_attack_types") or [])
-            if str(item).strip()
-        ]
-        reasoning = str(llm_result.get("reasoning") or "").strip() or "No additional analysis available."
-        recommended_decision = str(llm_result.get("recommended_decision") or "N/A").strip()
-
-        try:
-            confidence_text = f"{float(llm_result.get('confidence')):.2f}"
-        except (TypeError, ValueError):
-            confidence_text = "N/A"
-
-        return [
-            "AI-Assisted Analysis",
-            f"Reasoning: {reasoning}",
-            f"Possible Attack Types: {', '.join(attack_types) if attack_types else 'None'}",
-            f"Recommended Decision: {recommended_decision}",
-            f"Confidence: {confidence_text}",
-        ]
-
     def _should_use_llm_suspicious_finding(self, llm_judgment):
         if not llm_judgment or not llm_judgment.get("is_suspicious"):
             return False
@@ -372,28 +329,6 @@ class SecurityAgent:
             ]
         )
 
-    def _build_attack_report(self, detector_result, response_package, risk_result, decision_result, defense_result):
-        lines = [
-            "藍隊分析報告",
-            f"攻擊摘要：{response_package['summary']}",
-            f"攻擊類型：{', '.join(detector_result['attack_types'])}",
-            "命中簽章：",
-        ]
-        lines.extend(self._format_signatures(detector_result.get("matched_signatures")))
-        lines.extend(
-            [
-                f"風險等級：{risk_result['risk_level']}",
-                f"判定動作：{decision_result['decision']}",
-                f"模擬防禦：{defense_result['summary']}",
-                "",
-                "防禦建議：",
-            ]
-        )
-        lines.extend(self._format_recommendations(response_package["recommendations"]))
-        lines.extend(["", "Incident Response Checklist:"])
-        lines.extend(response_package["response_steps"])
-        return "\n".join(lines).strip()
-
     def _handle_followup(self, query, state):
         if self.followup_handler.is_point_followup(query):
             if not state["last_points"]:
@@ -456,32 +391,14 @@ class SecurityAgent:
             detector_result,
             risk_result,
         )
-        response_package = self.responder.build_response_package(
-            detector_result["attack_types"],
-            details=detector_result,
+        # Mode 1 attack alerts return one SOC-style report; RAG remains for Mode 3 Q&A.
+        answer = self.responder.build_security_triage_report(
+            detector_result,
+            risk_result,
+            decision_result,
+            defense_result,
+            llm_result,
         )
-
-        parts = [
-            self._build_attack_report(
-                detector_result,
-                response_package,
-                risk_result,
-                decision_result,
-                defense_result,
-            )
-        ]
-
-        if self.should_append_rag_explanation(query, detector_result):
-            rag_query = query
-            if not self.rag_qa.is_security(query):
-                rag_query = f"{query}\n\n攻擊類型：{', '.join(detector_result['attack_types'])}"
-            rag_answer = self.build_rag_answer(rag_query)
-            parts.append(f"補充說明：\n{rag_answer}")
-
-        if llm_result:
-            parts.append("\n".join(self._format_ai_assisted_analysis(llm_result)))
-
-        answer = "\n\n".join(parts)
         self._update_state(state, query, answer, keep_focus=False)
         return answer
 
