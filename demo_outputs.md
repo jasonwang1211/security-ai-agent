@@ -1,5 +1,7 @@
 # Demo Outputs
 
+This document shows representative CLI transcripts for the current `v1.1.4-event-to-agent-adapter` demo flow.
+
 ## Startup Output
 
 Status: Passed
@@ -7,211 +9,316 @@ Status: Passed
 ```text
 (venv) PS <project_path>> python app.py
 正在啟動 Security AI...
-Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
-Loading weights: 100%|███████████████████████████████████████████████████████████████| 103/103 [00:00<00:00, 7718.80it/s]
-BertModel LOAD REPORT from: sentence-transformers/all-MiniLM-L6-v2
-Key                     | Status     |  | 
-------------------------+------------+--+-
-embeddings.position_ids | UNEXPECTED |  | 
-
-Notes:
-- UNEXPECTED:   can be ignored when loading from different task/architecture; not ok if you expect identical arch.
-Failed to send telemetry event ClientStartEvent: capture() takes 1 positional argument but 3 were given
-Failed to send telemetry event ClientCreateCollectionEvent: capture() takes 1 positional argument but 3 were given
 
 Security AI 已啟動。
+
+請選擇模式：
+1. Payload / event analysis
+2. Log file ingestion demo
+3. Security knowledge Q&A
+4. Follow-up / more details
+0. Exit
 ```
 
-## Demo Case 1: SQL Injection
+## Demo Case 1: Mode 1 XSS Payload Analysis
 
 Status: Passed
 
 ```text
-你: ?id=1' OR '1'='1
-分析中...
-Failed to send telemetry event CollectionQueryEvent: capture() takes 1 positional argument but 3 were given
+請輸入模式編號: 1
 
-AI: 藍隊分析報告
-攻擊摘要：偵測到可能的攻擊類型：SQL Injection
-攻擊類型：SQL Injection
-命中簽章：
-- SQL Injection: ' or '1'='1
-風險等級：HIGH
-判定動作：BLOCK
-模擬防禦：已模擬封鎖這次可疑請求，未實際修改任何系統或防火牆設定。
+請輸入 payload 或事件描述: <script>alert(1)</script>
+[Mode 1] Running payload/event analysis...
+[Mode 1] Payload/event analysis started...
+[Mode 1] Payload/event analysis still running... elapsed 5s
+[Mode 1] Payload/event analysis complete.
 
-防禦建議：
-SQL Injection:
-- 使用參數化查詢或 prepared statements，避免字串拼接 SQL。
-- 驗證與限制使用者輸入格式，避免危險字元直接進入查詢。
-- 優先使用 ORM 或安全的資料存取層來降低手寫 SQL 風險。
+AI:
+[Security Triage Report]
 
-Incident Response Checklist:
-1. 先確認影響範圍並保留相關請求、日誌與證據。
-2. 暫時阻擋或限制可疑來源、輸入點或受影響功能。
-3. 檢查是否已有資料外洩、權限提升或檔案讀取跡象。
-4. 修補對應弱點後再重新驗證是否仍可重現。
-5. 補上監控、告警與輸入驗證，避免同類事件再次發生。
+1. Summary
+Status: ALERT
+Attack Type: XSS
+Risk Level: MEDIUM
+Decision: MONITOR
+Detection Source: rule_based_detector (rule_based)
 
-補充說明：
-根據提供的內容，此可疑輸入 `?id=1' OR '1'='1` 屬於 SQL Injection 攻擊。此 Payload 通常被用來進行布爾繞過攻擊（boolean-based blind SQL injection），通過修改查詢條件使資料庫返回預期結果，進而獲取敏感信息或繞過驗證。
+2. Evidence
+Input / Payload:
+<script>alert(1)</script>
 
-攻擊類型：SQL Injection
-
-AI-Assisted Analysis
-Reasoning: Rule-based detection identified a classic SQL Injection payload (' OR '1'='1') in the query parameter.
-Possible Attack Types: SQL Injection
-Recommended Decision: BLOCK
-Confidence: 0.95
-```
-
-## Demo Case 2: XSS
-
-Status: Passed
-
-```text
-你: <script>alert(1)</script>
-分析中...
-
-AI: 藍隊分析報告
-攻擊摘要：偵測到可能的攻擊類型：XSS
-攻擊類型：XSS
-命中簽章：
+Matched Signatures:
 - XSS: <script>, alert(
-風險等級：MEDIUM
-判定動作：MONITOR
-模擬防禦：已模擬將此事件加入監控與告警佇列，未實際部署監控規則。
 
-防禦建議：
-XSS:
-- 輸出到 HTML 前先做適當跳脫，避免惡意腳本被瀏覽器執行。
-- 啟用 Content Security Policy (CSP) 限制可執行腳本來源。
-- 避免直接信任使用者輸入，特別是可回顯到頁面的欄位。
+3. Why It Matters
+- XSS: XSS 可能讓攻擊者把腳本注入頁面，影響使用者瀏覽器、竊取 session 或執行未授權操作。
 
-Incident Response Checklist:
-1. 先確認影響範圍並保留相關請求、日誌與證據。
-2. 暫時阻擋或限制可疑來源、輸入點或受影響功能。
-3. 檢查是否已有資料外洩、權限提升或檔案讀取跡象。
-4. 修補對應弱點後再重新驗證是否仍可重現。
-5. 補上監控、告警與輸入驗證，避免同類事件再次發生。
+4. Recommended Response
+1. 檢查可疑輸入是否被反射到 response body 或頁面模板。
+2. 確認輸出點已依 HTML、JavaScript 或 attribute context 正確 encoding。
+3. 檢查 Content Security Policy (CSP) 是否啟用並限制不可信腳本來源。
 
-AI-Assisted Analysis
-Reasoning: Rule-based detector flagged the input as suspicious. Detected attack types: XSS. Current risk level: MEDIUM.
-Possible Attack Types: XSS
-Recommended Decision: MONITOR
-Confidence: 0.90
+5. Simulation Notice
+已模擬將此事件加入監控與告警佇列，未實際部署監控規則。
+
+6. AI Assist
+LLM Suggested Attack Type: XSS
+LLM Suggested Decision: BLOCK
+Confidence: 0.99
+Note: Decision above is the final system decision; LLM Suggested Decision is AI assist only.
 ```
 
-## Demo Case 3: Brute Force Behavior
+## Demo Case 2: Mode 2 Log Ingestion Summary
 
 Status: Passed
 
 ```text
-你: login failed 50 times from same IP in 1 minute
-分析中...
+請輸入模式編號: 2
 
-AI: LLM-assisted suspicious finding
-Suggested Attack Types: Brute Force, Credential Stuffing
-Recommended Risk: HIGH
-Recommended Action: BLOCK
-Confidence: 0.85
-Reasoning: The query describes repeated failed login attempts (50 times in 1 minute) from a single source, which is a classic indicator of a brute force or credential stuffing attack, regardless of the detector's CLEAN status.
-LLM Status: ACTIVE
-Final Risk: HIGH
-Final Decision: BLOCK
-Decision influenced by AI analysis
+請輸入 log 檔案路徑: demo_logs\web_attack.log
+[Mode 2] Reading and summarizing log file...
+[Log Ingestion Summary]
 
-Threat Intelligence Analysis
-Why Suspicious: The query describes repeated failed login attempts (50 times in 1 minute) from a single source, which is a classic indicator of a brute force or credential stuffing attack, regardless of the detector's CLEAN status.
-Detected Signals: same ip, 50 times, login failed
-Attack Pattern Explanation: Brute Force, Credential Stuffing
-Risk Reasoning: Recommended risk is HIGH based on confidence 0.85 and observed signals.
+File: demo_logs\web_attack.log
+Total Lines: 3
+Parsed Logs: 3
+Normalized Events: 3
+Aggregated Events: 3
+
+Detected Event Types:
+- web_request: 3
+
+Preserved Payloads:
+1. q=<script>alert(1)</script>
+2. id=1' or '1'='1
+3. file=../../etc/passwd
+
+Current Stage:
+Log ingestion only. Events are not sent into SecurityAgent yet.
+
+Send aggregated events to SecurityAgent? (y/n): n
+Show detailed JSON output? (y/n): n
 ```
 
-## Demo Case 4: Normal Input
+## Demo Case 3: Mode 2 Analyze First Event
 
 Status: Passed
 
 ```text
-你: user login success
-分析中...
+Send aggregated events to SecurityAgent? (y/n): y
+[Mode 2] Preparing SecurityAgent analysis...
 
-AI: 請提出資安相關問題，或直接貼上可疑 payload 讓我協助判斷。
+Choose SecurityAgent analysis scope:
+1. Analyze first event only
+2. Analyze all events
+0. Cancel
+
+請選擇分析範圍: 1
+[Mode 2] Running SecurityAgent analysis...
+[Analyzing Log Event 1/3]
+Input: q=<script>alert(1)</script>
+Processing Log Event 1/3 started...
+Processing Log Event 1/3 still running... elapsed 5s
+Processing Log Event 1/3 complete.
+[SecurityAgent Analysis for Log Event 1]
+[Security Triage Report]
+
+1. Summary
+Status: ALERT
+Attack Type: XSS
+Risk Level: MEDIUM
+Decision: MONITOR
+Detection Source: rule_based_detector (rule_based)
+
+2. Evidence
+Input / Payload:
+q=<script>alert(1)</script>
+
+Matched Signatures:
+- XSS: <script>, alert(
+
+3. Why It Matters
+- XSS: XSS 可能讓攻擊者把腳本注入頁面，影響使用者瀏覽器、竊取 session 或執行未授權操作。
+
+4. Recommended Response
+1. 檢查可疑輸入是否被反射到 response body 或頁面模板。
+2. 確認輸出點已依 HTML、JavaScript 或 attribute context 正確 encoding。
+3. 檢查 Content Security Policy (CSP) 是否啟用並限制不可信腳本來源。
+
+5. Simulation Notice
+已模擬將此事件加入監控與告警佇列，未實際部署監控規則。
+
+6. AI Assist
+LLM Suggested Attack Type: XSS
+LLM Suggested Decision: BLOCK
+Confidence: 0.98
+Note: Decision above is the final system decision; LLM Suggested Decision is AI assist only.
+
+[Mode 2] SecurityAgent analysis complete.
+Show detailed JSON output? (y/n): n
 ```
 
-## Demo Case 5: Anomaly / Possible Zero-Day
+## Demo Case 4: Mode 2 Analyze All Events
 
 Status: Passed
 
 ```text
-你: xJ12#@!$ unusual pattern ??? exec??
-分析中...
+Send aggregated events to SecurityAgent? (y/n): y
+[Mode 2] Preparing SecurityAgent analysis...
 
-AI: LLM-assisted suspicious finding
-Suggested Attack Types: Command Injection, Path Traversal
-Recommended Risk: MEDIUM
-Recommended Action: MONITOR
-Confidence: 0.90
-Reasoning: The query contains highly unusual characters, mixed case, and explicit command-like sequences ('exec??'), indicating potential command injection or path traversal attempts, despite the detector being CLEAN.
-LLM Status: ACTIVE
-Final Risk: HIGH
-Final Decision: MONITOR
-Decision influenced by AI analysis
-Anomaly-based detection triggered (possible zero-day)
+Choose SecurityAgent analysis scope:
+1. Analyze first event only
+2. Analyze all events
+0. Cancel
 
-Threat Intelligence Analysis
-Why Suspicious: The query contains highly unusual characters, mixed case, and explicit command-like sequences ('exec??'), indicating potential command injection or path traversal attempts, despite the detector being CLEAN.
-Detected Signals: unusual
-Attack Pattern Explanation: Command Injection, Path Traversal
-Risk Reasoning: Recommended risk is MEDIUM based on confidence 0.90 and observed signals.
+請選擇分析範圍: 2
+[Mode 2] Running SecurityAgent analysis...
+
+[Analyzing Log Event 1/3]
+Input: q=<script>alert(1)</script>
+Processing Log Event 1/3 started...
+Processing Log Event 1/3 complete.
+[SecurityAgent Analysis for Log Event 1]
+[Security Triage Report]
+
+1. Summary
+Status: ALERT
+Attack Type: XSS
+Risk Level: MEDIUM
+Decision: MONITOR
+Detection Source: rule_based_detector (rule_based)
+
+2. Evidence
+Input / Payload:
+q=<script>alert(1)</script>
+
+Matched Signatures:
+- XSS: <script>, alert(
+
+3. Why It Matters
+- XSS: XSS 可能讓攻擊者把腳本注入頁面，影響使用者瀏覽器、竊取 session 或執行未授權操作。
+
+4. Recommended Response
+... repeated Recommended Response section omitted for brevity ...
+
+5. Simulation Notice
+已模擬將此事件加入監控與告警佇列，未實際部署監控規則。
+
+[Analyzing Log Event 2/3]
+Input: id=1' or '1'='1
+Processing Log Event 2/3 started...
+Processing Log Event 2/3 complete.
+[SecurityAgent Analysis for Log Event 2]
+[Security Triage Report]
+
+1. Summary
+Status: ALERT
+Attack Type: SQL Injection
+Risk Level: HIGH
+Decision: BLOCK
+Detection Source: rule_based_detector (rule_based)
+
+2. Evidence
+Input / Payload:
+id=1' or '1'='1
+
+Matched Signatures:
+- SQL Injection: ' or '1'='1
+
+3. Why It Matters
+- SQL Injection: SQL Injection 可能讓攻擊者改變資料庫查詢邏輯，造成資料外洩、驗證繞過或資料破壞。
+
+4. Recommended Response
+... repeated Recommended Response section omitted for brevity ...
+
+5. Simulation Notice
+已模擬封鎖這次可疑請求，未實際修改任何系統或防火牆設定。
+
+[Analyzing Log Event 3/3]
+Input: file=../../etc/passwd
+Processing Log Event 3/3 started...
+Processing Log Event 3/3 complete.
+[SecurityAgent Analysis for Log Event 3]
+[Security Triage Report]
+
+1. Summary
+Status: ALERT
+Attack Type: Path Traversal
+Risk Level: HIGH
+Decision: BLOCK
+Detection Source: rule_based_detector (rule_based)
+
+2. Evidence
+Input / Payload:
+file=../../etc/passwd
+
+Matched Signatures:
+- Path Traversal: /etc/passwd, ../
+
+3. Why It Matters
+- Path Traversal: Path Traversal 可能讓攻擊者嘗試讀取應用程式目錄外的敏感檔案，例如系統密碼檔或設定檔。
+
+4. Recommended Response
+... repeated Recommended Response section omitted for brevity ...
+
+5. Simulation Notice
+已模擬封鎖這次可疑請求，未實際修改任何系統或防火牆設定。
+
+[Mode 2] SecurityAgent analysis complete.
+Show detailed JSON output? (y/n): n
 ```
 
-## Demo Case 6: RAG Security QA
+## Demo Case 5: Blank Input Handling
 
 Status: Passed
 
 ```text
-你: 什麼是 XSS
-分析中...
+請輸入模式編號:
+請輸入模式編號，或輸入 0 離開。
 
-AI: XSS，即跨站腳本攻擊（Cross-Site Scripting），是指攻擊者將惡意腳本注入可被其他使用者瀏覽的內容中，藉此竊取 Session、操 控頁面或冒用使用者行為。
+請選擇分析範圍:
+未輸入分析範圍，已取消 SecurityAgent 分析。
+
+Show detailed JSON output? (y/n):
+未顯示 detailed JSON output。
 ```
 
-## Demo Case 7: Contextual Follow-up
+## Demo Case 6: Mode 3 Security Knowledge Q&A
 
 Status: Passed
 
 ```text
-你: 詳細說明
-分析中...
+請輸入模式編號: 3
 
-AI: XSS 攻擊主要分為三種類型：反射型 XSS、儲存型 XSS 和基於 DOM 的 XSS。攻擊者利用這些漏洞，將惡意腳本注入到網頁中，當其他使用者瀏覽該頁面時，瀏覽器會執行這些腳本。
+請輸入資安知識問題: 什麼是 XSS
+[Mode 3] Running security knowledge Q&A...
+[Mode 3] Security knowledge Q&A started...
+[Mode 3] Security knowledge Q&A still running... elapsed 5s
+[Mode 3] Security knowledge Q&A complete.
 
-1. **反射型 XSS**：惡意腳本通過 URL 反射回伺服器，例如在留言板或搜索欄輸入惡意代碼後按送出。攻擊者可以利用這種方式竊取其他使用者的 Cookie 或 Session 信息。
-2. **儲存型 XSS**：惡意腳本被永久儲存在伺服器端資料庫中，當其他使用者訪問相關頁面時，瀏覽器會執行這些已儲存的腳本。
-3. **基於 DOM 的 XSS**：這種攻擊方式不涉及伺服器端代碼，而是利用 JavaScript 來操控頁面內容。攻擊者通過注入惡意 JavaScript 代碼，影響客戶端渲染。
-
-防禦措施包括：
-- 使用輸入驗證和過濾。
-- 設置 Content-Security-Policy (CSP) 頭部。
-- 使用同源策略限制跨站腳本的執行環境。
+AI: XSS，即跨站腳本攻擊（Cross-Site Scripting），是指攻擊者將惡意腳本注入可被其他使用者瀏覽的內容中，藉此竊取 Session、操控頁面或冒用使用者行為。
 ```
 
-## Demo Case 8: LLM Fail-safe Fallback
+## Demo Case 7: Mode 4 Follow-up / More Details
 
-Status: Passed with note
+Status: Passed
 
 ```text
-你: login failed 50 times from same IP in 1 minute
-分析中...
+請輸入模式編號: 4
 
-AI: Fallback Suspicious Finding (LLM unavailable)
-Reasoning: High-frequency failed logins from the same IP may indicate brute-force activity.
-Recommended Action: BLOCK
-Risk: HIGH
-Note: LLM unavailable, heuristic fallback used
-LLM Status: FALLBACK
+請輸入追問或想了解的細節: 詳細說明
+[Mode 4] Running follow-up analysis...
+[Mode 4] Follow-up analysis started...
+[Mode 4] Follow-up analysis complete.
 
-你: exit
+AI: XSS 攻擊主要分為反射型 XSS、儲存型 XSS 和基於 DOM 的 XSS。防禦重點包括輸入驗證、依輸出情境做 encoding，以及設定 Content Security Policy (CSP)。
+```
+
+## Demo Case 8: Exit
+
+Status: Passed
+
+```text
+請輸入模式編號: 0
 再見。
 ```
