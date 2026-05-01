@@ -49,19 +49,21 @@ class Responder:
 
     def _format_matched_signatures(self, matched_signatures):
         if not matched_signatures:
-            return ["  - 無"]
+            return ["- 無"]
 
         lines = []
         for attack_type, signatures in matched_signatures.items():
             joined = ", ".join(signatures) if signatures else "無"
-            lines.append(f"  - {attack_type}: {joined}")
+            lines.append(f"- {attack_type}: {joined}")
         return lines
 
     def _format_evidence(self, detector_result):
         lines = [
-            "Evidence:",
-            f"- Payload: {detector_result.get('original_input', '')}",
-            "- Matched Signatures:",
+            "2. Evidence",
+            "Input / Payload:",
+            str(detector_result.get("original_input", "")),
+            "",
+            "Matched Signatures:",
         ]
         lines.extend(self._format_matched_signatures(detector_result.get("matched_signatures")))
         return lines
@@ -98,17 +100,17 @@ class Responder:
         suggested_attack_type = ", ".join(attack_types) if attack_types else "None"
         return [
             "",
-            "Optional AI Assist Note:",
-            f"- LLM Suggested Attack Type: {suggested_attack_type}",
-            f"- LLM Suggested Decision: {llm_result.get('recommended_decision', 'N/A')}",
-            f"- Confidence: {self._format_confidence(llm_result)}",
-            "- Note: Final Decision is determined by the system decision flow.",
+            "6. AI Assist",
+            f"LLM Suggested Attack Type: {suggested_attack_type}",
+            f"LLM Suggested Decision: {llm_result.get('recommended_decision', 'N/A')}",
+            f"Confidence: {self._format_confidence(llm_result)}",
+            "Note: Final Decision is determined by the system decision flow.",
         ]
 
     def _format_simulation_note(self, defense_result):
         return [
             "",
-            "Simulation Note:",
+            "5. Simulation Notice",
             defense_result.get("summary", "此判定僅為模擬，不會執行實際系統操作。"),
         ]
 
@@ -124,19 +126,20 @@ class Responder:
         attack_type_text = ", ".join(attack_types) if attack_types else "None"
 
         lines = [
-            "[Security Triage Result]",
+            "[Security Triage Report]",
             "",
+            "1. Summary",
             f"Status: {detector_result.get('status', 'UNKNOWN')}",
             f"Attack Type: {attack_type_text}",
-            f"Final Risk: {risk_result.get('risk_level', 'LOW')}",
-            f"Final Decision: {decision_result.get('decision', 'ALLOW')}",
+            f"Risk Level: {risk_result.get('risk_level', 'LOW')}",
+            f"Decision: {decision_result.get('decision', 'ALLOW')}",
             f"Detection Source: {self._format_detection_source(detector_result)}",
             "",
         ]
         lines.extend(self._format_evidence(detector_result))
-        lines.extend(["", "Why It Matters:"])
+        lines.extend(["", "3. Why It Matters"])
         lines.extend(self._format_why_it_matters(attack_types))
-        lines.extend(["", "Recommended Next Steps:"])
+        lines.extend(["", "4. Recommended Response"])
         lines.extend(self._format_next_steps(attack_types))
         lines.extend(self._format_simulation_note(defense_result))
         lines.extend(self._format_ai_assist_note(llm_result))
