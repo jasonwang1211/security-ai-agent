@@ -33,6 +33,94 @@ class Responder:
         "依偵測結果檢查對應防護與監控是否生效。",
     ]
 
+    RESPONSE_PLAYBOOKS = {
+        "XSS": {
+            "Immediate Actions": [
+                "保留原始請求、時間、來源 IP、受影響 endpoint。",
+                "檢查 payload 是否被反射到 response body、HTML template 或前端渲染點。",
+                "暫時提高相關 endpoint 的監控等級。",
+            ],
+            "Mitigation": [
+                "依 HTML、JavaScript、URL、attribute context 套用正確輸出 encoding。",
+                "啟用或收緊 Content Security Policy (CSP)。",
+                "避免將使用者輸入直接寫入 DOM 或 template。",
+            ],
+            "Follow-up": [
+                "查詢同來源 IP 或同 endpoint 是否有其他 XSS payload。",
+                "加入 XSS regression test cases。",
+                "補上 WAF / IDS 偵測規則與告警。",
+            ],
+        },
+        "SQL Injection": {
+            "Immediate Actions": [
+                "保留原始請求、參數、來源 IP、時間與受影響 endpoint。",
+                "檢查 SQL error、登入繞過、異常查詢結果或資料外洩跡象。",
+                "暫時提高受影響 endpoint 的監控等級。",
+            ],
+            "Mitigation": [
+                "使用 parameterized queries 或 prepared statements。",
+                "移除字串拼接 SQL。",
+                "驗證輸入格式並限制不必要的特殊字元。",
+            ],
+            "Follow-up": [
+                "查詢同來源 IP 是否有多次注入嘗試。",
+                "檢查資料庫 audit log。",
+                "加入 SQL injection regression test cases。",
+            ],
+        },
+        "Path Traversal": {
+            "Immediate Actions": [
+                "保留原始請求、路徑參數、來源 IP、時間與 endpoint。",
+                "檢查是否有敏感檔案讀取跡象。",
+                "檢視相關檔案存取日誌。",
+            ],
+            "Mitigation": [
+                "對路徑做 normalization。",
+                "使用 allowlist 限制可存取檔案與目錄。",
+                "阻擋 ../、..\\、絕對路徑與敏感系統檔案路徑。",
+            ],
+            "Follow-up": [
+                "查詢同來源 IP 是否有其他 traversal 嘗試。",
+                "檢查是否有 /etc/passwd、config、secret、.env 等目標。",
+                "加入 path traversal regression test cases。",
+            ],
+        },
+        "Command Injection": {
+            "Immediate Actions": [
+                "保留原始請求、參數、來源 IP、時間與 endpoint。",
+                "檢查是否有非預期 process 被啟動。",
+                "檢查 shell metacharacters、pipe、command chaining patterns。",
+            ],
+            "Mitigation": [
+                "避免將使用者輸入直接傳入 shell command。",
+                "使用安全 API 取代 shell execution。",
+                "對命令參數使用 allowlist。",
+            ],
+            "Follow-up": [
+                "查詢 process logs 與系統 audit logs。",
+                "檢查是否有 lateral movement 或 privilege escalation 跡象。",
+                "加入 command injection regression test cases。",
+            ],
+        },
+    }
+    GENERIC_RESPONSE_PLAYBOOK = {
+        "Immediate Actions": [
+            "保留原始事件、時間、來源與相關日誌。",
+            "確認受影響 endpoint 或系統元件。",
+            "標記事件供後續人工複核。",
+        ],
+        "Mitigation": [
+            "檢查輸入驗證、輸出處理與存取控制。",
+            "確認監控與告警規則是否涵蓋此類事件。",
+            "降低不必要的攻擊面。",
+        ],
+        "Follow-up": [
+            "查詢同來源或相同 pattern 的其他事件。",
+            "將確認過的指標加入知識庫或偵測規則。",
+            "建立回歸測試案例。",
+        ],
+    }
+
     def __init__(self):
         pass
 
@@ -46,6 +134,34 @@ class Responder:
         if detector_type:
             return f"{name} ({detector_type})"
         return name
+
+    def _format_quick_reason(self, matched_signatures):
+        if not matched_signatures:
+            return "No matched signature evidence was available."
+
+        reasons = []
+        for attack_type, signatures in matched_signatures.items():
+            signatures = self._unique_items(signatures)
+            if signatures:
+                reasons.append(f"Matched {attack_type} indicators: {', '.join(signatures)}")
+
+        return "; ".join(reasons) if reasons else "No matched signature evidence was available."
+
+    def _format_quick_verdict(self, attack_types, detector_result, risk_result, decision_result):
+        attack_type_text = ", ".join(attack_types)
+        if attack_type_text:
+            verdict = f"This event is likely {attack_type_text}."
+        else:
+            verdict = "No known attack signature was confirmed."
+
+        return [
+            "0. Quick Verdict",
+            f"Verdict: {verdict}",
+            f"Risk Level: {risk_result.get('risk_level', 'LOW')}",
+            f"Decision: {decision_result.get('decision', 'ALLOW')}",
+            f"Reason: {self._format_quick_reason(detector_result.get('matched_signatures'))}",
+            "",
+        ]
 
     def _format_matched_signatures(self, matched_signatures):
         if not matched_signatures:
@@ -78,13 +194,43 @@ class Responder:
             return descriptions
         return ["- 此輸入命中可疑模式，建議保留證據並進一步確認是否影響實際服務。"]
 
-    def _format_next_steps(self, attack_types):
-        steps = []
-        for attack_type in attack_types:
-            steps.extend(self.TRIAGE_NEXT_STEPS.get(attack_type, []))
+    def _build_response_playbook(self, attack_types):
+        sections = {
+            "Immediate Actions": [],
+            "Mitigation": [],
+            "Follow-up": [],
+        }
 
-        steps = self._unique_items(steps) or self.GENERIC_NEXT_STEPS
-        return [f"{index}. {step}" for index, step in enumerate(steps, start=1)]
+        selected_playbooks = [
+            self.RESPONSE_PLAYBOOKS[attack_type]
+            for attack_type in attack_types
+            if attack_type in self.RESPONSE_PLAYBOOKS
+        ]
+        if not selected_playbooks:
+            selected_playbooks = [self.GENERIC_RESPONSE_PLAYBOOK]
+
+        for playbook in selected_playbooks:
+            for section_title in sections:
+                sections[section_title].extend(playbook.get(section_title, []))
+
+        return {
+            section_title: self._unique_items(items)
+            for section_title, items in sections.items()
+        }
+
+    def _format_response_section(self, section_title, items):
+        lines = [f"{section_title}:"]
+        lines.extend(f"{index}. {item}" for index, item in enumerate(items, start=1))
+        return lines
+
+    def _format_recommended_response(self, attack_types):
+        playbook = self._build_response_playbook(attack_types)
+        lines = []
+        for section_title in ("Immediate Actions", "Mitigation", "Follow-up"):
+            if lines:
+                lines.append("")
+            lines.extend(self._format_response_section(section_title, playbook[section_title]))
+        return lines
 
     def _format_confidence(self, llm_result):
         try:
@@ -104,7 +250,7 @@ class Responder:
             f"LLM Suggested Attack Type: {suggested_attack_type}",
             f"LLM Suggested Decision: {llm_result.get('recommended_decision', 'N/A')}",
             f"Confidence: {self._format_confidence(llm_result)}",
-            "Note: Final Decision is determined by the system decision flow.",
+            "Note: Decision above is the final system decision; LLM Suggested Decision is AI assist only.",
         ]
 
     def _format_simulation_note(self, defense_result):
@@ -128,19 +274,24 @@ class Responder:
         lines = [
             "[Security Triage Report]",
             "",
-            "1. Summary",
-            f"Status: {detector_result.get('status', 'UNKNOWN')}",
-            f"Attack Type: {attack_type_text}",
-            f"Risk Level: {risk_result.get('risk_level', 'LOW')}",
-            f"Decision: {decision_result.get('decision', 'ALLOW')}",
-            f"Detection Source: {self._format_detection_source(detector_result)}",
-            "",
         ]
+        lines.extend(self._format_quick_verdict(attack_types, detector_result, risk_result, decision_result))
+        lines.extend(
+            [
+                "1. Summary",
+                f"Status: {detector_result.get('status', 'UNKNOWN')}",
+                f"Attack Type: {attack_type_text}",
+                f"Risk Level: {risk_result.get('risk_level', 'LOW')}",
+                f"Decision: {decision_result.get('decision', 'ALLOW')}",
+                f"Detection Source: {self._format_detection_source(detector_result)}",
+                "",
+            ]
+        )
         lines.extend(self._format_evidence(detector_result))
         lines.extend(["", "3. Why It Matters"])
         lines.extend(self._format_why_it_matters(attack_types))
         lines.extend(["", "4. Recommended Response"])
-        lines.extend(self._format_next_steps(attack_types))
+        lines.extend(self._format_recommended_response(attack_types))
         lines.extend(self._format_simulation_note(defense_result))
         lines.extend(self._format_ai_assist_note(llm_result))
         return "\n".join(lines).strip()
