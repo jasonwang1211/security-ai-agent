@@ -402,6 +402,15 @@ class SecurityAgent:
         self._update_state(state, query, answer, keep_focus=False)
         return answer
 
+    def handle_knowledge_query(self, query, state):
+        query = self.preprocess_query(query)
+        if not query:
+            return "請先輸入問題。"
+
+        answer = self.build_rag_answer(query)
+        self._update_state(state, query, answer, keep_focus=True)
+        return answer
+
     def handle_query(self, query, state):
         query = self.preprocess_query(query)
 

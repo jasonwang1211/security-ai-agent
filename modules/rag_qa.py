@@ -12,12 +12,34 @@ except Exception:
     OpenCC = None
 
 from config import CHROMA_PATH, EMBED_MODEL, MODEL_NAME, TOP_K
+from modules.rag_query_planner import KNOWLEDGE_ROOT, RAGQueryPlanner
 
 
 class RAGQA:
+    PROJECT_ANSWER_RULES = """
+專案知識回答規則：
+1. 請使用提供的本專案 blue-team knowledge 內容回答，不要改用通用資安報告格式。
+2. 請使用繁體中文回答；Security Triage Report、Risk Level、Decision、AI Assist 等專有欄位可保留英文。
+3. 如果問題詢問 Security Triage Report、triage report、report、分流報告、應變報告或「怎麼看」，必須說明本專案實際報告區塊：
+   0. Quick Verdict
+   1. Summary
+   2. Evidence
+   3. Why It Matters
+   4. Recommended Response
+   5. Simulation Notice
+   6. AI Assist
+4. 說明 Risk Level 與 Decision 是最終系統欄位。
+5. 說明 BLOCK / MONITOR / ALLOW 是模擬決策，不是真的控制防火牆、WAF、EDR 或身份平台。
+6. 說明 LLM Suggested Decision 只是 AI assist，不是 final decision。
+7. 如果問題詢問 login failure、登入失敗、多次登入失敗、brute force 或暴力破解分析，且 context 中有相關內容，必須涵蓋 source_ip、target/endpoint、user、failed_count、HTTP 401/403、time window、false positive considerations。
+8. 不要主要根據 Structured Signals 回答；Structured Signals 只能當作 metadata hints。
+""".strip()
+
     def __init__(self):
         self.embeddings = None
         self.llm = None
+        self.query_planner = None
+        self._query_plan_cache = {}
         self.vectorstore = None
         self.init_error = None
 
@@ -137,9 +159,11 @@ class RAGQA:
 
         try:
             self.llm = ChatOllama(model=MODEL_NAME, temperature=0)
+            self.query_planner = RAGQueryPlanner(llm=self.llm)
         except Exception as exc:
             self.init_error = exc
             self.llm = None
+            self.query_planner = None
 
         if not os.path.exists(CHROMA_PATH):
             if self.init_error is None:
@@ -158,7 +182,17 @@ class RAGQA:
     def is_ready(self) -> bool:
         return self.vectorstore is not None and self.llm is not None
 
-    def is_security(self, query: str) -> bool:
+    def _get_query_plan(self, query: str):
+        cache_key = query or ""
+        if cache_key not in self._query_plan_cache:
+            if self.query_planner is None:
+                self._query_plan_cache[cache_key] = None
+            else:
+                self._query_plan_cache[cache_key] = self.query_planner.plan(query)
+
+        return self._query_plan_cache[cache_key]
+
+    def _keyword_is_security(self, query: str) -> bool:
         security_topics = [
             "sql",
             "sql injection",
@@ -194,7 +228,16 @@ class RAGQA:
         normalized = (query or "").lower()
         return any(keyword in normalized for keyword in security_topics)
 
-    def expand_query(self, query: str) -> str:
+    def is_security(self, query: str) -> bool:
+        plan = self._get_query_plan(query)
+        keyword_result = self._keyword_is_security(query)
+
+        if plan is None:
+            return keyword_result
+
+        return plan.is_security_question or keyword_result
+
+    def _keyword_expand_query(self, query: str) -> str:
         expanded = query or ""
         lowered = expanded.lower()
 
@@ -218,6 +261,13 @@ class RAGQA:
 
         return expanded
 
+    def expand_query(self, query: str) -> str:
+        plan = self._get_query_plan(query)
+        if plan is not None and plan.is_security_question:
+            return plan.rewritten_query
+
+        return self._keyword_expand_query(query)
+
     def load_full_source_text(self, source_path: str) -> str:
         if not source_path:
             return ""
@@ -238,8 +288,49 @@ class RAGQA:
         except Exception:
             return ""
 
+    def _resolve_knowledge_source(self, source_path: str):
+        try:
+            normalized = str(source_path or "").strip().replace("\\", "/")
+            if not normalized:
+                return None
+
+            root = KNOWLEDGE_ROOT.resolve()
+            candidate = (root / normalized).resolve()
+            if root not in candidate.parents:
+                return None
+            if not candidate.is_file() or candidate.suffix.lower() != ".md":
+                return None
+            return candidate
+        except Exception:
+            return None
+
+    def _load_preferred_sources_context(self, preferred_sources):
+        if not preferred_sources:
+            return ""
+
+        sections = []
+        for source in preferred_sources:
+            source_path = self._resolve_knowledge_source(source)
+            if source_path is None:
+                continue
+
+            source_text = self.load_full_source_text(str(source_path))
+            if source_text.strip():
+                sections.append(f"[Source: {source}]\n{source_text.strip()}")
+
+        return "\n\n".join(sections).strip()
+
     def retrieve_context(self, query: str):
-        if not query or self.vectorstore is None:
+        if not query:
+            return "", False
+
+        plan = self._get_query_plan(query)
+        if plan is not None and plan.is_security_question and plan.preferred_sources:
+            direct_context = self._load_preferred_sources_context(plan.preferred_sources)
+            if direct_context:
+                return direct_context, True
+
+        if self.vectorstore is None:
             return "", False
 
         try:
@@ -274,7 +365,10 @@ class RAGQA:
 
         normalized_query = (query or "").lower()
         section_keywords = []
-        if (
+        plan = self._get_query_plan(query)
+        if plan is not None and plan.is_security_question and plan.preferred_sections:
+            section_keywords = plan.preferred_sections
+        elif (
             "偵測" in query
             or "偵測邏輯" in query
             or "detection" in normalized_query
@@ -365,11 +459,12 @@ class RAGQA:
             return "目前找不到足夠的知識內容來回答這個問題。"
 
         focused_context = self.extract_relevant_section(context, query)
+        prompt_context = f"{self.PROJECT_ANSWER_RULES}\n\n{focused_context}"
         chain = self.main_prompt | self.llm
         return self._to_traditional(
             self._safe_invoke(
                 chain,
-                {"context": focused_context, "question": query},
+                {"context": prompt_context, "question": query},
                 "回答生成失敗，請稍後再試。",
             )
         )
