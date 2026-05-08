@@ -34,6 +34,31 @@ class RAGQA:
 7. 如果問題詢問 login failure、登入失敗、多次登入失敗、brute force 或暴力破解分析，且 context 中有相關內容，必須涵蓋 source_ip、target/endpoint、user、failed_count、HTTP 401/403、time window、false positive considerations。
 8. 不要主要根據 Structured Signals 回答；Structured Signals 只能當作 metadata hints。
 """.strip()
+    REPORT_GUIDE_ANSWER_RULES = """
+Security Triage Report 回答要求：
+1. 這題是在問本專案的 Security Triage Report 格式，請完整說明下列所有區塊，不可只說前三項：
+   - 0. Quick Verdict
+   - 1. Summary
+   - 2. Evidence
+   - 3. Why It Matters
+   - 4. Recommended Response
+   - 5. Simulation Notice
+   - 6. AI Assist
+2. 必須說明 Risk Level 代表系統的風險評估。
+3. 必須說明 Decision 代表最終系統決策。
+4. 必須說明 BLOCK / MONITOR / ALLOW 只是模擬決策，不是真的控制防火牆、WAF、EDR 或身份平台。
+5. 必須說明 LLM Suggested Decision 只是 AI assist，不會覆蓋 final Decision。
+6. RAG 只能解釋知識與報告欄位，不要判斷事件是否為攻擊，也不要替事件決定 BLOCK / MONITOR / ALLOW。
+7. 不要把 Structured Signals 當主要內容；它只能作為 metadata hints。
+""".strip()
+
+    METADATA_SUPPRESSION_RULES = """
+Metadata suppression rules:
+1. Do not output the "Structured Signals" section.
+2. Do not include YAML metadata from the knowledge file in the final answer.
+3. Use Structured Signals only as internal metadata hints.
+4. If the retrieved context contains Structured Signals, summarize the human-readable knowledge sections instead.
+""".strip()
 
     def __init__(self):
         self.embeddings = None
@@ -42,57 +67,6 @@ class RAGQA:
         self._query_plan_cache = {}
         self.vectorstore = None
         self.init_error = None
-
-        self.main_prompt = ChatPromptTemplate.from_template(
-            """
-你是一個資安助理。請只根據提供的內容回答問題。
-
-回答要求：
-1. 先直接回答問題。
-2. 使用清楚、簡潔的繁體中文。
-3. 如果內容不足，明確說明資料不足。
-4. 若問題涉及攻擊手法，可補充風險與防禦重點。
-
-參考內容：
-{context}
-
-問題：
-{question}
-"""
-        )
-
-        self.point_follow_prompt = ChatPromptTemplate.from_template(
-            """
-你是一個資安助理。請只解釋下面這一個重點，不要延伸到其他主題。
-
-重點：
-{target}
-
-回答要求：
-1. 使用繁體中文。
-2. 先用一句短結論直接說明它的意思。
-3. 最多補充 2 個簡短重點。
-4. 不要提供程式碼範例。
-5. 不要延伸到無關的攻擊手法、背景或額外主題。
-"""
-        )
-
-        self.natural_follow_prompt = ChatPromptTemplate.from_template(
-            """
-你是一個資安助理。請延續前一個主題回答追問。
-
-前一個焦點：
-{focus}
-
-追問：
-{question}
-
-回答要求：
-1. 承接前面的焦點作答。
-2. 用簡潔繁體中文回答。
-3. 若資訊不足，明確說明。
-"""
-        )
 
         self.main_prompt = ChatPromptTemplate.from_template(
             """
@@ -192,81 +166,22 @@ class RAGQA:
 
         return self._query_plan_cache[cache_key]
 
-    def _keyword_is_security(self, query: str) -> bool:
-        security_topics = [
-            "sql",
-            "sql injection",
-            "xss",
-            "csrf",
-            "anomaly",
-            "anomaly detection",
-            "unknown attack",
-            "unknown threat",
-            "zero-day",
-            "zero day",
-            "command injection",
-            "path traversal",
-            "log analysis",
-            "risk scoring",
-            "session",
-            "cookie",
-            "異常",
-            "異常偵測",
-            "未知攻擊",
-            "未知威脅",
-            "日誌",
-            "風險評分",
-            "漏洞",
-            "攻擊",
-            "防禦",
-            "風險",
-            "資安",
-            "注入",
-            "跨站",
-            "弱點",
-        ]
-        normalized = (query or "").lower()
-        return any(keyword in normalized for keyword in security_topics)
-
     def is_security(self, query: str) -> bool:
+        if not query:
+            return False
+
         plan = self._get_query_plan(query)
-        keyword_result = self._keyword_is_security(query)
-
         if plan is None:
-            return keyword_result
+            return False
 
-        return plan.is_security_question or keyword_result
-
-    def _keyword_expand_query(self, query: str) -> str:
-        expanded = query or ""
-        lowered = expanded.lower()
-
-        if "command injection" in lowered or "指令注入" in expanded:
-            expanded += " Command Injection OS Command Injection Shell Injection"
-
-        if "sql" in lowered or "sql injection" in lowered or "注入" in expanded:
-            expanded += " SQL Injection database query payload"
-
-        if "xss" in lowered or "跨站" in expanded:
-            expanded += " XSS script javascript browser payload"
-
-        if "csrf" in lowered:
-            expanded += " CSRF token SameSite Referer Origin"
-
-        if "zero-day" in lowered or "zero day" in lowered or "零日" in expanded:
-            expanded += " Zero-Day exploit vulnerability patch"
-
-        if "path traversal" in lowered or "路徑穿越" in expanded:
-            expanded += " path traversal file read ../"
-
-        return expanded
+        return plan.is_security_question
 
     def expand_query(self, query: str) -> str:
         plan = self._get_query_plan(query)
-        if plan is not None and plan.is_security_question:
+        if plan is not None and plan.is_security_question and plan.rewritten_query:
             return plan.rewritten_query
 
-        return self._keyword_expand_query(query)
+        return query or ""
 
     def load_full_source_text(self, source_path: str) -> str:
         if not source_path:
@@ -325,7 +240,10 @@ class RAGQA:
             return "", False
 
         plan = self._get_query_plan(query)
-        if plan is not None and plan.is_security_question and plan.preferred_sources:
+        if plan is None or not plan.is_security_question:
+            return "", False
+
+        if plan.preferred_sources:
             direct_context = self._load_preferred_sources_context(plan.preferred_sources)
             if direct_context:
                 return direct_context, True
@@ -334,7 +252,7 @@ class RAGQA:
             return "", False
 
         try:
-            expanded = self.expand_query(query)
+            expanded = plan.rewritten_query or query
             results = self.vectorstore.similarity_search_with_score(expanded, k=TOP_K)
         except Exception:
             return "", False
@@ -452,22 +370,56 @@ class RAGQA:
 
         return re.sub(r"\n{3,}", "\n\n", result)
 
+    def _is_report_guide_question(self, query: str) -> bool:
+        normalized = (query or "").lower()
+        report_terms = (
+            "security triage report",
+            "triage report",
+            "report",
+            "分流報告",
+            "應變報告",
+            "怎麼看",
+        )
+        return any(term in normalized for term in report_terms)
+
+    def _build_answer_context(self, query: str, context: str) -> str:
+        if self._is_report_guide_question(query):
+            return f"{self.PROJECT_ANSWER_RULES}\n\n{self.REPORT_GUIDE_ANSWER_RULES}\n\n{self.METADATA_SUPPRESSION_RULES}\n\n{context}"
+
+        focused_context = self.extract_relevant_section(context, query)
+        return f"{self.PROJECT_ANSWER_RULES}\n\n{self.METADATA_SUPPRESSION_RULES}\n\n{focused_context}"
+
+    def _strip_structured_signals(self, text: str) -> str:
+        if not text:
+            return text
+
+        patterns = (
+            r"(?ims)^\s*#{2,3}\s*Structured Signals\b.*\Z",
+            r"(?ims)^\s*Structured Signals\s*:?\s*```(?:yaml|yml)?\s*.*?```\s*\Z",
+            r"(?ims)^\s*Structured Signals\b.*\Z",
+        )
+        result = text
+        for pattern in patterns:
+            result = re.sub(pattern, "", result).rstrip()
+
+        return result if result else text
+
     def generate_answer(self, query: str, context: str):
         if not query:
             return "請先輸入問題。"
         if not context:
             return "目前找不到足夠的知識內容來回答這個問題。"
 
-        focused_context = self.extract_relevant_section(context, query)
-        prompt_context = f"{self.PROJECT_ANSWER_RULES}\n\n{focused_context}"
+        prompt_context = self._build_answer_context(query, context)
         chain = self.main_prompt | self.llm
-        return self._to_traditional(
+        answer = self._to_traditional(
             self._safe_invoke(
                 chain,
                 {"context": prompt_context, "question": query},
                 "回答生成失敗，請稍後再試。",
             )
         )
+        return self._strip_structured_signals(answer)
 
     def explain_point(self, target: str):
         if not target:
