@@ -195,75 +195,12 @@ class SecurityAgent:
         # for classifying a clean current input as suspicious.
         return has_payload_signal or self._is_log_like_security(query) or has_anomaly_indicator
 
-    def _build_llm_suspicious_report(self, llm_judgment, signals=None):
-        attack_types = [
-            str(item).strip()
-            for item in (llm_judgment.get("suggested_attack_types") or [])
-            if str(item).strip()
-        ]
-
-        try:
-            confidence_text = f"{float(llm_judgment.get('confidence')):.2f}"
-        except (TypeError, ValueError):
-            confidence_text = "N/A"
-
-        lines = [
-            "LLM-assisted suspicious finding",
-            f"Suggested Attack Types: {', '.join(attack_types) if attack_types else 'None'}",
-            f"Recommended Risk: {llm_judgment.get('recommended_risk', 'N/A')}",
-            f"Recommended Action: {llm_judgment.get('recommended_action', 'N/A')}",
-            f"Confidence: {confidence_text}",
-            f"Reasoning: {llm_judgment.get('reasoning', 'No reasoning provided.')}",
-            f"LLM Status: {llm_judgment.get('llm_status', 'FALLBACK')}",
-        ]
-
-        try:
-            confidence = float(llm_judgment.get("confidence"))
-        except (TypeError, ValueError):
-            confidence = 0.0
-
-        try:
-            anomaly_score = float(llm_judgment.get("anomaly_score"))
-        except (TypeError, ValueError):
-            anomaly_score = 0.0
-
-        llm_status = str(llm_judgment.get("llm_status") or "FALLBACK").upper()
-        llm_influenced_decision = llm_status != "FALLBACK" and confidence >= 0.85
-        anomaly_triggered = anomaly_score >= 0.8
-        final_risk = llm_judgment.get("recommended_risk", "MEDIUM") if llm_influenced_decision else "MEDIUM"
-        final_decision = llm_judgment.get("recommended_action", "MONITOR") if llm_influenced_decision else "MONITOR"
-
-        if anomaly_triggered:
-            final_risk = "HIGH"
-            if final_decision == "ALLOW":
-                final_decision = "MONITOR"
-
-        lines.append(f"Final Risk: {final_risk}")
-        lines.append(f"Final Decision: {final_decision}")
-
-        if llm_influenced_decision:
-            lines.append("Decision influenced by AI analysis")
-
-        if anomaly_triggered:
-            lines.append("Anomaly-based detection triggered (possible zero-day)")
-
-        signals = signals or {}
-        detected_signals = []
-        for key in ("keywords", "patterns", "anomaly_signals"):
-            detected_signals.extend(signals.get(key) or [])
-
-        lines.extend(
-            [
-                "",
-                "Threat Intelligence Analysis",
-                f"Why Suspicious: {llm_judgment.get('reasoning', 'The input contains signals associated with suspicious activity.')}",
-                f"Detected Signals: {', '.join(detected_signals) if detected_signals else 'None'}",
-                f"Attack Pattern Explanation: {', '.join(attack_types) if attack_types else 'No specific attack pattern identified; behavior is anomalous.'}",
-                f"Risk Reasoning: Recommended risk is {llm_judgment.get('recommended_risk', 'N/A')} based on confidence {confidence_text} and observed signals.",
-            ]
+    def _build_llm_suspicious_report(self, query, llm_judgment, signals=None):
+        return self.responder.build_llm_suspicious_triage_report(
+            query,
+            llm_judgment,
+            signals,
         )
-
-        return "\n".join(lines)
 
     def _is_log_like_security(self, query):
         normalized = (query or "").lower()
@@ -304,11 +241,12 @@ class SecurityAgent:
 
         return has_suspicious_phrase and (has_log_terms or has_count)
 
-    def _build_fallback_suspicious_report(self, query):
+    def _build_fallback_suspicious_report(self, query, signals=None):
         normalized = (query or "").lower()
         risk = "MEDIUM"
         action = "MONITOR"
         reasoning = "Log-like input contains suspicious authentication activity."
+        attack_types = ["Suspicious Authentication Activity"]
 
         if (
             ("login failed" in normalized or "failed login" in normalized or "failed logins" in normalized)
@@ -317,16 +255,19 @@ class SecurityAgent:
             reasoning = "High-frequency failed logins from the same IP may indicate brute-force activity."
             risk = "HIGH"
             action = "BLOCK"
+            attack_types = ["Brute Force"]
 
-        return "\n".join(
-            [
-                "Fallback Suspicious Finding (LLM unavailable)",
-                f"Reasoning: {reasoning}",
-                f"Recommended Action: {action}",
-                f"Risk: {risk}",
-                "Note: LLM unavailable, heuristic fallback used",
-                "LLM Status: FALLBACK",
-            ]
+        return self.responder.build_llm_suspicious_triage_report(
+            query,
+            {
+                "suggested_attack_types": attack_types,
+                "recommended_risk": risk,
+                "recommended_action": action,
+                "confidence": None,
+                "reasoning": reasoning,
+                "llm_status": "FALLBACK",
+            },
+            signals,
         )
 
     def _handle_followup(self, query, state):
@@ -443,12 +384,12 @@ class SecurityAgent:
                 llm_judgment = None
 
         if self._should_use_llm_suspicious_finding(llm_judgment):
-            answer = self._build_llm_suspicious_report(llm_judgment, signals)
+            answer = self._build_llm_suspicious_report(query, llm_judgment, signals)
             self._update_state(state, query, answer, keep_focus=False)
             return answer
 
         if llm_judgment and llm_judgment.get("llm_status") == "FALLBACK" and self._is_log_like_security(query):
-            answer = self._build_fallback_suspicious_report(query)
+            answer = self._build_fallback_suspicious_report(query, signals)
             self._update_state(state, query, answer, keep_focus=False)
             return answer
 

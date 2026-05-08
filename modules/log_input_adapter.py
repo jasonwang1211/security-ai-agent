@@ -11,6 +11,7 @@ class LogInputTranslation:
     detected_input_type: str
     normalized_event_type: str
     agent_input: str
+    normalized_event: dict
 
 
 def _is_single_line(value: str) -> bool:
@@ -52,6 +53,7 @@ def try_translate_raw_log_input(user_input: str) -> Optional[LogInputTranslation
         detected_input_type="raw_log",
         normalized_event_type=normalized_event.get("event_type") or "unknown",
         agent_input=agent_input,
+        normalized_event=normalized_event,
     )
 
 
