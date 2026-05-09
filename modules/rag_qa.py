@@ -1,18 +1,21 @@
+import importlib
 import os
 import re
+from typing import Any
 
 from langchain_community.chat_models import ChatOllama
 from langchain_community.embeddings import HuggingFaceEmbeddings
 from langchain_community.vectorstores import Chroma
 from langchain_core.prompts import ChatPromptTemplate
 
-try:
-    from opencc import OpenCC as OpenCCClass
-except Exception:
-    OpenCCClass = None
-
 from config import CHROMA_PATH, EMBED_MODEL, MODEL_NAME, TOP_K
 from modules.rag_query_planner import KNOWLEDGE_ROOT, RAGQueryPlanner
+
+OpenCCClass: Any = None
+try:
+    OpenCCClass = getattr(importlib.import_module("opencc"), "OpenCC")  # noqa: B009
+except Exception:
+    pass
 
 
 class RAGQA:
@@ -281,30 +284,8 @@ Metadata suppression rules:
         if not context or not query:
             return context
 
-        normalized_query = (query or "").lower()
-        section_keywords = []
         plan = self._get_query_plan(query)
-        if plan is not None and plan.is_security_question and plan.preferred_sections:
-            section_keywords = plan.preferred_sections
-        elif (
-            "偵測" in query
-            or "偵測邏輯" in query
-            or "detection" in normalized_query
-            or "detection logic" in normalized_query
-        ):
-            section_keywords = ["偵測邏輯", "Detection Logic"]
-        elif "特徵" in query or "跡象" in query:
-            section_keywords = ["特徵", "跡象"]
-        elif "防禦" in query or "怎麼防" in query or "如何防" in query:
-            section_keywords = ["防禦", "預防", "緩解"]
-        elif "危害" in query or "影響" in query or "風險" in query:
-            section_keywords = ["危害", "影響", "風險"]
-        elif "處理" in query or "怎麼辦" in query:
-            section_keywords = ["處理", "修補", "應對"]
-        elif "定義" in query or "是什麼" in query:
-            section_keywords = ["定義", "說明"]
-
-        if not section_keywords:
+        if plan is None or not plan.is_security_question or not plan.preferred_sections:
             return context
 
         lines = context.splitlines()
@@ -313,7 +294,9 @@ Metadata suppression rules:
 
         for raw_line in lines:
             line = raw_line.strip()
-            if line.startswith("#") and any(keyword in line for keyword in section_keywords):
+            if line.startswith("#") and any(
+                keyword in line for keyword in plan.preferred_sections
+            ):
                 capture = True
                 extracted.append(line)
                 continue
@@ -371,16 +354,17 @@ Metadata suppression rules:
         return re.sub(r"\n{3,}", "\n\n", result)
 
     def _is_report_guide_question(self, query: str) -> bool:
-        normalized = (query or "").lower()
-        report_terms = (
-            "security triage report",
-            "triage report",
-            "report",
-            "分流報告",
-            "應變報告",
-            "怎麼看",
-        )
-        return any(term in normalized for term in report_terms)
+        plan = self._get_query_plan(query)
+        if plan is None or not plan.is_security_question:
+            return False
+
+        preferred_sources = getattr(plan, "preferred_sources", []) or []
+        if "report_guides/security_triage_report_guide.md" in preferred_sources:
+            return True
+
+        topic = str(getattr(plan, "topic", "") or "").lower()
+        intent = str(getattr(plan, "intent", "") or "").lower()
+        return "triage_report" in topic or intent == "report_guide"
 
     def _build_answer_context(self, query: str, context: str) -> str:
         if self._is_report_guide_question(query):
