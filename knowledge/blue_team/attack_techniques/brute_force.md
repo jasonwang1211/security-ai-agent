@@ -1,47 +1,69 @@
 # Brute Force
 
 ## 定義
-Brute Force 是指攻擊者透過大量重複嘗試帳號密碼、驗證碼或金鑰組合，企圖取得未授權存取權限。
+Brute force 是攻擊者以大量嘗試猜測帳號、密碼、一次性驗證碼或其他認證秘密的行為。對藍隊而言，重點不是描述如何執行攻擊，而是從身份、來源、端點與時間序列判斷是否存在異常登入壓力。
 
-## 常見攻擊特徵
-- 同一帳號或同一來源在短時間內出現大量失敗登入。
-- 嘗試多組帳號密碼組合，呈現橫向掃描或撞庫模式。
-- 驗證失敗與成功事件之間存在異常集中現象。
+## 常見攻擊行為
+- 同一來源 IP 對同一登入端點連續產生失敗登入。
+- 同一來源 IP 嘗試多個使用者帳號。
+- 同一帳號在短時間內出現大量失敗登入。
+- 多次失敗後突然成功登入，需要提高接管風險判讀。
+- 管理員帳號、VPN、SSO、雲端控制台或後台登入頁受到集中嘗試。
 
-## 可疑 Payload / Log 特徵
-- 高頻率 `/login`、`/auth`、`/signin` 請求。
-- 同 IP 對多個帳號進行快速嘗試。
-- 多個 IP 對同一帳號進行分散式嘗試。
-- 大量 401、403 或登入失敗事件。
+## 與 Credential Stuffing 的差異
+Brute force 通常偏向猜測密碼或驗證秘密，嘗試模式可能集中在少數帳號或單一來源。Credential stuffing 則通常使用外洩帳密組合嘗試登入，常見特徵是大量帳號、分散來源、低頻但廣泛的嘗試。兩者都可能造成帳號接管，但調查方向不同。
 
-## 偵測邏輯
-- 設定帳號與來源 IP 的失敗次數門檻。
-- 分析短時間內的登入頻率、帳號覆蓋率與成功率變化。
-- 關聯裝置指紋、地理位置與代理服務使用情況。
+## 常見 Log 特徵
+- `source_ip` 在短時間內對 `/login`、`/auth`、`/signin` 或身份服務產生多次失敗。
+- HTTP `status` 出現大量 `401` 或 `403`。
+- 同一 `user` 的失敗登入次數異常升高。
+- `endpoint` 集中在登入、重設密碼、MFA 或 token 相關路徑。
+- `failed_count` 超過環境基準或偵測門檻。
 
-## 風險評估
-- 可能造成帳號被接管、資源濫用與後續內網滲透。
-- 若缺乏 MFA 或鎖定機制，風險更高。
+## 欄位意義
+- `source_ip`: 來源位址，可用來判斷是否同一來源集中嘗試。
+- `user`: 被嘗試登入的帳號，可用來判斷是否特定帳號遭鎖定。
+- `endpoint`: 被攻擊或被濫用的登入相關服務。
+- `status`: 認證結果或 HTTP 狀態。登入情境中 `401` 通常代表未授權，`403` 通常代表被拒絕。
+- `failed_count`: 聚合後的失敗次數，用於衡量頻率與嚴重度。
+
+## 風險判讀
+風險會隨目標與上下文升高。若目標是特權帳號、失敗後有成功登入、來源分散且持續、或同時伴隨 MFA 挑戰失敗，應提高到 HIGH 並啟動事件應變。單一失敗登入通常不足以確認攻擊，需與基準、時間窗、端點與身份上下文交叉判讀。
 
 ## 防禦方式
-- 啟用登入速率限制、Captcha 與帳號暫時鎖定。
-- 導入 MFA 與異常登入驗證。
-- 監控撞庫特徵與來源信譽。
-- 對高風險帳號與管理介面採更嚴格存取控制。
+- 對登入端點啟用 rate limiting 與 progressive delay。
+- 對高風險登入啟用 MFA、風險式驗證與裝置信任檢查。
+- 對異常來源、ASN、地理位置或匿名代理提高監控。
+- 建立帳號鎖定與解鎖流程，避免造成使用者服務中斷。
+- 對特權帳號啟用更嚴格的告警與審計。
 
 ## 事件應變流程
-- 確認受攻擊帳號、來源 IP 與攻擊時間區間。
-- 封鎖或限制惡意來源，並提高受影響帳號保護等級。
-- 檢查是否已有登入成功事件與後續敏感操作。
-- 通知使用者重設密碼並啟用 MFA。
+1. 保留原始登入 log、時間窗、來源 IP、使用者與端點。
+2. 查詢同來源 IP 是否攻擊其他帳號或端點。
+3. 查詢同一使用者是否被多個來源嘗試。
+4. 檢查是否有失敗後成功登入或異常 session。
+5. 視風險暫時封鎖來源、要求密碼重設、撤銷 session 或強制 MFA。
+6. 將確認指標加入偵測規則與後續監控。
 
 ## 報告用摘要
-系統發現疑似 Brute Force 行為，短時間內出現異常密集的登入失敗或多帳號嘗試。此類活動可能導致帳號接管，建議立即檢查登入事件、啟用速率限制並強化多因素驗證。
+此事件顯示登入端點出現多次失敗認證，可能代表 brute force 行為。建議保留身份與來源證據、確認是否有成功登入或帳號接管跡象，並依風險採取監控、封鎖或帳號保護措施。
 
 ## Structured Signals
-- attack_type: Brute Force
-- severity: MEDIUM to HIGH
-- detection_keywords: repeated login failure, account guessing, credential stuffing, high request rate, distributed authentication attempts
-- log_indicators: repeated 401 or 403 responses, multiple login attempts from one IP, one account targeted by many IPs, abnormal success after many failures
-- risk_score_hint: Raise score when attacks target admin accounts, MFA is absent, or a successful login follows repeated failures.
-- recommended_action: Apply rate limiting, block abusive sources, enforce MFA, and review affected accounts for takeover activity.
+
+```yaml
+attack_type: brute_force
+severity: HIGH
+detection_keywords:
+  - brute force
+  - repeated login failure
+  - failed_count
+  - source_ip
+  - account lockout
+log_indicators:
+  - same source_ip with repeated 401 or 403 responses
+  - same target endpoint receiving many login failures
+  - same user with repeated failed authentication
+  - successful login after repeated failures
+risk_score_hint: HIGH
+recommended_action: BLOCK
+```
