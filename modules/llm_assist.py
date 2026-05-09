@@ -85,13 +85,13 @@ Inputs:
     def __init__(self):
         self.llm = None
         self.init_error = None
+        self._llm_initialized = False
         self.suspicious_behavior_prompt = ChatPromptTemplate.from_template(
             self.SUSPICIOUS_BEHAVIOR_PROMPT
         )
         self.alert_explanation_prompt = ChatPromptTemplate.from_template(
             self.ALERT_EXPLANATION_PROMPT
         )
-        self._initialize_llm()
 
     def _initialize_llm(self):
         try:
@@ -101,6 +101,13 @@ Inputs:
         except Exception as exc:
             self.init_error = exc
             self.llm = None
+
+    def _ensure_llm_initialized(self):
+        if self._llm_initialized:
+            return
+
+        self._initialize_llm()
+        self._llm_initialized = True
 
     def judge_suspicious_behavior(
         self,
@@ -112,6 +119,7 @@ Inputs:
     ):
         fallback = self._build_suspicious_fallback_result(query, detector_result)
 
+        self._ensure_llm_initialized()
         if self.llm is None:
             return fallback
 
@@ -152,6 +160,7 @@ Inputs:
             decision_result=decision_result,
         )
 
+        self._ensure_llm_initialized()
         if self.llm is None:
             return fallback
 
