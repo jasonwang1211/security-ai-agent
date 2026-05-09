@@ -1,7 +1,5 @@
 import re
 
-from modules.llm_analyzer import LLMSecurityAnalyzer
-
 
 def extract_signals(query):
     normalized = (query or "").lower()
@@ -110,16 +108,14 @@ class SecurityAgent:
         rag_qa,
         responder,
         triage_policy,
-        llm_analyzer=None,
-        llm_threat_judge=None,
+        llm_assist=None,
     ):
         self.followup_handler = followup_handler
         self.detector = detector
         self.rag_qa = rag_qa
         self.responder = responder
         self.triage_policy = triage_policy
-        self.llm_analyzer = llm_analyzer
-        self.llm_threat_judge = llm_threat_judge
+        self.llm_assist = llm_assist
 
     def preprocess_query(self, query):
         return " ".join(str(query or "").split())
@@ -310,9 +306,9 @@ class SecurityAgent:
                 context, ok = "", False
 
         llm_result = None
-        if self.llm_analyzer is not None:
+        if self.llm_assist is not None:
             try:
-                llm_result = self.llm_analyzer.analyze(
+                llm_result = self.llm_assist.explain_alert(
                     query,
                     detector_result,
                     context if ok else "",
@@ -367,9 +363,9 @@ class SecurityAgent:
         signals = extract_signals(query)
         llm_judgment = None
         should_use_llm_judge = self._should_send_clean_input_to_llm(query, signals)
-        if should_use_llm_judge and self.llm_threat_judge is not None:
+        if should_use_llm_judge and self.llm_assist is not None:
             try:
-                llm_judgment = self.llm_threat_judge.judge(
+                llm_judgment = self.llm_assist.judge_suspicious_behavior(
                     query,
                     detector_result,
                     rag_context="",

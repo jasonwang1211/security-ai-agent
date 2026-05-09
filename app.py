@@ -1,8 +1,7 @@
 from modules.agent import SecurityAgent
 from modules.detector import RuleBasedDetector
 from modules.followup_handler import FollowupHandler
-from modules.llm_analyzer import LLMSecurityAnalyzer
-from modules.llm_threat_judge import LLMThreatJudge
+from modules.llm_assist import LLMAssist
 from modules.rag_qa import RAGQA
 from modules.responder import Responder
 from modules.skills.followup_skill import run_followup
@@ -105,16 +104,14 @@ def main():
     detector = RuleBasedDetector()
     responder = Responder()
     triage_policy = TriagePolicy()
-    llm_analyzer = LLMSecurityAnalyzer()
-    llm_threat_judge = LLMThreatJudge()
+    llm_assist = LLMAssist()
     agent = SecurityAgent(
         followup_handler=followup_handler,
         detector=detector,
         rag_qa=rag_qa,
         responder=responder,
         triage_policy=triage_policy,
-        llm_analyzer=llm_analyzer,
-        llm_threat_judge=llm_threat_judge,
+        llm_assist=llm_assist,
     )
 
     if rag_qa.is_ready():
