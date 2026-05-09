@@ -1,5 +1,10 @@
 # Demo & Evaluation Report
 
+[English](#english) | [繁體中文](#繁體中文)
+
+<a id="english"></a>
+# English
+
 > Project: AI-assisted Security Threat Detection and Response System  
 > Branch: `v1.1.4-event-to-agent-adapter`  
 > Current milestone: `v1.1.5-unified-triage-rag-routing`  
@@ -94,9 +99,9 @@ Mode 3 RAG is used for knowledge explanation only. It does not decide attack typ
 | D02 | Mode 1 Single Raw Auth Log | `2026-05-01T10:00:00Z login_failed src_ip=10.0.0.5 user=admin endpoint=/login status=401` | Input Translation plus `REVIEW / Authentication Failure / LOW / MONITOR` | Passed |
 | D03 | Mode 2 `auth_bruteforce.log` Summary | `demo_logs\auth_bruteforce.log` | 10 `auth_failure` events aggregated into 1 `brute_force_candidate` | Passed |
 | D04 | Mode 2 `auth_bruteforce.log` SecurityAgent Analysis | `demo_logs\auth_bruteforce.log` | `SUSPICIOUS / Brute Force or Brute Force + Credential Stuffing / MONITOR` | Passed |
-| D05 | Mode 3 Brute Force Q&A | `什麼是 brute force？` | RAG answer about brute force and blue-team interpretation | Passed |
-| D06 | Mode 3 Login Failure Analysis Q&A | `如何判斷多次登入失敗是不是攻擊？` | Mentions `source_ip`, endpoint, user, time window, HTTP `401` / `403`, brute force / credential stuffing | Passed |
-| D07 | Mode 3 Security Triage Report Guide | `Security Triage Report 怎麼看？` | Explains Quick Verdict, Summary, Evidence, Why It Matters, Recommended Response, Simulation Notice, AI Assist, Risk Level, Decision, and simulated decisions | Passed |
+| D05 | Mode 3 Brute Force Q&A | Brute force question | RAG answer about brute force and blue-team interpretation | Passed |
+| D06 | Mode 3 Login Failure Analysis Q&A | Login failure analysis question | Mentions `source_ip`, endpoint, user, time window, HTTP `401` / `403`, brute force / credential stuffing | Passed |
+| D07 | Mode 3 Security Triage Report Guide | Security Triage Report guide question | Explains Quick Verdict, Summary, Evidence, Why It Matters, Recommended Response, Simulation Notice, AI Assist, Risk Level, Decision, and simulated decisions | Passed |
 | D08 | Mode 1 XSS Regression | `<script>alert(1)</script>` | Rule-based report still works | Passed |
 
 ---
@@ -231,7 +236,7 @@ Aggregated failures from the same source and target become suspicious brute-forc
 Question:
 
 ```text
-什麼是 brute force？
+What is brute force?
 ```
 
 Expected result:
@@ -247,7 +252,7 @@ Evaluation: Passed.
 Question:
 
 ```text
-如何判斷多次登入失敗是不是攻擊？
+How should repeated login failures be analyzed?
 ```
 
 Expected result:
@@ -263,7 +268,7 @@ Evaluation: Passed.
 Question:
 
 ```text
-Security Triage Report 怎麼看？
+How should I read a Security Triage Report?
 ```
 
 Expected result:
@@ -292,7 +297,21 @@ Evaluation: Passed.
 
 ---
 
-## 6. Overall Evaluation
+## 6. Quality Foundation
+
+The current branch also includes a small but important quality foundation:
+
+- Architecture consolidation around `SecurityAgent`, `TriagePolicy`, `LLMAssist`, `mode_handlers.py`, `log_pipeline.py`, and `RAGQueryPlanner`
+- Golden smoke tests for the main demo flows
+- Pydantic boundary model tests for `modules/types.py`
+- `pytest` for regression checks
+- `ruff` for linting and import hygiene
+- Lenient `mypy` as a gradual typing baseline
+- GitHub Actions CI for automated quality checks
+
+---
+
+## 7. Overall Evaluation
 
 | Capability | Result |
 |---|---|
@@ -304,6 +323,7 @@ Evaluation: Passed.
 | Mode 2 `brute_force_candidate` SecurityAgent analysis | Passed |
 | Mode 3 dedicated knowledge Q&A routing | Passed |
 | `RAGQueryPlanner` and preferred source selection | Passed |
+| Quality checks and CI foundation | Passed |
 
 Overall result:
 
@@ -313,18 +333,18 @@ Unified Security Triage Output and RAG QA Stabilization milestone is ready for d
 
 ---
 
-## 7. Key Findings
+## 8. Key Findings
 
 1. The system now separates a single `auth_failure` from an aggregated `brute_force_candidate`.
 2. A single authentication failure is triaged as `REVIEW / LOW / MONITOR`.
 3. Aggregated repeated failures can become suspicious Brute Force / Credential Stuffing evidence.
-4. Rule-based detections and LLM-assisted suspicious findings now both use the unified `[Security Triage Report]`.
+4. Rule-based detections and LLMAssist suggestions now both use the unified `[Security Triage Report]`.
 5. Mode 3 RAG QA is no longer driven by the old keyword fallback in the active routing path.
 6. RAG is used for security knowledge explanation, while detection, risk, and decision fields remain part of the triage pipeline.
 
 ---
 
-## 8. Limitations
+## 9. Limitations
 
 This demo remains a functional prototype with the following limitations:
 
@@ -340,7 +360,7 @@ This demo remains a functional prototype with the following limitations:
 
 ---
 
-## 9. Suggested Next Steps
+## 10. Suggested Next Steps
 
 Recommended next development tasks:
 
@@ -355,4 +375,207 @@ Recommended next development tasks:
 
 ---
 
-Full CLI excerpts are available in [demo_outputs.md](demo_outputs.md).
+<a id="繁體中文"></a>
+# 繁體中文
+
+> 專案：AI 輔助安全威脅偵測與回應系統  
+> 分支：`v1.1.4-event-to-agent-adapter`  
+> 目前里程碑：`v1.1.5-unified-triage-rag-routing`  
+> 里程碑名稱：統一 Security Triage Report 與 RAG QA 穩定化
+
+完整 CLI 範例可參考 [demo_outputs.md](demo_outputs.md)。
+
+---
+
+## 1. 報告概述
+
+目前系統是一個 AI-assisted blue-team security triage prototype，支援：
+
+- Suspicious payload / event analysis
+- Single raw log translation
+- Log file ingestion and aggregation
+- RAG-based security knowledge Q&A
+- Follow-up explanation
+- Unified Security Triage Report
+
+本里程碑的重點是穩定統一的 Security Triage Report 格式，讓規則式偵測、日誌轉譯、聚合事件分析，以及 LLMAssist 輔助建議都能以一致格式呈現。同時，Mode 3 已透過 `RAGQueryPlanner` 與 preferred source selection 改善知識問答路由。
+
+---
+
+## 2. 系統概覽
+
+| 能力 | 目前行為 |
+|---|---|
+| CLI 模式 | 選單可進入 payload / event analysis、log file ingestion、security knowledge Q&A、follow-up explanation 或離開。 |
+| 統一分流輸出 | 安全分析結果使用 `[Security Triage Report]`，包含 Quick Verdict、Summary、Evidence、Why It Matters、Recommended Response、Simulation Notice 與 AI Assist。 |
+| Payload / Event Analysis | 可疑 payload 由 CLI Mode Handler 送入 `SecurityAgent`，透過 Rule-Based Detector、`TriagePolicy` 與選用 `LLMAssist` 產生報告。 |
+| Single Raw Log Translation | 單筆原始 authentication log 由 Consolidated Log Pipeline 轉譯，並以 authentication failure 進行分流。 |
+| Log File Ingestion | `modules/log_pipeline.py` 負責解析、正規化、聚合與轉接日誌，再視情況送入 SecurityAgent。 |
+| Brute Force Candidate Analysis | 重複登入失敗可聚合為 `brute_force_candidate`，再交由 SecurityAgent 分析。 |
+| RAG Knowledge Q&A | Mode 3 使用 `RAGQueryPlanner`、preferred source selection 與 Chroma fallback 提供知識解釋。 |
+| Follow-up Explanation | Mode 4 可根據前文提供補充說明。 |
+
+---
+
+## 3. 架構
+
+目前架構使用下列核心元件：
+
+- CLI Mode Handler
+- SecurityAgent
+- Rule-Based Detector
+- TriagePolicy
+- LLMAssist
+- Consolidated Log Pipeline
+- RAGQueryPlanner
+- Unified Security Triage Report
+
+整體流程：
+
+```text
+使用者輸入
+-> CLI Mode Handler
+-> SecurityAgent
+-> Rule-Based Detector / Consolidated Log Pipeline / RAGQueryPlanner
+-> TriagePolicy
+-> LLMAssist
+-> Unified Security Triage Report
+```
+
+Payload flow:
+
+```text
+User Input
+-> CLI Mode Handler
+-> SecurityAgent
+-> Rule-Based Detector
+-> TriagePolicy
+-> LLMAssist
+-> Security Triage Report
+```
+
+Single raw log flow:
+
+```text
+Raw Log Line
+-> Consolidated Log Pipeline
+-> Raw Log Translation
+-> Authentication Failure Triage Report
+```
+
+Log file flow:
+
+```text
+Log File
+-> Consolidated Log Pipeline
+-> Aggregated Event
+-> SecurityAgent
+-> Security Triage Report
+```
+
+RAG QA flow:
+
+```text
+Security Question
+-> Dedicated Knowledge Q&A route
+-> RAGQueryPlanner
+-> Preferred source selection / Chroma fallback
+-> RAG Answer
+```
+
+Mode 3 RAG 只負責知識解釋，不決定 attack type、risk level 或模擬 action。
+
+---
+
+## 4. Demo 摘要
+
+| ID | 類別 | 輸入 | 預期行為 | 結果 |
+|---|---|---|---|---|
+| D01 | Mode 1 XSS payload | `<script>alert(1)</script>` | `ALERT / XSS / MEDIUM / MONITOR` | Passed |
+| D02 | Mode 1 single raw auth log | `login_failed src_ip=10.0.0.5 user=admin endpoint=/login status=401` | Input Translation 加上 `REVIEW / Authentication Failure / LOW / MONITOR` | Passed |
+| D03 | Mode 2 `auth_bruteforce.log` summary | `demo_logs\auth_bruteforce.log` | 10 筆 `auth_failure` 聚合成 1 筆 `brute_force_candidate` | Passed |
+| D04 | Mode 2 `auth_bruteforce.log` SecurityAgent analysis | `demo_logs\auth_bruteforce.log` | `SUSPICIOUS / Brute Force or Credential Stuffing / MONITOR` | Passed |
+| D05 | Mode 3 brute force Q&A | brute force 問題 | 以藍隊角度解釋重複 credential guessing | Passed |
+| D06 | Mode 3 login failure analysis Q&A | 登入失敗分析問題 | 提到 `source_ip`、endpoint、user、time window、HTTP `401` / `403`、brute force / credential stuffing | Passed |
+| D07 | Mode 3 Security Triage Report guide | Security Triage Report 閱讀問題 | 解釋 Quick Verdict、Summary、Evidence、Why It Matters、Recommended Response、Simulation Notice、AI Assist、Risk Level、Decision 與模擬決策 | Passed |
+| D08 | Mode 1 XSS regression | `<script>alert(1)</script>` | 規則式 XSS 報告維持穩定 | Passed |
+
+---
+
+## 5. 品質基礎
+
+此分支已完成下列品質基礎：
+
+- architecture consolidation
+- golden smoke tests
+- Pydantic boundary model tests
+- `pytest`
+- `ruff`
+- lenient `mypy`
+- GitHub Actions CI
+
+這些檢查讓目前的 demo flow、Pydantic boundary types 與 consolidated architecture 在後續導入 ControllerAgent / Tool Registry 前有更穩定的回歸基礎。
+
+---
+
+## 6. 整體評估
+
+| 能力 | 結果 |
+|---|---|
+| Unified Security Triage Report | Passed |
+| Mode 1 payload triage | Passed |
+| Mode 1 raw log translation | Passed |
+| Single `auth_failure` triage | Passed |
+| Mode 2 log ingestion and aggregation | Passed |
+| Mode 2 `brute_force_candidate` SecurityAgent analysis | Passed |
+| Mode 3 dedicated knowledge Q&A routing | Passed |
+| `RAGQueryPlanner` and preferred source selection | Passed |
+| pytest / ruff / mypy / GitHub Actions CI | Passed |
+
+整體結果：
+
+```text
+Unified Security Triage Output and RAG QA Stabilization milestone is ready for demo documentation.
+```
+
+---
+
+## 7. 主要觀察
+
+1. 系統已能區分單筆 `auth_failure` 與聚合後的 `brute_force_candidate`。
+2. 單筆登入失敗會被分流為 `REVIEW / LOW / MONITOR`。
+3. 多筆重複登入失敗可形成 Brute Force / Credential Stuffing 的可疑證據。
+4. 規則式偵測與 LLMAssist 建議都會透過統一 `[Security Triage Report]` 呈現。
+5. Mode 3 RAG QA 已走 dedicated knowledge route 與 `RAGQueryPlanner`。
+6. RAG 用於知識解釋；偵測、風險與決策仍由 triage pipeline 產生。
+
+---
+
+## 8. 限制
+
+- 尚未支援所有真實世界日誌格式。
+- 沒有真實 firewall、WAF、EDR 或 production SIEM action。
+- `BLOCK`、`MONITOR`、`ALLOW` 都是模擬決策。
+- LLMAssist 建議不覆蓋最終系統 `Decision`。
+- RAG 不作為主要偵測層。
+- 目前 CLI 仍是選單式，尚未成為完整 Main Controller Agent。
+- 啟動時仍可能初始化較重的 RAG、embedding 與 Chroma 元件。
+- Smart Input Router / Main Controller Agent 仍是未來工作。
+- `RAGQueryPlanner` 可改善檢索，但答案品質仍取決於知識檔與本地 LLM 輸出。
+
+---
+
+## 9. 後續建議
+
+1. 凍結並整理目前 demo 文件。
+2. 加入 Smart Input Router / Main Controller Agent。
+3. 對 RAG / embedding / Chroma 加入 lazy initialization。
+4. 加入 JSON Incident Report export。
+5. 支援更真實的日誌格式。
+6. 探索 Hybrid Multi-Agent architecture。
+7. 加入 web dashboard。
+8. 後續建立 Red / Blue simulation lab。
+
+---
+
+完整 CLI 範例可參考 [demo_outputs.md](demo_outputs.md)。
