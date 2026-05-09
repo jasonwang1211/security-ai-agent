@@ -1,17 +1,15 @@
 from modules.agent import SecurityAgent
-from modules.decision_engine import DecisionEngine
-from modules.defense_simulator import DefenseSimulator
 from modules.detector import RuleBasedDetector
 from modules.followup_handler import FollowupHandler
 from modules.llm_analyzer import LLMSecurityAnalyzer
 from modules.llm_threat_judge import LLMThreatJudge
 from modules.rag_qa import RAGQA
-from modules.risk_scorer import RiskScorer
 from modules.responder import Responder
 from modules.skills.followup_skill import run_followup
 from modules.skills.knowledge_qa_skill import run_knowledge_qa
 from modules.skills.log_ingestion_skill import run_log_agent_analysis, run_log_ingestion, run_with_progress
 from modules.skills.payload_analysis_skill import run_payload_analysis
+from modules.triage_policy import TriagePolicy
 
 EXIT_COMMANDS = {"exit", "quit", "離開"}
 MENU_EXIT_COMMANDS = EXIT_COMMANDS | {"0"}
@@ -106,9 +104,7 @@ def main():
     followup_handler = FollowupHandler()
     detector = RuleBasedDetector()
     responder = Responder()
-    risk_scorer = RiskScorer()
-    decision_engine = DecisionEngine()
-    defense_simulator = DefenseSimulator()
+    triage_policy = TriagePolicy()
     llm_analyzer = LLMSecurityAnalyzer()
     llm_threat_judge = LLMThreatJudge()
     agent = SecurityAgent(
@@ -116,9 +112,7 @@ def main():
         detector=detector,
         rag_qa=rag_qa,
         responder=responder,
-        risk_scorer=risk_scorer,
-        decision_engine=decision_engine,
-        defense_simulator=defense_simulator,
+        triage_policy=triage_policy,
         llm_analyzer=llm_analyzer,
         llm_threat_judge=llm_threat_judge,
     )

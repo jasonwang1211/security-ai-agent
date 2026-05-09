@@ -109,9 +109,7 @@ class SecurityAgent:
         detector,
         rag_qa,
         responder,
-        risk_scorer,
-        decision_engine,
-        defense_simulator,
+        triage_policy,
         llm_analyzer=None,
         llm_threat_judge=None,
     ):
@@ -119,9 +117,7 @@ class SecurityAgent:
         self.detector = detector
         self.rag_qa = rag_qa
         self.responder = responder
-        self.risk_scorer = risk_scorer
-        self.decision_engine = decision_engine
-        self.defense_simulator = defense_simulator
+        self.triage_policy = triage_policy
         self.llm_analyzer = llm_analyzer
         self.llm_threat_judge = llm_threat_judge
 
@@ -304,8 +300,8 @@ class SecurityAgent:
         return None
 
     def _handle_attack_flow(self, query, detector_result, state):
-        risk_result = self.risk_scorer.score(detector_result["attack_types"])
-        decision_result = self.decision_engine.decide(risk_result["risk_level"])
+        risk_result = self.triage_policy.score_risk(detector_result)
+        decision_result = self.triage_policy.decide(risk_result)
         context, ok = "", False
         if self.rag_qa is not None:
             try:
@@ -327,8 +323,8 @@ class SecurityAgent:
             except Exception:
                 llm_result = None
 
-        defense_result = self.defense_simulator.simulate(
-            decision_result["decision"],
+        defense_result = self.triage_policy.simulate_defense(
+            decision_result,
             detector_result,
             risk_result,
         )
