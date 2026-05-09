@@ -30,9 +30,9 @@ The latest milestone stabilizes a single triage report format across determinist
 |---|---|
 | CLI Modes | The menu routes users to payload/event analysis, log file ingestion, security knowledge Q&A, follow-up explanation, or exit. |
 | Unified Triage Output | Security analysis results use `[Security Triage Report]` with Quick Verdict, Summary, Evidence, Why It Matters, Recommended Response, Simulation Notice, and AI Assist sections. |
-| Payload / Event Analysis | Known suspicious payloads are detected with rule-based signatures, risk scoring, simulated decision logic, and response guidance. |
-| Single Raw Log Translation | Raw authentication log lines can be parsed, normalized, translated into SecurityAgent input, and triaged as authentication failures. |
-| Log File Ingestion | Log files are parsed, normalized, aggregated, and optionally sent to SecurityAgent. |
+| Payload / Event Analysis | Known suspicious payloads are routed by CLI mode handlers, analyzed by SecurityAgent, scored by `TriagePolicy`, and optionally enriched by `LLMAssist`. |
+| Single Raw Log Translation | Raw authentication log lines are handled by the consolidated log pipeline and triaged as authentication failures. |
+| Log File Ingestion | Log files are parsed, normalized, aggregated, and adapted by `modules/log_pipeline.py`, then optionally sent to SecurityAgent. |
 | Brute Force Candidate Analysis | Repeated authentication failures can aggregate into a `brute_force_candidate` event for SecurityAgent triage. |
 | RAG Knowledge Q&A | Mode 3 uses a dedicated knowledge route, `RAGQueryPlanner`, preferred source selection, and Chroma fallback for explanatory answers. |
 | Follow-up Explanation | Mode 4 remains available for additional explanation based on previous context. |
@@ -45,11 +45,11 @@ The latest milestone stabilizes a single triage report format across determinist
 
 ```text
 User Input
--> Mode Router / Skill Layer
+-> CLI Mode Handler
+-> SecurityAgent
 -> Rule-Based Detector
--> Risk Scoring
--> Decision Engine
--> Defense Simulation
+-> TriagePolicy
+-> LLMAssist
 -> Security Triage Report
 ```
 
@@ -57,10 +57,8 @@ User Input
 
 ```text
 Raw Log Line
--> Log Input Adapter
--> Log Parser
--> Event Normalizer
--> Event-to-Agent Input
+-> Consolidated Log Pipeline
+-> Raw Log Translation
 -> Authentication Failure Triage Report
 ```
 
@@ -68,10 +66,8 @@ Raw Log Line
 
 ```text
 Log File
--> Log Parser
--> Event Normalizer
--> Event Aggregator
--> Event-to-Agent Adapter
+-> Consolidated Log Pipeline
+-> Aggregated Event
 -> SecurityAgent
 -> Security Triage Report
 ```
@@ -223,7 +219,7 @@ Status: SUSPICIOUS
 Attack Type: Brute Force / Credential Stuffing
 Risk Level: HIGH
 Decision: MONITOR
-Detection Source: llm_threat_judge + signal_extraction
+Detection Source: llm_assist + signal_extraction
 ```
 
 Evaluation: Passed.
