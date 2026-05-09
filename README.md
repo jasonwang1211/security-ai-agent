@@ -210,8 +210,17 @@ pip install -r requirements-dev.txt
 Run the golden smoke tests:
 
 ```powershell
-python -m pytest tests\test_golden_smoke.py
+python -m pytest
 ```
+
+Run lint and gradual typing checks:
+
+```powershell
+python -m ruff check .
+python -m mypy app.py modules tests
+```
+
+Pytest runs the golden smoke tests. Ruff checks style, imports, and common lint issues. Mypy is configured in lenient mode as a gradual typing foundation.
 
 These tests use dummy RAG and LLM Assist objects, so they do not start the full app or initialize Chroma, embeddings, Torch, Ollama, or local LLM clients.
 
