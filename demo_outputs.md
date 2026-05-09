@@ -1,18 +1,12 @@
 # Demo Outputs
 
-This document shows representative CLI transcripts for the current `v1.1.4-event-to-agent-adapter` demo flow.
+This document shows representative CLI output for the current `v1.1.4-event-to-agent-adapter` demo flow.
 
-## Startup Output
+The current system emits a unified `[Security Triage Report]` for triage output. Older standalone formats such as `LLM-assisted suspicious finding`, `Threat Intelligence Analysis`, `[Security Triage Result]`, `Final Risk`, and `Final Decision` are outdated and should not be used as the expected demo output.
 
-Status: Passed
+## Current CLI Modes
 
 ```text
-(venv) PS <project_path>> python app.py
-正在啟動 Security AI...
-
-Security AI 已啟動。
-
-請選擇模式：
 1. Payload / event analysis
 2. Log file ingestion demo
 3. Security knowledge Q&A
@@ -20,28 +14,33 @@ Security AI 已啟動。
 0. Exit
 ```
 
-## Demo Case 1: Mode 1 XSS Payload Analysis
+## Demo Case 1: Mode 1 XSS Payload Triage
 
 Status: Passed
 
-```text
-請輸入模式編號: 1
+Input:
 
-請輸入 payload 或事件描述: <script>alert(1)</script>
+```text
+<script>alert(1)</script>
+```
+
+Expected / observed output excerpt:
+
+```text
 [Mode 1] Running payload/event analysis...
-[Mode 1] Payload/event analysis started...
-[Mode 1] Payload/event analysis still running... elapsed 5s
-[Mode 1] Payload/event analysis complete.
 
 AI:
 [Security Triage Report]
 
-1. Summary
+0. Quick Verdict
 Status: ALERT
 Attack Type: XSS
 Risk Level: MEDIUM
 Decision: MONITOR
 Detection Source: rule_based_detector (rule_based)
+
+1. Summary
+The input contains a script tag and JavaScript alert pattern consistent with an XSS payload.
 
 2. Evidence
 Input / Payload:
@@ -51,274 +50,223 @@ Matched Signatures:
 - XSS: <script>, alert(
 
 3. Why It Matters
-- XSS: XSS 可能讓攻擊者把腳本注入頁面，影響使用者瀏覽器、竊取 session 或執行未授權操作。
+XSS can allow attacker-controlled script execution in a user's browser, potentially affecting session data, page integrity, or user actions.
 
 4. Recommended Response
-1. 檢查可疑輸入是否被反射到 response body 或頁面模板。
-2. 確認輸出點已依 HTML、JavaScript 或 attribute context 正確 encoding。
-3. 檢查 Content Security Policy (CSP) 是否啟用並限制不可信腳本來源。
+Immediate Actions:
+- Treat the payload as suspicious and monitor the related request path, source, and user/session context.
+
+Mitigation:
+- Apply output encoding for HTML, JavaScript, and attribute contexts.
+- Validate and sanitize untrusted input.
+- Review Content Security Policy coverage.
+
+Follow-up:
+- Check whether the payload was reflected, stored, or executed.
+- Review nearby events from the same source or session.
 
 5. Simulation Notice
-已模擬將此事件加入監控與告警佇列，未實際部署監控規則。
+This is a simulated training decision, not an enforcement action.
 
 6. AI Assist
 LLM Suggested Attack Type: XSS
 LLM Suggested Decision: BLOCK
-Confidence: 0.99
 Note: Decision above is the final system decision; LLM Suggested Decision is AI assist only.
 ```
 
-## Demo Case 2: Mode 2 Log Ingestion Summary
+## Demo Case 2: Mode 1 Single Raw Auth Log Translation
 
 Status: Passed
 
-```text
-請輸入模式編號: 2
+Input:
 
-請輸入 log 檔案路徑: demo_logs\web_attack.log
-[Mode 2] Reading and summarizing log file...
+```text
+2026-05-01T10:00:00Z login_failed src_ip=10.0.0.5 user=admin endpoint=/login status=401
+```
+
+Observed translation block:
+
+```text
+[Input Translation]
+Detected Input Type: raw_log
+Normalized Event Type: auth_failure
+Converted SecurityAgent Input:
+login failed from source_ip 10.0.0.5 against /login for user admin
+```
+
+Expected / observed triage summary:
+
+```text
+[Security Triage Report]
+
+0. Quick Verdict
+Status: REVIEW
+Attack Type: Authentication Failure
+Risk Level: LOW
+Decision: MONITOR
+Detection Source: signal_extraction
+
+1. Summary
+A single failed login was observed for user admin from source IP 10.0.0.5 against /login.
+
+2. Evidence
+- Event Type: auth_failure
+- Source IP: 10.0.0.5
+- User: admin
+- Target: /login
+- Status: 401
+
+3. Why It Matters
+Authentication failures are useful security signals, but one failed login is not enough to confirm Brute Force.
+
+4. Recommended Response
+Immediate Actions:
+- Monitor for repeated failures from the same source IP, user, or endpoint.
+
+Mitigation:
+- Ensure rate limiting, lockout policy, and alert thresholds are configured.
+
+Follow-up:
+- Correlate with nearby login successes, repeated 401 / 403 responses, and other users targeted by the same source.
+```
+
+## Demo Case 3: Mode 2 auth_bruteforce.log
+
+Status: Passed
+
+Input:
+
+```text
+demo_logs\auth_bruteforce.log
+```
+
+Observed log ingestion summary:
+
+```text
 [Log Ingestion Summary]
 
-File: demo_logs\web_attack.log
-Total Lines: 3
-Parsed Logs: 3
-Normalized Events: 3
-Aggregated Events: 3
+File: demo_logs\auth_bruteforce.log
+Total Lines: 10
+Parsed Logs: 10
+Normalized Events: 10
+Aggregated Events: 1
 
 Detected Event Types:
-- web_request: 3
+- auth_failure: 10
 
-Preserved Payloads:
-1. q=<script>alert(1)</script>
-2. id=1' or '1'='1
-3. file=../../etc/passwd
-
-Current Stage:
-Log ingestion only. Events are not sent into SecurityAgent yet.
-
-Send aggregated events to SecurityAgent? (y/n): n
-Show detailed JSON output? (y/n): n
+Aggregated Finding:
+- Event Type: brute_force_candidate
+- Source IP: 192.168.1.10
+- Target: /login
+- Failed Count: 10
 ```
 
-## Demo Case 3: Mode 2 Analyze First Event
-
-Status: Passed
+Expected / observed SecurityAgent output summary:
 
 ```text
-Send aggregated events to SecurityAgent? (y/n): y
-[Mode 2] Preparing SecurityAgent analysis...
-
-Choose SecurityAgent analysis scope:
-1. Analyze first event only
-2. Analyze all events
-0. Cancel
-
-請選擇分析範圍: 1
-[Mode 2] Running SecurityAgent analysis...
-[Analyzing Log Event 1/3]
-Input: q=<script>alert(1)</script>
-Processing Log Event 1/3 started...
-Processing Log Event 1/3 still running... elapsed 5s
-Processing Log Event 1/3 complete.
-[SecurityAgent Analysis for Log Event 1]
+[SecurityAgent Analysis for Aggregated Event 1]
 [Security Triage Report]
 
-1. Summary
-Status: ALERT
-Attack Type: XSS
-Risk Level: MEDIUM
-Decision: MONITOR
-Detection Source: rule_based_detector (rule_based)
-
-2. Evidence
-Input / Payload:
-q=<script>alert(1)</script>
-
-Matched Signatures:
-- XSS: <script>, alert(
-
-3. Why It Matters
-- XSS: XSS 可能讓攻擊者把腳本注入頁面，影響使用者瀏覽器、竊取 session 或執行未授權操作。
-
-4. Recommended Response
-1. 檢查可疑輸入是否被反射到 response body 或頁面模板。
-2. 確認輸出點已依 HTML、JavaScript 或 attribute context 正確 encoding。
-3. 檢查 Content Security Policy (CSP) 是否啟用並限制不可信腳本來源。
-
-5. Simulation Notice
-已模擬將此事件加入監控與告警佇列，未實際部署監控規則。
-
-6. AI Assist
-LLM Suggested Attack Type: XSS
-LLM Suggested Decision: BLOCK
-Confidence: 0.98
-Note: Decision above is the final system decision; LLM Suggested Decision is AI assist only.
-
-[Mode 2] SecurityAgent analysis complete.
-Show detailed JSON output? (y/n): n
-```
-
-## Demo Case 4: Mode 2 Analyze All Events
-
-Status: Passed
-
-```text
-Send aggregated events to SecurityAgent? (y/n): y
-[Mode 2] Preparing SecurityAgent analysis...
-
-Choose SecurityAgent analysis scope:
-1. Analyze first event only
-2. Analyze all events
-0. Cancel
-
-請選擇分析範圍: 2
-[Mode 2] Running SecurityAgent analysis...
-
-[Analyzing Log Event 1/3]
-Input: q=<script>alert(1)</script>
-Processing Log Event 1/3 started...
-Processing Log Event 1/3 complete.
-[SecurityAgent Analysis for Log Event 1]
-[Security Triage Report]
-
-1. Summary
-Status: ALERT
-Attack Type: XSS
-Risk Level: MEDIUM
-Decision: MONITOR
-Detection Source: rule_based_detector (rule_based)
-
-2. Evidence
-Input / Payload:
-q=<script>alert(1)</script>
-
-Matched Signatures:
-- XSS: <script>, alert(
-
-3. Why It Matters
-- XSS: XSS 可能讓攻擊者把腳本注入頁面，影響使用者瀏覽器、竊取 session 或執行未授權操作。
-
-4. Recommended Response
-... repeated Recommended Response section omitted for brevity ...
-
-5. Simulation Notice
-已模擬將此事件加入監控與告警佇列，未實際部署監控規則。
-
-[Analyzing Log Event 2/3]
-Input: id=1' or '1'='1
-Processing Log Event 2/3 started...
-Processing Log Event 2/3 complete.
-[SecurityAgent Analysis for Log Event 2]
-[Security Triage Report]
-
-1. Summary
-Status: ALERT
-Attack Type: SQL Injection
+0. Quick Verdict
+Status: SUSPICIOUS
+Attack Type: Brute Force / Credential Stuffing
 Risk Level: HIGH
-Decision: BLOCK
-Detection Source: rule_based_detector (rule_based)
-
-2. Evidence
-Input / Payload:
-id=1' or '1'='1
-
-Matched Signatures:
-- SQL Injection: ' or '1'='1
-
-3. Why It Matters
-- SQL Injection: SQL Injection 可能讓攻擊者改變資料庫查詢邏輯，造成資料外洩、驗證繞過或資料破壞。
-
-4. Recommended Response
-... repeated Recommended Response section omitted for brevity ...
-
-5. Simulation Notice
-已模擬封鎖這次可疑請求，未實際修改任何系統或防火牆設定。
-
-[Analyzing Log Event 3/3]
-Input: file=../../etc/passwd
-Processing Log Event 3/3 started...
-Processing Log Event 3/3 complete.
-[SecurityAgent Analysis for Log Event 3]
-[Security Triage Report]
+Decision: MONITOR
+Detection Source: llm_threat_judge + signal_extraction
 
 1. Summary
-Status: ALERT
-Attack Type: Path Traversal
-Risk Level: HIGH
-Decision: BLOCK
-Detection Source: rule_based_detector (rule_based)
+Multiple authentication failures were aggregated from source IP 192.168.1.10 against /login.
 
 2. Evidence
-Input / Payload:
-file=../../etc/passwd
-
-Matched Signatures:
-- Path Traversal: /etc/passwd, ../
+- Event Type: brute_force_candidate
+- Source IP: 192.168.1.10
+- Target: /login
+- Failed Count: 10
+- Normalized auth_failure events: 10
 
 3. Why It Matters
-- Path Traversal: Path Traversal 可能讓攻擊者嘗試讀取應用程式目錄外的敏感檔案，例如系統密碼檔或設定檔。
+Repeated failed logins from the same source against the same endpoint are consistent with brute force or credential stuffing behavior.
 
 4. Recommended Response
-... repeated Recommended Response section omitted for brevity ...
+Immediate Actions:
+- Monitor the source IP and target endpoint.
+- Review whether any successful login occurred after the failure sequence.
 
-5. Simulation Notice
-已模擬封鎖這次可疑請求，未實際修改任何系統或防火牆設定。
+Mitigation:
+- Apply rate limiting, temporary lockout, MFA, and suspicious source monitoring.
 
-[Mode 2] SecurityAgent analysis complete.
-Show detailed JSON output? (y/n): n
+Follow-up:
+- Check time window, usernames attempted, user-agent patterns, and related 401 / 403 responses.
 ```
 
-## Demo Case 5: Blank Input Handling
+No old `LLM-assisted suspicious finding` header is expected in this mode.
+
+## Demo Case 4: Mode 3 RAG QA
 
 Status: Passed
 
-```text
-請輸入模式編號:
-請輸入模式編號，或輸入 0 離開。
+Mode 3 is for security knowledge explanation. RAG QA now uses `RAGQueryPlanner` plus preferred source selection. RAG does not decide attack type, `Risk Level`, or `Decision`; those fields come from the triage pipeline.
 
-請選擇分析範圍:
-未輸入分析範圍，已取消 SecurityAgent 分析。
+### Question: 什麼是 brute force？
 
-Show detailed JSON output? (y/n):
-未顯示 detailed JSON output。
-```
+Expected / observed behavior:
 
-## Demo Case 6: Mode 3 Security Knowledge Q&A
+- Explains brute force as repeated credential guessing.
+- Frames it from a blue-team perspective.
+- Mentions useful context such as source identity, source IP, endpoint, account/user, and time-sequence patterns.
 
-Status: Passed
+Representative answer excerpt:
 
 ```text
-請輸入模式編號: 3
-
-請輸入資安知識問題: 什麼是 XSS
-[Mode 3] Running security knowledge Q&A...
-[Mode 3] Security knowledge Q&A started...
-[Mode 3] Security knowledge Q&A still running... elapsed 5s
-[Mode 3] Security knowledge Q&A complete.
-
-AI: XSS，即跨站腳本攻擊（Cross-Site Scripting），是指攻擊者將惡意腳本注入可被其他使用者瀏覽的內容中，藉此竊取 Session、操控頁面或冒用使用者行為。
+Brute force is an attack pattern where an actor repeatedly tries credentials until one succeeds. From a blue-team view, the useful evidence is not one failed login by itself, but repeated failures across a time window, often tied to the same source_ip, target endpoint, user identity, or sequence of related authentication events.
 ```
 
-## Demo Case 7: Mode 4 Follow-up / More Details
+### Question: 如何判斷多次登入失敗是不是攻擊？
 
-Status: Passed
+Expected / observed behavior:
+
+- Mentions time window.
+- Mentions `source_ip`.
+- Mentions target / endpoint.
+- Mentions user or account.
+- Mentions HTTP `401` / `403`.
+- Names brute force / credential stuffing.
+- Includes false-positive considerations.
+
+Representative answer excerpt:
 
 ```text
-請輸入模式編號: 4
-
-請輸入追問或想了解的細節: 詳細說明
-[Mode 4] Running follow-up analysis...
-[Mode 4] Follow-up analysis started...
-[Mode 4] Follow-up analysis complete.
-
-AI: XSS 攻擊主要分為反射型 XSS、儲存型 XSS 和基於 DOM 的 XSS。防禦重點包括輸入驗證、依輸出情境做 encoding，以及設定 Content Security Policy (CSP)。
+To judge whether repeated login failures are attack-like, compare failures within a time window and group by source_ip, target endpoint, and user. Many 401 or 403 responses from the same source against /login can indicate brute force or credential stuffing, but false positives are possible, such as a user with an expired password, a broken client, or a scheduled integration using stale credentials.
 ```
 
-## Demo Case 8: Exit
+### Question: Security Triage Report 怎麼看？
 
-Status: Passed
+Expected / observed behavior:
+
+- Explains `Quick Verdict`.
+- Explains `Summary`.
+- Explains `Evidence`.
+- Explains `Why It Matters`.
+- Explains `Recommended Response`.
+- Explains `Simulation Notice`.
+- Explains `AI Assist`.
+- Explains `Risk Level`.
+- Explains `Decision`.
+- Clarifies that `BLOCK`, `MONITOR`, and `ALLOW` are simulated decisions.
+- Clarifies that `LLM Suggested Decision` is assist-only.
+
+Representative answer excerpt:
 
 ```text
-請輸入模式編號: 0
-再見。
+Read the Security Triage Report from top to bottom. Quick Verdict gives the compact status, attack type, risk level, decision, and detection source. Summary explains what happened. Evidence shows the concrete signals. Why It Matters explains the security impact. Recommended Response separates immediate actions, mitigation, and follow-up. Simulation Notice reminds you that BLOCK, MONITOR, and ALLOW are simulated decisions. AI Assist shows model suggestions, but LLM Suggested Decision is assist-only and is not the final system decision.
 ```
+
+## Retired Output Formats
+
+The following older labels are retained here only as a migration note and should not appear as the current final demo output:
+
+- `LLM-assisted suspicious finding`
+- `Threat Intelligence Analysis` as a standalone final format
+- `[Security Triage Result]`
+- `Final Risk`
+- `Final Decision`
