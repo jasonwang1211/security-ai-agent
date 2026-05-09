@@ -4,6 +4,7 @@ import re
 from langchain_core.prompts import ChatPromptTemplate
 
 from config import AGENT_MODEL_NAME
+from modules.types import LLMAlertExplanationResultModel, LLMSuspiciousResultModel
 
 
 class LLMAssist:
@@ -138,7 +139,8 @@ Inputs:
             parsed = self._parse_json(content)
             if not isinstance(parsed, dict):
                 return fallback
-            result = self._merge_suspicious_with_fallback(parsed, fallback)
+            validated = LLMSuspiciousResultModel.model_validate(parsed).model_dump()
+            result = self._merge_suspicious_with_fallback(validated, fallback)
             result["llm_status"] = "ACTIVE"
             return result
         except Exception:
@@ -180,7 +182,8 @@ Inputs:
             parsed = self._parse_json(content)
             if not isinstance(parsed, dict):
                 return fallback
-            return self._merge_alert_with_fallback(parsed, fallback)
+            validated = LLMAlertExplanationResultModel.model_validate(parsed).model_dump()
+            return self._merge_alert_with_fallback(validated, fallback)
         except Exception:
             return fallback
 

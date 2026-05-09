@@ -6,3 +6,4 @@ chromadb
 sentence-transformers
 opencc-python-reimplemented
 ollama
+pydantic>=2
