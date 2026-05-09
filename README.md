@@ -1,5 +1,7 @@
 # AI-Assisted Blue-Team Security Triage Prototype
 
+[![CI](https://github.com/jasonwang1211/security-ai-agent/actions/workflows/ci.yml/badge.svg)](https://github.com/jasonwang1211/security-ai-agent/actions/workflows/ci.yml)
+
 This project is an AI-assisted blue-team security triage prototype. It helps analysts review suspicious payloads, translate individual raw log lines, ingest and aggregate log files, ask RAG-based security knowledge questions, and read the result through a unified `Security Triage Report`.
 
 The system is a defensive academic prototype. It does not attack real targets or control real security infrastructure.
@@ -32,12 +34,13 @@ For detailed evaluation notes and CLI excerpts, see:
 | Feature | Purpose |
 |---|---|
 | Rule-Based Detector | Detects known payload attacks such as XSS, SQL Injection, and Path Traversal. |
-| Log Parser / Event Normalizer / Event Aggregator | Converts supported logs into normalized and aggregated security events. |
-| Event-to-Agent Adapter | Converts normalized or aggregated events into SecurityAgent inputs. |
+| Consolidated Log Pipeline | `modules/log_pipeline.py` parses, normalizes, aggregates, adapts, and translates log inputs. |
+| CLI Mode Handlers | `modules/mode_handlers.py` contains the lightweight CLI mode wrappers used by `app.py`. |
 | Raw Log Input Adapter | Translates a single raw log line into an event-oriented triage input. |
 | RAGQueryPlanner | Plans security knowledge queries and supports preferred source selection. |
 | RAG Knowledge Q&A | Answers defensive security questions using local knowledge and retrieval. |
-| LLM Assist | Provides suggestions for suspicious behavior while leaving final decisions to the system flow. |
+| LLMAssist | Provides alert explanation and suspicious behavior suggestions while leaving final decisions to the system flow. |
+| TriagePolicy | Owns risk scoring, decision mapping, and simulated defense policy. |
 | Unified Security Triage Report | Presents triage results in one consistent report format. |
 | Simulated Defense Decision | Produces simulated `BLOCK`, `MONITOR`, or `ALLOW` decisions. |
 
@@ -48,9 +51,7 @@ For detailed evaluation notes and CLI excerpts, see:
 ```text
 User Payload
 -> Rule-Based Detector
--> Risk Scoring
--> Decision Engine
--> Defense Simulation
+-> TriagePolicy
 -> Security Triage Report
 ```
 
@@ -58,8 +59,7 @@ User Payload
 
 ```text
 Raw Log Line
--> Log Input Adapter
--> Parser / Normalizer
+-> Log Pipeline
 -> Event-to-Agent Input
 -> Authentication Failure Triage Report
 ```
@@ -68,10 +68,7 @@ Raw Log Line
 
 ```text
 Log File
--> Parser
--> Normalizer
--> Aggregator
--> Event-to-Agent Adapter
+-> Log Pipeline
 -> SecurityAgent
 -> Security Triage Report
 ```
@@ -148,26 +145,15 @@ sentinel_project/
 │       └── report_guides/
 └── modules/
     ├── agent.py
+    ├── mode_handlers.py
     ├── detector.py
-    ├── log_input_adapter.py
-    ├── log_parser.py
-    ├── event_normalizer.py
-    ├── event_aggregator.py
-    ├── event_to_agent_input.py
+    ├── triage_policy.py
+    ├── llm_assist.py
+    ├── responder.py
+    ├── log_pipeline.py
     ├── rag_qa.py
     ├── rag_query_planner.py
-    ├── llm_threat_judge.py
-    ├── llm_analyzer.py
-    ├── responder.py
-    ├── risk_scorer.py
-    ├── decision_engine.py
-    ├── defense_simulator.py
-    ├── followup_handler.py
-    └── skills/
-        ├── payload_analysis_skill.py
-        ├── log_ingestion_skill.py
-        ├── knowledge_qa_skill.py
-        └── followup_skill.py
+    └── followup_handler.py
 ```
 
 ## Local Model Prerequisites
@@ -214,6 +200,31 @@ Run the CLI:
 ```bash
 python app.py
 ```
+
+## Running Tests
+
+Install development dependencies:
+
+```powershell
+pip install -r requirements-dev.txt
+```
+
+Run the golden smoke tests:
+
+```powershell
+python -m pytest
+```
+
+Run lint and gradual typing checks:
+
+```powershell
+python -m ruff check .
+python -m mypy app.py modules tests
+```
+
+Pytest runs the golden smoke tests. Ruff checks style, imports, and common lint issues. Mypy is configured in lenient mode as a gradual typing foundation.
+
+These tests use dummy RAG and LLM Assist objects, so they do not start the full app or initialize Chroma, embeddings, Torch, Ollama, or local LLM clients.
 
 ## Model Configuration
 

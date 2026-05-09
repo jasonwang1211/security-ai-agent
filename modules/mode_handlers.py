@@ -4,8 +4,11 @@ import time
 from collections import Counter
 
 from demo_log_ingestion import SECTION_TITLES, _process_lines, _read_log_lines
-from modules.event_to_agent_input import events_to_agent_inputs
-from modules.skills import get_agent_state
+from modules.log_pipeline import (
+    events_to_agent_inputs,
+    format_input_translation,
+    try_translate_raw_log_input,
+)
 
 SUMMARY_TITLE = "[Log Ingestion Summary]"
 DETECTED_EVENT_TYPES_TITLE = "Detected Event Types:"
@@ -19,6 +22,48 @@ BRUTE_FORCE_EVENT_TYPE = "brute_force_candidate"
 WEB_REQUEST_EVENT_TYPE = "web_request"
 LOG_AGENT_ANALYSIS_EMPTY_MESSAGE = "No analyzable log events were produced."
 PROGRESS_INTERVAL_SECONDS = 5
+
+
+def get_agent_state(agent):
+    # CLI mode handlers are thin wrappers, so shared conversation state stays on the agent.
+    if not hasattr(agent, "cli_state"):
+        agent.cli_state = {
+            "last_question": "",
+            "last_answer": "",
+            "last_points": [],
+            "last_focus": "",
+        }
+
+    return agent.cli_state
+
+
+def run_payload_analysis(agent, user_input: str) -> str:
+    # Thin wrapper around the existing Mode 1 agent analysis flow.
+    translation = try_translate_raw_log_input(user_input)
+    if translation:
+        if translation.normalized_event_type == "auth_failure":
+            answer = agent.responder.build_auth_failure_triage_report(
+                translation.normalized_event,
+                translation.agent_input,
+            )
+        else:
+            answer = agent.handle_query(translation.agent_input, get_agent_state(agent))
+        return f"\n{format_input_translation(translation)}\n\nAI: {answer}\n"
+
+    answer = agent.handle_query(user_input, get_agent_state(agent))
+    return f"\nAI: {answer}\n"
+
+
+def run_knowledge_qa(agent, question: str) -> str:
+    # Mode 3 is dedicated knowledge Q&A, so it bypasses follow-up and detection flows.
+    answer = agent.handle_knowledge_query(question, get_agent_state(agent))
+    return f"\nAI: {answer}\n"
+
+
+def run_followup(agent, question: str) -> str:
+    # Thin wrapper around the existing Mode 4 follow-up flow with shared state.
+    answer = agent.handle_query(question, get_agent_state(agent))
+    return f"\nAI: {answer}\n"
 
 
 def run_with_progress(target, label):

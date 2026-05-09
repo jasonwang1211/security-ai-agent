@@ -33,13 +33,18 @@ AI:
 [Security Triage Report]
 
 0. Quick Verdict
+Verdict: This event is likely XSS.
+Risk Level: MEDIUM
+Decision: MONITOR
+Reason: Matched XSS indicators: <script>, alert(
+
+1. Summary
 Status: ALERT
 Attack Type: XSS
 Risk Level: MEDIUM
 Decision: MONITOR
 Detection Source: rule_based_detector (rule_based)
 
-1. Summary
 The input contains a script tag and JavaScript alert pattern consistent with an XSS payload.
 
 2. Evidence
@@ -100,13 +105,18 @@ Expected / observed triage summary:
 [Security Triage Report]
 
 0. Quick Verdict
+Verdict: This is a failed login event. A single failure is not enough to confirm brute force.
+Risk Level: LOW
+Decision: MONITOR
+Reason: Single auth_failure event should be reviewed, but repeated-failure evidence is required before labeling it Brute Force or Credential Stuffing.
+
+1. Summary
 Status: REVIEW
 Attack Type: Authentication Failure
 Risk Level: LOW
 Decision: MONITOR
-Detection Source: signal_extraction
+Detection Source: raw_log_translation
 
-1. Summary
 A single failed login was observed for user admin from source IP 10.0.0.5 against /login.
 
 2. Evidence
@@ -168,13 +178,18 @@ Expected / observed SecurityAgent output summary:
 [Security Triage Report]
 
 0. Quick Verdict
+Verdict: This event is suspicious for Brute Force / Credential Stuffing.
+Risk Level: HIGH
+Decision: MONITOR
+Reason: Multiple failed login events were aggregated from the same source against the same target.
+
+1. Summary
 Status: SUSPICIOUS
 Attack Type: Brute Force / Credential Stuffing
 Risk Level: HIGH
 Decision: MONITOR
-Detection Source: llm_threat_judge + signal_extraction
+Detection Source: llm_assist + signal_extraction
 
-1. Summary
 Multiple authentication failures were aggregated from source IP 192.168.1.10 against /login.
 
 2. Evidence

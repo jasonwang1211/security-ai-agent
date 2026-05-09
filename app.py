@@ -1,17 +1,18 @@
 from modules.agent import SecurityAgent
-from modules.decision_engine import DecisionEngine
-from modules.defense_simulator import DefenseSimulator
 from modules.detector import RuleBasedDetector
 from modules.followup_handler import FollowupHandler
-from modules.llm_analyzer import LLMSecurityAnalyzer
-from modules.llm_threat_judge import LLMThreatJudge
+from modules.llm_assist import LLMAssist
 from modules.rag_qa import RAGQA
-from modules.risk_scorer import RiskScorer
 from modules.responder import Responder
-from modules.skills.followup_skill import run_followup
-from modules.skills.knowledge_qa_skill import run_knowledge_qa
-from modules.skills.log_ingestion_skill import run_log_agent_analysis, run_log_ingestion, run_with_progress
-from modules.skills.payload_analysis_skill import run_payload_analysis
+from modules.mode_handlers import (
+    run_followup,
+    run_knowledge_qa,
+    run_log_agent_analysis,
+    run_log_ingestion,
+    run_payload_analysis,
+    run_with_progress,
+)
+from modules.triage_policy import TriagePolicy
 
 EXIT_COMMANDS = {"exit", "quit", "離開"}
 MENU_EXIT_COMMANDS = EXIT_COMMANDS | {"0"}
@@ -106,21 +107,15 @@ def main():
     followup_handler = FollowupHandler()
     detector = RuleBasedDetector()
     responder = Responder()
-    risk_scorer = RiskScorer()
-    decision_engine = DecisionEngine()
-    defense_simulator = DefenseSimulator()
-    llm_analyzer = LLMSecurityAnalyzer()
-    llm_threat_judge = LLMThreatJudge()
+    triage_policy = TriagePolicy()
+    llm_assist = LLMAssist()
     agent = SecurityAgent(
         followup_handler=followup_handler,
         detector=detector,
         rag_qa=rag_qa,
         responder=responder,
-        risk_scorer=risk_scorer,
-        decision_engine=decision_engine,
-        defense_simulator=defense_simulator,
-        llm_analyzer=llm_analyzer,
-        llm_threat_judge=llm_threat_judge,
+        triage_policy=triage_policy,
+        llm_assist=llm_assist,
     )
 
     if rag_qa.is_ready():

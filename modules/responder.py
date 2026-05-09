@@ -497,7 +497,7 @@ class Responder:
             f"Attack Type: {attack_type_text}",
             f"Risk Level: {final_risk}",
             f"Decision: {final_decision}",
-            "Detection Source: llm_threat_judge + signal_extraction",
+            "Detection Source: llm_assist + signal_extraction",
             "",
             "2. Evidence",
             "Input / Event:",
