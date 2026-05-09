@@ -215,6 +215,22 @@ Run the CLI:
 python app.py
 ```
 
+## Running Tests
+
+Install development dependencies:
+
+```powershell
+pip install -r requirements-dev.txt
+```
+
+Run the golden smoke tests:
+
+```powershell
+python -m pytest tests\test_golden_smoke.py
+```
+
+These tests use dummy RAG and LLM Assist objects, so they do not start the full app or initialize Chroma, embeddings, Torch, Ollama, or local LLM clients.
+
 ## Model Configuration
 
 | Purpose | Model |
