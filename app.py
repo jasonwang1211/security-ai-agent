@@ -4,10 +4,14 @@ from modules.followup_handler import FollowupHandler
 from modules.llm_assist import LLMAssist
 from modules.rag_qa import RAGQA
 from modules.responder import Responder
-from modules.skills.followup_skill import run_followup
-from modules.skills.knowledge_qa_skill import run_knowledge_qa
-from modules.skills.log_ingestion_skill import run_log_agent_analysis, run_log_ingestion, run_with_progress
-from modules.skills.payload_analysis_skill import run_payload_analysis
+from modules.mode_handlers import (
+    run_followup,
+    run_knowledge_qa,
+    run_log_agent_analysis,
+    run_log_ingestion,
+    run_payload_analysis,
+    run_with_progress,
+)
 from modules.triage_policy import TriagePolicy
 
 EXIT_COMMANDS = {"exit", "quit", "離開"}

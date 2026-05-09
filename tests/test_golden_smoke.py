@@ -1,9 +1,8 @@
 from modules.agent import SecurityAgent
 from modules.detector import RuleBasedDetector
 from modules.followup_handler import FollowupHandler
+from modules.mode_handlers import run_log_agent_analysis, run_log_ingestion, run_payload_analysis
 from modules.responder import Responder
-from modules.skills.log_ingestion_skill import run_log_agent_analysis, run_log_ingestion
-from modules.skills.payload_analysis_skill import run_payload_analysis
 from modules.triage_policy import TriagePolicy
 
 
