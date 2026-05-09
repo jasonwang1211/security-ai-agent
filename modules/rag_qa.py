@@ -7,9 +7,9 @@ from langchain_community.vectorstores import Chroma
 from langchain_core.prompts import ChatPromptTemplate
 
 try:
-    from opencc import OpenCC
+    from opencc import OpenCC as OpenCCClass
 except Exception:
-    OpenCC = None
+    OpenCCClass = None
 
 from config import CHROMA_PATH, EMBED_MODEL, MODEL_NAME, TOP_K
 from modules.rag_query_planner import KNOWLEDGE_ROOT, RAGQueryPlanner
@@ -338,11 +338,11 @@ Metadata suppression rules:
             return fallback_message
 
     def _to_traditional(self, text: str) -> str:
-        if not text or OpenCC is None:
+        if not text or OpenCCClass is None:
             return text
 
         try:
-            return OpenCC("s2t").convert(text)
+            return OpenCCClass("s2t").convert(text)
         except Exception:
             return text
 

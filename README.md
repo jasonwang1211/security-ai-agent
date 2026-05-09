@@ -1,5 +1,7 @@
 # AI-Assisted Blue-Team Security Triage Prototype
 
+[![CI](https://github.com/jasonwang1211/security-ai-agent/actions/workflows/ci.yml/badge.svg)](https://github.com/jasonwang1211/security-ai-agent/actions/workflows/ci.yml)
+
 This project is an AI-assisted blue-team security triage prototype. It helps analysts review suspicious payloads, translate individual raw log lines, ingest and aggregate log files, ask RAG-based security knowledge questions, and read the result through a unified `Security Triage Report`.
 
 The system is a defensive academic prototype. It does not attack real targets or control real security infrastructure.
