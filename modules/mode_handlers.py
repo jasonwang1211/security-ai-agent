@@ -4,8 +4,11 @@ import time
 from collections import Counter
 
 from demo_log_ingestion import SECTION_TITLES, _process_lines, _read_log_lines
-from modules.event_to_agent_input import events_to_agent_inputs
-from modules.log_input_adapter import format_input_translation, try_translate_raw_log_input
+from modules.log_pipeline import (
+    events_to_agent_inputs,
+    format_input_translation,
+    try_translate_raw_log_input,
+)
 
 SUMMARY_TITLE = "[Log Ingestion Summary]"
 DETECTED_EVENT_TYPES_TITLE = "Detected Event Types:"

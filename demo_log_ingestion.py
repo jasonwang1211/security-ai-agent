@@ -1,9 +1,7 @@
 import json
 import sys
 
-from modules.event_aggregator import aggregate_events
-from modules.event_normalizer import normalize_event
-from modules.log_parser import parse_log_line
+from modules.log_pipeline import aggregate_events, normalize_event, parse_log_line
 
 
 USAGE = "python demo_log_ingestion.py demo_logs/auth_bruteforce.log"
