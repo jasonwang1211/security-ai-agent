@@ -1,9 +1,14 @@
+from pathlib import Path
+
 from modules.agent import SecurityAgent
 from modules.detector import RuleBasedDetector
 from modules.followup_handler import FollowupHandler
 from modules.mode_handlers import run_log_agent_analysis, run_log_ingestion, run_payload_analysis
 from modules.responder import Responder
 from modules.triage_policy import TriagePolicy
+
+
+AUTH_BRUTEFORCE_LOG = str(Path("demo_logs") / "auth_bruteforce.log")
 
 
 class DummyRAG:
@@ -100,7 +105,7 @@ def test_mode1_raw_auth_log_triage():
 
 
 def test_mode2_auth_bruteforce_ingestion_summary():
-    output = run_log_ingestion("demo_logs\\auth_bruteforce.log")
+    output = run_log_ingestion(AUTH_BRUTEFORCE_LOG)
 
     assert "Log Ingestion Summary" in output
     assert "Total Lines: 10" in output
@@ -115,7 +120,7 @@ def test_mode2_auth_bruteforce_ingestion_summary():
 def test_mode2_auth_bruteforce_agent_analysis():
     agent = build_test_agent()
 
-    output = run_log_agent_analysis(agent, "demo_logs\\auth_bruteforce.log", scope="first")
+    output = run_log_agent_analysis(agent, AUTH_BRUTEFORCE_LOG, scope="first")
 
     assert "[Security Triage Report]" in output
     assert "Status: SUSPICIOUS" in output
