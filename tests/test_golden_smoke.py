@@ -1,7 +1,5 @@
 from pathlib import Path
 
-import pytest
-
 from modules.agent import SecurityAgent
 from modules.detector import RuleBasedDetector
 from modules.followup_handler import FollowupHandler
@@ -112,9 +110,6 @@ def test_mode1_path_traversal_payload_regression():
     assert "Detection Source: rule_based_detector (rule_based)" in output
 
 
-@pytest.mark.xfail(
-    reason="Command Injection regression pending detector signature support.",
-)
 def test_mode1_command_injection_payload_regression():
     agent = build_test_agent()
 
@@ -123,6 +118,8 @@ def test_mode1_command_injection_payload_regression():
     assert "[Security Triage Report]" in output
     assert "Status: ALERT" in output
     assert "Attack Type: Command Injection" in output
+    assert "Risk Level: HIGH" in output
+    assert "Decision: BLOCK" in output
     assert "Detection Source: rule_based_detector (rule_based)" in output
 
 

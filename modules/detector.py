@@ -5,6 +5,7 @@ class RuleBasedDetector:
         "Path Traversal": ["/etc/passwd", "../", "..\\"],
         "XSS": ["<script>", "alert(", "onerror="],
         "SQL Injection": ["' or '1'='1", "'--", "union select", "drop table"],
+        "Command Injection": ["; rm ", "; rm -rf", "&&", "||", "| nc ", "$(", "`"],
     }
 
     def __init__(self):
