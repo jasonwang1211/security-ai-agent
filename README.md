@@ -19,7 +19,7 @@ For detailed evaluation notes and CLI excerpts, see:
 
 | Feature | Purpose |
 |---|---|
-| Rule-Based Detector | Detects known payload attacks such as XSS, SQL Injection, and Path Traversal. |
+| Rule-Based Detector | Detects known payload attacks such as XSS, SQL Injection, Path Traversal, and Command Injection. |
 | SecurityAgent | Coordinates detector output, triage policy, RAG context, and optional LLM assistance. |
 | TriagePolicy | Owns risk scoring, decision mapping, and simulated defense policy. |
 | LLMAssist | Provides alert explanation and suspicious behavior suggestions while leaving decisions to the system flow. |
@@ -120,7 +120,9 @@ python -m ruff check .
 python -m mypy app.py modules tests
 ```
 
-The test suite uses dummy RAG and LLMAssist objects, so it does not start the full app or initialize Chroma, embeddings, Torch, Ollama, or local LLM clients. GitHub Actions CI runs the same quality gate.
+Current expected test result: `30 passed`.
+
+The test suite includes expanded golden smoke tests, direct consolidated log pipeline tests, and Pydantic boundary model tests. It uses dummy RAG and LLMAssist objects, so it does not start the full app or initialize RAGQA, Chroma, embeddings, Torch, Ollama, ChatOllama, or local LLM clients. GitHub Actions CI runs the same quality gate.
 
 ### Local Model Prerequisites
 
@@ -187,10 +189,11 @@ Completed:
 - Raw log translation
 - `auth_failure` triage
 - Brute force candidate triage
+- Rule-based Command Injection detection
 - `RAGQueryPlanner`
 - Mode 3 dedicated knowledge QA route
 - Pydantic boundary types for gradual controller and tool registry work
-- Golden smoke tests, focused boundary model tests, `ruff`, lenient `mypy`, and GitHub Actions CI
+- Expanded golden smoke tests, direct log pipeline tests, focused boundary model tests, `pytest`, `ruff`, lenient `mypy`, and GitHub Actions CI
 
 ### Future Work
 
@@ -219,7 +222,7 @@ Completed:
 
 | 功能 | 說明 |
 |---|---|
-| Rule-Based Detector | 偵測 XSS、SQL Injection、Path Traversal 等已知 payload 攻擊。 |
+| Rule-Based Detector | 偵測 XSS、SQL Injection、Path Traversal、Command Injection 等已知 payload 攻擊。 |
 | SecurityAgent | 協調偵測結果、TriagePolicy、RAG context 與 LLMAssist 輔助資訊。 |
 | TriagePolicy | 負責風險評估、決策對應與模擬防禦策略。 |
 | LLMAssist | 提供告警解釋與可疑行為建議，但不取代系統流程決策。 |

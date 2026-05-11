@@ -103,6 +103,7 @@ Mode 3 RAG is used for knowledge explanation only. It does not decide attack typ
 | D06 | Mode 3 Login Failure Analysis Q&A | Login failure analysis question | Mentions `source_ip`, endpoint, user, time window, HTTP `401` / `403`, brute force / credential stuffing | Passed |
 | D07 | Mode 3 Security Triage Report Guide | Security Triage Report guide question | Explains Quick Verdict, Summary, Evidence, Why It Matters, Recommended Response, Simulation Notice, AI Assist, Risk Level, Decision, and simulated decisions | Passed |
 | D08 | Mode 1 XSS Regression | `<script>alert(1)</script>` | Rule-based report still works | Passed |
+| D09 | Mode 1 Command Injection Regression | `test; rm -rf /tmp/test` | Rule-based Command Injection detection with `HIGH / BLOCK` | Passed |
 
 ---
 
@@ -295,6 +296,31 @@ Rule-based XSS report remains stable.
 
 Evaluation: Passed.
 
+### D09 - Mode 1 Command Injection Regression
+
+Input:
+
+```text
+test; rm -rf /tmp/test
+```
+
+Observed summary:
+
+```text
+[Security Triage Report]
+
+1. Summary
+Status: ALERT
+Attack Type: Command Injection
+Risk Level: HIGH
+Decision: BLOCK
+Detection Source: rule_based_detector (rule_based)
+```
+
+Evaluation: Passed.
+
+The rule-based detector now recognizes high-signal command injection payload indicators and routes them through the current unified report format.
+
 ---
 
 ## 6. Quality Foundation
@@ -302,9 +328,10 @@ Evaluation: Passed.
 The current branch also includes a small but important quality foundation:
 
 - Architecture consolidation around `SecurityAgent`, `TriagePolicy`, `LLMAssist`, `mode_handlers.py`, `log_pipeline.py`, and `RAGQueryPlanner`
-- Golden smoke tests for the main demo flows
+- Expanded golden smoke tests for payload regressions, benign input, malformed raw logs, and empty input
+- Direct consolidated log pipeline tests for parsing, normalization, and brute-force aggregation
 - Pydantic boundary model tests for `modules/types.py`
-- `pytest` for regression checks
+- `pytest` for regression checks; current expected result is `30 passed`
 - `ruff` for linting and import hygiene
 - Lenient `mypy` as a gradual typing baseline
 - GitHub Actions CI for automated quality checks
@@ -323,6 +350,7 @@ The current branch also includes a small but important quality foundation:
 | Mode 2 `brute_force_candidate` SecurityAgent analysis | Passed |
 | Mode 3 dedicated knowledge Q&A routing | Passed |
 | `RAGQueryPlanner` and preferred source selection | Passed |
+| Rule-based Command Injection detection | Passed |
 | Quality checks and CI foundation | Passed |
 
 Overall result:
@@ -499,6 +527,7 @@ Mode 3 RAG 只負責知識解釋，不決定 attack type、risk level 或模擬 
 | D06 | Mode 3 login failure analysis Q&A | 登入失敗分析問題 | 提到 `source_ip`、endpoint、user、time window、HTTP `401` / `403`、brute force / credential stuffing | Passed |
 | D07 | Mode 3 Security Triage Report guide | Security Triage Report 閱讀問題 | 解釋 Quick Verdict、Summary、Evidence、Why It Matters、Recommended Response、Simulation Notice、AI Assist、Risk Level、Decision 與模擬決策 | Passed |
 | D08 | Mode 1 XSS regression | `<script>alert(1)</script>` | 規則式 XSS 報告維持穩定 | Passed |
+| D09 | Mode 1 Command Injection regression | `test; rm -rf /tmp/test` | Rule-Based Detector 偵測 Command Injection，風險 `HIGH`，決策 `BLOCK` | Passed |
 
 ---
 
@@ -507,9 +536,10 @@ Mode 3 RAG 只負責知識解釋，不決定 attack type、risk level 或模擬 
 此分支已完成下列品質基礎：
 
 - architecture consolidation
-- golden smoke tests
+- expanded golden smoke tests
+- direct consolidated log pipeline tests
 - Pydantic boundary model tests
-- `pytest`
+- `pytest` (`30 passed`)
 - `ruff`
 - lenient `mypy`
 - GitHub Actions CI
@@ -530,6 +560,7 @@ Mode 3 RAG 只負責知識解釋，不決定 attack type、risk level 或模擬 
 | Mode 2 `brute_force_candidate` SecurityAgent analysis | Passed |
 | Mode 3 dedicated knowledge Q&A routing | Passed |
 | `RAGQueryPlanner` and preferred source selection | Passed |
+| Rule-based Command Injection detection | Passed |
 | pytest / ruff / mypy / GitHub Actions CI | Passed |
 
 整體結果：

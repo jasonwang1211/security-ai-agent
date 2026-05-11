@@ -83,7 +83,40 @@ LLM Suggested Decision: BLOCK
 Note: Decision above is the final system decision; LLM Suggested Decision is AI assist only.
 ```
 
-## Demo Case 2: Mode 1 Single Raw Auth Log Translation / 範例 2：Mode 1 單筆原始登入失敗日誌轉譯
+## Demo Case 2: Mode 1 Command Injection Payload Triage / 範例 2：Mode 1 Command Injection Payload 分流
+
+Status / 狀態: Passed
+
+Input / 輸入:
+
+```text
+test; rm -rf /tmp/test
+```
+
+Expected / observed output excerpt / 預期與實際輸出摘錄:
+
+```text
+[Security Triage Report]
+
+0. Quick Verdict
+Verdict: This event is likely Command Injection.
+Risk Level: HIGH
+Decision: BLOCK
+Reason: Matched Command Injection indicators: ; rm , ; rm -rf
+
+1. Summary
+Status: ALERT
+Attack Type: Command Injection
+Risk Level: HIGH
+Decision: BLOCK
+Detection Source: rule_based_detector (rule_based)
+```
+
+This is a representative excerpt. Detailed LLMAssist wording is intentionally omitted because the stable regression contract is rule-based detection, `HIGH` risk, and `BLOCK` decision.
+
+此段為代表性摘錄。LLMAssist 詳細文字刻意省略，穩定回歸契約是規則式偵測、`HIGH` 風險與 `BLOCK` 決策。
+
+## Demo Case 3: Mode 1 Single Raw Auth Log Translation / 範例 3：Mode 1 單筆原始登入失敗日誌轉譯
 
 Status / 狀態: Passed
 
@@ -144,7 +177,7 @@ Follow-up:
 - Correlate with nearby login successes, repeated 401 / 403 responses, and other users targeted by the same source.
 ```
 
-## Demo Case 3: Mode 2 auth_bruteforce.log / 範例 3：Mode 2 brute force 日誌聚合
+## Demo Case 4: Mode 2 auth_bruteforce.log / 範例 4：Mode 2 brute force 日誌聚合
 
 Status / 狀態: Passed
 
@@ -222,7 +255,7 @@ This mode should not show any retired standalone output header.
 
 此模式不應出現任何已退役的獨立輸出標題。
 
-## Demo Case 4: Mode 3 RAG QA / 範例 4：Mode 3 RAG 資安知識問答
+## Demo Case 5: Mode 3 RAG QA / 範例 5：Mode 3 RAG 資安知識問答
 
 Status / 狀態: Passed
 
