@@ -1,12 +1,15 @@
 # AI-Assisted Blue-Team Security Triage Prototype
 
 [![CI](https://github.com/jasonwang1211/security-ai-agent/actions/workflows/ci.yml/badge.svg)](https://github.com/jasonwang1211/security-ai-agent/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+
+A hybrid blue-team security triage prototype: deterministic rule-based detection as the safety floor, with LLM and RAG layers used only for explanation and context. The LLM can suggest, but it never overrides the final system verdict. Local-first, defensive-only, and designed for academic SOC-style analysis.
 
 [English](#english) | [繁體中文](#繁體中文)
 
 ## English
 
-This project is an AI-assisted blue-team security triage prototype. It helps analysts review suspicious payloads, translate individual raw log lines, ingest and aggregate log files, ask RAG-based security knowledge questions, and read results through a unified `Security Triage Report`.
+This project helps analysts review suspicious payloads, translate individual raw log lines, ingest and aggregate log files, ask RAG-based security knowledge questions, and read results through a unified `Security Triage Report`.
 
 The system is a defensive academic prototype. It does not attack real targets or control real security infrastructure.
 
@@ -15,21 +18,25 @@ For detailed evaluation notes and CLI excerpts, see:
 - [Demo & Evaluation Report](REPORT.md)
 - [Demo Outputs](demo_outputs.md)
 
+### The Problem
+
+SOC-style triage has two common failure modes:
+
+- Pure rule-based detection is stable, but misses contextual or behavior-based signals.
+- Pure LLM-based detection is flexible, but can hallucinate and should not be trusted with blocking decisions.
+
+This project explores a hybrid path: deterministic detection and policy produce the final verdict, while LLM and RAG layers explain, contextualize, and support analyst review.
+
 ### Key Features
 
-| Feature | Purpose |
-|---|---|
-| Rule-Based Detector | Detects known payload attacks such as XSS, SQL Injection, Path Traversal, and Command Injection. |
-| SecurityAgent | Coordinates detector output, triage policy, RAG context, and optional LLM assistance. |
-| TriagePolicy | Owns risk scoring, decision mapping, and simulated defense policy. |
-| LLMAssist | Provides alert explanation and suspicious behavior suggestions while leaving decisions to the system flow. |
-| Consolidated Log Pipeline | `modules/log_pipeline.py` parses, normalizes, aggregates, adapts, and translates log inputs. |
-| CLI Mode Handlers | `modules/mode_handlers.py` contains the lightweight CLI mode wrappers used by `app.py`. |
-| RAGQueryPlanner | Plans security knowledge queries and supports preferred source selection. |
-| RAG Knowledge Q&A | Answers defensive security questions using local knowledge and retrieval. |
-| Pydantic Boundary Types | `modules/types.py` defines gradual boundary models for future controller and tool registry work. |
-| Unified Security Triage Report | Presents triage results in one consistent report format. |
-| Simulated Defense Decision | Produces simulated `BLOCK`, `MONITOR`, or `ALLOW` decisions. |
+| Layer | Component | Role |
+|---|---|---|
+| Detection | Rule-Based Detector | Deterministic XSS, SQL Injection, Path Traversal, and Command Injection detection. |
+| Triage | TriagePolicy | Risk scoring and simulated `BLOCK` / `MONITOR` / `ALLOW` decisions. |
+| Pipeline | Log Pipeline | Parses, normalizes, aggregates, and adapts log inputs. |
+| Knowledge | RAGQueryPlanner + RAG QA | Local defensive knowledge retrieval and explanation. |
+| Assist | LLMAssist | Advisory reasoning only; it never overrides the final verdict. |
+| Output | Security Triage Report | Unified report format across payload and log flows. |
 
 ### Current Flow
 
@@ -43,29 +50,12 @@ User Input
 -> Unified Security Triage Report
 ```
 
-Mode-specific paths:
+Role separation:
 
-```text
-Payload / event analysis
--> Rule-Based Detector
--> TriagePolicy
--> Security Triage Report
-
-Single raw log triage
--> log_pipeline.py
--> SecurityAgent
--> Security Triage Report
-
-Log file triage
--> log_pipeline.py
--> SecurityAgent
--> Security Triage Report
-
-Security knowledge Q&A
--> RAGQueryPlanner
--> Preferred Source Selection / Chroma Retrieval
--> RAG Answer
-```
+- Rule-Based Detector, Log Pipeline, and TriagePolicy are deterministic.
+- RAGQueryPlanner and RAG QA support knowledge retrieval and explanation.
+- LLMAssist is advisory only.
+- Unified Security Triage Report is the final output format.
 
 ### System Architecture
 
@@ -94,15 +84,17 @@ Core modules:
 0. Exit
 ```
 
-### Safety Boundaries
+### Non-Goals
 
-- Rule-Based Detector is the primary decision layer for known payload detection.
-- RAG is for explanation and knowledge support only.
-- LLMAssist provides suggestions only.
-- The resulting `Decision` is produced by the system flow.
-- `BLOCK`, `MONITOR`, and `ALLOW` are simulated decisions.
-- The system does not control real firewalls, WAF, EDR, cloud policies, or production response systems.
-- This is a defensive academic prototype.
+This prototype deliberately does not:
+
+- Attack real systems or external targets.
+- Execute real firewall, WAF, EDR, SIEM, SOAR, or cloud policy actions.
+- Let LLM output override deterministic rule-based or policy decisions.
+- Treat RAG retrieval as a primary detection layer.
+- Replace production security monitoring systems.
+
+`BLOCK`, `MONITOR`, and `ALLOW` are simulated training decisions only.
 
 ### Testing And Quality Checks
 
@@ -133,39 +125,15 @@ Required local models:
 - `qwen2.5:7b`
 - `gemma4:e4b`
 
-Pull them with:
-
-```bash
-ollama pull qwen2.5:7b
-ollama pull gemma4:e4b
-```
-
 Exact model names can be changed in `config.py`.
 
 ### How To Run
 
-Create and activate a virtual environment:
-
 ```powershell
 python -m venv venv
 .\venv\Scripts\Activate.ps1
-```
-
-Install dependencies:
-
-```bash
 pip install -r requirements.txt
-```
-
-Prepare the local RAG knowledge base:
-
-```bash
 python ingest_knowledge.py
-```
-
-Run the CLI:
-
-```bash
 python app.py
 ```
 
@@ -174,42 +142,48 @@ python app.py
 Current working branch:
 
 ```text
-v1.1.4-event-to-agent-adapter
-```
-
-Current milestone:
-
-```text
-v1.1.5-unified-triage-rag-routing
+main
 ```
 
 Completed:
 
 - Unified `Security Triage Report`
-- Raw log translation
-- `auth_failure` triage
-- Brute force candidate triage
-- Rule-based Command Injection detection
+- Raw log translation and brute-force candidate aggregation
+- Rule-based detection for XSS, SQL Injection, Path Traversal, and Command Injection
 - `RAGQueryPlanner`
-- Mode 3 dedicated knowledge QA route
 - Pydantic boundary types for gradual controller and tool registry work
 - Expanded golden smoke tests, direct log pipeline tests, focused boundary model tests, `pytest`, `ruff`, lenient `mypy`, and GitHub Actions CI
 
-### Future Work
+### Roadmap
 
-- Smart Input Router / Main Controller Agent
-- Lazy initialization
+**v1.3 — Evidence and Incident Capability**
+
+- Time-window aggregation
 - JSON incident report export
-- More realistic log formats
-- Web dashboard
-- Hybrid multi-agent architecture
+- MITRE ATT&CK mapping
+
+**v1.4 — Controller Agent and Tool Registry**
+
+- Smart input routing
+- Tool-calling ControllerAgent
+- Typed tool input/output contracts
+
+**v1.5+ — Evaluation and Simulation**
+
+- Small benchmark dataset
+- Retrieval and detection quality evaluation
 - Red / blue simulation lab
+- Web dashboard exploration
+
+For the full plan, see [docs/ROADMAP.md](docs/ROADMAP.md).
 
 ## 繁體中文
 
+這是一個混合式藍隊安全分流原型：以「可重現的規則式偵測」作為安全地板，LLM 與 RAG 只負責解釋、補充脈絡與輔助分析。LLM 可以提出建議，但不能覆蓋最終系統判定。本專案採本地優先、防禦導向設計，適合學術展示與 SOC-style 分析流程。
+
 ### 專案簡介
 
-本專案是一個 AI 輔助的藍隊安全分流原型，協助分析可疑 payload、轉換單筆原始日誌、匯入並聚合日誌檔案、回答以 RAG 為基礎的資安知識問題，並以統一 Security Triage Report 呈現結果。
+本專案協助分析可疑 payload、轉換單筆原始日誌、匯入並聚合日誌檔案、回答以 RAG 為基礎的資安知識問題，並以統一 Security Triage Report 呈現結果。
 
 這是一個防禦導向的學術原型，不會攻擊真實目標，也不會控制真實安全基礎設施。
 
@@ -218,21 +192,25 @@ Completed:
 - [Demo & Evaluation Report](REPORT.md)
 - [Demo Outputs](demo_outputs.md)
 
+### 問題背景
+
+SOC-style 事件分流常見兩個問題：
+
+- 純規則式偵測穩定，但容易漏掉需要上下文判讀的行為型訊號。
+- 純 LLM 偵測彈性高，但可能幻覺，不適合直接決定封鎖或放行。
+
+本專案採混合式設計：由 deterministic detection 與 policy 產生最終判定，LLM 與 RAG 只負責解釋、脈絡補充與輔助分析。
+
 ### 主要功能
 
-| 功能 | 說明 |
-|---|---|
-| Rule-Based Detector | 偵測 XSS、SQL Injection、Path Traversal、Command Injection 等已知 payload 攻擊。 |
-| SecurityAgent | 協調偵測結果、TriagePolicy、RAG context 與 LLMAssist 輔助資訊。 |
-| TriagePolicy | 負責風險評估、決策對應與模擬防禦策略。 |
-| LLMAssist | 提供告警解釋與可疑行為建議，但不取代系統流程決策。 |
-| Consolidated Log Pipeline | `modules/log_pipeline.py` 負責日誌解析、正規化、聚合、轉接與轉譯。 |
-| CLI Mode Handlers | `modules/mode_handlers.py` 負責 `app.py` 使用的 CLI 模式包裝。 |
-| RAGQueryPlanner | 規劃資安知識查詢，並支援偏好知識來源選擇。 |
-| RAG Knowledge Q&A | 使用本地知識庫與檢索結果回答防禦性資安問題。 |
-| Pydantic boundary types | `modules/types.py` 提供逐步導入的邊界型別基礎，支援未來 ControllerAgent 與 Tool Registry 工作。 |
-| 統一 Security Triage Report | 以一致格式呈現分流分析結果。 |
-| 模擬防禦決策 | 產生模擬的 `BLOCK`、`MONITOR` 或 `ALLOW` 決策。 |
+| 層級 | 元件 | 說明 |
+|---|---|---|
+| Detection | Rule-Based Detector | 以規則式方式偵測 XSS、SQL Injection、Path Traversal、Command Injection。 |
+| Triage | TriagePolicy | 負責風險評估與模擬 `BLOCK` / `MONITOR` / `ALLOW` 決策。 |
+| Pipeline | Log Pipeline | 解析、正規化、聚合並轉接日誌輸入。 |
+| Knowledge | RAGQueryPlanner + RAG QA | 提供本地防禦知識檢索與解釋。 |
+| Assist | LLMAssist | 只提供輔助推理，不覆蓋最終系統判定。 |
+| Output | Security Triage Report | 在 payload 與 log flow 中提供統一報告格式。 |
 
 ### 目前流程
 
@@ -246,29 +224,12 @@ Completed:
 -> 統一 Security Triage Report
 ```
 
-模式流程：
+角色分工：
 
-```text
-Payload / event analysis
--> Rule-Based Detector
--> TriagePolicy
--> Security Triage Report
-
-Single raw log triage
--> log_pipeline.py
--> SecurityAgent
--> Security Triage Report
-
-Log file triage
--> log_pipeline.py
--> SecurityAgent
--> Security Triage Report
-
-Security knowledge Q&A
--> RAGQueryPlanner
--> Preferred Source Selection / Chroma Retrieval
--> RAG Answer
-```
+- Rule-Based Detector、Log Pipeline、TriagePolicy 是 deterministic。
+- RAGQueryPlanner 與 RAG QA 負責知識檢索與解釋。
+- LLMAssist 只提供 advisory 建議。
+- 統一 Security Triage Report 是最終輸出格式。
 
 ### 系統架構
 
@@ -297,25 +258,19 @@ Security knowledge Q&A
 0. Exit
 ```
 
-### 安全限制
+### 非目標
 
-- Rule-Based Detector 是已知 payload 偵測的主要判斷層。
-- RAG 只負責解釋與知識支援。
-- LLMAssist 只提供輔助建議。
-- 最終 Decision 由系統流程產生。
-- `BLOCK` / `MONITOR` / `ALLOW` 都是模擬決策。
-- 系統不控制真實 firewall、WAF、EDR 或 cloud policies。
-- 本專案是防禦導向的學術原型。
+本 prototype 明確不做以下事情：
+
+- 不攻擊真實系統或外部目標。
+- 不執行真實 firewall、WAF、EDR、SIEM、SOAR 或 cloud policy 動作。
+- 不讓 LLM 輸出覆蓋 deterministic rule-based 或 policy 決策。
+- 不把 RAG 檢索當作主要偵測層。
+- 不取代正式 production security monitoring system。
+
+`BLOCK`、`MONITOR`、`ALLOW` 都是模擬訓練決策。
 
 ### 測試與品質檢查
-
-安裝開發相依套件：
-
-```powershell
-pip install -r requirements-dev.txt
-```
-
-執行 pytest / ruff / mypy：
 
 ```powershell
 python -m pytest
@@ -323,39 +278,46 @@ python -m ruff check .
 python -m mypy app.py modules tests
 ```
 
-測試使用 dummy RAG 與 LLMAssist 物件，不會啟動完整 CLI，也不會初始化 Chroma、embeddings、Torch、Ollama 或本地 LLM client。GitHub Actions CI 會執行同一組品質檢查。
+目前預期測試結果：`30 passed`。
+
+測試使用 dummy RAG 與 LLMAssist 物件，不會啟動完整 CLI，也不會初始化 RAGQA、Chroma、embeddings、Torch、Ollama、ChatOllama 或本地 LLM client。GitHub Actions CI 會執行同一組品質檢查。
 
 ### 目前狀態
 
 目前分支：
 
 ```text
-v1.1.4-event-to-agent-adapter
-```
-
-目前里程碑：
-
-```text
-v1.1.5-unified-triage-rag-routing
+main
 ```
 
 已完成：
 
 - 統一 Security Triage Report
-- 原始日誌轉譯
-- `auth_failure` 分流
-- brute force candidate 分流
+- 原始日誌轉譯與 brute-force candidate 聚合
+- XSS、SQL Injection、Path Traversal、Command Injection 的規則式偵測
 - `RAGQueryPlanner`
-- Mode 3 專用知識問答路由
 - Pydantic boundary types 基礎
-- golden smoke tests、boundary model tests、`pytest`、`ruff`、寬鬆 `mypy` 與 GitHub Actions CI
+- expanded golden smoke tests、direct log pipeline tests、boundary model tests、`pytest`、`ruff`、寬鬆 `mypy` 與 GitHub Actions CI
 
-### 未來規劃
+### Roadmap / 後續規劃
 
-- Smart Input Router / Main Controller Agent
-- Lazy initialization
+**v1.3 — Evidence and Incident Capability**
+
+- Time-window aggregation
 - JSON incident report export
-- 更真實的日誌格式
-- Web dashboard
-- Hybrid multi-agent architecture
+- MITRE ATT&CK mapping
+
+**v1.4 — Controller Agent and Tool Registry**
+
+- Smart input routing
+- Tool-calling ControllerAgent
+- Typed tool input/output contracts
+
+**v1.5+ — Evaluation and Simulation**
+
+- Small benchmark dataset
+- Retrieval and detection quality evaluation
 - Red / blue simulation lab
+- Web dashboard exploration
+
+完整規劃請見 [docs/ROADMAP.md](docs/ROADMAP.md)。
