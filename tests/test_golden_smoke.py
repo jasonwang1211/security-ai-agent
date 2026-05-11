@@ -1,5 +1,7 @@
 from pathlib import Path
 
+import pytest
+
 from modules.agent import SecurityAgent
 from modules.detector import RuleBasedDetector
 from modules.followup_handler import FollowupHandler
@@ -84,6 +86,74 @@ def test_mode1_xss_payload_triage():
     assert "Decision: MONITOR" in output
     assert "Detection Source: rule_based_detector (rule_based)" in output
     assert "6. AI Assist" in output
+
+
+def test_mode1_sql_injection_payload_regression():
+    agent = build_test_agent()
+
+    output = run_payload_analysis(agent, "?id=1' OR '1'='1")
+
+    assert isinstance(output, str)
+    assert "[Security Triage Report]" in output
+    assert "Status: ALERT" in output
+    assert "Attack Type: SQL Injection" in output
+    assert "Detection Source: rule_based_detector (rule_based)" in output
+
+
+def test_mode1_path_traversal_payload_regression():
+    agent = build_test_agent()
+
+    output = run_payload_analysis(agent, "../../etc/passwd")
+
+    assert isinstance(output, str)
+    assert "[Security Triage Report]" in output
+    assert "Status: ALERT" in output
+    assert "Attack Type: Path Traversal" in output
+    assert "Detection Source: rule_based_detector (rule_based)" in output
+
+
+@pytest.mark.xfail(
+    reason="Command Injection regression pending detector signature support.",
+)
+def test_mode1_command_injection_payload_regression():
+    agent = build_test_agent()
+
+    output = run_payload_analysis(agent, "test; rm -rf /tmp/test")
+
+    assert "[Security Triage Report]" in output
+    assert "Status: ALERT" in output
+    assert "Attack Type: Command Injection" in output
+    assert "Detection Source: rule_based_detector (rule_based)" in output
+
+
+def test_mode1_benign_input_does_not_trigger_known_payload_alerts():
+    agent = build_test_agent()
+
+    output = run_payload_analysis(agent, "hello world")
+
+    assert isinstance(output, str)
+    assert "Status: ALERT" not in output
+    assert "Attack Type: SQL Injection" not in output
+    assert "Attack Type: XSS" not in output
+    assert "Attack Type: Path Traversal" not in output
+
+
+def test_mode1_malformed_raw_log_does_not_translate_as_auth_failure():
+    agent = build_test_agent()
+
+    output = run_payload_analysis(agent, "this is not a valid auth log")
+
+    assert isinstance(output, str)
+    assert "[Input Translation]" not in output
+    assert "Normalized Event Type: auth_failure" not in output
+
+
+def test_mode1_empty_input_does_not_crash():
+    agent = build_test_agent()
+
+    output = run_payload_analysis(agent, "")
+
+    assert isinstance(output, str)
 
 
 def test_mode1_raw_auth_log_triage():
