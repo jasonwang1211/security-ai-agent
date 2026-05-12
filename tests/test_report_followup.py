@@ -128,10 +128,21 @@ def test_minimal_kb_docs_exist_and_contain_key_phrases():
         Path("knowledge/blue_team/report_explainer/reading_the_report.md"),
         Path("knowledge/blue_team/report_explainer/risk_level_decision.md"),
         Path("knowledge/blue_team/report_explainer/investigation_checklist.md"),
+        Path("knowledge/blue_team/report_explainer/security_triage_report.md"),
+        Path("knowledge/blue_team/report_explainer/evidence_interpretation.md"),
+        Path("knowledge/blue_team/report_explainer/detection_source_meaning.md"),
+        Path("knowledge/blue_team/report_explainer/behavior_attack_triage.md"),
+        Path("knowledge/blue_team/report_explainer/simulation_notice.md"),
+        Path("knowledge/blue_team/report_explainer/ai_assist_limitations.md"),
+        Path("knowledge/blue_team/report_explainer/disagreement_handling.md"),
+        Path("knowledge/blue_team/report_explainer/incident_response_next_steps.md"),
     ]
 
     for doc in docs:
         assert doc.exists()
+        content = doc.read_text(encoding="utf-8")
+        assert content.strip()
+        assert "---" in content
 
     combined = "\n".join(doc.read_text(encoding="utf-8") for doc in docs)
     assert "Security Triage Report" in combined
