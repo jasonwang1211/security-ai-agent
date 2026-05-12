@@ -2,9 +2,77 @@ import json
 import re
 
 from langchain_core.prompts import ChatPromptTemplate
+from pydantic import ValidationError
 
 from config import AGENT_MODEL_NAME
-from modules.types import LLMAlertExplanationResultModel, LLMSuspiciousResultModel
+from modules.llm_guardrails import GuardrailResult, LLMGuardrails
+from modules.types import (
+    EvidenceBundle,
+    Finding,
+    LLMAssessment,
+    LLMAlertExplanationResultModel,
+    LLMSuspiciousResultModel,
+)
+
+
+def build_evidence_assessment_context(
+    evidence_bundle: EvidenceBundle,
+    finding: Finding,
+) -> dict[str, object]:
+    return {
+        "finding_id": finding.id,
+        "finding_type": finding.finding_type,
+        "status": finding.status,
+        "risk_level": finding.risk_level,
+        "decision": finding.decision,
+        "attack_type": finding.attack_type,
+        "evidence_items": [
+            {
+                "id": item.id,
+                "type": item.type,
+                "description": item.description,
+                "value": item.value,
+                "confidence": item.confidence,
+            }
+            for item in evidence_bundle.items
+        ],
+        "constraints": {
+            "advisory_only": True,
+            "final_verdict_controlled_by": "TriagePolicy",
+            "must_cite_evidence_ids": True,
+        },
+    }
+
+
+def parse_llm_assessment_json(
+    raw_output: str,
+    fallback: LLMAssessment,
+) -> LLMAssessment:
+    parsed = _parse_json_object(raw_output)
+    if not isinstance(parsed, dict):
+        return fallback
+
+    try:
+        return LLMAssessment.model_validate(parsed)
+    except ValidationError:
+        return fallback
+
+
+def _parse_json_object(raw_output: str):
+    if not raw_output:
+        return None
+
+    cleaned = str(raw_output).strip()
+    if cleaned.startswith("```"):
+        cleaned = re.sub(r"^```(?:json)?", "", cleaned, flags=re.IGNORECASE).strip()
+        cleaned = re.sub(r"```$", "", cleaned).strip()
+
+    try:
+        parsed = json.loads(cleaned)
+    except json.JSONDecodeError:
+        return None
+
+    return parsed if isinstance(parsed, dict) else None
 
 
 class LLMAssist:
@@ -186,6 +254,65 @@ Inputs:
             return self._merge_alert_with_fallback(validated, fallback)
         except Exception:
             return fallback
+
+    def assess_evidence(
+        self,
+        evidence_bundle: EvidenceBundle,
+        finding: Finding,
+    ) -> LLMAssessment:
+        fallback = self._build_evidence_assessment_fallback(evidence_bundle, finding)
+        context = build_evidence_assessment_context(evidence_bundle, finding)
+
+        try:
+            raw_output = self._invoke_llm_for_evidence(context)
+            if not raw_output:
+                return fallback
+            return parse_llm_assessment_json(raw_output, fallback)
+        except Exception:
+            return fallback
+
+    def assess_evidence_with_guardrails(
+        self,
+        evidence_bundle: EvidenceBundle,
+        finding: Finding,
+        guardrails: LLMGuardrails | None = None,
+    ) -> tuple[LLMAssessment, GuardrailResult]:
+        assessment = self.assess_evidence(evidence_bundle, finding)
+        guardrail_result = (guardrails or LLMGuardrails()).validate(
+            assessment,
+            evidence_bundle,
+            finding,
+        )
+        return assessment, guardrail_result
+
+    def _invoke_llm_for_evidence(self, context: dict[str, object]) -> str | None:
+        return None
+
+    def _build_evidence_assessment_fallback(
+        self,
+        evidence_bundle: EvidenceBundle,
+        finding: Finding,
+    ) -> LLMAssessment:
+        evidence_references = finding.evidence_ids or sorted(evidence_bundle.available_ids)
+        is_suspicious = finding.status in ("SUSPICIOUS", "ALERT")
+        if is_suspicious and not evidence_references:
+            is_suspicious = False
+
+        possible_attack_type = finding.attack_type or finding.finding_type
+
+        return LLMAssessment(
+            is_suspicious=is_suspicious,
+            possible_attack_types=[possible_attack_type],
+            confidence="medium",
+            reasoning="Fallback advisory assessment based on deterministic finding and cited evidence.",
+            recommended_risk=finding.risk_level,
+            recommended_action=finding.decision,
+            evidence_references=evidence_references,
+            metadata={
+                "llm_status": "FALLBACK",
+                "advisory_only": True,
+            },
+        )
 
     def _build_suspicious_fallback_result(self, query, detector_result):
         detector_result = detector_result or {}
