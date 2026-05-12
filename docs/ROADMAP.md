@@ -13,18 +13,42 @@ Completed:
 - RAGQueryPlanner for knowledge QA
 - LLMAssist as advisory-only reasoning
 - Pydantic boundary types
+- v1.3 Evidence and Incident Capability
+- Scenario A integration coverage
+- 11 `report_explainer` KB docs
 - Expanded golden smoke tests and direct log pipeline tests
 - pytest / ruff / mypy / GitHub Actions CI
 
-Current quality gate:
+Previous quality gate (superseded by the v1.3 gate below):
 
 - `python -m pytest` → `30 passed`
 - `python -m ruff check .`
 - `python -m mypy app.py modules tests`
 
+Updated v1.3 quality gate:
+
+- `python -m pytest` -> `102 passed`
+- `python -m ruff check .` -> passed
+- `python -m mypy app.py modules tests` -> passed
+
 ## v1.3 — Evidence and Incident Capability
 
-Goal:
+Status:
+Completed in this branch.
+
+Implemented:
+
+- Evidence / Finding / Incident schemas
+- Stable EV-ID and F-ID references
+- Time-window authentication sequence correlation
+- `possible_account_compromise` scenario with `HIGH / MONITOR`
+- JSON Incident Report export
+- Report-aware follow-up
+- Evidence-grounded LLMAssist with safety guardrails
+- Scenario A mixed auth log integration coverage
+- 11 `report_explainer` KB docs
+
+Historical goal:
 Move from single-event triage toward incident-style evidence handling.
 
 Planned:
@@ -37,7 +61,18 @@ Planned:
 
 ## v1.4 — Controller Agent and Tool Registry
 
-Goal:
+Status:
+Deferred until routing destinations are mature.
+
+v1.4 next planned high-value upgrade:
+
+- Detection-as-Code Lite
+- YAML-based detection rules
+- Rule loader
+- Severity, confidence, references, and MITRE metadata
+- Move hard-coded signatures out of Python
+
+Later UX / ControllerAgent goal:
 Introduce a higher-level controller without weakening deterministic safety boundaries.
 
 Planned:
