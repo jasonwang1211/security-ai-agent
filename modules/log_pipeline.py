@@ -46,6 +46,7 @@ NORMALIZED_EVENT_FIELDS = (
     "source_ip",
     "target",
     "user",
+    "timestamp",
     "method",
     "status",
     "payload",
@@ -217,6 +218,7 @@ def normalize_event(parsed_log: dict) -> dict:
             "source_ip": parsed_log.get("src_ip"),
             "target": target,
             "user": parsed_log.get("user"),
+            "timestamp": parsed_log.get("timestamp"),
             "method": parsed_log.get("method"),
             "status": parsed_log.get("status"),
         }
@@ -231,6 +233,8 @@ def normalize_event(parsed_log: dict) -> dict:
     # Auth failures take precedence over generic web request classification.
     if parsed_log.get("event") == "login_failed":
         event["event_type"] = "auth_failure"
+    elif parsed_log.get("event") in ("login_success", "auth_success"):
+        event["event_type"] = "auth_success"
     elif _is_auth_status(event["status"]) and _contains_login(target):
         event["event_type"] = "auth_failure"
     elif event["method"] and path:
@@ -385,7 +389,7 @@ def _has_meaningful_parsed_fields(parsed_log: dict, normalized_event: dict) -> b
     if parsed_log.get("method") and parsed_log.get("path"):
         return True
 
-    if parsed_log.get("event") == "login_failed":
+    if parsed_log.get("event") in ("login_failed", "login_success", "auth_success"):
         return True
 
     if parsed_log.get("src_ip") and parsed_log.get("status"):
