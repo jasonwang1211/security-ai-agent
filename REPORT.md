@@ -1,4 +1,4 @@
-# Demo & Evaluation Report
+# Demo Walkthrough and Verification Report
 
 [English](#english) | [繁體中文](#繁體中文)
 
@@ -6,11 +6,13 @@
 # English
 
 > Project: AI-assisted Security Threat Detection and Response System  
-> Branch: `v1.1.4-event-to-agent-adapter`  
-> Current milestone: `v1.1.5-unified-triage-rag-routing`  
-> Milestone name: Unified Security Triage Output and RAG QA Stabilization
+> Branch: `main`  
+> Current milestone: `v1.2-documentation-and-test-stabilization`  
+> Milestone name: Unified Triage, Golden Tests, and Portfolio Documentation Polish
 
 Full CLI excerpts are available in [demo_outputs.md](demo_outputs.md).
+
+This report documents representative CLI workflows and pass/fail verification against the current unified `Security Triage Report` contract. It is not a statistical benchmark. Precision / recall, false positive rate, and retrieval quality evaluation are planned for a later milestone.
 
 ---
 
@@ -386,20 +388,7 @@ This demo remains a functional prototype with the following limitations:
 - Smart Input Router / Main Controller Agent behavior remains future work.
 - `RAGQueryPlanner` improves retrieval, but answer quality still depends on the quality of knowledge files and local LLM output.
 
----
-
-## 10. Suggested Next Steps
-
-Recommended next development tasks:
-
-1. Freeze and document the current demo.
-2. Add a Smart Input Router / Main Controller Agent.
-3. Add lazy initialization for heavy RAG / embedding / Chroma components.
-4. Add JSON Incident Report export.
-5. Support more realistic log formats.
-6. Explore a Hybrid Multi-Agent architecture.
-7. Add a web dashboard.
-8. Build a Red / Blue simulation lab later.
+For planned future work, see [docs/ROADMAP.md](docs/ROADMAP.md).
 
 ---
 
@@ -407,11 +396,13 @@ Recommended next development tasks:
 # 繁體中文
 
 > 專案：AI 輔助安全威脅偵測與回應系統  
-> 分支：`v1.1.4-event-to-agent-adapter`  
-> 目前里程碑：`v1.1.5-unified-triage-rag-routing`  
-> 里程碑名稱：統一 Security Triage Report 與 RAG QA 穩定化
+> 分支：`main`  
+> 目前里程碑：`v1.2-documentation-and-test-stabilization`  
+> 里程碑名稱：統一分流、Golden Tests 與作品集文件整理
 
 完整 CLI 範例可參考 [demo_outputs.md](demo_outputs.md)。
+
+本報告記錄代表性的 CLI 流程與 pass/fail 驗證，用來確認目前統一 `Security Triage Report` 契約是否穩定。這不是統計式 benchmark；precision / recall、false positive rate 與 retrieval quality evaluation 會留到後續里程碑。
 
 ---
 
@@ -594,18 +585,7 @@ Unified Security Triage Output and RAG QA Stabilization milestone is ready for d
 - Smart Input Router / Main Controller Agent 仍是未來工作。
 - `RAGQueryPlanner` 可改善檢索，但答案品質仍取決於知識檔與本地 LLM 輸出。
 
----
-
-## 9. 後續建議
-
-1. 凍結並整理目前 demo 文件。
-2. 加入 Smart Input Router / Main Controller Agent。
-3. 對 RAG / embedding / Chroma 加入 lazy initialization。
-4. 加入 JSON Incident Report export。
-5. 支援更真實的日誌格式。
-6. 探索 Hybrid Multi-Agent architecture。
-7. 加入 web dashboard。
-8. 後續建立 Red / Blue simulation lab。
+後續規劃請見 [docs/ROADMAP.md](docs/ROADMAP.md)。
 
 ---
 

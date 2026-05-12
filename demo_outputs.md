@@ -317,7 +317,11 @@ Representative answer excerpt / 代表性回答摘錄:
 Read the Security Triage Report from top to bottom. Quick Verdict gives the compact status, attack type, risk level, decision, and detection source. Summary explains what happened. Evidence shows the concrete signals. Why It Matters explains the security impact. Recommended Response separates immediate actions, mitigation, and follow-up. Simulation Notice reminds you that BLOCK, MONITOR, and ALLOW are simulated decisions. AI Assist shows model suggestions, but LLM Suggested Decision is assist-only and is not the final system decision.
 ```
 
-## Retired Output Formats / 已退役輸出格式
+## Appendix: Deprecated Output Formats / 附錄：已退役輸出格式
+
+Historical reference only. These formats are no longer emitted by the current system and are kept to document output schema evolution.
+
+僅作為歷史參考。目前系統已不再輸出這些格式，保留此段是為了記錄輸出格式的演進。
 
 The following older labels are retained here only as a migration note and should not appear as the current final demo output:
 
