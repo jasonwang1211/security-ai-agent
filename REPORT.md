@@ -6,13 +6,59 @@
 # English
 
 > Project: AI-assisted Security Threat Detection and Response System  
-> Branch: `main`  
-> Current milestone: `v1.2-documentation-and-test-stabilization`  
-> Milestone name: Unified Triage, Golden Tests, and Portfolio Documentation Polish
+> Branch: `v1.3-evidence-incident-capability`  
+> Current milestone: `v1.3-evidence-incident-capability`  
+> Milestone name: Evidence and Incident Capability
 
 Full CLI excerpts are available in [demo_outputs.md](demo_outputs.md).
 
 This report documents representative CLI workflows and pass/fail verification against the current unified `Security Triage Report` contract. It is not a statistical benchmark. Precision / recall, false positive rate, and retrieval quality evaluation are planned for a later milestone.
+
+---
+
+## v1.3 Evidence and Incident Capability
+
+What changed:
+
+- Added `EvidenceItem`, `EvidenceBundle`, `Finding`, `Incident`, `GenerationMetadata`, and `LLMAssessment` schemas.
+- Added `LLMGuardrails` for evidence references, deterministic downgrade protection, unilateral `BLOCK` caution, attack-type allowlisting, and confidence sanity.
+- Added `auth_success` normalization in the log pipeline.
+- Added deterministic time-window and sequence correlation for `possible_account_compromise`.
+- Added JSON Incident Report export utilities.
+- Added report-aware follow-up helpers for EV-ID / F-ID lookup and report explanation.
+- Added evidence-grounded LLMAssist fallback/advisory assessment with guardrail validation.
+- Added Scenario A mixed authentication demo log and integration coverage.
+- Added 11 `report_explainer` KB docs for report-aware explanation.
+
+Verification:
+
+- `python -m pytest` -> `102 passed`
+- `python -m ruff check .` -> passed
+- `python -m mypy app.py modules tests` -> passed
+
+Representative Scenario A:
+
+```text
+Mixed auth log
+-> parse / normalize
+-> time-window + sequence correlation
+-> possible_account_compromise
+-> Risk Level: HIGH
+-> Decision: MONITOR
+-> JSON Incident Report
+-> EV-003 follow-up explanation
+-> LLMAssist advisory assessment with guardrails
+```
+
+Boundary note:
+
+This is not confirmed compromise. `MONITOR` means analyst review / simulated monitoring. The prototype does not perform real firewall, WAF, EDR, SIEM, or SOAR action. LLMAssist remains advisory and cannot override the deterministic final decision.
+
+### v1.3 證據與事件能力
+
+v1.3 將系統從單一事件分析推進到 incident-style evidence handling。系統現在能使用 EV-ID / F-ID 保存證據與 finding，針對 authentication log 進行 time-window sequence correlation，偵測 repeated auth_failure followed by auth_success 的 `possible_account_compromise` 情境，並輸出 JSON Incident Report。
+
+驗證結果：`pytest` 為 `102 passed`，`ruff` 通過，`mypy app.py modules tests` 通過。此判定仍是 deterministic correlation；`possible_account_compromise` 代表可疑但未確認的 compromise，因此 v1.3 預設為 `HIGH / MONITOR`。LLMAssist 只提供 advisory reasoning，並受到 guardrails 限制；最終 decision 不會被 LLM 覆蓋，也不會執行真實 enforcement。
 
 ---
 
@@ -333,7 +379,8 @@ The current branch also includes a small but important quality foundation:
 - Expanded golden smoke tests for payload regressions, benign input, malformed raw logs, and empty input
 - Direct consolidated log pipeline tests for parsing, normalization, and brute-force aggregation
 - Pydantic boundary model tests for `modules/types.py`
-- `pytest` for regression checks; current expected result is `30 passed`
+- Evidence / incident model, guardrail, correlator, exporter, follow-up, LLMAssist, and Scenario A integration tests
+- `pytest` for regression checks; current expected result is `102 passed`
 - `ruff` for linting and import hygiene
 - Lenient `mypy` as a gradual typing baseline
 - GitHub Actions CI for automated quality checks
@@ -530,7 +577,7 @@ Mode 3 RAG 只負責知識解釋，不決定 attack type、risk level 或模擬 
 - expanded golden smoke tests
 - direct consolidated log pipeline tests
 - Pydantic boundary model tests
-- `pytest` (`30 passed`)
+- `pytest` (`102 passed`)
 - `ruff`
 - lenient `mypy`
 - GitHub Actions CI

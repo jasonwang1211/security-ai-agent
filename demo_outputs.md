@@ -1,8 +1,8 @@
 # Demo Outputs / Demo 輸出範例
 
-This document shows representative CLI output for the current `v1.1.4-event-to-agent-adapter` demo flow.
+This document shows representative output excerpts for the current `v1.3-evidence-incident-capability` demo flow.
 
-本文件整理目前 `v1.1.4-event-to-agent-adapter` demo flow 的代表性 CLI 輸出。
+本文件整理目前 `v1.3-evidence-incident-capability` demo flow 的代表性輸出摘錄。
 
 The current system emits a unified `[Security Triage Report]` for triage output. Older standalone formats are outdated and should not be used as the expected demo output.
 
@@ -332,3 +332,44 @@ The following older labels are retained here only as a migration note and should
 - `[Security Triage Result]`
 - `Final Risk`
 - `Final Decision`
+
+## Scenario A - Possible Account Compromise / 情境 A：疑似帳號入侵
+
+Status / 狀態: Passed
+
+Input / 輸入:
+
+```text
+demo_logs/scenario_a_mixed_auth.log
+```
+
+Detected Incident / 偵測到的 Incident:
+
+- Type: Possible Account Compromise
+- Finding: `possible_account_compromise`
+- Risk Level: `HIGH`
+- Decision: `MONITOR`
+- Evidence:
+  - `EV-001` `failed_count`
+  - `EV-002` `time_window`
+  - `EV-003` `success_after_failures`
+- JSON Incident Report: available through `modules.incident_exporter`
+- Report-aware follow-up:
+  - `EV-003 是什麼意思？`
+  - `為什麼是 MONITOR？`
+
+Representative flow:
+
+```text
+Mixed auth log
+-> parse / normalize
+-> time-window + sequence correlation
+-> possible_account_compromise
+-> Risk Level: HIGH
+-> Decision: MONITOR
+-> JSON Incident Report
+-> EV-003 follow-up explanation
+-> LLMAssist advisory assessment with guardrails
+```
+
+`MONITOR` is used because the sequence is suspicious but not confirmed compromise. LLMAssist remains advisory and cannot override the deterministic final decision. No real enforcement action is performed.

@@ -37,6 +37,7 @@ This project explores a hybrid path: deterministic detection and policy produce 
 | Knowledge | RAGQueryPlanner + RAG QA | Local defensive knowledge retrieval and explanation. |
 | Assist | LLMAssist | Advisory reasoning only; it never overrides the final verdict. |
 | Output | Security Triage Report | Unified report format across payload and log flows. |
+| Incident | Evidence / Incident Capability | Stable EV-ID / F-ID evidence handling, sequence correlation, JSON Incident export, and report-aware follow-up. |
 
 ### Non-Goals
 
@@ -86,6 +87,28 @@ Core modules:
 - `modules/rag_qa.py`: local knowledge retrieval and answer generation
 - `modules/types.py`: Pydantic boundary types
 
+### v1.3 Evidence and Incident Capability
+
+v1.3 moves the prototype from single-event triage toward incident-style evidence handling:
+
+- Evidence / Finding / Incident Pydantic schemas
+- Stable EV-ID and F-ID references
+- Time-window authentication sequence correlation
+- `possible_account_compromise` finding
+- JSON Incident Report export
+- Report-aware follow-up helper
+- Evidence-grounded LLMAssist with guardrails
+- Scenario A mixed auth log integration test
+- 11 `report_explainer` KB docs
+
+Boundaries:
+
+- `possible_account_compromise` is suspicious, not confirmed compromise.
+- v1.3 uses `HIGH / MONITOR`, not automatic `BLOCK`.
+- LLMAssist remains advisory only.
+- Final verdict remains deterministic and policy-controlled.
+- No real enforcement actions are performed.
+
 ### CLI Modes
 
 ```text
@@ -112,9 +135,9 @@ python -m ruff check .
 python -m mypy app.py modules tests
 ```
 
-Current expected test result: `30 passed`.
+Current expected test result: `102 passed`.
 
-The test suite includes expanded golden smoke tests, direct consolidated log pipeline tests, and Pydantic boundary model tests. It uses dummy RAG and LLMAssist objects, so it does not start the full app or initialize RAGQA, Chroma, embeddings, Torch, Ollama, ChatOllama, or local LLM clients. GitHub Actions CI runs the same quality gate.
+The test suite includes expanded golden smoke tests, direct consolidated log pipeline tests, Pydantic boundary model tests, incident/export/follow-up/guardrail tests, and Scenario A integration coverage for a mixed authentication log. Deterministic tests do not start the full app or initialize RAGQA, Chroma, embeddings, Torch, Ollama, ChatOllama, or local LLM clients. GitHub Actions CI runs the same quality gate.
 
 ### Local Model Prerequisites
 
@@ -142,7 +165,7 @@ python app.py
 Current working branch:
 
 ```text
-main
+v1.3-evidence-incident-capability
 ```
 
 Completed:
@@ -152,6 +175,7 @@ Completed:
 - Rule-based detection for XSS, SQL Injection, Path Traversal, and Command Injection
 - `RAGQueryPlanner`
 - Pydantic boundary types for gradual controller and tool registry work
+- v1.3 Evidence and Incident Capability, including stable EV-ID/F-ID contracts, `possible_account_compromise` correlation, JSON Incident Report export, report-aware follow-up, LLMAssist guardrails, Scenario A integration coverage, and 11 `report_explainer` KB docs
 - Expanded golden smoke tests, direct log pipeline tests, focused boundary model tests, `pytest`, `ruff`, lenient `mypy`, and GitHub Actions CI
 
 ### Roadmap
@@ -175,7 +199,19 @@ Completed:
 - Red / blue simulation lab
 - Web dashboard exploration
 
+Roadmap sync for v1.3:
+
+- v1.3 Evidence and Incident Capability is implemented in this branch.
+- v1.4 Detection-as-Code Lite is the next planned high-value upgrade: YAML-based detection rules, rule loader, severity / confidence / references / MITRE metadata, and moving hard-coded signatures out of Python.
+- Smart Input Router and ControllerAgent work remain later UX / orchestration scope after destinations are mature.
+
 For the full plan, see [docs/ROADMAP.md](docs/ROADMAP.md).
+
+### v1.3 Evidence and Incident Capability
+
+本階段將系統從單一事件分流推進到 incident-style evidence handling。系統現在能使用 EV-ID / F-ID 保存證據與 finding，針對 authentication log 進行 time-window sequence correlation，偵測 repeated auth_failure followed by auth_success 的 `possible_account_compromise` 情境，並輸出 JSON Incident Report。
+
+此判定仍為 deterministic correlation；LLMAssist 只提供 advisory reasoning，並受到 guardrails 限制。`possible_account_compromise` 在 v1.3 預設為 `HIGH / MONITOR`，不直接執行或模擬 `BLOCK`。所有 `BLOCK` / `MONITOR` / `ALLOW` 仍是訓練用模擬決策，沒有真實 enforcement。
 
 ## 繁體中文
 
@@ -278,7 +314,7 @@ python -m ruff check .
 python -m mypy app.py modules tests
 ```
 
-目前預期測試結果：`30 passed`。
+目前預期測試結果：`102 passed`。
 
 測試使用 dummy RAG 與 LLMAssist 物件，不會啟動完整 CLI，也不會初始化 RAGQA、Chroma、embeddings、Torch、Ollama、ChatOllama 或本地 LLM client。GitHub Actions CI 會執行同一組品質檢查。
 
@@ -287,7 +323,7 @@ python -m mypy app.py modules tests
 目前分支：
 
 ```text
-main
+v1.3-evidence-incident-capability
 ```
 
 已完成：
