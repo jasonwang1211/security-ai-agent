@@ -1,0 +1,320 @@
+from __future__ import annotations
+
+import re
+
+from modules.types import EvidenceItem, Finding, Incident
+
+Intent = str
+
+DOC_READING_REPORT = "knowledge/blue_team/report_explainer/reading_the_report.md"
+DOC_RISK_DECISION = "knowledge/blue_team/report_explainer/risk_level_decision.md"
+DOC_INVESTIGATION = "knowledge/blue_team/report_explainer/investigation_checklist.md"
+
+DOCS_BY_INTENT = {
+    "explain_evidence": [DOC_READING_REPORT],
+    "explain_finding": [DOC_READING_REPORT],
+    "why_risk": [DOC_RISK_DECISION],
+    "why_decision": [DOC_RISK_DECISION],
+    "next_steps": [DOC_INVESTIGATION],
+    "ai_assist_disagreement": [DOC_RISK_DECISION],
+    "read_report": [DOC_READING_REPORT],
+    "unknown": [],
+}
+
+SUGGESTIONS_BY_INTENT = {
+    "explain_evidence": [
+        "為什麼這個 evidence 會影響風險？",
+        "我接下來要查什麼？",
+    ],
+    "explain_finding": [
+        "這個 finding 參考了哪些 evidence？",
+        "這個 finding 對應哪些調查步驟？",
+    ],
+    "why_risk": [
+        "哪些 evidence 支持這個 Risk Level？",
+        "這可能是誤報嗎？",
+    ],
+    "why_decision": [
+        "HIGH 為什麼不一定等於 BLOCK？",
+        "什麼情況下會升級成 BLOCK？",
+    ],
+    "next_steps": [
+        "我要查哪些 log source？",
+        "這可能是誤報嗎？",
+        "是否需要保留 evidence？",
+    ],
+    "ai_assist_disagreement": [
+        "Final Decision 和 AI Assist 誰優先？",
+        "我該怎麼處理 AI 建議不同的情況？",
+    ],
+    "read_report": [
+        "Evidence 區塊怎麼看？",
+        "Risk Level 和 Decision 有什麼差別？",
+    ],
+    "unknown": [
+        "這份報告怎麼看？",
+        "我接下來要查什麼？",
+    ],
+}
+
+
+def classify_followup_intent(question: str) -> Intent:
+    text = str(question or "").strip().lower()
+    evidence_ids = extract_evidence_ids(text)
+    finding_ids = extract_finding_ids(text)
+
+    if evidence_ids:
+        return "explain_evidence"
+
+    if finding_ids:
+        return "explain_finding"
+
+    if any(term in text for term in ("ai assist", "llm", "ai 建議", "final decision")):
+        if any(term in text for term in ("不一樣", "不同", "disagree", "disagreement")):
+            return "ai_assist_disagreement"
+
+    if any(term in text for term in ("接下來", "next", "next step", "查什麼", "checklist")):
+        return "next_steps"
+
+    if any(term in text for term in ("monitor", "block", "allow", "decision", "決策", "為什麼是")):
+        return "why_decision"
+
+    if any(term in text for term in ("risk", "high", "medium", "low", "風險", "risk level")):
+        return "why_risk"
+
+    if any(term in text for term in ("怎麼看", "報告", "report", "triage report")):
+        return "read_report"
+
+    return "unknown"
+
+
+def extract_evidence_ids(text: str) -> list[str]:
+    return _extract_stable_ids(r"EV-\d+", text)
+
+
+def extract_finding_ids(text: str) -> list[str]:
+    return _extract_stable_ids(r"F-\d+", text)
+
+
+def lookup_evidence(incident: Incident, evidence_id: str) -> EvidenceItem | None:
+    return incident.evidence_bundle.get(str(evidence_id or "").upper())
+
+
+def lookup_finding(incident: Incident, finding_id: str) -> Finding | None:
+    normalized_id = str(finding_id or "").upper()
+    return next((finding for finding in incident.findings if finding.id == normalized_id), None)
+
+
+def suggest_followups(intent: str, incident: Incident | None = None) -> list[str]:
+    suggestions = SUGGESTIONS_BY_INTENT.get(intent, SUGGESTIONS_BY_INTENT["unknown"])
+    if incident is None:
+        return list(suggestions)
+
+    if intent in ("why_decision", "why_risk"):
+        return [*suggestions, f"這個 {incident.risk_level}/{incident.decision} 組合代表什麼？"]
+
+    return list(suggestions)
+
+
+def answer_report_followup(question: str, incident: Incident) -> dict[str, object]:
+    intent = classify_followup_intent(question)
+    evidence_ids = extract_evidence_ids(question)
+    finding_ids = extract_finding_ids(question)
+    referenced_evidence: list[str] = []
+    referenced_findings: list[str] = []
+    confidence = "medium"
+
+    if intent == "explain_evidence":
+        answer, referenced_evidence, confidence = _answer_evidence_lookup(
+            incident, evidence_ids
+        )
+    elif intent == "explain_finding":
+        answer, referenced_findings, referenced_evidence, confidence = _answer_finding_lookup(
+            incident, finding_ids
+        )
+    elif intent == "why_risk":
+        answer = _answer_why_risk(incident)
+        referenced_findings = [finding.id for finding in incident.findings]
+        confidence = "high"
+    elif intent == "why_decision":
+        answer = _answer_why_decision(incident)
+        referenced_findings = [finding.id for finding in incident.findings]
+        confidence = "high"
+    elif intent == "next_steps":
+        answer = _answer_next_steps(incident)
+        referenced_findings = [finding.id for finding in incident.findings]
+        confidence = "high"
+    elif intent == "ai_assist_disagreement":
+        answer = _answer_ai_assist_disagreement(incident)
+        confidence = "medium"
+    elif intent == "read_report":
+        answer = _answer_read_report(incident)
+        confidence = "high"
+    else:
+        answer = (
+            "我可以根據目前 Incident、Finding、Evidence 說明這份報告，但不會重新判定風險或改變決策。"
+            "請指定 EV-ID、F-ID，或詢問 Risk Level、Decision、下一步調查。"
+        )
+        confidence = "low"
+
+    return {
+        "intent": intent,
+        "answer": answer,
+        "referenced_evidence": referenced_evidence,
+        "referenced_findings": referenced_findings,
+        "referenced_docs": DOCS_BY_INTENT.get(intent, []),
+        "suggested_followups": suggest_followups(intent, incident),
+        "confidence": confidence,
+    }
+
+
+def _extract_stable_ids(pattern: str, text: str) -> list[str]:
+    seen = set()
+    extracted = []
+    for match in re.findall(pattern, str(text or ""), flags=re.IGNORECASE):
+        normalized = match.upper()
+        if normalized not in seen:
+            extracted.append(normalized)
+            seen.add(normalized)
+    return extracted
+
+
+def _answer_evidence_lookup(
+    incident: Incident,
+    evidence_ids: list[str],
+) -> tuple[str, list[str], str]:
+    if not evidence_ids:
+        return (
+            "請提供 EV-ID，例如 EV-003。我會只解釋目前報告中已存在的 evidence。",
+            [],
+            "insufficient",
+        )
+
+    answer_parts = []
+    referenced = []
+    missing = []
+    for evidence_id in evidence_ids:
+        item = lookup_evidence(incident, evidence_id)
+        if item is None:
+            missing.append(evidence_id)
+            continue
+
+        referenced.append(item.id)
+        value_text = f" value={item.value!r}" if item.value is not None else ""
+        answer_parts.append(
+            f"{item.id} 是目前 Incident 的 evidence，type={item.type}。"
+            f"{item.description}{value_text}。"
+        )
+
+    if missing:
+        answer_parts.append(
+            f"找不到 {', '.join(missing)}；我不會替不存在的 evidence 補內容。"
+        )
+
+    confidence = "high" if referenced and not missing else "insufficient"
+    return " ".join(answer_parts), referenced, confidence
+
+
+def _answer_finding_lookup(
+    incident: Incident,
+    finding_ids: list[str],
+) -> tuple[str, list[str], list[str], str]:
+    if not finding_ids:
+        return (
+            "請提供 F-ID，例如 F-001。我會只解釋目前報告中已存在的 finding。",
+            [],
+            [],
+            "insufficient",
+        )
+
+    answer_parts = []
+    referenced_findings = []
+    referenced_evidence = []
+    missing = []
+    for finding_id in finding_ids:
+        finding = lookup_finding(incident, finding_id)
+        if finding is None:
+            missing.append(finding_id)
+            continue
+
+        referenced_findings.append(finding.id)
+        referenced_evidence.extend(finding.evidence_ids)
+        answer_parts.append(
+            f"{finding.id} 是 {finding.finding_type}，status={finding.status}，"
+            f"risk={finding.risk_level}，decision={finding.decision}。"
+            f"它引用 evidence: {', '.join(finding.evidence_ids) or 'none'}。"
+        )
+
+    if missing:
+        answer_parts.append(f"找不到 {', '.join(missing)}。")
+
+    return (
+        " ".join(answer_parts),
+        referenced_findings,
+        _dedupe(referenced_evidence),
+        "high" if referenced_findings and not missing else "insufficient",
+    )
+
+
+def _answer_why_risk(incident: Incident) -> str:
+    evidence_count = len(incident.evidence_bundle.items)
+    return (
+        f"目前報告的 Risk Level 是 {incident.risk_level}。"
+        f"這是根據既有 Incident / Finding / Evidence 的 deterministic verdict 說明，"
+        f"包含 {len(incident.findings)} 個 finding 和 {evidence_count} 個 evidence。"
+        "這個回答只解釋報告內容，不重新評分。"
+    )
+
+
+def _answer_why_decision(incident: Incident) -> str:
+    return (
+        f"目前 Final Decision 是 {incident.decision}。"
+        "possible_account_compromise 代表可疑但尚未確認的 compromise；"
+        "v1.3 以 MONITOR 表示需要 analyst review，而不是直接執行 BLOCK。"
+        f"{incident.simulation_notice}"
+    )
+
+
+def _answer_next_steps(incident: Incident) -> str:
+    source_ips = _evidence_values_by_type(incident, "same_source_ip")
+    users = _evidence_values_by_type(incident, "same_user")
+    targets = _evidence_values_by_type(incident, "same_target")
+    focus = ", ".join([*source_ips, *users, *targets]) or incident.id
+    return (
+        "建議先 review successful login session、檢查同一 source_ip 是否嘗試其他 user、"
+        "比對 authentication log 與 session activity，並保留相關 evidence。"
+        f"本次調查焦點: {focus}。"
+    )
+
+
+def _answer_ai_assist_disagreement(incident: Incident) -> str:
+    return (
+        f"若 AI Assist 與 Final Decision 不一致，仍以 deterministic Final Decision "
+        f"{incident.decision} 為準。AI Assist 是 advisory，不會覆蓋 Risk Level 或 Decision。"
+    )
+
+
+def _answer_read_report(incident: Incident) -> str:
+    return (
+        "這份 Security Triage Report 可以先看 Quick Verdict，再看 Summary、Evidence、"
+        "Risk Level、Decision、Recommended Response 和 Simulation Notice。"
+        f"目前 Incident 是 {incident.id}，decision={incident.decision}。"
+    )
+
+
+def _evidence_values_by_type(incident: Incident, evidence_type: str) -> list[str]:
+    values = []
+    for item in incident.evidence_bundle.items:
+        if item.type == evidence_type and item.value is not None:
+            values.append(str(item.value))
+    return values
+
+
+def _dedupe(values: list[str]) -> list[str]:
+    deduped = []
+    seen = set()
+    for value in values:
+        if value not in seen:
+            deduped.append(value)
+            seen.add(value)
+    return deduped
