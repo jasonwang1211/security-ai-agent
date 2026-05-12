@@ -1,94 +1,69 @@
-# Architecture Debt and Consolidation Plan
+# Architecture Debt Engineering Journal
 
-Current milestone: `v1.1.5-unified-triage-rag-routing`
+Current baseline: `v1.2-documentation-and-test-stabilization`
+
+This document tracks structural debt cleanup as an engineering discipline: reducing module sprawl, consolidating thin wrappers, and preserving deterministic safety boundaries before adding more agentic behavior.
 
 ## Current Status
 
-The project has reached a stable demo milestone with:
+The project has reached a stable consolidated architecture with:
 
 - Unified `Security Triage Report`
-- Payload triage
-- Raw auth log triage
-- Log file ingestion and aggregation
+- Rule-based detection for XSS, SQL Injection, Path Traversal, and Command Injection
+- Raw auth log translation
+- Log file ingestion and brute-force candidate aggregation
 - `RAGQueryPlanner`-based knowledge QA
+- Pydantic boundary models for future controller and tool work
 
-This document records the current architecture debt and consolidation progress. The project is intentionally moving from a working prototype toward a cleaner, easier-to-maintain architecture.
+## Consolidation Outcomes
 
-## Completed Consolidation
+| Area | Before | After | Outcome |
+|---|---|---|---|
+| Triage policy | `risk_scorer.py`, `decision_engine.py`, `defense_simulator.py` | `triage_policy.py` | Consolidated risk scoring, decision mapping, and simulated defense policy |
+| LLM assist | `llm_threat_judge.py`, `llm_analyzer.py` | `llm_assist.py` | Unified advisory LLM behavior and fallback handling |
+| CLI mode wrappers | `modules/skills/*` | `mode_handlers.py` | Consolidated thin CLI wrappers |
+| Log ingestion | parser / normalizer / aggregator / adapter modules | `log_pipeline.py` | Consolidated parse -> normalize -> aggregate -> adapt flow |
+| Boundary contracts | ad-hoc dictionaries | `modules/types.py` | Added Pydantic boundary models for future controller/tool work |
+| Testing foundation | limited smoke coverage | golden + log pipeline + boundary tests | Current quality gate: `30 passed`, ruff, mypy |
 
-- Triage policy completed: `risk_scorer.py`, `decision_engine.py`, and `defense_simulator.py` were consolidated into `modules/triage_policy.py`.
-- LLM assist completed: `llm_threat_judge.py` and `llm_analyzer.py` were consolidated into `modules/llm_assist.py`.
-- CLI mode handler consolidation completed: `modules/skills/*` was consolidated into `modules/mode_handlers.py`.
-- Log pipeline consolidation completed: `log_parser.py`, `event_normalizer.py`, `event_aggregator.py`, `event_to_agent_input.py`, and `log_input_adapter.py` were consolidated into `modules/log_pipeline.py`.
+## Current Quality Gate
 
-## Current Architecture Debt
+- `python -m pytest` -> `30 passed`
+- `python -m ruff check .`
+- `python -m mypy app.py modules tests`
+- CI runs the same quality gate
 
-### A. ControllerAgent / Tool Registry
+## Remaining Engineering Notes
+
+### ControllerAgent / Tool Registry
 
 `SecurityAgent` currently works as an orchestrator / workflow controller. It coordinates detection, scoring, decisioning, response simulation, LLM assist, and report generation.
 
-It is not yet a true tool-calling agent.
+It is not yet a true tool-calling agent. Future controller work should preserve deterministic policy boundaries and use typed tool input/output contracts.
 
-Future direction: introduce a Main Controller Agent with a tool registry, where detection, triage, log handling, RAG QA, and reporting can be exposed as explicit tools.
+### Responder Size
 
-### B. Responder Size
+`responder.py` owns unified report formatting and response playbooks. This keeps output consistent, but the file remains large.
 
-`responder.py` owns unified report formatting and response playbooks. This makes the report output consistent, but the file is currently large.
+Future cleanup can keep report formatting in `responder.py` while moving static playbook data into structured constants or knowledge files.
 
-Future direction: keep report formatting in `responder.py`, but move static playbook data into structured constants or knowledge files.
+### RAG Routing
 
-### C. RAG Routing
+`RAGQueryPlanner` supports preferred source selection for the current small knowledge base.
 
-`RAGQueryPlanner` currently supports preferred source selection. This is useful for the current small knowledge base.
+Future retrieval work can move toward metadata-driven retrieval with markdown frontmatter and Chroma metadata filtering.
 
-Future direction: move toward metadata-driven retrieval with markdown frontmatter and Chroma metadata filtering.
+### Startup Cost
 
-### D. Startup Cost
+App startup may still initialize heavy RAG, embedding, and Chroma resources.
 
-App startup still initializes heavy RAG, embedding, and Chroma resources.
+Future work should continue moving heavy components toward lazy initialization.
 
-Future direction: broader lazy initialization so each heavy component loads only when its CLI mode or controller tool needs it.
+## Out of Scope for Consolidation
 
-### E. Schemas / Common Types
+- Building a large multi-agent architecture immediately
+- Building a Red / Blue simulation lab during consolidation
+- Supporting every real-world log format during consolidation
+- Connecting to real firewall, WAF, EDR, SIEM, SOAR, or cloud policy actions
 
-Most pipeline contracts are still plain dictionaries. This is flexible for the prototype, but it makes cross-module contracts easy to drift.
-
-Future direction: introduce lightweight shared schemas or common types for detector results, normalized events, triage policy results, LLM assist results, and report inputs.
-
-## Consolidation Roadmap
-
-### Phase 1: Triage Policy Consolidation
-
-- Completed: `risk_scorer.py`, `decision_engine.py`, and `defense_simulator.py` were consolidated into `modules/triage_policy.py`.
-
-### Phase 2: LLM Assist Consolidation
-
-- Completed: `LLMThreatJudge` and `LLMSecurityAnalyzer` were consolidated into `modules/llm_assist.py`.
-
-### Phase 3: Skill Handler Preparation
-
-- Completed: CLI skill handlers were consolidated into `modules/mode_handlers.py`.
-
-### Phase 3B: Log Pipeline Consolidation
-
-- Completed: log parser, normalizer, aggregator, event-to-agent adapter, and raw log input adapter were consolidated into `modules/log_pipeline.py`.
-
-### Phase 4: Responder Playbook Refactor
-
-- Keep unified report formatting in `responder.py`.
-- Move static response playbooks into structured constants or knowledge files.
-
-### Phase 5: Lazy Initialization
-
-- Defer RAG, embedding, Chroma, and local LLM initialization until needed.
-
-### Phase 6: ControllerAgent / Tool Registry
-
-- Introduce a future `ControllerAgent` and explicit tool registry for routing analysis, RAG QA, log ingestion, and reporting workflows.
-
-## Non-Goals
-
-- Do not build a 10-agent architecture now.
-- Do not build a Red / Blue simulation lab now.
-- Do not support every log format now.
-- Do not connect to a real firewall, WAF, or EDR.
+For planned future work after consolidation, see [docs/ROADMAP.md](docs/ROADMAP.md).

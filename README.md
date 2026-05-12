@@ -38,6 +38,18 @@ This project explores a hybrid path: deterministic detection and policy produce 
 | Assist | LLMAssist | Advisory reasoning only; it never overrides the final verdict. |
 | Output | Security Triage Report | Unified report format across payload and log flows. |
 
+### Non-Goals
+
+This prototype deliberately does not:
+
+- Attack real systems or external targets.
+- Execute real firewall, WAF, EDR, SIEM, SOAR, or cloud policy actions.
+- Let LLM output override deterministic rule-based or policy decisions.
+- Treat RAG retrieval as a primary detection layer.
+- Replace production security monitoring systems.
+
+`BLOCK`, `MONITOR`, and `ALLOW` are simulated training decisions only.
+
 ### Current Flow
 
 ```text
@@ -83,18 +95,6 @@ Core modules:
 4. Follow-up / more details
 0. Exit
 ```
-
-### Non-Goals
-
-This prototype deliberately does not:
-
-- Attack real systems or external targets.
-- Execute real firewall, WAF, EDR, SIEM, SOAR, or cloud policy actions.
-- Let LLM output override deterministic rule-based or policy decisions.
-- Treat RAG retrieval as a primary detection layer.
-- Replace production security monitoring systems.
-
-`BLOCK`, `MONITOR`, and `ALLOW` are simulated training decisions only.
 
 ### Testing And Quality Checks
 
@@ -212,6 +212,18 @@ SOC-style 事件分流常見兩個問題：
 | Assist | LLMAssist | 只提供輔助推理，不覆蓋最終系統判定。 |
 | Output | Security Triage Report | 在 payload 與 log flow 中提供統一報告格式。 |
 
+### 非目標
+
+本 prototype 明確不做以下事情：
+
+- 不攻擊真實系統或外部目標。
+- 不執行真實 firewall、WAF、EDR、SIEM、SOAR 或 cloud policy 動作。
+- 不讓 LLM 輸出覆蓋 deterministic rule-based 或 policy 決策。
+- 不把 RAG 檢索當作主要偵測層。
+- 不取代正式 production security monitoring system。
+
+`BLOCK`、`MONITOR`、`ALLOW` 都是模擬訓練決策。
+
 ### 目前流程
 
 ```text
@@ -257,18 +269,6 @@ SOC-style 事件分流常見兩個問題：
 4. Follow-up / more details
 0. Exit
 ```
-
-### 非目標
-
-本 prototype 明確不做以下事情：
-
-- 不攻擊真實系統或外部目標。
-- 不執行真實 firewall、WAF、EDR、SIEM、SOAR 或 cloud policy 動作。
-- 不讓 LLM 輸出覆蓋 deterministic rule-based 或 policy 決策。
-- 不把 RAG 檢索當作主要偵測層。
-- 不取代正式 production security monitoring system。
-
-`BLOCK`、`MONITOR`、`ALLOW` 都是模擬訓練決策。
 
 ### 測試與品質檢查
 
