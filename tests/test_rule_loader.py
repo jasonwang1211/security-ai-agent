@@ -51,6 +51,28 @@ def test_load_detection_rules_does_not_return_disabled_rule(tmp_path):
     assert load_detection_rules(tmp_path) == []
 
 
+def test_load_detection_rules_rejects_duplicate_enabled_rule_ids(tmp_path):
+    write_rule(tmp_path / "one.yml", VALID_RULE_YAML)
+    write_rule(tmp_path / "two.yml", VALID_RULE_YAML.replace("title: Temporary XSS Rule", "title: Copy"))
+
+    with pytest.raises(ValueError):
+        load_detection_rules(tmp_path)
+
+
+def test_load_detection_rules_allows_disabled_duplicate_rule_id(tmp_path):
+    write_rule(tmp_path / "one.yml", VALID_RULE_YAML)
+    write_rule(
+        tmp_path / "two.yml",
+        VALID_RULE_YAML.replace("title: Temporary XSS Rule", "title: Disabled Copy").replace(
+            "enabled: true", "enabled: false"
+        ),
+    )
+
+    rules = load_detection_rules(tmp_path)
+
+    assert [rule.id for rule in rules] == ["XSS-999"]
+
+
 def test_load_detection_rule_invalid_yaml_top_level_list_raises_value_error(tmp_path):
     rule_path = tmp_path / "list.yml"
     write_rule(rule_path, "- not\n- a\n- rule\n")

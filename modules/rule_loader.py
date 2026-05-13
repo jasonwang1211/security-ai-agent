@@ -34,10 +34,17 @@ def load_detection_rules(directory: str | Path) -> list[DetectionRule]:
 
     rule_paths = _iter_rule_files(rule_directory) if rule_directory.is_dir() else [rule_directory]
     rules: list[DetectionRule] = []
+    seen_ids: dict[str, Path] = {}
 
     for rule_path in rule_paths:
         rule = load_detection_rule(rule_path)
         if rule.enabled:
+            if rule.id in seen_ids:
+                raise ValueError(
+                    f"duplicate enabled detection rule id {rule.id!r}: "
+                    f"{seen_ids[rule.id]} and {rule_path}"
+                )
+            seen_ids[rule.id] = rule_path
             rules.append(rule)
 
     return rules
