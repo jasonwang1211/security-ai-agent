@@ -1,8 +1,8 @@
 # Demo Outputs / Demo 輸出範例
 
-This document shows representative output excerpts for tag `v1.3.0` on `main`.
+This document shows representative output excerpts for tag `v1.4.0` on `main` after merge.
 
-本文件整理 `main` 上 tag `v1.3.0` 的代表性輸出摘錄。
+本文件整理 merge 後 `main` 上 tag `v1.4.0` 的代表性輸出摘錄。
 
 The current system emits a unified `[Security Triage Report]` for triage output. Older standalone formats are outdated and should not be used as the expected demo output.
 
@@ -359,11 +359,40 @@ System: explains that the event is suspicious but not confirmed compromise; anal
 Status / 驗證:
 
 - Covered by `tests/test_scenario_a_integration.py`
-- Current verification: `102 passed`
+- Current verification: `141 passed`
 
 Boundary note / 邊界說明:
 
 `MONITOR` is used because the sequence is suspicious but not confirmed compromise. LLMAssist remains advisory and cannot override the deterministic final decision. No real enforcement action is performed.
+
+## Demo Case 7: YAML Detection-as-Code / YAML 規則式偵測
+
+Status / 狀態: Passed
+
+Input payload / 輸入 payload:
+
+```text
+; rm -rf /tmp/test
+```
+
+Detection result / 偵測結果:
+
+```text
+Status: ALERT
+Attack Type: Command Injection
+Matched Rule: CMD-001
+Rule Source: detections/blue_team/command_injection/command_injection_basic.yml
+Severity: HIGH
+Confidence: 0.9
+MITRE Techniques: T1059
+Decision: BLOCK
+```
+
+Notes / 說明:
+
+- XSS, SQL Injection, Path Traversal, and Command Injection rules are loaded from YAML.
+- If YAML loading fails, hard-coded fallback keeps detector behavior stable.
+- This is deterministic detection, not LLM detection.
 
 ## Appendix: Deprecated Output Formats / 附錄：已退役輸出格式
 

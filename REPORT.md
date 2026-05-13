@@ -6,8 +6,8 @@
 # English
 
 > Project: AI-assisted Security Threat Detection and Response System  
-> Current target: tag `v1.3.0` on `main`  
-> Milestone: Evidence and Incident Capability
+> Current target: tag `v1.4.0` on `main`  
+> Milestone: Detection-as-Code Lite
 
 Full CLI excerpts are available in [demo_outputs.md](demo_outputs.md).
 
@@ -52,6 +52,41 @@ Mixed auth log
 Boundary note:
 
 This is not confirmed compromise. `MONITOR` means analyst review / simulated monitoring. The prototype does not perform real firewall, WAF, EDR, SIEM, or SOAR action. LLMAssist remains advisory and cannot override the deterministic final decision.
+
+---
+
+## v1.4 Detection-as-Code Lite
+
+What changed:
+
+- Added `modules/detection_rules.py` for the `DetectionRule` schema.
+- Added `modules/rule_loader.py` for YAML rule loading and schema validation.
+- Added YAML rules under `detections/blue_team/`.
+- Updated the detector adapter so YAML rules are the primary path.
+- Exposed rule metadata in detector results.
+
+Supported YAML rule files:
+
+- `xss_basic.yml`
+- `sql_injection_basic.yml`
+- `path_traversal_basic.yml`
+- `command_injection_basic.yml`
+
+Verification:
+
+- `python -m pytest` -> `141 passed`
+- `python -m ruff check .` -> passed
+- `python -m mypy app.py modules tests` -> passed
+
+Boundary note:
+
+YAML rules are the primary deterministic detection path. Hard-coded signatures remain as a conservative fallback. No real firewall, WAF, EDR, SIEM, SOAR, or cloud enforcement is performed.
+
+### v1.4 Detection-as-Code Lite / YAML 規則式偵測
+
+v1.4 將 XSS、SQL Injection、Path Traversal、Command Injection 的 payload signatures 移至 `detections/blue_team/` YAML 規則。系統新增 `DetectionRule` schema 與 YAML rule loader，detector adapter 以 YAML 作為主要偵測路徑，並在 detector result 中保留 rule ID、source path、severity、confidence、MITRE techniques 與 references 等 metadata。
+
+此階段仍是 deterministic rule-based detection，不是 ML detection，也不是 LLM-generated rules。Hard-coded signatures 仍保留作為保守 fallback，且不執行任何真實 enforcement。
 
 ### v1.3 證據與事件能力
 
@@ -379,7 +414,7 @@ The current branch also includes a small but important quality foundation:
 - Direct consolidated log pipeline tests for parsing, normalization, and brute-force aggregation
 - Pydantic boundary model tests for `modules/types.py`
 - Evidence / incident model, guardrail, correlator, exporter, follow-up, LLMAssist, and Scenario A integration tests
-- `pytest` for regression checks; current expected result is `102 passed`
+- `pytest` for regression checks; current expected result is `141 passed`
 - `ruff` for linting and import hygiene
 - Lenient `mypy` as a gradual typing baseline
 - GitHub Actions CI for automated quality checks
@@ -404,7 +439,7 @@ The current branch also includes a small but important quality foundation:
 Overall result:
 
 ```text
-Unified Security Triage Output and RAG QA Stabilization milestone is ready for demo documentation.
+Detection-as-Code Lite milestone is ready for demo documentation. The detector now uses YAML rules as the primary deterministic path, while preserving hard-coded fallback behavior and the unified Security Triage Report contract.
 ```
 
 ---
@@ -442,8 +477,8 @@ For planned future work, see [docs/ROADMAP.md](docs/ROADMAP.md).
 # 繁體中文
 
 > 專案：AI 輔助安全威脅偵測與回應系統  
-> 目前目標：`main` 上的 tag `v1.3.0`  
-> 里程碑：Evidence and Incident Capability
+> 目前目標：merge 後 `main` 上的 tag `v1.4.0`  
+> 里程碑：Detection-as-Code Lite
 
 完整 CLI 範例可參考 [demo_outputs.md](demo_outputs.md)。
 
@@ -575,7 +610,7 @@ Mode 3 RAG 只負責知識解釋，不決定 attack type、risk level 或模擬 
 - expanded golden smoke tests
 - direct consolidated log pipeline tests
 - Pydantic boundary model tests
-- `pytest` (`102 passed`)
+- `pytest` (`141 passed`)
 - `ruff`
 - lenient `mypy`
 - GitHub Actions CI
@@ -602,7 +637,7 @@ Mode 3 RAG 只負責知識解釋，不決定 attack type、risk level 或模擬 
 整體結果：
 
 ```text
-Unified Security Triage Output and RAG QA Stabilization milestone is ready for demo documentation.
+Detection-as-Code Lite milestone is ready for demo documentation. The detector now uses YAML rules as the primary deterministic path, while preserving hard-coded fallback behavior and the unified Security Triage Report contract.
 ```
 
 ---

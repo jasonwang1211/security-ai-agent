@@ -1,6 +1,6 @@
 # Architecture Debt Engineering Journal
 
-Current baseline: tag `v1.3.0` on `main`
+Current baseline: tag `v1.4.0` on `main`
 
 This document tracks structural debt cleanup as an engineering discipline: reducing module sprawl, consolidating thin wrappers, and preserving deterministic safety boundaries before adding more agentic behavior.
 
@@ -17,6 +17,7 @@ The project has reached a stable consolidated architecture with:
 - Evidence / Finding / Incident schemas and JSON Incident Report export
 - Time-window authentication sequence correlation for Scenario A
 - Advisory LLMAssist guardrails and report-aware follow-up
+- YAML-based Detection-as-Code Lite rules with schema validation and metadata
 
 ## Consolidation Outcomes
 
@@ -27,7 +28,7 @@ The project has reached a stable consolidated architecture with:
 | CLI mode wrappers | `modules/skills/*` | `mode_handlers.py` | Consolidated thin CLI wrappers |
 | Log ingestion | parser / normalizer / aggregator / adapter modules | `log_pipeline.py` | Consolidated parse -> normalize -> aggregate -> adapt flow |
 | Boundary contracts | ad-hoc dictionaries | `modules/types.py` | Added Pydantic boundary models for future controller/tool work |
-| Testing foundation | limited smoke coverage | golden + log pipeline + boundary + incident tests | Current quality gate: `102 passed`, ruff, mypy |
+| Testing foundation | limited smoke coverage | golden + log pipeline + boundary + incident + detection-rule tests | Current quality gate: `141 passed`, ruff, mypy |
 
 ## v1.3 Phase Outcomes
 
@@ -47,9 +48,27 @@ Engineering note: v1.3 intentionally increased module count because the new modu
 - `llm_guardrails.py`
 - `report_followup.py`
 
+## v1.4 Phase Outcomes
+
+- Detection rules moved into YAML files.
+- Added `DetectionRule` schema and `RuleLoader`.
+- Detector adapter now uses YAML rules as the primary path.
+- Rule metadata exposed in detector results.
+- Hard-coded signatures retained as conservative fallback during migration.
+- Quality gate updated to `141 passed`.
+
+New modules:
+
+- `detection_rules.py`
+- `rule_loader.py`
+
+New rule folder:
+
+- `detections/blue_team/`
+
 ## Current Quality Gate
 
-- `python -m pytest` -> `102 passed`
+- `python -m pytest` -> `141 passed`
 - `python -m ruff check .` -> passed
 - `python -m mypy app.py modules tests` -> passed
 - CI runs the same quality gate

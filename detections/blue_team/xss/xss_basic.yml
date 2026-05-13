@@ -1,0 +1,18 @@
+id: XSS-001
+title: Basic XSS Script Indicators
+attack_type: XSS
+severity: MEDIUM
+confidence: 0.8
+patterns:
+  - "<script>"
+  - "alert("
+  - "onerror="
+  - "javascript:"
+match_mode: substring
+case_sensitive: false
+mitre_techniques:
+  - T1059
+references:
+  - knowledge/blue_team/attack_techniques/xss.md
+notes: "Basic XSS indicators used by the deterministic detector."
+enabled: true

@@ -14,6 +14,7 @@ class DetectorResultModel(BaseModel):
     attack_types: list[str] = Field(default_factory=list)
     matched_signatures: dict[str, list[str]] = Field(default_factory=dict)
     original_input: str = ""
+    metadata: dict[str, Any] = Field(default_factory=dict)
 
 
 class RiskResultModel(BaseModel):

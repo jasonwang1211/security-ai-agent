@@ -1,10 +1,10 @@
 # Roadmap
 
-This roadmap describes planned development after the v1.3 Evidence and Incident Capability release.
+This roadmap describes planned development after the v1.4 Detection-as-Code Lite milestone.
 
 ## Current Baseline
 
-Current release baseline: tag `v1.3.0` on `main`.
+Current release: tag `v1.4.0` on `main`.
 
 Completed:
 
@@ -16,17 +16,18 @@ Completed:
 - LLMAssist as advisory-only reasoning
 - Pydantic boundary types
 - v1.3 Evidence and Incident Capability
+- v1.4 Detection-as-Code Lite
 - Scenario A integration coverage
 - JSON Incident Report export
 - Report-aware follow-up
 - LLM Safety Layer
 - 11 `report_explainer` KB docs
-- Expanded golden smoke tests, direct log pipeline tests, and incident tests
+- YAML detection rules with schema validation and metadata
 - pytest / ruff / mypy / GitHub Actions CI
 
-Current v1.3 quality gate:
+Current v1.4 quality gate:
 
-- `python -m pytest` -> `102 passed`
+- `python -m pytest` -> `141 passed`
 - `python -m ruff check .` -> passed
 - `python -m mypy app.py modules tests` -> passed
 
@@ -47,38 +48,36 @@ Delivered:
 - 11 `report_explainer` KB docs
 - 102 passed quality gate
 
-Historical goal:
-Move from single-event triage toward incident-style evidence handling.
-
 ## v1.4 — Detection-as-Code Lite
+
+Status: Completed.
+
+Delivered:
+
+- YAML-based deterministic detection rules
+- `DetectionRule` Pydantic schema
+- YAML rule loader with schema validation
+- Detector adapter using YAML rules as the primary path
+- XSS / SQL Injection / Path Traversal / Command Injection signatures migrated to YAML
+- Rule metadata for IDs, source paths, severity, confidence, MITRE techniques, and references
+- Hard-coded signatures retained as conservative fallback
+- 141 passed quality gate
+
+Boundary:
+v1.4 does not add ML detection, LLM-generated rules, Sigma/YARA compatibility, production SIEM integration, or real enforcement.
+
+## v1.5+ — Controller Agent, Evaluation, and Dashboard
 
 Status: Next.
 
-Goal:
-Move hard-coded detection signatures toward a small, inspectable detection-as-code layer while preserving deterministic triage boundaries.
-
 Planned:
 
-- YAML-based detection rules
-- Rule loader
-- Signature metadata
-- Severity, confidence, references, and MITRE technique metadata
-- Migrate existing XSS / SQL Injection / Path Traversal / Command Injection signatures out of Python
-
-## v1.5+ — Controller Agent, Evaluation, and Simulation
-
-Status: Later.
-
-Planned:
-
-- Tool-calling ControllerAgent
-- Tool registry
+- ControllerAgent and tool registry
 - Typed tool input/output contracts using Pydantic boundary models
 - Benchmark dataset and quality evaluation
-- Detection quality metrics
-- Retrieval quality checks
-- Metadata-driven RAG exploration
-- Simulation / dashboard exploration
+- Detection and retrieval quality metrics
+- Dashboard / demo exploration
+- Possible follow-up handler cleanup
 
 Important constraint:
 The ControllerAgent may route work and request tools, but final triage decisions must still respect deterministic policy boundaries.
@@ -90,11 +89,11 @@ All response decisions remain simulated unless explicitly redesigned in a future
 
 # 後續規劃
 
-此 roadmap 描述 v1.3 Evidence and Incident Capability 發布後的後續開發方向。
+此 roadmap 描述 v1.4 Detection-as-Code Lite 完成後的後續開發方向。
 
 ## 目前基準
 
-目前 release baseline：`main` 上的 tag `v1.3.0`。
+目前 release target：merge 後 `main` 上的 tag `v1.4.0`。
 
 已完成：
 
@@ -106,16 +105,18 @@ All response decisions remain simulated unless explicitly redesigned in a future
 - LLMAssist advisory-only reasoning
 - Pydantic boundary types
 - v1.3 Evidence and Incident Capability
+- v1.4 Detection-as-Code Lite
 - Scenario A integration coverage
 - JSON Incident Report export
 - Report-aware follow-up
 - LLM Safety Layer
 - 11 篇 `report_explainer` KB docs
+- YAML detection rules、schema validation 與 rule metadata
 - pytest / ruff / mypy / GitHub Actions CI
 
-目前 v1.3 quality gate：
+目前 v1.4 quality gate：
 
-- `python -m pytest` -> `102 passed`
+- `python -m pytest` -> `141 passed`
 - `python -m ruff check .` -> passed
 - `python -m mypy app.py modules tests` -> passed
 
@@ -136,35 +137,36 @@ All response decisions remain simulated unless explicitly redesigned in a future
 - 11 篇 `report_explainer` KB docs
 - 102 passed quality gate
 
-## v1.4 — Detection-as-Code Lite / 輕量偵測即程式碼
+## v1.4 — Detection-as-Code Lite / YAML 規則式偵測
+
+狀態：已完成。
+
+已交付：
+
+- YAML-based deterministic detection rules
+- `DetectionRule` Pydantic schema
+- YAML rule loader with schema validation
+- Detector adapter using YAML rules as the primary path
+- XSS / SQL Injection / Path Traversal / Command Injection signatures migrated to YAML
+- Rule metadata: IDs、source paths、severity、confidence、MITRE techniques、references
+- Hard-coded signatures retained as conservative fallback
+- 141 passed quality gate
+
+邊界：
+v1.4 不包含 ML detection、LLM-generated rules、Sigma/YARA compatibility、production SIEM integration 或 real enforcement。
+
+## v1.5+ — Controller Agent, Evaluation, and Dashboard / 控制代理、評估與 Dashboard
 
 狀態：下一階段。
 
-目標：
-將 hard-coded detection signatures 移往小型、可檢視的 detection-as-code layer，同時保留 deterministic triage boundaries。
-
 規劃：
 
-- YAML-based detection rules
-- Rule loader
-- Signature metadata
-- Severity, confidence, references, and MITRE technique metadata
-- 將既有 XSS / SQL Injection / Path Traversal / Command Injection signatures 從 Python 搬出
-
-## v1.5+ — Controller Agent, Evaluation, and Simulation / 控制代理、評估與模擬
-
-狀態：後續階段。
-
-規劃：
-
-- Tool-calling ControllerAgent
-- Tool registry
+- ControllerAgent and tool registry
 - Typed tool input/output contracts using Pydantic boundary models
 - Benchmark dataset and quality evaluation
-- Detection quality metrics
-- Retrieval quality checks
-- Metadata-driven RAG exploration
-- Simulation / dashboard exploration
+- Detection and retrieval quality metrics
+- Dashboard / demo exploration
+- Possible follow-up handler cleanup
 
 重要限制：
 ControllerAgent 可以負責 routing 與 tool requests，但 final triage decisions 仍必須遵守 deterministic policy boundaries。
