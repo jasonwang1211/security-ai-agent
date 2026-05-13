@@ -165,8 +165,10 @@ python app.py
 Current working branch:
 
 ```text
-v1.3-evidence-incident-capability
+main
 ```
+
+Current release target: tag `v1.3.0` on `main`
 
 Completed:
 
@@ -180,30 +182,22 @@ Completed:
 
 ### Roadmap
 
-**v1.3 — Evidence and Incident Capability**
+**✅ v1.3 — Evidence and Incident Capability** (Completed)
 
-- Time-window aggregation
-- JSON incident report export
-- MITRE ATT&CK mapping
+See [docs/ROADMAP.md](docs/ROADMAP.md) for delivered items.
 
-**v1.4 — Controller Agent and Tool Registry**
+**🚧 v1.4 — Detection-as-Code Lite** (Next)
 
-- Smart input routing
-- Tool-calling ControllerAgent
-- Typed tool input/output contracts
+- YAML-based detection rules
+- Rule loader and signature metadata
+- Severity, confidence, references, and MITRE technique metadata
+- Migrate existing XSS / SQL Injection / Path Traversal / Command Injection signatures out of Python
 
-**v1.5+ — Evaluation and Simulation**
+**📋 v1.5+ — Controller Agent, Evaluation, and Simulation**
 
-- Small benchmark dataset
-- Retrieval and detection quality evaluation
-- Red / blue simulation lab
-- Web dashboard exploration
-
-Roadmap sync for v1.3:
-
-- v1.3 Evidence and Incident Capability is implemented in this branch.
-- v1.4 Detection-as-Code Lite is the next planned high-value upgrade: YAML-based detection rules, rule loader, severity / confidence / references / MITRE metadata, and moving hard-coded signatures out of Python.
-- Smart Input Router and ControllerAgent work remain later UX / orchestration scope after destinations are mature.
+- Tool-calling ControllerAgent and tool registry
+- Benchmark dataset and quality evaluation
+- Web dashboard / demo exploration
 
 For the full plan, see [docs/ROADMAP.md](docs/ROADMAP.md).
 
@@ -323,8 +317,10 @@ python -m mypy app.py modules tests
 目前分支：
 
 ```text
-v1.3-evidence-incident-capability
+main
 ```
+
+Current release target: tag `v1.3.0` on `main`
 
 已完成：
 
@@ -337,23 +333,21 @@ v1.3-evidence-incident-capability
 
 ### Roadmap / 後續規劃
 
-**v1.3 — Evidence and Incident Capability**
+**✅ v1.3 — Evidence and Incident Capability / 證據與事件能力**（已完成）
 
-- Time-window aggregation
-- JSON incident report export
-- MITRE ATT&CK mapping
+已交付項目請見 [docs/ROADMAP.md](docs/ROADMAP.md)。
 
-**v1.4 — Controller Agent and Tool Registry**
+**🚧 v1.4 — Detection-as-Code Lite / 輕量偵測即程式碼**（下一階段）
 
-- Smart input routing
-- Tool-calling ControllerAgent
-- Typed tool input/output contracts
+- YAML-based detection rules / YAML 偵測規則
+- Rule loader and signature metadata / 規則載入器與特徵 metadata
+- Severity, confidence, references, and MITRE technique metadata / 嚴重度、信心值、參考資料與 MITRE 技術 metadata
+- Migrate existing XSS / SQL Injection / Path Traversal / Command Injection signatures out of Python / 將既有 XSS、SQL Injection、Path Traversal、Command Injection 特徵從 Python 搬出
 
-**v1.5+ — Evaluation and Simulation**
+**📋 v1.5+ — Controller Agent, Evaluation, and Simulation / 控制代理、評估與模擬**
 
-- Small benchmark dataset
-- Retrieval and detection quality evaluation
-- Red / blue simulation lab
-- Web dashboard exploration
+- Tool-calling ControllerAgent and tool registry / 可呼叫工具的 ControllerAgent 與工具註冊表
+- Benchmark dataset and quality evaluation / 評估資料集與品質評估
+- Web dashboard / demo exploration / Web dashboard 與 demo 探索
 
 完整規劃請見 [docs/ROADMAP.md](docs/ROADMAP.md)。

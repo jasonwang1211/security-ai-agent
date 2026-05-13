@@ -1,6 +1,6 @@
 # Architecture Debt Engineering Journal
 
-Current baseline: `v1.2-documentation-and-test-stabilization`
+Current baseline: tag `v1.3.0` on `main`
 
 This document tracks structural debt cleanup as an engineering discipline: reducing module sprawl, consolidating thin wrappers, and preserving deterministic safety boundaries before adding more agentic behavior.
 
@@ -14,6 +14,9 @@ The project has reached a stable consolidated architecture with:
 - Log file ingestion and brute-force candidate aggregation
 - `RAGQueryPlanner`-based knowledge QA
 - Pydantic boundary models for future controller and tool work
+- Evidence / Finding / Incident schemas and JSON Incident Report export
+- Time-window authentication sequence correlation for Scenario A
+- Advisory LLMAssist guardrails and report-aware follow-up
 
 ## Consolidation Outcomes
 
@@ -24,13 +27,31 @@ The project has reached a stable consolidated architecture with:
 | CLI mode wrappers | `modules/skills/*` | `mode_handlers.py` | Consolidated thin CLI wrappers |
 | Log ingestion | parser / normalizer / aggregator / adapter modules | `log_pipeline.py` | Consolidated parse -> normalize -> aggregate -> adapt flow |
 | Boundary contracts | ad-hoc dictionaries | `modules/types.py` | Added Pydantic boundary models for future controller/tool work |
-| Testing foundation | limited smoke coverage | golden + log pipeline + boundary tests | Current quality gate: `30 passed`, ruff, mypy |
+| Testing foundation | limited smoke coverage | golden + log pipeline + boundary + incident tests | Current quality gate: `102 passed`, ruff, mypy |
+
+## v1.3 Phase Outcomes
+
+- Evidence / Finding / Incident schemas
+- LLM Safety Layer Foundation
+- Time-window auth sequence correlation
+- JSON Incident Report export
+- Minimal report-aware follow-up helper
+- Evidence-grounded LLMAssist
+- Scenario A integration test
+- 11 `report_explainer` KB docs
+
+Engineering note: v1.3 intentionally increased module count because the new modules represent separate responsibilities:
+
+- `evidence_correlator.py`
+- `incident_exporter.py`
+- `llm_guardrails.py`
+- `report_followup.py`
 
 ## Current Quality Gate
 
-- `python -m pytest` -> `30 passed`
-- `python -m ruff check .`
-- `python -m mypy app.py modules tests`
+- `python -m pytest` -> `102 passed`
+- `python -m ruff check .` -> passed
+- `python -m mypy app.py modules tests` -> passed
 - CI runs the same quality gate
 
 ## Remaining Engineering Notes
@@ -45,19 +66,19 @@ It is not yet a true tool-calling agent. Future controller work should preserve 
 
 `responder.py` owns unified report formatting and response playbooks. This keeps output consistent, but the file remains large.
 
-Future cleanup can keep report formatting in `responder.py` while moving static playbook data into structured constants or knowledge files.
+Future cleanup can keep report formatting in `responder.py` while moving static playbook data into structured constants or knowledge files. Planned sequencing should follow [docs/ROADMAP.md](docs/ROADMAP.md).
 
 ### RAG Routing
 
 `RAGQueryPlanner` supports preferred source selection for the current small knowledge base.
 
-Future retrieval work can move toward metadata-driven retrieval with markdown frontmatter and Chroma metadata filtering.
+Future retrieval work can move toward metadata-driven retrieval with markdown frontmatter and Chroma metadata filtering. Planned sequencing should follow [docs/ROADMAP.md](docs/ROADMAP.md).
 
 ### Startup Cost
 
 App startup may still initialize heavy RAG, embedding, and Chroma resources.
 
-Future work should continue moving heavy components toward lazy initialization.
+Future work should continue moving heavy components toward lazy initialization. Planned sequencing should follow [docs/ROADMAP.md](docs/ROADMAP.md).
 
 ## Out of Scope for Consolidation
 

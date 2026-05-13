@@ -6,9 +6,8 @@
 # English
 
 > Project: AI-assisted Security Threat Detection and Response System  
-> Branch: `v1.3-evidence-incident-capability`  
-> Current milestone: `v1.3-evidence-incident-capability`  
-> Milestone name: Evidence and Incident Capability
+> Current target: tag `v1.3.0` on `main`  
+> Milestone: Evidence and Incident Capability
 
 Full CLI excerpts are available in [demo_outputs.md](demo_outputs.md).
 
@@ -443,9 +442,8 @@ For planned future work, see [docs/ROADMAP.md](docs/ROADMAP.md).
 # 繁體中文
 
 > 專案：AI 輔助安全威脅偵測與回應系統  
-> 分支：`main`  
-> 目前里程碑：`v1.2-documentation-and-test-stabilization`  
-> 里程碑名稱：統一分流、Golden Tests 與作品集文件整理
+> 目前目標：`main` 上的 tag `v1.3.0`  
+> 里程碑：Evidence and Incident Capability
 
 完整 CLI 範例可參考 [demo_outputs.md](demo_outputs.md)。
 

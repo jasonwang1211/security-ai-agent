@@ -1,8 +1,8 @@
 # Demo Outputs / Demo 輸出範例
 
-This document shows representative output excerpts for the current `v1.3-evidence-incident-capability` demo flow.
+This document shows representative output excerpts for tag `v1.3.0` on `main`.
 
-本文件整理目前 `v1.3-evidence-incident-capability` demo flow 的代表性輸出摘錄。
+本文件整理 `main` 上 tag `v1.3.0` 的代表性輸出摘錄。
 
 The current system emits a unified `[Security Triage Report]` for triage output. Older standalone formats are outdated and should not be used as the expected demo output.
 
@@ -317,6 +317,54 @@ Representative answer excerpt / 代表性回答摘錄:
 Read the Security Triage Report from top to bottom. Quick Verdict gives the compact status, attack type, risk level, decision, and detection source. Summary explains what happened. Evidence shows the concrete signals. Why It Matters explains the security impact. Recommended Response separates immediate actions, mitigation, and follow-up. Simulation Notice reminds you that BLOCK, MONITOR, and ALLOW are simulated decisions. AI Assist shows model suggestions, but LLM Suggested Decision is assist-only and is not the final system decision.
 ```
 
+## Demo Case 6: Scenario A — Possible Account Compromise / 情境 A：疑似帳號入侵
+
+Status / 狀態: Passed
+
+Input / 輸入:
+
+- `demo_logs/scenario_a_mixed_auth.log`
+- benign + attack mixed authentication log
+
+Pipeline / 流程:
+
+```text
+parse → normalize → time-window correlation → sequence detection
+→ EvidenceBundle → TriagePolicy → LLMAssist advisory assessment
+→ LLMGuardrails → Security Triage Report + JSON Incident Report
+```
+
+Output excerpt / 輸出摘要:
+
+```text
+Incident Type: Possible Account Compromise
+Finding: possible_account_compromise
+Risk Level: HIGH
+Decision: MONITOR
+Evidence:
+EV-001 failed_count
+EV-002 time_window
+EV-003 success_after_failures
+```
+
+Follow-up demo / 追問示範:
+
+```text
+User: EV-003 是什麼意思？
+System: explains that EV-003 is the successful authentication after repeated failures.
+User: 為什麼是 MONITOR？
+System: explains that the event is suspicious but not confirmed compromise; analyst review is required.
+```
+
+Status / 驗證:
+
+- Covered by `tests/test_scenario_a_integration.py`
+- Current verification: `102 passed`
+
+Boundary note / 邊界說明:
+
+`MONITOR` is used because the sequence is suspicious but not confirmed compromise. LLMAssist remains advisory and cannot override the deterministic final decision. No real enforcement action is performed.
+
 ## Appendix: Deprecated Output Formats / 附錄：已退役輸出格式
 
 Historical reference only. These formats are no longer emitted by the current system and are kept to document output schema evolution.
@@ -332,44 +380,3 @@ The following older labels are retained here only as a migration note and should
 - `[Security Triage Result]`
 - `Final Risk`
 - `Final Decision`
-
-## Scenario A - Possible Account Compromise / 情境 A：疑似帳號入侵
-
-Status / 狀態: Passed
-
-Input / 輸入:
-
-```text
-demo_logs/scenario_a_mixed_auth.log
-```
-
-Detected Incident / 偵測到的 Incident:
-
-- Type: Possible Account Compromise
-- Finding: `possible_account_compromise`
-- Risk Level: `HIGH`
-- Decision: `MONITOR`
-- Evidence:
-  - `EV-001` `failed_count`
-  - `EV-002` `time_window`
-  - `EV-003` `success_after_failures`
-- JSON Incident Report: available through `modules.incident_exporter`
-- Report-aware follow-up:
-  - `EV-003 是什麼意思？`
-  - `為什麼是 MONITOR？`
-
-Representative flow:
-
-```text
-Mixed auth log
--> parse / normalize
--> time-window + sequence correlation
--> possible_account_compromise
--> Risk Level: HIGH
--> Decision: MONITOR
--> JSON Incident Report
--> EV-003 follow-up explanation
--> LLMAssist advisory assessment with guardrails
-```
-
-`MONITOR` is used because the sequence is suspicious but not confirmed compromise. LLMAssist remains advisory and cannot override the deterministic final decision. No real enforcement action is performed.
