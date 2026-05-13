@@ -641,7 +641,7 @@ Mode 3 RAG 只負責知識解釋，不決定 attack type、risk level 或模擬 
 整體結果：
 
 ```text
-Detection-as-Code Lite milestone is ready for demo documentation. The detector now uses YAML rules as the primary deterministic path, while preserving hard-coded fallback behavior and the unified Security Triage Report contract.
+Detection-as-Code Lite 里程碑已完成，可作為目前 demo 文件的基準。detector 現在以 YAML 規則作為主要的 deterministic 偵測路徑，同時保留 hard-coded fallback 行為，並維持統一的 Security Triage Report 輸出契約。
 ```
 
 ---
