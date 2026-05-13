@@ -1,6 +1,6 @@
 # Demo Outputs / Demo 輸出範例
 
-This document shows representative output excerpts for tag `v1.4.0` on `main` after merge.
+This document shows representative output excerpts for the `v1.5-controller-agent` branch, based on tag `v1.4.0` on `main`.
 
 本文件整理 merge 後 `main` 上 tag `v1.4.0` 的代表性輸出摘錄。
 
@@ -393,6 +393,38 @@ Notes / 說明:
 - XSS, SQL Injection, Path Traversal, and Command Injection rules are loaded from YAML.
 - If YAML loading fails, hard-coded fallback keeps detector behavior stable.
 - This is deterministic detection, not LLM detection.
+
+## Demo Case 8: ControllerAgent Deterministic Dispatch / ControllerAgent deterministic dispatch
+
+Status / 狀態: Passed
+
+This case documents the v1.5 ControllerAgent infrastructure. It is currently tested through deterministic unit and integration tests, not wired into the CLI menu yet.
+
+Representative dispatch excerpt:
+
+```text
+route: payload_triage
+selected_tool: payload_triage
+output_status: ok
+response_text: payload triage done
+```
+
+Mode hint excerpt:
+
+```text
+route: mode_1
+selected_tool: payload_triage
+output_status: ok
+```
+
+Notes:
+
+- Dispatch is deterministic by explicit route or tool name.
+- `mode_1` maps to `payload_triage` through the default route map.
+- No Auto Route mode is present.
+- No Smart Router is present.
+- No LLM-driven tool routing is used.
+- Final verdicts remain deterministic and policy-controlled.
 
 ## Appendix: Deprecated Output Formats / 附錄：已退役輸出格式
 

@@ -59,6 +59,21 @@ case_sensitive: false
 enabled: true
 ```
 
+## ControllerAgent and Tool Registry
+
+v1.5 adds typed agent infrastructure without making the system autonomous. `ToolSpec` defines each tool contract, including input model, output model, safety level, RAG/LLM flags, and allowed input kinds. `ToolRegistry` stores the allowed tools, while the Skill Catalog defines exactly six v1.5 wrapper skills:
+
+- `payload_triage`
+- `raw_log_translate`
+- `log_file_ingest`
+- `rag_security_qa`
+- `report_followup`
+- `incident_json_export`
+
+Skill wrappers expose existing local capabilities as typed local tools. `ControllerAgent` validates input, calls the registered handler, validates output, and returns a `ControllerOutput`.
+
+Dispatch is deterministic by explicit route or tool name. This is agent infrastructure, not autonomous LLM routing. Auto Route, Smart Router, and LLM-driven tool selection are deferred.
+
 ## YAML and Schema Validation
 
 YAML is a human-readable data format. This project uses PyYAML to read YAML rule files, then uses Pydantic to validate that each rule has the required fields and valid values.
@@ -175,7 +190,7 @@ The project uses several testing layers:
 
 Current quality gate:
 
-- `python -m pytest` -> `141 passed`
+- `python -m pytest` -> `240 passed`
 - `python -m ruff check .`
 - `python -m mypy app.py modules tests`
 

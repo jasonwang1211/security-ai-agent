@@ -1,6 +1,6 @@
 # Architecture Debt Engineering Journal
 
-Current baseline: tag `v1.4.0` on `main`
+Current baseline: `v1.5-controller-agent` branch, based on tag `v1.4.0` on `main`
 
 This document tracks structural debt cleanup as an engineering discipline: reducing module sprawl, consolidating thin wrappers, and preserving deterministic safety boundaries before adding more agentic behavior.
 
@@ -18,6 +18,7 @@ The project has reached a stable consolidated architecture with:
 - Time-window authentication sequence correlation for Scenario A
 - Advisory LLMAssist guardrails and report-aware follow-up
 - YAML-based Detection-as-Code Lite rules with schema validation and metadata
+- Isolated v1.5 ControllerAgent and Tool Registry infrastructure
 
 ## Consolidation Outcomes
 
@@ -28,7 +29,7 @@ The project has reached a stable consolidated architecture with:
 | CLI mode wrappers | `modules/skills/*` | `mode_handlers.py` | Consolidated thin CLI wrappers |
 | Log ingestion | parser / normalizer / aggregator / adapter modules | `log_pipeline.py` | Consolidated parse -> normalize -> aggregate -> adapt flow |
 | Boundary contracts | ad-hoc dictionaries | `modules/types.py` | Added Pydantic boundary models for future controller/tool work |
-| Testing foundation | limited smoke coverage | golden + log pipeline + boundary + incident + detection-rule tests | Current quality gate: `141 passed`, ruff, mypy |
+| Testing foundation | limited smoke coverage | golden + log pipeline + boundary + incident + detection-rule + controller tests | Current quality gate: `240 passed`, ruff, mypy |
 
 ## v1.3 Phase Outcomes
 
@@ -75,9 +76,45 @@ New rule folder:
 
 - `detections/blue_team/`
 
+## v1.5 Phase Outcomes
+
+- Added typed ControllerAgent infrastructure while keeping existing CLI modes unchanged.
+- Added deterministic dispatch by explicit route/tool name.
+- Added six v1.5 wrapper skill contracts and thin wrappers.
+- Verified `ToolRegistry`, Skill Catalog, Skill Wrappers, and `ControllerAgent` together through integration-style tests.
+- Deferred Smart Router, Auto Route, LLM-driven routing, Rule Explainer, and Investigation Planner.
+
+New modules:
+
+- `controller_types.py`
+- `tool_registry.py`
+- `skill_catalog.py`
+- `skill_wrappers.py`
+- `controller_agent.py`
+
+New tests:
+
+- `test_controller_types.py`
+- `test_tool_registry.py`
+- `test_skill_catalog.py`
+- `test_skill_wrappers.py`
+- `test_controller_agent.py`
+- `test_controller_agent_integration.py`
+
+Quality gate:
+
+- Previous v1.4 gate: `141 passed`
+- Current v1.5 gate: `240 passed`
+- `python -m ruff check .` -> passed
+- `python -m mypy app.py modules tests` -> passed
+
+Architecture note:
+
+v1.5 intentionally keeps `ControllerAgent` isolated from CLI runtime. Existing CLI modes remain unchanged, and Smart Router is deferred.
+
 ## Current Quality Gate
 
-- `python -m pytest` -> `141 passed`
+- `python -m pytest` -> `240 passed`
 - `python -m ruff check .` -> passed
 - `python -m mypy app.py modules tests` -> passed
 - CI runs the same quality gate
@@ -86,9 +123,7 @@ New rule folder:
 
 ### ControllerAgent / Tool Registry
 
-`SecurityAgent` currently works as an orchestrator / workflow controller. It coordinates detection, scoring, decisioning, response simulation, LLM assist, and report generation.
-
-It is not yet a true tool-calling agent. Future controller work should preserve deterministic policy boundaries and use typed tool input/output contracts.
+`ControllerAgent` now exists as an isolated deterministic dispatcher for typed tools. It is not wired into the CLI runtime yet. Future controller work should preserve deterministic policy boundaries and avoid LLM-driven routing until the planned Smart Router milestone.
 
 ### Follow-up Module Boundary
 

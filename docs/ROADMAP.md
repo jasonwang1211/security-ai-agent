@@ -1,10 +1,12 @@
 # Roadmap
 
-This roadmap describes planned development after the v1.4 Detection-as-Code Lite milestone.
+This roadmap describes planned development after the v1.5 ControllerAgent and Tool Registry infrastructure milestone.
 
 ## Current Baseline
 
-Current release: tag `v1.4.0` on `main`.
+Current branch: `v1.5-controller-agent`.
+
+Release baseline: tag `v1.4.0` on `main`.
 
 Completed:
 
@@ -23,11 +25,12 @@ Completed:
 - LLM Safety Layer
 - 11 `report_explainer` KB docs
 - YAML detection rules with schema validation and metadata
+- v1.5 ControllerAgent and Tool Registry infrastructure
 - pytest / ruff / mypy / GitHub Actions CI
 
-Current v1.4 quality gate:
+Current v1.5 quality gate:
 
-- `python -m pytest` -> `141 passed`
+- `python -m pytest` -> `240 passed`
 - `python -m ruff check .` -> passed
 - `python -m mypy app.py modules tests` -> passed
 
@@ -66,21 +69,66 @@ Delivered:
 Boundary:
 v1.4 does not add ML detection, LLM-generated rules, Sigma/YARA compatibility, production SIEM integration, or real enforcement.
 
-## v1.5+ — Controller Agent, Evaluation, and Dashboard
+## v1.5 - ControllerAgent and Tool Registry
+
+Status: Completed on `v1.5-controller-agent`.
+
+Delivered:
+
+- Typed `ToolSpec` contracts and controller boundary models
+- `ToolRegistry` skeleton
+- Skill Catalog with exactly six v1.5 wrapper skill specs
+- Thin Skill Wrappers for existing local capabilities
+- Deterministic `ControllerAgent` dispatch by explicit route/tool name
+- Default route map with explicit skill routes and CLI mode hints
+- ControllerAgent unit tests and integration-style tests
+- 240 passed quality gate
+
+Boundary:
+v1.5 does not add Auto Route, Smart Router, LLM-driven routing, Investigation Planner, Rule Explainer, or CLI wiring. Existing CLI behavior remains unchanged.
+
+## v1.6 - RAG v2 Foundation
 
 Status: Next.
 
 Planned:
 
-- ControllerAgent and tool registry
-- Typed tool input/output contracts using Pydantic boundary models
-- Benchmark dataset and quality evaluation
-- Detection and retrieval quality metrics
-- Dashboard / demo exploration
-- Possible follow-up handler cleanup
+- Metadata/frontmatter for knowledge documents
+- Exact ID lookup
+- Source citations
+- `AnswerWithSources`
+- Retrieval behavior that can be evaluated deterministically
 
-Important constraint:
-The ControllerAgent may route work and request tools, but final triage decisions must still respect deterministic policy boundaries.
+## v1.7 - Answer Safety, Evaluation, and Smart Router
+
+Status: Later.
+
+Planned:
+
+- Answer Safety checks
+- Evaluation datasets
+- Detection and retrieval quality metrics
+- Smart Router after the safety/evaluation foundation is in place
+
+## v1.8 - Advanced AnswerGuardrails and Investigation Planner
+
+Status: Later.
+
+Planned:
+
+- Advanced `AnswerGuardrails`
+- Investigation Planner
+- More structured analyst workflow support
+
+## v1.9 - Analyst UX and Demo Polish
+
+Status: Later.
+
+Planned:
+
+- Analyst UX improvements
+- Demo polish
+- Dashboard / demo exploration
 
 ## Non-Goals
 
@@ -114,9 +162,9 @@ All response decisions remain simulated unless explicitly redesigned in a future
 - YAML detection rules、schema validation 與 rule metadata
 - pytest / ruff / mypy / GitHub Actions CI
 
-目前 v1.4 quality gate：
+目前 v1.5 quality gate：
 
-- `python -m pytest` -> `141 passed`
+- `python -m pytest` -> `240 passed`
 - `python -m ruff check .` -> passed
 - `python -m mypy app.py modules tests` -> passed
 
@@ -155,18 +203,17 @@ All response decisions remain simulated unless explicitly redesigned in a future
 邊界：
 v1.4 不包含 ML detection、LLM-generated rules、Sigma/YARA compatibility、production SIEM integration 或 real enforcement。
 
-## v1.5+ — Controller Agent, Evaluation, and Dashboard / 控制代理、評估與 Dashboard
+## v1.5 - ControllerAgent and Tool Registry / ControllerAgent 與 Tool Registry
 
 狀態：下一階段。
 
 規劃：
 
-- ControllerAgent and tool registry
-- Typed tool input/output contracts using Pydantic boundary models
-- Benchmark dataset and quality evaluation
-- Detection and retrieval quality metrics
-- Dashboard / demo exploration
-- Possible follow-up handler cleanup
+- Typed `ToolSpec` contracts and `ToolRegistry`
+- Deterministic `ControllerAgent` dispatch by explicit route/tool name
+- Six wrapper skills
+- No Auto Route, Smart Router, or LLM-driven tool selection
+- 240 passed quality gate
 
 重要限制：
 ControllerAgent 可以負責 routing 與 tool requests，但 final triage decisions 仍必須遵守 deterministic policy boundaries。
@@ -175,3 +222,24 @@ ControllerAgent 可以負責 routing 與 tool requests，但 final triage decisi
 
 Roadmap 不包含 offensive automation 或真實 enforcement actions。
 除非未來另行設計 production-safe environment，所有 response decisions 都維持 simulated。
+## v1.6 - RAG v2 Foundation / RAG v2 基礎
+
+- metadata/frontmatter
+- exact ID lookup
+- source citations
+- `AnswerWithSources`
+
+## v1.7 - Answer Safety, Evaluation, and Smart Router / 答案安全、評估與 Smart Router
+
+- Answer Safety
+- Evaluation datasets
+- Smart Router later
+
+## v1.8 - Advanced AnswerGuardrails and Investigation Planner
+
+- Advanced `AnswerGuardrails`
+- Investigation Planner
+
+## v1.9 - Analyst UX and Demo Polish
+
+- Analyst UX / demo polish

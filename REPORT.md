@@ -5,9 +5,10 @@
 <a id="english"></a>
 # English
 
-> Project: AI-assisted Security Threat Detection and Response System  
-> Current target: tag `v1.4.0` on `main`  
-> Milestone: Detection-as-Code Lite
+> Project: AI-assisted Security Threat Detection and Response System
+> Current branch: `v1.5-controller-agent`
+> Release baseline: tag `v1.4.0` on `main`
+> Milestone: ControllerAgent and Tool Registry Infrastructure
 
 Full CLI excerpts are available in [demo_outputs.md](demo_outputs.md).
 
@@ -81,6 +82,27 @@ Verification:
 Boundary note:
 
 YAML rules are the primary deterministic detection path. Hard-coded signatures remain as a conservative fallback. No real firewall, WAF, EDR, SIEM, SOAR, or cloud enforcement is performed.
+
+---
+
+## v1.5 ControllerAgent and Tool Registry
+
+What changed:
+
+- Added typed ControllerAgent infrastructure for future agent skill orchestration.
+- Added `ToolRegistry`, six `ToolSpec` entries, thin skill wrappers, and deterministic route dispatch.
+- Verified `ToolRegistry` + Skill Catalog + Skill Wrappers together through `ControllerAgent` integration tests.
+- Kept `ControllerAgent` isolated from `app.py` and the current CLI runtime.
+
+Boundary note:
+
+This milestone does not change existing CLI behavior. `ControllerAgent` dispatches only by explicit route or tool name; it does not perform LLM routing, free-form input classification, Auto Route, or Smart Router behavior.
+
+Verification:
+
+- `python -m pytest` -> `240 passed`
+- `python -m ruff check .` -> passed
+- `python -m mypy app.py modules tests` -> passed
 
 ### v1.4 Detection-as-Code Lite / YAML 規則式偵測
 
@@ -187,6 +209,7 @@ Mode 3 RAG is used for knowledge explanation only. It does not decide attack typ
 | D08 | Mode 1 XSS Regression | `<script>alert(1)</script>` | Rule-based report still works | Passed |
 | D09 | Mode 1 Command Injection Regression | `test; rm -rf /tmp/test` | Rule-based Command Injection detection with `HIGH / BLOCK` | Passed |
 | D10 | YAML Detection-as-Code | `; rm -rf /tmp/test` | YAML rule `CMD-001` matched with severity / confidence / MITRE metadata | Passed |
+| D11 | ControllerAgent Dispatch | explicit route / mode hint | Deterministic dispatch through ToolRegistry and wrapper skills | Passed |
 
 ---
 
@@ -415,7 +438,8 @@ The current branch also includes a small but important quality foundation:
 - Direct consolidated log pipeline tests for parsing, normalization, and brute-force aggregation
 - Pydantic boundary model tests for `modules/types.py`
 - Evidence / incident model, guardrail, correlator, exporter, follow-up, LLMAssist, and Scenario A integration tests
-- `pytest` for regression checks; current expected result is `141 passed`
+- ControllerAgent unit and integration tests for the six v1.5 wrapper skills
+- `pytest` for regression checks; current expected result is `240 passed`
 - `ruff` for linting and import hygiene
 - Lenient `mypy` as a gradual typing baseline
 - GitHub Actions CI for automated quality checks
@@ -436,12 +460,13 @@ The current branch also includes a small but important quality foundation:
 | `RAGQueryPlanner` and preferred source selection | Passed |
 | Rule-based Command Injection detection | Passed |
 | YAML Detection-as-Code | Passed |
+| ControllerAgent deterministic dispatch infrastructure | Passed |
 | Quality checks and CI foundation | Passed |
 
 Overall result:
 
 ```text
-Detection-as-Code Lite milestone is ready for demo documentation. The detector now uses YAML rules as the primary deterministic path, while preserving hard-coded fallback behavior and the unified Security Triage Report contract.
+ControllerAgent and Tool Registry infrastructure is ready as an isolated v1.5 foundation. Existing CLI behavior remains unchanged, and deterministic detection / policy still control final verdicts.
 ```
 
 ---
@@ -602,6 +627,7 @@ Mode 3 RAG 只負責知識解釋，不決定 attack type、risk level 或模擬 
 | D08 | Mode 1 XSS regression | `<script>alert(1)</script>` | 規則式 XSS 報告維持穩定 | Passed |
 | D09 | Mode 1 Command Injection regression | `test; rm -rf /tmp/test` | Rule-Based Detector 偵測 Command Injection，風險 `HIGH`，決策 `BLOCK` | Passed |
 | D10 | YAML Detection-as-Code | `; rm -rf /tmp/test` | YAML rule `CMD-001` 命中，並顯示 severity / confidence / MITRE metadata | Passed |
+| D11 | ControllerAgent Dispatch | explicit route / mode hint | 透過 ToolRegistry 與 wrapper skills 進行 deterministic dispatch | Passed |
 
 ---
 
@@ -613,7 +639,7 @@ Mode 3 RAG 只負責知識解釋，不決定 attack type、risk level 或模擬 
 - expanded golden smoke tests
 - direct consolidated log pipeline tests
 - Pydantic boundary model tests
-- `pytest` (`141 passed`)
+- `pytest` (`240 passed`)
 - `ruff`
 - lenient `mypy`
 - GitHub Actions CI
