@@ -43,6 +43,22 @@ Rule metadata includes:
 
 Hard-coded signatures remain as a conservative fallback so the detector keeps known behavior even if external rule loading is unavailable.
 
+Example YAML rule:
+
+```yaml
+id: XSS-001
+title: Basic XSS Script Indicators
+attack_type: XSS
+severity: MEDIUM
+confidence: 0.8
+patterns:
+  - "<script>"
+  - "alert("
+match_mode: substring
+case_sensitive: false
+enabled: true
+```
+
 ## YAML and Schema Validation
 
 YAML is a human-readable data format. This project uses PyYAML to read YAML rule files, then uses Pydantic to validate that each rule has the required fields and valid values.
@@ -55,6 +71,17 @@ Schema validation prevents broken or incomplete rule files from silently enterin
 - disabled rules are ignored
 
 This helps keep detection behavior predictable and testable.
+
+Simplified Pydantic-style example, not the full production class:
+
+```python
+class DetectionRule(BaseModel):
+    id: str
+    attack_type: str
+    severity: Literal["LOW", "MEDIUM", "HIGH"]
+    confidence: float
+    patterns: list[str]
+```
 
 ## Evidence and Incident Model
 
@@ -69,6 +96,15 @@ Project models include:
 - `GenerationMetadata`
 
 This matters because report follow-up can answer questions like "EV-003 是什麼意思？" and JSON Incident Report export becomes possible. Stable evidence references also help prevent ungrounded explanations because generated text can be checked against known evidence IDs.
+
+Compact example:
+
+```text
+EV-003: success_after_failures
+F-001: possible_account_compromise
+Risk Level: HIGH
+Decision: MONITOR
+```
 
 ## Time-Window and Sequence Correlation
 
@@ -104,6 +140,13 @@ Why not let the LLM decide?
 
 Because final security decisions must be reproducible, testable, and bounded by deterministic policy.
 
+Pseudo-rule:
+
+```text
+If LLMAssist cites EV-999 but EV-999 does not exist in the EvidenceBundle,
+LLMGuardrails rejects the advisory result and falls back to deterministic output.
+```
+
 ## RAG and Report-aware Follow-up
 
 RAG is used for explanation and security knowledge, not primary detection. Report-aware follow-up explains existing reports, evidence IDs, risk levels, and decisions. It must not re-judge the final verdict.
@@ -137,6 +180,16 @@ Current quality gate:
 - `python -m mypy app.py modules tests`
 
 Deterministic tests do not require Ollama, Chroma, embeddings, Torch, ChatOllama, or app startup.
+
+Compact examples:
+
+```text
+Golden payload test:
+known XSS / SQLi / Path Traversal / Command Injection payloads should keep their expected behavior.
+
+Scenario A integration test:
+mixed auth log -> Incident -> EV-ID follow-up -> LLMAssist guardrails.
+```
 
 ## MITRE ATT&CK Metadata
 

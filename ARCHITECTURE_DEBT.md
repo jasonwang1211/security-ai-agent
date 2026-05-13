@@ -57,6 +57,15 @@ Engineering note: v1.3 intentionally increased module count because the new modu
 - Hard-coded signatures retained as conservative fallback during migration.
 - Quality gate updated to `141 passed`.
 
+Metrics note:
+
+- Test count: `102 passed` -> `141 passed`
+- New modules: `detection_rules.py`, `rule_loader.py`
+- New rule directory: `detections/blue_team/`
+- YAML rule files: 4
+- Supported YAML attack types: XSS, SQL Injection, Path Traversal, Command Injection
+- Hard-coded signatures retained as conservative fallback
+
 New modules:
 
 - `detection_rules.py`
@@ -80,6 +89,10 @@ New rule folder:
 `SecurityAgent` currently works as an orchestrator / workflow controller. It coordinates detection, scoring, decisioning, response simulation, LLM assist, and report generation.
 
 It is not yet a true tool-calling agent. Future controller work should preserve deterministic policy boundaries and use typed tool input/output contracts.
+
+### Follow-up Module Boundary
+
+`followup_handler.py` and `report_followup.py` should be reviewed before or during v1.5 Tool Registry work. The goal is to decide whether point-based follow-up and report-aware EV/F-ID follow-up should remain separate tools or be unified behind one `ToolSpec`.
 
 ### Responder Size
 

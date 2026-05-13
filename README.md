@@ -202,6 +202,13 @@ Completed:
 - v1.4 Detection-as-Code Lite, including YAML rules, schema validation, detector adapter, rule metadata, and hard-coded fallback
 - Expanded golden smoke tests, direct log pipeline tests, focused boundary model tests, `pytest`, `ruff`, lenient `mypy`, and GitHub Actions CI
 
+### Further Reading
+
+- [Technical Notes](docs/TECH_NOTES.md) — Engineering deep-dive covering Detection-as-Code, Evidence/Incident modeling, LLM guardrails, MITRE metadata, and testing strategy.
+- [Roadmap](docs/ROADMAP.md) — Version plan and future milestones.
+- [Architecture Debt Journal](ARCHITECTURE_DEBT.md) — Engineering consolidation notes.
+- [Demo & Evaluation Report](REPORT.md) — Demo walkthrough and verification.
+
 ### Roadmap
 
 **✅ v1.3 — Evidence and Incident Capability** (Completed)
@@ -350,6 +357,13 @@ Current release: tag `v1.4.0` on `main`
 - v1.4 Detection-as-Code Lite：YAML detection rules、`DetectionRule` schema、YAML rule loader、detector adapter、rule metadata，並保留 hard-coded fallback
 - 邊界：仍是 deterministic rule-based detection，不是 ML detection，也不是 LLM-generated rules；YAML metadata 不會覆蓋 `TriagePolicy`
 - expanded golden smoke tests、direct log pipeline tests、boundary model tests、`pytest`、`ruff`、寬鬆 `mypy` 與 GitHub Actions CI
+
+### 延伸閱讀
+
+- [Technical Notes](docs/TECH_NOTES.md)：整理 Detection-as-Code、Evidence/Incident model、LLM guardrails、MITRE metadata 與測試策略。
+- [Roadmap](docs/ROADMAP.md)：版本規劃與後續里程碑。
+- [Architecture Debt Journal](ARCHITECTURE_DEBT.md)：架構整理與技術債紀錄。
+- [Demo & Evaluation Report](REPORT.md)：Demo 流程與驗證紀錄。
 
 ### Roadmap / 後續規劃
 
