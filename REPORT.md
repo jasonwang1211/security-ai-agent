@@ -107,7 +107,7 @@ The current system is an AI-assisted blue-team security triage prototype. It sup
 - Follow-up explanation
 - Unified `[Security Triage Report]` output
 
-The latest milestone stabilizes a single triage report format across deterministic and LLM-assisted analysis paths, adds raw authentication log translation, demonstrates aggregated brute-force candidate analysis, and improves Mode 3 knowledge Q&A routing with `RAGQueryPlanner` and preferred source selection.
+The latest milestone adds Detection-as-Code Lite: YAML-based deterministic detection rules, schema validation, detector adapter support, and rule metadata, while preserving the unified Security Triage Report contract and conservative hard-coded fallback behavior.
 
 ---
 
@@ -186,6 +186,7 @@ Mode 3 RAG is used for knowledge explanation only. It does not decide attack typ
 | D07 | Mode 3 Security Triage Report Guide | Security Triage Report guide question | Explains Quick Verdict, Summary, Evidence, Why It Matters, Recommended Response, Simulation Notice, AI Assist, Risk Level, Decision, and simulated decisions | Passed |
 | D08 | Mode 1 XSS Regression | `<script>alert(1)</script>` | Rule-based report still works | Passed |
 | D09 | Mode 1 Command Injection Regression | `test; rm -rf /tmp/test` | Rule-based Command Injection detection with `HIGH / BLOCK` | Passed |
+| D10 | YAML Detection-as-Code | `; rm -rf /tmp/test` | YAML rule `CMD-001` matched with severity / confidence / MITRE metadata | Passed |
 
 ---
 
@@ -434,6 +435,7 @@ The current branch also includes a small but important quality foundation:
 | Mode 3 dedicated knowledge Q&A routing | Passed |
 | `RAGQueryPlanner` and preferred source selection | Passed |
 | Rule-based Command Injection detection | Passed |
+| YAML Detection-as-Code | Passed |
 | Quality checks and CI foundation | Passed |
 
 Overall result:
@@ -497,7 +499,7 @@ For planned future work, see [docs/ROADMAP.md](docs/ROADMAP.md).
 - Follow-up explanation
 - Unified Security Triage Report
 
-本里程碑的重點是穩定統一的 Security Triage Report 格式，讓規則式偵測、日誌轉譯、聚合事件分析，以及 LLMAssist 輔助建議都能以一致格式呈現。同時，Mode 3 已透過 `RAGQueryPlanner` 與 preferred source selection 改善知識問答路由。
+本里程碑新增 Detection-as-Code Lite：以 YAML-based deterministic detection rules 管理偵測規則，加入 schema validation、detector adapter 與 rule metadata，同時保留統一 Security Triage Report 契約與保守的 hard-coded fallback。
 
 ---
 
@@ -599,6 +601,7 @@ Mode 3 RAG 只負責知識解釋，不決定 attack type、risk level 或模擬 
 | D07 | Mode 3 Security Triage Report guide | Security Triage Report 閱讀問題 | 解釋 Quick Verdict、Summary、Evidence、Why It Matters、Recommended Response、Simulation Notice、AI Assist、Risk Level、Decision 與模擬決策 | Passed |
 | D08 | Mode 1 XSS regression | `<script>alert(1)</script>` | 規則式 XSS 報告維持穩定 | Passed |
 | D09 | Mode 1 Command Injection regression | `test; rm -rf /tmp/test` | Rule-Based Detector 偵測 Command Injection，風險 `HIGH`，決策 `BLOCK` | Passed |
+| D10 | YAML Detection-as-Code | `; rm -rf /tmp/test` | YAML rule `CMD-001` 命中，並顯示 severity / confidence / MITRE metadata | Passed |
 
 ---
 
@@ -632,6 +635,7 @@ Mode 3 RAG 只負責知識解釋，不決定 attack type、risk level 或模擬 
 | Mode 3 dedicated knowledge Q&A routing | Passed |
 | `RAGQueryPlanner` and preferred source selection | Passed |
 | Rule-based Command Injection detection | Passed |
+| YAML Detection-as-Code | Passed |
 | pytest / ruff / mypy / GitHub Actions CI | Passed |
 
 整體結果：

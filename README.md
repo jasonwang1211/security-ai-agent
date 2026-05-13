@@ -31,7 +31,7 @@ This project explores a hybrid path: deterministic detection and policy produce 
 
 | Layer | Component | Role |
 |---|---|---|
-| Detection | Rule-Based Detector | Deterministic XSS, SQL Injection, Path Traversal, and Command Injection detection. |
+| Detection | Rule-Based Detector + YAML Rules | Deterministic XSS, SQL Injection, Path Traversal, and Command Injection detection using YAML-based Detection-as-Code rules. |
 | Triage | TriagePolicy | Risk scoring and simulated `BLOCK` / `MONITOR` / `ALLOW` decisions. |
 | Pipeline | Log Pipeline | Parses, normalizes, aggregates, and adapts log inputs. |
 | Knowledge | RAGQueryPlanner + RAG QA | Local defensive knowledge retrieval and explanation. |
@@ -225,12 +225,6 @@ See [docs/ROADMAP.md](docs/ROADMAP.md) for delivered items.
 
 For the full plan, see [docs/ROADMAP.md](docs/ROADMAP.md).
 
-### v1.3 Evidence and Incident Capability
-
-本階段將系統從單一事件分流推進到 incident-style evidence handling。系統現在能使用 EV-ID / F-ID 保存證據與 finding，針對 authentication log 進行 time-window sequence correlation，偵測 repeated auth_failure followed by auth_success 的 `possible_account_compromise` 情境，並輸出 JSON Incident Report。
-
-此判定仍為 deterministic correlation；LLMAssist 只提供 advisory reasoning，並受到 guardrails 限制。`possible_account_compromise` 在 v1.3 預設為 `HIGH / MONITOR`，不直接執行或模擬 `BLOCK`。所有 `BLOCK` / `MONITOR` / `ALLOW` 仍是訓練用模擬決策，沒有真實 enforcement。
-
 ## 繁體中文
 
 這是一個混合式藍隊安全分流原型：以「可重現的規則式偵測」作為安全地板，LLM 與 RAG 只負責解釋、補充脈絡與輔助分析。LLM 可以提出建議，但不能覆蓋最終系統判定。本專案採本地優先、防禦導向設計，適合學術展示與 SOC-style 分析流程。
@@ -259,7 +253,7 @@ SOC-style 事件分流常見兩個問題：
 
 | 層級 | 元件 | 說明 |
 |---|---|---|
-| Detection | Rule-Based Detector | 以規則式方式偵測 XSS、SQL Injection、Path Traversal、Command Injection。 |
+| Detection | Rule-Based Detector + YAML Rules | 以 YAML-based Detection-as-Code 規則進行 XSS、SQL Injection、Path Traversal、Command Injection 的 deterministic 偵測。 |
 | Triage | TriagePolicy | 負責風險評估與模擬 `BLOCK` / `MONITOR` / `ALLOW` 決策。 |
 | Pipeline | Log Pipeline | 解析、正規化、聚合並轉接日誌輸入。 |
 | Knowledge | RAGQueryPlanner + RAG QA | 提供本地防禦知識檢索與解釋。 |
