@@ -1,0 +1,17 @@
+id: PATH-001
+title: Basic Path Traversal Indicators
+attack_type: Path Traversal
+severity: HIGH
+confidence: 0.85
+patterns:
+  - "/etc/passwd"
+  - "../"
+  - "..\\"
+match_mode: substring
+case_sensitive: false
+mitre_techniques:
+  - T1083
+references:
+  - knowledge/blue_team/attack_techniques/path_traversal.md
+notes: "Basic path traversal indicators used by the deterministic detector."
+enabled: true

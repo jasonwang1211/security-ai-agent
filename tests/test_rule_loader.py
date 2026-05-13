@@ -40,6 +40,13 @@ def test_load_detection_rules_recursively_loads_sample_rule():
     assert any(rule.id == "XSS-001" for rule in rules)
 
 
+def test_load_detection_rules_recursively_loads_all_migrated_rule_ids():
+    rules = load_detection_rules("detections/blue_team")
+    rule_ids = {rule.id for rule in rules}
+
+    assert {"XSS-001", "SQLI-001", "PATH-001", "CMD-001"}.issubset(rule_ids)
+
+
 def test_load_detection_rules_returns_empty_list_for_missing_directory(tmp_path):
     assert load_detection_rules(tmp_path / "missing") == []
 

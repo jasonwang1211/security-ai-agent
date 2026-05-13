@@ -1,0 +1,18 @@
+id: SQLI-001
+title: Basic SQL Injection Indicators
+attack_type: SQL Injection
+severity: HIGH
+confidence: 0.9
+patterns:
+  - "' or '1'='1"
+  - "'--"
+  - "union select"
+  - "drop table"
+match_mode: substring
+case_sensitive: false
+mitre_techniques:
+  - T1190
+references:
+  - knowledge/blue_team/attack_techniques/sql_injection.md
+notes: "Basic SQL injection indicators used by the deterministic detector."
+enabled: true
