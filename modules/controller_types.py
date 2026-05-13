@@ -104,6 +104,17 @@ class ReportFollowupInput(BaseModel):
         return _require_non_blank(value, "question")
 
 
+class IncidentJsonExportInput(BaseModel):
+    incident_id: str | None = None
+    incident: dict[str, Any] = Field(default_factory=dict)
+
+    @model_validator(mode="after")
+    def incident_id_or_incident_required(self) -> "IncidentJsonExportInput":
+        if self.incident_id is None and not self.incident:
+            raise ValueError("incident_id or incident must be provided")
+        return self
+
+
 class ToolExecutionResult(BaseModel):
     status: ControllerStatus
     output: dict[str, Any] = Field(default_factory=dict)
