@@ -150,6 +150,21 @@ Architecture note:
 
 v1.6 intentionally keeps RAG v2 helpers isolated from the existing `RAGQA` runtime. Existing CLI modes remain unchanged. AnswerGuardrails and evaluation are deferred.
 
+### RAG Runtime vs RAG v2 Helper Status
+
+| Module | Status | Role |
+|---|---|---|
+| `rag_qa.py` | active runtime | Current RAG QA path used by existing CLI / agent flow |
+| `rag_query_planner.py` | active legacy planner | Current planner used by existing RAG QA flow |
+| `rag_types.py` | v1.6 helper foundation | Pydantic boundary types for future source-cited RAG |
+| `rag_metadata.py` | v1.6 helper foundation | Frontmatter metadata parser for KB docs |
+| `rag_intent.py` | v1.6 helper foundation | Rule-based intent classification and exact ID extraction |
+| `rag_retrieval_planner.py` | v1.6 helper foundation | Metadata-aware candidate planning, no vector runtime |
+| `rag_source_assembly.py` | v1.6 helper foundation | SourceCitation / AnswerWithSources assembly |
+| `rag_explainers.py` | v1.6 helper foundation | Deterministic source-cited report/rule explanation helpers |
+
+v1.6 intentionally keeps these helpers isolated from `rag_qa.py`. v1.7 must decide whether to wire RAG v2 helpers into runtime, consolidate modules, or keep staged infrastructure. This is a documented architecture decision, not a runtime change.
+
 ## Current Quality Gate
 
 - `python -m pytest` -> `366 passed`
@@ -165,7 +180,7 @@ v1.6 intentionally keeps RAG v2 helpers isolated from the existing `RAGQA` runti
 
 ### Follow-up Module Boundary
 
-`followup_handler.py` and `report_followup.py` should be reviewed before or during v1.5 Tool Registry work. The goal is to decide whether point-based follow-up and report-aware EV/F-ID follow-up should remain separate tools or be unified behind one `ToolSpec`.
+`followup_handler.py` and `report_followup.py` remain separate for now. v1.7 planning must decide whether point-based follow-up and report-aware EV/F-ID follow-up remain separate tools or unify behind one `ToolSpec` / report-aware follow-up path.
 
 ### Responder Size
 

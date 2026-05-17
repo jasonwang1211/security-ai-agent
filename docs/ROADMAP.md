@@ -116,6 +116,16 @@ Planned:
 - Evaluation datasets
 - Detection and retrieval quality metrics
 - Smart Router after the safety/evaluation foundation is in place
+- Decide RAG v2 runtime integration strategy:
+  - integrate source-cited helpers into existing `RAGQA`
+  - or keep `RAGQA` active while RAG v2 remains staged
+  - or consolidate RAG modules after evaluation coverage exists
+- Decide follow-up module boundary:
+  - keep `followup_handler.py` and `report_followup.py` separate
+  - or unify behind a single `ToolSpec` / report-aware follow-up path
+
+Boundary:
+v1.7 should not add more RAG modules unless their ownership is clearly distinct. Prefer wiring, evaluation, and consolidation decisions over additional parallel scaffolding.
 
 ## v1.8 - Advanced AnswerGuardrails and Investigation Planner
 
@@ -248,6 +258,9 @@ Status: Completed on `v1.6-rag-v2-foundation`.
 - Answer Safety
 - Evaluation datasets
 - Smart Router after safety/evaluation foundation
+- Decide RAG v2 runtime integration strategy: integrate helpers into `RAGQA`, keep staged infrastructure, or consolidate modules after evaluation coverage exists
+- Decide follow-up module boundary: keep `followup_handler.py` and `report_followup.py` separate, or unify behind one `ToolSpec` / report-aware follow-up path
+- Boundary: v1.7 should prefer wiring, evaluation, and consolidation decisions over additional parallel RAG scaffolding
 
 ## v1.8 - Advanced AnswerGuardrails and Investigation Planner
 

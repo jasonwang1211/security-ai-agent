@@ -7,7 +7,7 @@
 
 > Project: AI-assisted Security Threat Detection and Response System
 > Current branch: `v1.6-rag-v2-foundation`
-> Release baseline: tag `v1.4.0` on `main`
+> Release baseline: tag `v1.5.0` on `main`
 > Milestone: RAG v2 Foundation
 
 Full CLI excerpts are available in [demo_outputs.md](demo_outputs.md).
@@ -521,7 +521,7 @@ For planned future work, see [docs/ROADMAP.md](docs/ROADMAP.md).
 # 繁體中文
 
 > 專案：AI 輔助安全威脅偵測與回應系統  
-> 目前目標：merge 後 `main` 上的 tag `v1.4.0`  
+> 目前目標：merge 後 `main` 上的 tag `v1.5.0`
 > 里程碑：Detection-as-Code Lite
 
 完整 CLI 範例可參考 [demo_outputs.md](demo_outputs.md)。
