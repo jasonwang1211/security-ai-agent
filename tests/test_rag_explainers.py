@@ -1,8 +1,43 @@
+import subprocess
 import sys
 
 from modules.rag_explainers import explain_report_question, explain_rule_question
 from modules.rag_metadata import KnowledgeDocMetadata, load_metadata_from_directory
 from modules.rag_types import AnswerWithSources
+
+
+def assert_module_imports_without_runtime_dependencies(module_name: str) -> None:
+    code = f"""
+import importlib
+import json
+import sys
+
+forbidden = [
+    "modules.rag_qa",
+    "langchain",
+    "chromadb",
+    "sentence_transformers",
+    "ollama",
+    "torch",
+]
+
+importlib.import_module({module_name!r})
+
+loaded = [
+    name for name in forbidden
+    if name in sys.modules or any(mod.startswith(name + ".") for mod in sys.modules)
+]
+
+print(json.dumps(loaded))
+raise SystemExit(1 if loaded else 0)
+"""
+    result = subprocess.run(
+        [sys.executable, "-c", code],
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+    assert result.returncode == 0, result.stdout + result.stderr
 
 
 def make_metadata(
@@ -150,33 +185,11 @@ def test_explain_rule_question_with_no_metadata_candidates_returns_insufficient_
 
 
 def test_report_explainer_does_not_import_rag_runtime_modules() -> None:
-    forbidden_modules = [
-        "app",
-        "modules.rag_qa",
-        "langchain",
-        "chromadb",
-        "sentence_transformers",
-        "ollama",
-        "torch",
-    ]
-
-    for module_name in forbidden_modules:
-        assert module_name not in sys.modules
+    assert_module_imports_without_runtime_dependencies("modules.rag_explainers")
 
 
 def test_rule_explainer_does_not_import_rag_runtime_modules() -> None:
-    forbidden_modules = [
-        "app",
-        "modules.rag_qa",
-        "langchain",
-        "chromadb",
-        "sentence_transformers",
-        "ollama",
-        "torch",
-    ]
-
-    for module_name in forbidden_modules:
-        assert module_name not in sys.modules
+    assert_module_imports_without_runtime_dependencies("modules.rag_explainers")
 
 
 def test_real_report_explainer_metadata_can_support_monitor_answer() -> None:

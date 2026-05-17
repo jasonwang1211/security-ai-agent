@@ -1,4 +1,5 @@
 from pathlib import Path
+import subprocess
 import sys
 
 import pytest
@@ -11,6 +12,40 @@ from modules.rag_metadata import (
     parse_frontmatter_metadata,
     split_frontmatter,
 )
+
+
+def assert_module_imports_without_runtime_dependencies(module_name: str) -> None:
+    code = f"""
+import importlib
+import json
+import sys
+
+forbidden = [
+    "modules.rag_qa",
+    "langchain",
+    "chromadb",
+    "sentence_transformers",
+    "ollama",
+    "torch",
+]
+
+importlib.import_module({module_name!r})
+
+loaded = [
+    name for name in forbidden
+    if name in sys.modules or any(mod.startswith(name + ".") for mod in sys.modules)
+]
+
+print(json.dumps(loaded))
+raise SystemExit(1 if loaded else 0)
+"""
+    result = subprocess.run(
+        [sys.executable, "-c", code],
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+    assert result.returncode == 0, result.stdout + result.stderr
 
 
 VALID_DOC = """---
@@ -231,15 +266,4 @@ def test_all_report_explainer_docs_have_non_empty_keywords() -> None:
 
 
 def test_metadata_parser_does_not_import_or_initialize_rag_runtime_modules() -> None:
-    forbidden_modules = [
-        "app",
-        "modules.rag_qa",
-        "langchain",
-        "chromadb",
-        "sentence_transformers",
-        "ollama",
-        "torch",
-    ]
-
-    for module_name in forbidden_modules:
-        assert module_name not in sys.modules
+    assert_module_imports_without_runtime_dependencies("modules.rag_metadata")

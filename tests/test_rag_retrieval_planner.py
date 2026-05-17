@@ -1,3 +1,4 @@
+import subprocess
 import sys
 
 from modules.rag_intent import build_rag_retrieval_plan
@@ -10,6 +11,40 @@ from modules.rag_retrieval_planner import (
     score_metadata_candidate,
     select_metadata_candidates,
 )
+
+
+def assert_module_imports_without_runtime_dependencies(module_name: str) -> None:
+    code = f"""
+import importlib
+import json
+import sys
+
+forbidden = [
+    "modules.rag_qa",
+    "langchain",
+    "chromadb",
+    "sentence_transformers",
+    "ollama",
+    "torch",
+]
+
+importlib.import_module({module_name!r})
+
+loaded = [
+    name for name in forbidden
+    if name in sys.modules or any(mod.startswith(name + ".") for mod in sys.modules)
+]
+
+print(json.dumps(loaded))
+raise SystemExit(1 if loaded else 0)
+"""
+    result = subprocess.run(
+        [sys.executable, "-c", code],
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+    assert result.returncode == 0, result.stdout + result.stderr
 
 
 def make_metadata(
@@ -215,15 +250,4 @@ def test_models_remove_blank_reasons_and_warnings() -> None:
 
 
 def test_planner_module_does_not_import_rag_runtime_modules() -> None:
-    forbidden_modules = [
-        "app",
-        "modules.rag_qa",
-        "langchain",
-        "chromadb",
-        "sentence_transformers",
-        "ollama",
-        "torch",
-    ]
-
-    for module_name in forbidden_modules:
-        assert module_name not in sys.modules
+    assert_module_imports_without_runtime_dependencies("modules.rag_retrieval_planner")
