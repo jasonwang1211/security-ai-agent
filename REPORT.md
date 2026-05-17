@@ -6,9 +6,9 @@
 # English
 
 > Project: AI-assisted Security Threat Detection and Response System
-> Current branch: `v1.5-controller-agent`
+> Current branch: `v1.6-rag-v2-foundation`
 > Release baseline: tag `v1.4.0` on `main`
-> Milestone: ControllerAgent and Tool Registry Infrastructure
+> Milestone: RAG v2 Foundation
 
 Full CLI excerpts are available in [demo_outputs.md](demo_outputs.md).
 
@@ -98,7 +98,21 @@ Boundary note:
 
 This milestone does not change existing CLI behavior. `ControllerAgent` dispatches only by explicit route or tool name; it does not perform LLM routing, free-form input classification, Auto Route, or Smart Router behavior.
 
-Verification:
+## v1.6 RAG v2 Foundation
+
+v1.6 update:
+
+- Added source-cited RAG v2 helper infrastructure for traceable report and rule explanations.
+- Added RAG v2 boundary models, metadata parsing, rule-based intent classification, exact ID extraction, metadata-aware planning, source assembly, and deterministic Report Explainer v2 / Rule Explainer v2 helpers.
+- Added frontmatter metadata support for the 11 `report_explainer` docs.
+- Kept these helpers isolated from the existing `modules/rag_qa.py` runtime and CLI paths.
+- Quality gate: `python -m pytest` -> `366 passed`; `python -m ruff check .` -> passed; `python -m mypy app.py modules tests` -> passed.
+
+v1.6 boundary note:
+
+This milestone improves RAG traceability and explainability; it is not a runtime RAG replacement. Existing CLI behavior remains unchanged. RAG v2 helpers are deterministic and test-covered. RAG does not become a detection source, and the final verdict remains deterministic and policy-controlled.
+
+v1.5 verification:
 
 - `python -m pytest` -> `240 passed`
 - `python -m ruff check .` -> passed
@@ -129,7 +143,7 @@ The current system is an AI-assisted blue-team security triage prototype. It sup
 - Follow-up explanation
 - Unified `[Security Triage Report]` output
 
-The latest milestone adds Detection-as-Code Lite: YAML-based deterministic detection rules, schema validation, detector adapter support, and rule metadata, while preserving the unified Security Triage Report contract and conservative hard-coded fallback behavior.
+The latest milestone adds the v1.6 RAG v2 Foundation: source-cited helper infrastructure, metadata-aware planning, source assembly, and deterministic report/rule explainer helpers while preserving the existing CLI runtime and unified Security Triage Report contract.
 
 ---
 
@@ -210,6 +224,7 @@ Mode 3 RAG is used for knowledge explanation only. It does not decide attack typ
 | D09 | Mode 1 Command Injection Regression | `test; rm -rf /tmp/test` | Rule-based Command Injection detection with `HIGH / BLOCK` | Passed |
 | D10 | YAML Detection-as-Code | `; rm -rf /tmp/test` | YAML rule `CMD-001` matched with severity / confidence / MITRE metadata | Passed |
 | D11 | ControllerAgent Dispatch | explicit route / mode hint | Deterministic dispatch through ToolRegistry and wrapper skills | Passed |
+| D12 | RAG v2 Source-Cited Explainers | report/rule question helper | Metadata-aware plan -> SourceCitation -> AnswerWithSources | Passed |
 
 ---
 
@@ -439,7 +454,8 @@ The current branch also includes a small but important quality foundation:
 - Pydantic boundary model tests for `modules/types.py`
 - Evidence / incident model, guardrail, correlator, exporter, follow-up, LLMAssist, and Scenario A integration tests
 - ControllerAgent unit and integration tests for the six v1.5 wrapper skills
-- `pytest` for regression checks; current expected result is `240 passed`
+- RAG v2 type, metadata, intent, planner, source assembly, and explainer tests
+- `pytest` for regression checks; current expected result is `366 passed`
 - `ruff` for linting and import hygiene
 - Lenient `mypy` as a gradual typing baseline
 - GitHub Actions CI for automated quality checks
@@ -461,12 +477,13 @@ The current branch also includes a small but important quality foundation:
 | Rule-based Command Injection detection | Passed |
 | YAML Detection-as-Code | Passed |
 | ControllerAgent deterministic dispatch infrastructure | Passed |
+| RAG v2 source-cited explainer helpers | Passed |
 | Quality checks and CI foundation | Passed |
 
 Overall result:
 
 ```text
-ControllerAgent and Tool Registry infrastructure is ready as an isolated v1.5 foundation. Existing CLI behavior remains unchanged, and deterministic detection / policy still control final verdicts.
+RAG v2 Foundation is ready as an isolated v1.6 helper layer. Existing CLI behavior remains unchanged, and deterministic detection / policy still control final verdicts.
 ```
 
 ---
@@ -628,6 +645,7 @@ Mode 3 RAG 只負責知識解釋，不決定 attack type、risk level 或模擬 
 | D09 | Mode 1 Command Injection regression | `test; rm -rf /tmp/test` | Rule-Based Detector 偵測 Command Injection，風險 `HIGH`，決策 `BLOCK` | Passed |
 | D10 | YAML Detection-as-Code | `; rm -rf /tmp/test` | YAML rule `CMD-001` 命中，並顯示 severity / confidence / MITRE metadata | Passed |
 | D11 | ControllerAgent Dispatch | explicit route / mode hint | 透過 ToolRegistry 與 wrapper skills 進行 deterministic dispatch | Passed |
+| D12 | RAG v2 Source-Cited Explainers | report/rule question helper | Metadata-aware plan -> SourceCitation -> AnswerWithSources | Passed |
 
 ---
 
@@ -639,7 +657,7 @@ Mode 3 RAG 只負責知識解釋，不決定 attack type、risk level 或模擬 
 - expanded golden smoke tests
 - direct consolidated log pipeline tests
 - Pydantic boundary model tests
-- `pytest` (`240 passed`)
+- `pytest` (`366 passed`)
 - `ruff`
 - lenient `mypy`
 - GitHub Actions CI
@@ -662,6 +680,7 @@ Mode 3 RAG 只負責知識解釋，不決定 attack type、risk level 或模擬 
 | `RAGQueryPlanner` and preferred source selection | Passed |
 | Rule-based Command Injection detection | Passed |
 | YAML Detection-as-Code | Passed |
+| RAG v2 source-cited explainer helpers | Passed |
 | pytest / ruff / mypy / GitHub Actions CI | Passed |
 
 整體結果：

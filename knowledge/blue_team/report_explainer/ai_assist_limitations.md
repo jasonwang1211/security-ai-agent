@@ -1,9 +1,28 @@
 ---
-id: ai_assist_limitations
-authority: explainer
-question_intents:
-  - ai_assist_disagreement
-  - why_decision
+doc_id: report.ai_assist_limitations
+doc_type: report_explainer
+applies_to:
+  - Security Triage Report
+  - AI Assist
+  - Deterministic Verdict
+related_tools:
+  - report_followup
+  - rag_security_qa
+attack_types:
+  - Possible Account Compromise
+  - Brute Force
+severity:
+  - LOW
+  - MEDIUM
+  - HIGH
+rule_ids: []
+mitre_techniques: []
+keywords:
+  - AI Assist
+  - LLMAssist
+  - advisory
+  - guardrails
+  - deterministic verdict
 ---
 
 # AI Assist Limitations

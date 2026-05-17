@@ -1,9 +1,28 @@
 ---
-id: simulation_notice
-authority: explainer
-question_intents:
-  - why_decision
-  - simulation_notice
+doc_id: report.simulation_notice
+doc_type: report_explainer
+applies_to:
+  - Security Triage Report
+  - Simulation Notice
+  - Decision
+related_tools:
+  - report_followup
+  - rag_security_qa
+attack_types:
+  - Possible Account Compromise
+  - Brute Force
+severity:
+  - LOW
+  - MEDIUM
+  - HIGH
+rule_ids: []
+mitre_techniques: []
+keywords:
+  - simulation notice
+  - simulated decision
+  - monitor
+  - block
+  - enforcement
 ---
 
 # Simulation Notice

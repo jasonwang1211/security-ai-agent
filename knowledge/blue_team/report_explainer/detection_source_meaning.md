@@ -1,9 +1,29 @@
 ---
-id: detection_source_meaning
-authority: explainer
-question_intents:
-  - detection_source
-  - read_report
+doc_id: report.detection_source_meaning
+doc_type: report_explainer
+applies_to:
+  - Security Triage Report
+  - Detection Source
+  - AI Assist
+  - Triage Policy
+related_tools:
+  - report_followup
+  - rag_security_qa
+attack_types:
+  - Possible Account Compromise
+  - Brute Force
+severity:
+  - LOW
+  - MEDIUM
+  - HIGH
+rule_ids: []
+mitre_techniques: []
+keywords:
+  - detection source
+  - rule_based_detector
+  - log_pipeline
+  - triage_policy
+  - report_aware_rag
 ---
 
 # Detection Source Meaning

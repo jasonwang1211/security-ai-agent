@@ -1,10 +1,28 @@
 ---
-id: risk_level_decision
-authority: explainer
-question_intents:
-  - why_risk
-  - why_decision
-  - ai_assist_disagreement
+doc_id: report.risk_level_decision
+doc_type: report_explainer
+applies_to:
+  - Security Triage Report
+  - Risk Level
+  - Decision
+related_tools:
+  - report_followup
+  - rag_security_qa
+attack_types:
+  - Possible Account Compromise
+  - Brute Force
+severity:
+  - LOW
+  - MEDIUM
+  - HIGH
+rule_ids: []
+mitre_techniques: []
+keywords:
+  - risk level
+  - decision
+  - monitor
+  - allow
+  - block
 ---
 
 # Risk Level and Decision

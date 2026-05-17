@@ -1,8 +1,8 @@
 # Demo Outputs / Demo 輸出範例
 
-This document shows representative output excerpts for the `v1.5-controller-agent` branch, based on tag `v1.4.0` on `main`.
+This document shows representative output excerpts for the `v1.6-rag-v2-foundation` branch, based on tag `v1.5.0` on `main`.
 
-本文件整理 merge 後 `main` 上 tag `v1.4.0` 的代表性輸出摘錄。
+本文件整理 merge 後 `main` 上 tag `v1.5.0` 的代表性輸出摘錄。
 
 The current system emits a unified `[Security Triage Report]` for triage output. Older standalone formats are outdated and should not be used as the expected demo output.
 
@@ -425,6 +425,34 @@ Notes:
 - No Smart Router is present.
 - No LLM-driven tool routing is used.
 - Final verdicts remain deterministic and policy-controlled.
+
+## Demo Case 9: RAG v2 Source-Cited Explanation Helper
+
+Status: Passed
+
+This case documents the v1.6 RAG v2 helper infrastructure. It is covered by deterministic tests and is not connected to the CLI menu yet.
+
+Question:
+
+```text
+為什麼是 MONITOR？
+```
+
+RAG v2 helper excerpt:
+
+```text
+intent: report_question
+selected source: knowledge/blue_team/report_explainer/...
+answer type: AnswerWithSources
+evidence/rule IDs: preserved when present
+limitation: helper-only, not CLI-wired yet
+```
+
+Notes:
+
+- The helper path uses metadata-aware planning, `SourceCitation`, and `AnswerWithSources`.
+- It does not call Chroma, Ollama, embeddings, Torch, or LLM generation.
+- It is explanation-only and does not override deterministic Risk Level, Decision, or simulated policy output.
 
 ## Appendix: Deprecated Output Formats / 附錄：已退役輸出格式
 
