@@ -1,10 +1,29 @@
 ---
-id: reading_the_report
-authority: explainer
-question_intents:
-  - read_report
-  - explain_evidence
-  - explain_finding
+doc_id: report.reading_the_report
+doc_type: report_explainer
+applies_to:
+  - Security Triage Report
+  - Evidence
+  - Findings
+  - Quick Verdict
+related_tools:
+  - report_followup
+  - rag_security_qa
+attack_types:
+  - Possible Account Compromise
+  - Brute Force
+severity:
+  - LOW
+  - MEDIUM
+  - HIGH
+rule_ids: []
+mitre_techniques: []
+keywords:
+  - read report
+  - Security Triage Report
+  - Evidence
+  - Findings
+  - Quick Verdict
 ---
 
 # Reading the Security Triage Report

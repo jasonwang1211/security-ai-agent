@@ -1,8 +1,27 @@
 ---
-id: incident_response_next_steps
-authority: playbook
-question_intents:
-  - next_steps
+doc_id: report.incident_response_next_steps
+doc_type: report_explainer
+applies_to:
+  - Security Triage Report
+  - Incident Response
+  - Next Steps
+related_tools:
+  - report_followup
+  - rag_security_qa
+attack_types:
+  - Possible Account Compromise
+  - Brute Force
+severity:
+  - MEDIUM
+  - HIGH
+rule_ids: []
+mitre_techniques: []
+keywords:
+  - next steps
+  - investigation
+  - analyst review
+  - authentication logs
+  - incident response
 ---
 
 # Incident Response Next Steps

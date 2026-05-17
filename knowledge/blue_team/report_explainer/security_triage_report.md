@@ -1,9 +1,28 @@
 ---
-id: security_triage_report
-authority: explainer
-question_intents:
-  - read_report
-  - report_structure
+doc_id: report.security_triage_report
+doc_type: report_explainer
+applies_to:
+  - Security Triage Report
+  - Report Structure
+  - JSON Incident Report
+related_tools:
+  - report_followup
+  - rag_security_qa
+attack_types:
+  - Possible Account Compromise
+  - Brute Force
+severity:
+  - LOW
+  - MEDIUM
+  - HIGH
+rule_ids: []
+mitre_techniques: []
+keywords:
+  - Security Triage Report
+  - report structure
+  - findings
+  - evidence
+  - final verdict
 ---
 
 # Security Triage Report

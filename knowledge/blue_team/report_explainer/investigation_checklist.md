@@ -1,8 +1,28 @@
 ---
-id: investigation_checklist
-authority: explainer
-question_intents:
-  - next_steps
+doc_id: report.investigation_checklist
+doc_type: report_explainer
+applies_to:
+  - Security Triage Report
+  - Investigation
+  - Evidence
+  - Findings
+related_tools:
+  - report_followup
+  - rag_security_qa
+attack_types:
+  - Possible Account Compromise
+  - Brute Force
+severity:
+  - MEDIUM
+  - HIGH
+rule_ids: []
+mitre_techniques: []
+keywords:
+  - investigation checklist
+  - brute_force_candidate
+  - possible_account_compromise
+  - analyst review
+  - immediate checks
 ---
 
 # Investigation Checklist

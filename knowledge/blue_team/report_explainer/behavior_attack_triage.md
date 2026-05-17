@@ -1,10 +1,27 @@
 ---
-id: behavior_attack_triage
-authority: explainer
-question_intents:
-  - explain_finding
-  - why_risk
-  - why_decision
+doc_id: report.behavior_attack_triage
+doc_type: report_explainer
+applies_to:
+  - Security Triage Report
+  - Findings
+  - Attack Type
+  - Risk Level
+related_tools:
+  - report_followup
+  - rag_security_qa
+attack_types:
+  - Possible Account Compromise
+  - Brute Force
+severity:
+  - HIGH
+rule_ids: []
+mitre_techniques: []
+keywords:
+  - behavior triage
+  - brute_force_candidate
+  - possible_account_compromise
+  - repeated failures
+  - successful login
 ---
 
 # Behavior Attack Triage

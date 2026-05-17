@@ -1,8 +1,27 @@
 ---
-id: evidence_interpretation
-authority: explainer
-question_intents:
-  - explain_evidence
+doc_id: report.evidence_interpretation
+doc_type: report_explainer
+applies_to:
+  - Security Triage Report
+  - Evidence
+  - EV-ID
+related_tools:
+  - report_followup
+  - rag_security_qa
+attack_types:
+  - Possible Account Compromise
+  - Brute Force
+severity:
+  - MEDIUM
+  - HIGH
+rule_ids: []
+mitre_techniques: []
+keywords:
+  - evidence
+  - EV-ID
+  - EV-003
+  - success_after_failures
+  - report evidence
 ---
 
 # Evidence Interpretation
