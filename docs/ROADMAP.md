@@ -1,12 +1,12 @@
 # Roadmap
 
-This roadmap describes planned development after the v1.5 ControllerAgent and Tool Registry infrastructure milestone.
+This roadmap describes planned development after the v1.6 RAG v2 Foundation milestone.
 
 ## Current Baseline
 
-Current branch: `v1.5-controller-agent`.
+Current branch: `v1.6-rag-v2-foundation`.
 
-Release baseline: tag `v1.4.0` on `main`.
+Release baseline: tag `v1.5.0` on `main`.
 
 Completed:
 
@@ -26,11 +26,12 @@ Completed:
 - 11 `report_explainer` KB docs
 - YAML detection rules with schema validation and metadata
 - v1.5 ControllerAgent and Tool Registry infrastructure
+- v1.6 RAG v2 Foundation
 - pytest / ruff / mypy / GitHub Actions CI
 
-Current v1.5 quality gate:
+Current v1.6 quality gate:
 
-- `python -m pytest` -> `240 passed`
+- `python -m pytest` -> `366 passed`
 - `python -m ruff check .` -> passed
 - `python -m mypy app.py modules tests` -> passed
 
@@ -89,19 +90,25 @@ v1.5 does not add Auto Route, Smart Router, LLM-driven routing, Investigation Pl
 
 ## v1.6 - RAG v2 Foundation
 
-Status: Next.
+Status: Completed on `v1.6-rag-v2-foundation`.
 
-Planned:
+Delivered:
 
-- Metadata/frontmatter for knowledge documents
-- Exact ID lookup
-- Source citations
-- `AnswerWithSources`
-- Retrieval behavior that can be evaluated deterministically
+- RAG v2 boundary types: `AnswerWithSources`, `SourceCitation`, `RAGRetrievalPlan`, and `ExtractedIds`
+- Frontmatter metadata for the 11 `report_explainer` docs
+- Rule-based RAG intent classification
+- Exact ID extraction / lookup helpers for EV-ID, F-ID, INC-ID, rule IDs, and MITRE technique IDs
+- Metadata-aware retrieval planner
+- Source assembly from metadata candidates into source-cited answers
+- Deterministic Report Explainer v2 and Rule Explainer v2 helpers
+- 366 passed quality gate
+
+Boundary:
+v1.6 does not add AnswerGuardrails, Smart Router, Investigation Planner, LLM-based routing, LLM generation, or replacement of the existing `RAGQA` runtime. Existing CLI behavior remains unchanged.
 
 ## v1.7 - Answer Safety, Evaluation, and Smart Router
 
-Status: Later.
+Status: Next.
 
 Planned:
 
@@ -141,7 +148,7 @@ All response decisions remain simulated unless explicitly redesigned in a future
 
 ## 目前基準
 
-目前 release target：merge 後 `main` 上的 tag `v1.4.0`。
+目前 release target：merge 後 `main` 上的 tag `v1.5.0`。
 
 已完成：
 
@@ -162,9 +169,9 @@ All response decisions remain simulated unless explicitly redesigned in a future
 - YAML detection rules、schema validation 與 rule metadata
 - pytest / ruff / mypy / GitHub Actions CI
 
-目前 v1.5 quality gate：
+目前 v1.6 quality gate：
 
-- `python -m pytest` -> `240 passed`
+- `python -m pytest` -> `366 passed`
 - `python -m ruff check .` -> passed
 - `python -m mypy app.py modules tests` -> passed
 
@@ -224,16 +231,23 @@ Roadmap 不包含 offensive automation 或真實 enforcement actions。
 除非未來另行設計 production-safe environment，所有 response decisions 都維持 simulated。
 ## v1.6 - RAG v2 Foundation / RAG v2 基礎
 
-- metadata/frontmatter
-- exact ID lookup
-- source citations
-- `AnswerWithSources`
+Status: Completed on `v1.6-rag-v2-foundation`.
+
+- RAG v2 boundary types: `AnswerWithSources`, `SourceCitation`, `RAGRetrievalPlan`, `ExtractedIds`
+- 11 份 `report_explainer` docs 的 frontmatter metadata
+- rule-based RAG intent classification
+- EV-ID / F-ID / INC-ID / rule ID / MITRE technique ID extraction 與 lookup helpers
+- metadata-aware retrieval planner
+- SourceCitation / AnswerWithSources source assembly
+- deterministic Report Explainer v2 與 Rule Explainer v2 helpers
+- 366 passed quality gate
+- 不包含 AnswerGuardrails、Smart Router、Investigation Planner、LLM-based routing，也未取代既有 `RAGQA` runtime
 
 ## v1.7 - Answer Safety, Evaluation, and Smart Router / 答案安全、評估與 Smart Router
 
 - Answer Safety
 - Evaluation datasets
-- Smart Router later
+- Smart Router after safety/evaluation foundation
 
 ## v1.8 - Advanced AnswerGuardrails and Investigation Planner
 

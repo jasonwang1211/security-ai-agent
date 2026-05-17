@@ -150,6 +150,25 @@ Boundaries:
 - Existing CLI modes remain unchanged.
 - Controller unit and integration tests do not initialize real RAG, Chroma, embeddings, Ollama, ChatOllama, Torch, or `SecurityAgent`.
 
+### v1.6 RAG v2 Foundation
+
+v1.6 adds source-cited RAG v2 helper infrastructure while keeping the existing `RAGQA` runtime and CLI behavior unchanged:
+
+- RAG v2 boundary types: `AnswerWithSources`, `SourceCitation`, `RAGRetrievalPlan`, and `ExtractedIds`.
+- Frontmatter metadata support for the 11 `report_explainer` knowledge docs.
+- Rule-based RAG intent classification.
+- Exact ID extraction and lookup helpers for EV-ID, F-ID, INC-ID, rule IDs, and MITRE technique IDs.
+- Metadata-aware retrieval planning without running vector retrieval.
+- Source assembly from metadata candidates into `SourceCitation` and `AnswerWithSources`.
+- Deterministic Report Explainer v2 and Rule Explainer v2 helpers.
+- Current quality gate: `366 passed`.
+
+Boundaries:
+
+- v1.6 helpers are not wired into the existing `modules/rag_qa.py` runtime yet.
+- No Chroma, Ollama, embeddings, Torch, or LLM generation is introduced in these helper paths.
+- RAG remains explanation-only and does not override deterministic verdicts, risk levels, or simulated decisions.
+
 ### CLI Modes
 
 ```text
@@ -176,7 +195,7 @@ python -m ruff check .
 python -m mypy app.py modules tests
 ```
 
-Current expected test result: `240 passed`.
+Current expected test result: `366 passed`.
 
 The test suite includes expanded golden smoke tests, direct consolidated log pipeline tests, Pydantic boundary model tests, incident/export/follow-up/guardrail tests, and Scenario A integration coverage for a mixed authentication log. Deterministic tests do not start the full app or initialize RAGQA, Chroma, embeddings, Torch, Ollama, ChatOllama, or local LLM clients. GitHub Actions CI runs the same quality gate.
 
@@ -206,10 +225,10 @@ python app.py
 Current working branch:
 
 ```text
-v1.5-controller-agent
+v1.6-rag-v2-foundation
 ```
 
-Current release baseline: tag `v1.4.0` on `main`
+Current release baseline: tag `v1.5.0` on `main`
 
 Completed:
 
@@ -221,6 +240,7 @@ Completed:
 - v1.3 Evidence and Incident Capability, including stable EV-ID/F-ID contracts, `possible_account_compromise` correlation, JSON Incident Report export, report-aware follow-up, LLMAssist guardrails, Scenario A integration coverage, and 11 `report_explainer` KB docs
 - v1.4 Detection-as-Code Lite, including YAML rules, schema validation, detector adapter, rule metadata, and hard-coded fallback
 - v1.5 ControllerAgent and Tool Registry infrastructure, including typed tool specs, deterministic dispatch, six wrapper skills, and integration tests
+- v1.6 RAG v2 Foundation, including source-cited helper types, metadata parsing, intent classification, exact ID extraction, metadata-aware planning, source assembly, and deterministic report/rule explainers
 - Expanded golden smoke tests, direct log pipeline tests, focused boundary model tests, `pytest`, `ruff`, lenient `mypy`, and GitHub Actions CI
 
 ### Further Reading
@@ -252,18 +272,21 @@ See [docs/ROADMAP.md](docs/ROADMAP.md) for delivered items.
 - Six wrapper skills
 - No Auto Route, Smart Router, or LLM-driven tool selection
 
-**📋 v1.6 — RAG v2 Foundation** (Next)
+**✅ v1.6 — RAG v2 Foundation** (Completed on `v1.6-rag-v2-foundation`)
 
-- Metadata/frontmatter
-- Exact ID lookup
-- Source citations
-- `AnswerWithSources`
+- Source-cited RAG v2 helper infrastructure
+- Metadata/frontmatter for 11 `report_explainer` docs
+- Exact ID extraction / lookup
+- Metadata-aware retrieval planning
+- Source citations and `AnswerWithSources`
+- Deterministic Report Explainer v2 and Rule Explainer v2 helpers
+- Not wired into the existing `RAGQA` runtime
 
-**📋 v1.7+ — Answer Safety, Evaluation, Smart Router, and UX**
+**📋 v1.7 — Answer Safety, Evaluation, and Smart Router** (Next)
 
-- Answer Safety and evaluation datasets
-- Smart Router after safety and evaluation foundations
-- Dashboard / demo polish
+- v1.7 next: Answer Safety, evaluation datasets, and Smart Router after safety/evaluation foundations
+- v1.8: Advanced AnswerGuardrails and Investigation Planner
+- v1.9: Analyst UX and demo polish
 
 For the full plan, see [docs/ROADMAP.md](docs/ROADMAP.md).
 
@@ -368,7 +391,7 @@ python -m ruff check .
 python -m mypy app.py modules tests
 ```
 
-目前預期測試結果：`240 passed`。
+目前預期測試結果：`366 passed`。
 
 測試使用 dummy RAG 與 LLMAssist 物件，不會啟動完整 CLI，也不會初始化 RAGQA、Chroma、embeddings、Torch、Ollama、ChatOllama 或本地 LLM client。GitHub Actions CI 會執行同一組品質檢查。
 
@@ -377,10 +400,10 @@ python -m mypy app.py modules tests
 目前分支：
 
 ```text
-v1.5-controller-agent
+v1.6-rag-v2-foundation
 ```
 
-Current release baseline: tag `v1.4.0` on `main`
+Current release baseline: tag `v1.5.0` on `main`
 
 已完成：
 
@@ -391,6 +414,7 @@ Current release baseline: tag `v1.4.0` on `main`
 - Pydantic boundary types 基礎
 - v1.4 Detection-as-Code Lite：YAML detection rules、`DetectionRule` schema、YAML rule loader、detector adapter、rule metadata，並保留 hard-coded fallback
 - v1.5 ControllerAgent / Tool Registry infrastructure：typed `ToolSpec`、deterministic dispatch、six wrapper skills 與 integration tests
+- v1.6 RAG v2 Foundation：source-cited helper types、frontmatter metadata、intent classification、exact ID lookup、metadata-aware planning、source assembly、Report Explainer v2 / Rule Explainer v2
 - 邊界：仍是 deterministic rule-based detection，不是 ML detection，也不是 LLM-generated rules；YAML metadata 不會覆蓋 `TriagePolicy`
 - expanded golden smoke tests、direct log pipeline tests、boundary model tests、`pytest`、`ruff`、寬鬆 `mypy` 與 GitHub Actions CI
 
@@ -423,16 +447,18 @@ Current release baseline: tag `v1.4.0` on `main`
 - Six wrapper skills
 - No Auto Route, Smart Router, or LLM-driven tool selection
 
-**📋 v1.6 — RAG v2 Foundation / RAG v2 基礎**（下一階段）
+**✅ v1.6 — RAG v2 Foundation / RAG v2 基礎**（已完成）
 
-- metadata/frontmatter
-- exact ID lookup
-- source citations
-- `AnswerWithSources`
+- 11 份 `report_explainer` docs 的 frontmatter metadata
+- EV-ID / F-ID / INC-ID / rule ID / MITRE technique ID extraction 與 lookup helpers
+- metadata-aware retrieval planner
+- SourceCitation / AnswerWithSources source assembly
+- deterministic Report Explainer v2 與 Rule Explainer v2 helpers
+- 尚未接入既有 `RAGQA` runtime；沒有新增 Chroma / Ollama / LLM generation
 
 完整規劃請見 [docs/ROADMAP.md](docs/ROADMAP.md)。
 ### v1.5 ControllerAgent 與 Tool Registry
 
 v1.5 新增型別化 agent 基礎設施，但不改變既有 CLI 行為。`ToolRegistry` 保存型別化 `ToolSpec`，`ControllerAgent` 只依明確 route 或 tool name 做 deterministic dispatch。六個 wrapper skills 為 `payload_triage`、`raw_log_translate`、`log_file_ingest`、`rag_security_qa`、`report_followup`、`incident_json_export`。v1.5 不包含 Auto Route、Smart Router，也不使用 LLM 進行 tool selection；最終 verdict 仍由 deterministic policy 控制。目前品質門檻：`240 passed`。
 
-後續規劃：v1.6 是 RAG v2 Foundation，包含 metadata/frontmatter、exact ID lookup、source citations 與 `AnswerWithSources`；v1.7 之後再處理 Answer Safety、evaluation datasets、Smart Router 與 UX polish。
+v1.6 已完成 RAG v2 Foundation：metadata/frontmatter、exact ID lookup、source citations、`AnswerWithSources`、metadata-aware planner、source assembly，以及 deterministic Report / Rule Explainer helpers。RAG 仍是 explanation-only，不會覆寫 deterministic verdict。後續 v1.7 是 Answer Safety、evaluation datasets 與 Smart Router。

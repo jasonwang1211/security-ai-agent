@@ -179,6 +179,22 @@ Example follow-up questions:
 - "為什麼是 MONITOR？"
 - "我接下來要查什麼？"
 
+## RAG v2 Foundation
+
+v1.6 introduces metadata-aware and source-cited helper infrastructure for RAG v2. It does not replace the current `RAGQA` runtime and does not make RAG a detection source.
+
+Key pieces:
+
+- Frontmatter metadata makes knowledge docs easier to filter and cite.
+- Exact ID extraction / lookup handles EV-ID, F-ID, INC-ID, rule ID, and MITRE technique ID references better than pure vector search.
+- The metadata-aware retrieval planner selects candidate sources without running vector retrieval.
+- `AnswerWithSources` carries answer text, `SourceCitation` entries, exact IDs, answer-support confidence, and limitations.
+- Report Explainer v2 and Rule Explainer v2 are deterministic helper paths.
+
+Safety boundary:
+
+RAG v2 remains explanation-only. It cannot override final verdicts, risk levels, decisions, or deterministic policy-controlled output. `BLOCK`, `MONITOR`, and `ALLOW` remain simulated.
+
 ## Testing Strategy
 
 The project uses several testing layers:
@@ -190,7 +206,7 @@ The project uses several testing layers:
 
 Current quality gate:
 
-- `python -m pytest` -> `240 passed`
+- `python -m pytest` -> `366 passed`
 - `python -m ruff check .`
 - `python -m mypy app.py modules tests`
 

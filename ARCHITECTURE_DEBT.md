@@ -1,6 +1,6 @@
 # Architecture Debt Engineering Journal
 
-Current baseline: `v1.5-controller-agent` branch, based on tag `v1.4.0` on `main`
+Current baseline: `v1.6-rag-v2-foundation` branch, based on tag `v1.5.0` on `main`
 
 This document tracks structural debt cleanup as an engineering discipline: reducing module sprawl, consolidating thin wrappers, and preserving deterministic safety boundaries before adding more agentic behavior.
 
@@ -19,6 +19,7 @@ The project has reached a stable consolidated architecture with:
 - Advisory LLMAssist guardrails and report-aware follow-up
 - YAML-based Detection-as-Code Lite rules with schema validation and metadata
 - Isolated v1.5 ControllerAgent and Tool Registry infrastructure
+- Isolated v1.6 RAG v2 helper infrastructure for source-cited explanations
 
 ## Consolidation Outcomes
 
@@ -29,7 +30,7 @@ The project has reached a stable consolidated architecture with:
 | CLI mode wrappers | `modules/skills/*` | `mode_handlers.py` | Consolidated thin CLI wrappers |
 | Log ingestion | parser / normalizer / aggregator / adapter modules | `log_pipeline.py` | Consolidated parse -> normalize -> aggregate -> adapt flow |
 | Boundary contracts | ad-hoc dictionaries | `modules/types.py` | Added Pydantic boundary models for future controller/tool work |
-| Testing foundation | limited smoke coverage | golden + log pipeline + boundary + incident + detection-rule + controller tests | Current quality gate: `240 passed`, ruff, mypy |
+| Testing foundation | limited smoke coverage | golden + log pipeline + boundary + incident + detection-rule + controller + RAG v2 helper tests | Current quality gate: `366 passed`, ruff, mypy |
 
 ## v1.3 Phase Outcomes
 
@@ -112,9 +113,46 @@ Architecture note:
 
 v1.5 intentionally keeps `ControllerAgent` isolated from CLI runtime. Existing CLI modes remain unchanged, and Smart Router is deferred.
 
+## v1.6 Phase Outcomes
+
+- Added RAG v2 boundary types, metadata parsing, rule-based intent classification, exact ID extraction, metadata-aware planning, source assembly, and deterministic report/rule explainer helpers.
+- Added frontmatter metadata for the 11 `report_explainer` docs.
+- Kept RAG v2 helpers isolated from the existing `RAGQA` runtime.
+- Existing CLI modes remain unchanged.
+- Deferred AnswerGuardrails, evaluation datasets, Smart Router, and Investigation Planner.
+
+New modules:
+
+- `rag_types.py`
+- `rag_metadata.py`
+- `rag_intent.py`
+- `rag_retrieval_planner.py`
+- `rag_source_assembly.py`
+- `rag_explainers.py`
+
+New tests:
+
+- `test_rag_types.py`
+- `test_rag_metadata.py`
+- `test_rag_intent.py`
+- `test_rag_retrieval_planner.py`
+- `test_rag_source_assembly.py`
+- `test_rag_explainers.py`
+
+Quality gate:
+
+- Previous v1.5 gate: `240 passed`
+- Current v1.6 gate: `366 passed`
+- `python -m ruff check .` -> passed
+- `python -m mypy app.py modules tests` -> passed
+
+Architecture note:
+
+v1.6 intentionally keeps RAG v2 helpers isolated from the existing `RAGQA` runtime. Existing CLI modes remain unchanged. AnswerGuardrails and evaluation are deferred.
+
 ## Current Quality Gate
 
-- `python -m pytest` -> `240 passed`
+- `python -m pytest` -> `366 passed`
 - `python -m ruff check .` -> passed
 - `python -m mypy app.py modules tests` -> passed
 - CI runs the same quality gate
@@ -137,9 +175,9 @@ Future cleanup can keep report formatting in `responder.py` while moving static 
 
 ### RAG Routing
 
-`RAGQueryPlanner` supports preferred source selection for the current small knowledge base.
+`RAGQueryPlanner` supports preferred source selection for the current small knowledge base. v1.6 adds isolated metadata-aware RAG v2 helper modules for source-cited report/rule explanations, but they are not wired into the current runtime.
 
-Future retrieval work can move toward metadata-driven retrieval with markdown frontmatter and Chroma metadata filtering. Planned sequencing should follow [docs/ROADMAP.md](docs/ROADMAP.md).
+Future retrieval work can decide when to wire these helpers into runtime paths and when to add AnswerGuardrails/evaluation. Planned sequencing should follow [docs/ROADMAP.md](docs/ROADMAP.md).
 
 ### Startup Cost
 
