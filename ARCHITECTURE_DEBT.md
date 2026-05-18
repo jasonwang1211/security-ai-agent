@@ -163,7 +163,7 @@ v1.6 intentionally keeps RAG v2 helpers isolated from the existing `RAGQA` runti
 | `rag_source_assembly.py` | v1.6 helper foundation | SourceCitation / AnswerWithSources assembly |
 | `rag_explainers.py` | v1.6 helper foundation | Deterministic source-cited report/rule explanation helpers |
 
-v1.6 intentionally keeps these helpers isolated from `rag_qa.py`. v1.7 must decide whether to wire RAG v2 helpers into runtime, consolidate modules, or keep staged infrastructure. This is a documented architecture decision, not a runtime change.
+v1.6 intentionally keeps these helpers isolated from `rag_qa.py`. v1.7 ownership decision: `RAGQA` remains the active general knowledge QA runtime, while RAG v2 helpers remain staged for future narrow report/rule explanation wiring through `report_followup.py` or a protected helper path. This reduces the risk of adding more parallel RAG modules before AnswerGuardrails and eval coverage prove a user-facing path is safe.
 
 ## Current Quality Gate
 
@@ -180,7 +180,7 @@ v1.6 intentionally keeps these helpers isolated from `rag_qa.py`. v1.7 must deci
 
 ### Follow-up Module Boundary
 
-`followup_handler.py` and `report_followup.py` remain separate for now. v1.7 planning must decide whether point-based follow-up and report-aware EV/F-ID follow-up remain separate tools or unify behind one `ToolSpec` / report-aware follow-up path.
+`followup_handler.py` and `report_followup.py` remain separate for now. v1.7 ownership decision: point/context follow-up stays with `followup_handler.py`, while report-aware EV/F-ID follow-up stays with `report_followup.py`. Do not unify them until Smart Router eval cases prove a single route is safe.
 
 ### Responder Size
 
