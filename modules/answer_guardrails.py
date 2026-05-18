@@ -44,6 +44,7 @@ RAG_DETECTION_PATTERNS = (
 )
 LLM_OVERRIDE_PATTERNS = (
     "llm changed the decision",
+    "llm changed the final decision",
     "ai changed risk level",
     "ai 覆蓋決策",
     "llm 修改判定",
