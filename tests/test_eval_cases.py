@@ -194,9 +194,49 @@ def test_bundled_router_cases_include_unknown_clarification_case():
     cases = load_router_cases("eval_cases/router_cases.jsonl")
 
     assert any(
-        case.expected_input_kind == "unknown" and case.expected_route == "clarification"
+        case.expected_input_kind == "unknown" and case.expected_route == "clarification_required"
         for case in cases
     )
+
+
+def test_bundled_router_cases_use_allowed_kinds_and_routes():
+    cases = load_router_cases("eval_cases/router_cases.jsonl")
+    allowed_input_kinds = {
+        "payload_or_event",
+        "raw_log_line",
+        "log_file_path",
+        "security_knowledge_question",
+        "report_followup",
+        "incident_export",
+        "unknown",
+    }
+    allowed_routes = {
+        "payload_triage",
+        "raw_log_translate",
+        "log_file_ingest",
+        "rag_security_qa",
+        "report_followup",
+        "incident_json_export",
+        "clarification_required",
+    }
+
+    assert {case.expected_input_kind for case in cases}.issubset(allowed_input_kinds)
+    assert {case.expected_route for case in cases}.issubset(allowed_routes)
+
+
+def test_bundled_router_cases_cover_required_categories():
+    cases = load_router_cases("eval_cases/router_cases.jsonl")
+    required_input_kinds = {
+        "payload_or_event",
+        "raw_log_line",
+        "log_file_path",
+        "security_knowledge_question",
+        "report_followup",
+        "incident_export",
+        "unknown",
+    }
+
+    assert required_input_kinds.issubset({case.expected_input_kind for case in cases})
 
 
 def test_bundled_payload_detection_cases_include_benign_case():
