@@ -4,9 +4,9 @@ This roadmap describes planned development after the v1.6 RAG v2 Foundation mile
 
 ## Current Baseline
 
-Current branch: `v1.6-rag-v2-foundation`.
+Current release: tag `v1.6.0` on `main`.
 
-Release baseline: tag `v1.5.0` on `main`.
+Next development branch: `v1.7-answer-safety-eval-router`.
 
 Completed:
 
@@ -154,11 +154,13 @@ All response decisions remain simulated unless explicitly redesigned in a future
 
 # 後續規劃
 
-此 roadmap 描述 v1.4 Detection-as-Code Lite 完成後的後續開發方向。
+此 roadmap 描述 v1.6 RAG v2 Foundation 完成後的後續開發方向。
 
 ## 目前基準
 
-目前 release target：merge 後 `main` 上的 tag `v1.5.0`。
+目前 release：`main` 上的 tag `v1.6.0`。
+
+下一個 development branch：`v1.7-answer-safety-eval-router`。
 
 已完成：
 
@@ -177,6 +179,8 @@ All response decisions remain simulated unless explicitly redesigned in a future
 - LLM Safety Layer
 - 11 篇 `report_explainer` KB docs
 - YAML detection rules、schema validation 與 rule metadata
+- v1.5 ControllerAgent and Tool Registry infrastructure
+- v1.6 RAG v2 Foundation
 - pytest / ruff / mypy / GitHub Actions CI
 
 目前 v1.6 quality gate：
@@ -222,7 +226,7 @@ v1.4 不包含 ML detection、LLM-generated rules、Sigma/YARA compatibility、p
 
 ## v1.5 - ControllerAgent and Tool Registry / ControllerAgent 與 Tool Registry
 
-狀態：下一階段。
+狀態：已完成。
 
 規劃：
 
@@ -254,6 +258,8 @@ Status: Completed on `v1.6-rag-v2-foundation`.
 - 不包含 AnswerGuardrails、Smart Router、Investigation Planner、LLM-based routing，也未取代既有 `RAGQA` runtime
 
 ## v1.7 - Answer Safety, Evaluation, and Smart Router / 答案安全、評估與 Smart Router
+
+狀態：下一階段。
 
 - Answer Safety
 - Evaluation datasets

@@ -222,13 +222,9 @@ python app.py
 
 ### Current Status
 
-Current working branch:
+Current release: tag `v1.6.0` on `main`.
 
-```text
-v1.6-rag-v2-foundation
-```
-
-Current release baseline: tag `v1.5.0` on `main`
+Next development branch: `v1.7-answer-safety-eval-router`.
 
 Completed:
 
@@ -272,7 +268,7 @@ See [docs/ROADMAP.md](docs/ROADMAP.md) for delivered items.
 - Six wrapper skills
 - No Auto Route, Smart Router, or LLM-driven tool selection
 
-**✅ v1.6 — RAG v2 Foundation** (Completed on `v1.6-rag-v2-foundation`)
+**✅ v1.6 — RAG v2 Foundation** (Released as `v1.6.0`)
 
 - Source-cited RAG v2 helper infrastructure
 - Metadata/frontmatter for 11 `report_explainer` docs
@@ -397,13 +393,9 @@ python -m mypy app.py modules tests
 
 ### 目前狀態
 
-目前分支：
+Current release: tag `v1.6.0` on `main`.
 
-```text
-v1.6-rag-v2-foundation
-```
-
-Current release baseline: tag `v1.5.0` on `main`
+Next development branch: `v1.7-answer-safety-eval-router`.
 
 已完成：
 
@@ -457,8 +449,3 @@ Current release baseline: tag `v1.5.0` on `main`
 - 尚未接入既有 `RAGQA` runtime；沒有新增 Chroma / Ollama / LLM generation
 
 完整規劃請見 [docs/ROADMAP.md](docs/ROADMAP.md)。
-### v1.5 ControllerAgent 與 Tool Registry
-
-v1.5 新增型別化 agent 基礎設施，但不改變既有 CLI 行為。`ToolRegistry` 保存型別化 `ToolSpec`，`ControllerAgent` 只依明確 route 或 tool name 做 deterministic dispatch。六個 wrapper skills 為 `payload_triage`、`raw_log_translate`、`log_file_ingest`、`rag_security_qa`、`report_followup`、`incident_json_export`。v1.5 不包含 Auto Route、Smart Router，也不使用 LLM 進行 tool selection；最終 verdict 仍由 deterministic policy 控制。目前品質門檻：`240 passed`。
-
-v1.6 已完成 RAG v2 Foundation：metadata/frontmatter、exact ID lookup、source citations、`AnswerWithSources`、metadata-aware planner、source assembly，以及 deterministic Report / Rule Explainer helpers。RAG 仍是 explanation-only，不會覆寫 deterministic verdict。後續 v1.7 是 Answer Safety、evaluation datasets 與 Smart Router。
