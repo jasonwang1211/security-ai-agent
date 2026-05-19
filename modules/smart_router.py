@@ -114,6 +114,25 @@ class SmartRouterDecision(BaseModel):
         return self
 
 
+class SmartRouterPreview(BaseModel):
+    decision: SmartRouterDecision
+    would_execute: bool = False
+    preview_text: str
+
+    @field_validator("preview_text")
+    @classmethod
+    def preview_text_must_not_be_blank(cls, value: str) -> str:
+        if not value.strip():
+            raise ValueError("preview_text must not be empty")
+        return value
+
+    @model_validator(mode="after")
+    def preview_must_not_execute(self) -> "SmartRouterPreview":
+        if self.would_execute:
+            raise ValueError("Smart Router preview must not execute tools")
+        return self
+
+
 def route_user_input(user_input: str) -> SmartRouterDecision:
     text = user_input.strip()
     if not text:
@@ -165,6 +184,24 @@ def route_user_input(user_input: str) -> SmartRouterDecision:
         "Input does not match a known v1.7 router category.",
         requires_clarification=True,
     )
+
+
+def preview_route(user_input: str) -> SmartRouterPreview:
+    decision = route_user_input(user_input)
+    if decision.route == "clarification_required":
+        preview_text = (
+            "路由預覽：目前無法判斷適合的工具，需要使用者補充資訊。"
+            "此預覽不會執行任何工具，也不會改變風險等級或決策。"
+        )
+    else:
+        preview_text = (
+            f"路由預覽：系統判定此輸入適合交給 `{decision.route}`，"
+            f"類型為 `{decision.input_kind}`，可信度 `{decision.confidence}`。"
+            f"原因：{decision.reason} "
+            "此預覽只顯示路由決策，不會執行工具，也不會改變風險等級或決策。"
+        )
+
+    return SmartRouterPreview(decision=decision, preview_text=preview_text)
 
 
 def _decision(
