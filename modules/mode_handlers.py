@@ -3,7 +3,7 @@ import threading
 import time
 from collections import Counter
 
-from demo_log_ingestion import SECTION_TITLES, _process_lines, _read_log_lines
+from modules.log_ingestion_runner import SECTION_TITLES, process_lines, read_log_lines
 from modules.log_pipeline import (
     events_to_agent_inputs,
     format_input_translation,
@@ -201,11 +201,11 @@ def _format_detailed_json(parsed_logs, normalized_events, aggregated_events):
 
 def _read_and_process_log(log_path):
     try:
-        lines = _read_log_lines(log_path)
+        lines = read_log_lines(log_path)
     except OSError as exc:
         return f"\n讀取 log 檔案失敗: {exc}\n", None
 
-    parsed_logs, normalized_events, aggregated_events = _process_lines(lines)
+    parsed_logs, normalized_events, aggregated_events = process_lines(lines)
     return None, (lines, parsed_logs, normalized_events, aggregated_events)
 
 

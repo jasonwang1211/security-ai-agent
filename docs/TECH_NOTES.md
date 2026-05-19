@@ -195,6 +195,19 @@ Safety boundary:
 
 RAG v2 remains explanation-only. It cannot override final verdicts, risk levels, decisions, or deterministic policy-controlled output. `BLOCK`, `MONITOR`, and `ALLOW` remain simulated.
 
+## v1.7 Reliability Foundation
+
+v1.7 adds deterministic reliability infrastructure before any user-facing router activation.
+
+- `eval_cases/` contains small regression datasets, not a statistical benchmark.
+- AnswerGuardrails are deterministic safety checks for unsafe answer claims.
+- The Evaluation Runner performs deterministic smoke checks over bundled cases.
+- Smart Router is rule-based route selection only.
+- Smart Router is not wired into the CLI yet and does not execute tools.
+- There is no LLM routing and no LLM final verdict override.
+
+The detailed v1.7 design lives in `docs/v1.7-spec.md`; these notes only summarize the technical role of the new foundation.
+
 ## Testing Strategy
 
 The project uses several testing layers:
@@ -206,7 +219,7 @@ The project uses several testing layers:
 
 Current quality gate:
 
-- `python -m pytest` -> `366 passed`
+- `python -m pytest` -> `445 passed`
 - `python -m ruff check .`
 - `python -m mypy app.py modules tests`
 

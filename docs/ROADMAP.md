@@ -1,12 +1,12 @@
 # Roadmap
 
-This roadmap describes planned development after the v1.6 RAG v2 Foundation milestone.
+This roadmap describes planned development after the v1.7 Answer Safety / Evaluation / Smart Router Foundation milestone.
 
 ## Current Baseline
 
-Current branch: `v1.6-rag-v2-foundation`.
+Current release: tag `v1.6.0` on `main`.
 
-Release baseline: tag `v1.5.0` on `main`.
+Current development branch: `v1.7-answer-safety-eval-router`.
 
 Completed:
 
@@ -27,13 +27,15 @@ Completed:
 - YAML detection rules with schema validation and metadata
 - v1.5 ControllerAgent and Tool Registry infrastructure
 - v1.6 RAG v2 Foundation
+- v1.7 Answer Safety / Evaluation / Smart Router Foundation
 - pytest / ruff / mypy / GitHub Actions CI
 
-Current v1.6 quality gate:
+Current v1.7 quality gate:
 
-- `python -m pytest` -> `366 passed`
+- `python -m pytest` -> `445 passed`
 - `python -m ruff check .` -> passed
 - `python -m mypy app.py modules tests` -> passed
+- CI includes Gitleaks secret scanning
 
 ## v1.3 — Evidence and Incident Capability
 
@@ -108,34 +110,33 @@ v1.6 does not add AnswerGuardrails, Smart Router, Investigation Planner, LLM-bas
 
 ## v1.7 - Answer Safety, Evaluation, and Smart Router
 
+Status: Foundation completed on `v1.7-answer-safety-eval-router`.
+
+Delivered:
+
+- Small regression eval cases for answer safety, report QA, router cases, and payload detection
+- Deterministic AnswerGuardrails foundation
+- Deterministic Evaluation Runner foundation
+- Isolated rule-based Smart Router foundation
+- RAG v2 runtime integration and follow-up ownership decisions documented
+- CI Gitleaks secret scanning
+- Reusable log ingestion runner moved into `modules/`
+- 445 passed quality gate
+
+Boundary:
+Smart Router is not CLI-wired yet. v1.7 does not add LLM-based routing, an LLM final verdict, RAGQA replacement, Investigation Planner, or real enforcement.
+
+## v1.8 - Protected Runtime Wiring and Analyst UX Polish
+
 Status: Next.
 
 Planned:
 
-- Answer Safety checks
-- Evaluation datasets
-- Detection and retrieval quality metrics
-- Smart Router after the safety/evaluation foundation is in place
-- Decide RAG v2 runtime integration strategy:
-  - integrate source-cited helpers into existing `RAGQA`
-  - or keep `RAGQA` active while RAG v2 remains staged
-  - or consolidate RAG modules after evaluation coverage exists
-- Decide follow-up module boundary:
-  - keep `followup_handler.py` and `report_followup.py` separate
-  - or unify behind a single `ToolSpec` / report-aware follow-up path
-
-Boundary:
-v1.7 should not add more RAG modules unless their ownership is clearly distinct. Prefer wiring, evaluation, and consolidation decisions over additional parallel scaffolding.
-
-## v1.8 - Advanced AnswerGuardrails and Investigation Planner
-
-Status: Later.
-
-Planned:
-
-- Advanced `AnswerGuardrails`
-- Investigation Planner
-- More structured analyst workflow support
+- Protected runtime wiring for narrow report/rule explanations
+- Smart Router CLI integration only after route safety is proven
+- Optional Investigation Planner after safety coverage is mature
+- Analyst UX polish
+- Advanced `AnswerGuardrails` only if deterministic coverage is insufficient
 
 ## v1.9 - Analyst UX and Demo Polish
 
@@ -154,11 +155,13 @@ All response decisions remain simulated unless explicitly redesigned in a future
 
 # 後續規劃
 
-此 roadmap 描述 v1.4 Detection-as-Code Lite 完成後的後續開發方向。
+此 roadmap 描述 v1.6 RAG v2 Foundation 完成後的後續開發方向。
 
 ## 目前基準
 
-目前 release target：merge 後 `main` 上的 tag `v1.5.0`。
+目前 release：`main` 上的 tag `v1.6.0`。
+
+目前 development branch: `v1.7-answer-safety-eval-router`。
 
 已完成：
 
@@ -177,11 +180,14 @@ All response decisions remain simulated unless explicitly redesigned in a future
 - LLM Safety Layer
 - 11 篇 `report_explainer` KB docs
 - YAML detection rules、schema validation 與 rule metadata
+- v1.5 ControllerAgent and Tool Registry infrastructure
+- v1.6 RAG v2 Foundation
+- v1.7 Answer Safety / Evaluation / Smart Router Foundation
 - pytest / ruff / mypy / GitHub Actions CI
 
-目前 v1.6 quality gate：
+目前 v1.7 quality gate：
 
-- `python -m pytest` -> `366 passed`
+- `python -m pytest` -> `445 passed`
 - `python -m ruff check .` -> passed
 - `python -m mypy app.py modules tests` -> passed
 
@@ -222,7 +228,7 @@ v1.4 不包含 ML detection、LLM-generated rules、Sigma/YARA compatibility、p
 
 ## v1.5 - ControllerAgent and Tool Registry / ControllerAgent 與 Tool Registry
 
-狀態：下一階段。
+狀態：已完成。
 
 規劃：
 
@@ -255,17 +261,21 @@ Status: Completed on `v1.6-rag-v2-foundation`.
 
 ## v1.7 - Answer Safety, Evaluation, and Smart Router / 答案安全、評估與 Smart Router
 
-- Answer Safety
-- Evaluation datasets
-- Smart Router after safety/evaluation foundation
-- Decide RAG v2 runtime integration strategy: integrate helpers into `RAGQA`, keep staged infrastructure, or consolidate modules after evaluation coverage exists
-- Decide follow-up module boundary: keep `followup_handler.py` and `report_followup.py` separate, or unify behind one `ToolSpec` / report-aware follow-up path
-- Boundary: v1.7 should prefer wiring, evaluation, and consolidation decisions over additional parallel RAG scaffolding
+Status: Foundation completed.
 
-## v1.8 - Advanced AnswerGuardrails and Investigation Planner
+- eval_cases/ small regression datasets
+- deterministic AnswerGuardrails
+- deterministic Evaluation Runner
+- isolated rule-based Smart Router
+- RAG v2 runtime integration and follow-up ownership decisions documented
+- Boundary: Smart Router is not CLI-wired; no LLM-based routing; RAGQA is not replaced
 
-- Advanced `AnswerGuardrails`
-- Investigation Planner
+## v1.8 - Protected Runtime Wiring and Analyst UX Polish
+
+- protected runtime wiring
+- narrow report/rule explanation integration
+- optional Investigation Planner after safety coverage
+- analyst UX polish
 
 ## v1.9 - Analyst UX and Demo Polish
 

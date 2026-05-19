@@ -1,6 +1,8 @@
 # Architecture Debt Engineering Journal
 
-Current baseline: `v1.6-rag-v2-foundation` branch, based on tag `v1.5.0` on `main`
+Current branch: `v1.7-answer-safety-eval-router`
+Current baseline: tag `v1.6.0` on `main`
+Current quality gate: `445 passed`
 
 This document tracks structural debt cleanup as an engineering discipline: reducing module sprawl, consolidating thin wrappers, and preserving deterministic safety boundaries before adding more agentic behavior.
 
@@ -20,6 +22,7 @@ The project has reached a stable consolidated architecture with:
 - YAML-based Detection-as-Code Lite rules with schema validation and metadata
 - Isolated v1.5 ControllerAgent and Tool Registry infrastructure
 - Isolated v1.6 RAG v2 helper infrastructure for source-cited explanations
+- Isolated v1.7 reliability foundation for eval cases, deterministic AnswerGuardrails, Evaluation Runner, and rule-based Smart Router
 
 ## Consolidation Outcomes
 
@@ -30,7 +33,7 @@ The project has reached a stable consolidated architecture with:
 | CLI mode wrappers | `modules/skills/*` | `mode_handlers.py` | Consolidated thin CLI wrappers |
 | Log ingestion | parser / normalizer / aggregator / adapter modules | `log_pipeline.py` | Consolidated parse -> normalize -> aggregate -> adapt flow |
 | Boundary contracts | ad-hoc dictionaries | `modules/types.py` | Added Pydantic boundary models for future controller/tool work |
-| Testing foundation | limited smoke coverage | golden + log pipeline + boundary + incident + detection-rule + controller + RAG v2 helper tests | Current quality gate: `366 passed`, ruff, mypy |
+| Testing foundation | limited smoke coverage | golden + log pipeline + boundary + incident + detection-rule + controller + RAG v2 + v1.7 reliability helper tests | Current quality gate: `445 passed`, ruff, mypy |
 
 ## v1.3 Phase Outcomes
 
@@ -163,14 +166,28 @@ v1.6 intentionally keeps RAG v2 helpers isolated from the existing `RAGQA` runti
 | `rag_source_assembly.py` | v1.6 helper foundation | SourceCitation / AnswerWithSources assembly |
 | `rag_explainers.py` | v1.6 helper foundation | Deterministic source-cited report/rule explanation helpers |
 
-v1.6 intentionally keeps these helpers isolated from `rag_qa.py`. v1.7 must decide whether to wire RAG v2 helpers into runtime, consolidate modules, or keep staged infrastructure. This is a documented architecture decision, not a runtime change.
+v1.6 intentionally keeps these helpers isolated from `rag_qa.py`. v1.7 ownership decision: `RAGQA` remains the active general knowledge QA runtime, while RAG v2 helpers remain staged for future narrow report/rule explanation wiring through `report_followup.py` or a protected helper path. This reduces the risk of adding more parallel RAG modules before AnswerGuardrails and eval coverage prove a user-facing path is safe.
+
+## v1.7 Phase Outcomes
+
+- Added small regression datasets under `eval_cases/`.
+- Added `modules/eval_cases.py` for pure JSONL loading and validation.
+- Added `modules/answer_guardrails.py` for deterministic answer safety checks.
+- Added `modules/eval_runner.py` for deterministic eval smoke summaries.
+- Added `modules/smart_router.py` for isolated rule-based route decisions.
+- Added `modules/log_ingestion_runner.py` so runtime code no longer imports demo helpers.
+- Added CI Gitleaks secret scanning.
+
+Architecture note:
+
+v1.7 intentionally keeps Smart Router isolated from CLI runtime. The phase improves reliability and evaluation before wiring. v1.8 should decide the protected wiring strategy for narrow report/rule explanations and any router activation.
 
 ## Current Quality Gate
 
-- `python -m pytest` -> `366 passed`
+- `python -m pytest` -> `445 passed`
 - `python -m ruff check .` -> passed
 - `python -m mypy app.py modules tests` -> passed
-- CI runs the same quality gate
+- CI runs the same quality gate and includes Gitleaks secret scanning
 
 ## Remaining Engineering Notes
 
@@ -180,7 +197,7 @@ v1.6 intentionally keeps these helpers isolated from `rag_qa.py`. v1.7 must deci
 
 ### Follow-up Module Boundary
 
-`followup_handler.py` and `report_followup.py` remain separate for now. v1.7 planning must decide whether point-based follow-up and report-aware EV/F-ID follow-up remain separate tools or unify behind one `ToolSpec` / report-aware follow-up path.
+`followup_handler.py` and `report_followup.py` remain separate for now. v1.7 ownership decision: point/context follow-up stays with `followup_handler.py`, while report-aware EV/F-ID follow-up stays with `report_followup.py`. Do not unify them until Smart Router eval cases prove a single route is safe.
 
 ### Responder Size
 

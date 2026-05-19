@@ -6,9 +6,9 @@
 # English
 
 > Project: AI-assisted Security Threat Detection and Response System
-> Current branch: `v1.6-rag-v2-foundation`
-> Release baseline: tag `v1.5.0` on `main`
-> Milestone: RAG v2 Foundation
+> Current branch: `v1.7-answer-safety-eval-router`
+> Release baseline: tag `v1.6.0` on `main`
+> Milestone: Answer Safety / Evaluation / Smart Router Foundation
 
 Full CLI excerpts are available in [demo_outputs.md](demo_outputs.md).
 
@@ -112,6 +112,22 @@ v1.6 boundary note:
 
 This milestone improves RAG traceability and explainability; it is not a runtime RAG replacement. Existing CLI behavior remains unchanged. RAG v2 helpers are deterministic and test-covered. RAG does not become a detection source, and the final verdict remains deterministic and policy-controlled.
 
+## v1.7 Answer Safety / Evaluation / Smart Router Foundation
+
+v1.7 adds reliability infrastructure before user-facing router activation.
+
+What changed:
+
+- Added eval cases for answer safety, report QA, router routing, and payload detection.
+- Added deterministic AnswerGuardrails for unsafe claims such as real enforcement, RAG as detection source, LLM final verdict override, and MONITOR as confirmed compromise.
+- Added deterministic Evaluation Runner smoke checks.
+- Added an isolated rule-based Smart Router route decision helper.
+- Added CI Gitleaks secret scanning and moved reusable log ingestion runner code into `modules/`.
+
+Boundary note:
+
+Smart Router classifies input into finalized route categories, but it is not wired into the CLI yet and does not execute tools. Existing CLI behavior remains unchanged. AnswerGuardrails are deterministic checks, not an LLM safety classifier. The quality gate is `445 passed`, with ruff and mypy passing.
+
 v1.5 verification:
 
 - `python -m pytest` -> `240 passed`
@@ -143,7 +159,7 @@ The current system is an AI-assisted blue-team security triage prototype. It sup
 - Follow-up explanation
 - Unified `[Security Triage Report]` output
 
-The latest milestone adds the v1.6 RAG v2 Foundation: source-cited helper infrastructure, metadata-aware planning, source assembly, and deterministic report/rule explainer helpers while preserving the existing CLI runtime and unified Security Triage Report contract.
+The latest milestone adds the v1.7 Answer Safety / Evaluation / Smart Router Foundation: deterministic guardrails, small eval datasets, an eval runner, and an isolated rule-based route decision helper while preserving the existing CLI runtime and unified Security Triage Report contract.
 
 ---
 
@@ -225,6 +241,7 @@ Mode 3 RAG is used for knowledge explanation only. It does not decide attack typ
 | D10 | YAML Detection-as-Code | `; rm -rf /tmp/test` | YAML rule `CMD-001` matched with severity / confidence / MITRE metadata | Passed |
 | D11 | ControllerAgent Dispatch | explicit route / mode hint | Deterministic dispatch through ToolRegistry and wrapper skills | Passed |
 | D12 | RAG v2 Source-Cited Explainers | report/rule question helper | Metadata-aware plan -> SourceCitation -> AnswerWithSources | Passed |
+| D13 | Answer Safety / Eval Runner / Smart Router Foundation | rule-based helper tests | Deterministic guardrails + eval runner + Smart Router route decision | Passed |
 
 ---
 
@@ -455,7 +472,8 @@ The current branch also includes a small but important quality foundation:
 - Evidence / incident model, guardrail, correlator, exporter, follow-up, LLMAssist, and Scenario A integration tests
 - ControllerAgent unit and integration tests for the six v1.5 wrapper skills
 - RAG v2 type, metadata, intent, planner, source assembly, and explainer tests
-- `pytest` for regression checks; current expected result is `366 passed`
+- AnswerGuardrails, eval case loader, eval runner, and Smart Router tests
+- `pytest` for regression checks; current expected result is `445 passed`
 - `ruff` for linting and import hygiene
 - Lenient `mypy` as a gradual typing baseline
 - GitHub Actions CI for automated quality checks
@@ -478,12 +496,13 @@ The current branch also includes a small but important quality foundation:
 | YAML Detection-as-Code | Passed |
 | ControllerAgent deterministic dispatch infrastructure | Passed |
 | RAG v2 source-cited explainer helpers | Passed |
+| AnswerGuardrails / eval runner / Smart Router foundation | Passed |
 | Quality checks and CI foundation | Passed |
 
 Overall result:
 
 ```text
-RAG v2 Foundation is ready as an isolated v1.6 helper layer. Existing CLI behavior remains unchanged, and deterministic detection / policy still control final verdicts.
+v1.7 reliability foundation is ready as an isolated helper layer. Existing CLI behavior remains unchanged, and deterministic detection / policy still control final verdicts.
 ```
 
 ---
@@ -657,7 +676,8 @@ Mode 3 RAG 只負責知識解釋，不決定 attack type、risk level 或模擬 
 - expanded golden smoke tests
 - direct consolidated log pipeline tests
 - Pydantic boundary model tests
-- `pytest` (`366 passed`)
+- AnswerGuardrails / eval runner / Smart Router tests
+- `pytest` (`445 passed`)
 - `ruff`
 - lenient `mypy`
 - GitHub Actions CI
