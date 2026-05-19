@@ -161,7 +161,7 @@ All response decisions remain simulated unless explicitly redesigned in a future
 
 目前 release：`main` 上的 tag `v1.6.0`。
 
-下一個 development branch：`v1.7-answer-safety-eval-router`。
+目前 development branch: `v1.7-answer-safety-eval-router`。
 
 已完成：
 
