@@ -209,7 +209,7 @@ Future cleanup can keep report formatting in `responder.py` while moving static 
 
 `RAGQueryPlanner` supports preferred source selection for the current small knowledge base. v1.6 adds isolated metadata-aware RAG v2 helper modules for source-cited report/rule explanations, but they are not wired into the current runtime.
 
-Future retrieval work can decide when to wire these helpers into runtime paths and when to add AnswerGuardrails/evaluation. Planned sequencing should follow [docs/ROADMAP.md](docs/ROADMAP.md).
+Future retrieval work can decide when to wire these helpers into runtime paths and when to expand AnswerGuardrails/evaluation coverage. Planned sequencing should follow [docs/ROADMAP.md](docs/ROADMAP.md).
 
 ### Startup Cost
 
