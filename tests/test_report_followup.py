@@ -50,18 +50,40 @@ def make_source() -> SourceCitation:
     return SourceCitation(source="knowledge/example.md", kind="knowledge_doc")
 
 
+def make_internal_safety_source() -> SourceCitation:
+    return SourceCitation(
+        source="internal/answer_guardrails",
+        kind="knowledge_doc",
+        heading="Protected fallback",
+        identifier="answer_guardrails",
+    )
+
+
 def make_answer(
     text: str,
     *,
+    sources: list[SourceCitation] | None = None,
     rule_ids: list[str] | None = None,
     limitations: list[str] | None = None,
 ) -> AnswerWithSources:
     return AnswerWithSources(
         answer=text,
-        sources=[make_source()],
+        sources=sources or [make_source()],
         rule_ids=rule_ids or [],
         confidence="MEDIUM",
         limitations=limitations or [],
+    )
+
+
+def make_answer_without_sources(text: str) -> AnswerWithSources:
+    return AnswerWithSources.model_construct(
+        answer=text,
+        sources=[],
+        evidence_ids=[],
+        finding_ids=[],
+        rule_ids=[],
+        confidence="MEDIUM",
+        limitations=[],
     )
 
 
@@ -181,6 +203,7 @@ def test_protect_answer_with_guardrails_returns_original_safe_answer():
     assert result.answer is answer
     assert not result.was_fallback
     assert not result.safety_report.has_errors()
+    assert not any(source.source == "internal/answer_guardrails" for source in result.answer.sources)
 
 
 def test_protect_answer_with_guardrails_returns_fallback_for_real_enforcement_claim():
@@ -190,7 +213,7 @@ def test_protect_answer_with_guardrails_returns_fallback_for_real_enforcement_cl
 
     assert result.was_fallback
     assert result.safety_report.has_errors()
-    assert "could not be safely returned" in result.answer.answer
+    assert "未通過安全檢查" in result.answer.answer
 
 
 def test_protected_fallback_has_limitations():
@@ -202,6 +225,53 @@ def test_protected_fallback_has_limitations():
     assert any("AnswerGuardrails" in limitation for limitation in result.answer.limitations)
 
 
+def test_protected_fallback_appends_internal_safety_citation_when_original_sources_exist():
+    answer = make_answer("The firewall blocked the attacker in production.")
+
+    result = protect_answer_with_guardrails(answer)
+
+    assert result.answer.sources[0].source == "knowledge/example.md"
+    assert any(
+        source.source == "internal/answer_guardrails"
+        and source.identifier == "answer_guardrails"
+        and source.heading == "Protected fallback"
+        for source in result.answer.sources
+    )
+
+
+def test_protected_fallback_uses_internal_safety_citation_when_sources_are_absent():
+    answer = make_answer_without_sources("The firewall blocked the attacker in production.")
+
+    result = protect_answer_with_guardrails(answer)
+
+    assert [source.source for source in result.answer.sources] == ["internal/answer_guardrails"]
+    assert result.answer.sources[0].identifier == "answer_guardrails"
+
+
+def test_protected_fallback_does_not_duplicate_internal_safety_citation():
+    answer = make_answer(
+        "The firewall blocked the attacker in production.",
+        sources=[make_source(), make_internal_safety_source()],
+    )
+
+    result = protect_answer_with_guardrails(answer)
+
+    assert [
+        source.source for source in result.answer.sources
+        if source.source == "internal/answer_guardrails"
+    ] == ["internal/answer_guardrails"]
+
+
+def test_protected_fallback_uses_conservative_wording():
+    answer = make_answer("The firewall blocked the attacker in production.")
+
+    result = protect_answer_with_guardrails(answer)
+
+    assert "保守說明" in result.answer.answer
+    assert "原始報告證據" in result.answer.answer
+    assert "人工複核" in result.answer.answer
+
+
 def test_protected_fallback_does_not_claim_real_enforcement():
     answer = make_answer("The firewall blocked the attacker in production.")
 
@@ -210,6 +280,19 @@ def test_protected_fallback_does_not_claim_real_enforcement():
     assert "firewall blocked" not in result.answer.answer.casefold()
     assert "real firewall" not in result.answer.answer.casefold()
     assert "production enforcement action was performed" not in result.answer.answer.casefold()
+    assert "confirmed compromise" not in result.answer.answer.casefold()
+    assert "rag detected" not in result.answer.answer.casefold()
+    assert "llm changed" not in result.answer.answer.casefold()
+
+
+def test_protected_fallback_preserves_safety_report_error_findings():
+    answer = make_answer("The firewall blocked the attacker in production.")
+
+    result = protect_answer_with_guardrails(answer)
+
+    assert result.was_fallback
+    assert result.safety_report.findings_by_rule("real_enforcement_claim")
+    assert result.safety_report.findings_by_rule("real_enforcement_claim")[0].severity == "ERROR"
 
 
 def test_explain_report_followup_protected_returns_result():

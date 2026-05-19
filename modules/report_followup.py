@@ -30,7 +30,7 @@ DOCS_BY_INTENT = {
 SAFETY_FALLBACK_SOURCE = SourceCitation(
     source="internal/answer_guardrails",
     kind="knowledge_doc",
-    heading="Protected explanation fallback",
+    heading="Protected fallback",
     identifier="answer_guardrails",
 )
 
@@ -94,13 +94,11 @@ def protect_answer_with_guardrails(
 
     fallback = AnswerWithSources(
         answer=(
-            "This explanation could not be safely returned. The protected helper "
-            "detected unsupported or unsafe claims, so the original answer was "
-            "withheld. Limitations: use the deterministic report, cited evidence, "
-            "and rule metadata as the source of truth. This helper performs no "
-            "firewall, WAF, SIEM, SOAR, cloud, or endpoint action."
+            "此回答未通過安全檢查，因此改以保守說明回覆。請以原始報告證據、"
+            "命中規則與人工複核為準；本系統不會執行真實封鎖，也不會讓 AI "
+            "覆蓋最終判定。"
         ),
-        sources=answer.sources or [SAFETY_FALLBACK_SOURCE],
+        sources=_fallback_sources(answer.sources),
         confidence="LOW",
         limitations=[
             "Original helper output failed deterministic AnswerGuardrails.",
@@ -112,6 +110,22 @@ def protect_answer_with_guardrails(
         safety_report=safety_report,
         was_fallback=True,
     )
+
+
+def _fallback_sources(sources: list[SourceCitation]) -> list[SourceCitation]:
+    fallback_sources = list(sources)
+    if not fallback_sources:
+        return [SAFETY_FALLBACK_SOURCE]
+
+    has_safety_source = any(
+        citation.source == SAFETY_FALLBACK_SOURCE.source
+        and citation.identifier == SAFETY_FALLBACK_SOURCE.identifier
+        for citation in fallback_sources
+    )
+    if not has_safety_source:
+        fallback_sources.append(SAFETY_FALLBACK_SOURCE)
+
+    return fallback_sources
 
 
 def explain_report_followup_protected(
