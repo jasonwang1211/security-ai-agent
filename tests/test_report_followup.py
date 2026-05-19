@@ -1,14 +1,22 @@
+import subprocess
+import sys
 from pathlib import Path
 
 from modules.evidence_correlator import correlate_auth_sequence
+from modules.rag_metadata import KnowledgeDocMetadata
+from modules.rag_types import AnswerWithSources, SourceCitation
 from modules.report_followup import (
-    classify_followup_intent,
+    ProtectedExplanationResult,
+    answer_report_followup,
     extract_evidence_ids,
     extract_finding_ids,
+    explain_report_followup_protected,
+    explain_rule_followup_protected,
+    classify_followup_intent,
     lookup_evidence,
     lookup_finding,
+    protect_answer_with_guardrails,
     suggest_followups,
-    answer_report_followup,
 )
 from modules.types import Incident
 
@@ -36,6 +44,45 @@ def make_incident() -> Incident:
     incident = correlate_auth_sequence(events, failure_threshold=5, window_minutes=5)
     assert incident is not None
     return incident
+
+
+def make_source() -> SourceCitation:
+    return SourceCitation(source="knowledge/example.md", kind="knowledge_doc")
+
+
+def make_answer(
+    text: str,
+    *,
+    rule_ids: list[str] | None = None,
+    limitations: list[str] | None = None,
+) -> AnswerWithSources:
+    return AnswerWithSources(
+        answer=text,
+        sources=[make_source()],
+        rule_ids=rule_ids or [],
+        confidence="MEDIUM",
+        limitations=limitations or [],
+    )
+
+
+def make_report_metadata() -> KnowledgeDocMetadata:
+    return KnowledgeDocMetadata(
+        doc_id="report.risk_level_decision",
+        doc_type="report_explainer",
+        applies_to=["Security Triage Report"],
+        keywords=["decision", "monitor", "risk"],
+        source_path="knowledge/blue_team/report_explainer/risk_level_decision.md",
+    )
+
+
+def make_rule_metadata(rule_id: str = "CMD-001") -> KnowledgeDocMetadata:
+    return KnowledgeDocMetadata(
+        doc_id=f"rule.{rule_id.lower()}",
+        doc_type="detection_rule",
+        keywords=["command injection", "rule"],
+        rule_ids=[rule_id],
+        source_path="detections/blue_team/command_injection.yml",
+    )
 
 
 def test_extract_evidence_ids_preserves_order_and_removes_duplicates():
@@ -121,6 +168,149 @@ def test_suggest_followups_returns_static_suggestions():
 
     assert suggestions
     assert any("BLOCK" in suggestion for suggestion in suggestions)
+
+
+def test_protect_answer_with_guardrails_returns_original_safe_answer():
+    answer = make_answer(
+        "MONITOR is a simulated decision selected by deterministic policy for review."
+    )
+
+    result = protect_answer_with_guardrails(answer)
+
+    assert isinstance(result, ProtectedExplanationResult)
+    assert result.answer is answer
+    assert not result.was_fallback
+    assert not result.safety_report.has_errors()
+
+
+def test_protect_answer_with_guardrails_returns_fallback_for_real_enforcement_claim():
+    answer = make_answer("The firewall blocked the attacker in production.")
+
+    result = protect_answer_with_guardrails(answer)
+
+    assert result.was_fallback
+    assert result.safety_report.has_errors()
+    assert "could not be safely returned" in result.answer.answer
+
+
+def test_protected_fallback_has_limitations():
+    answer = make_answer("The firewall blocked the attacker in production.")
+
+    result = protect_answer_with_guardrails(answer)
+
+    assert result.answer.limitations
+    assert any("AnswerGuardrails" in limitation for limitation in result.answer.limitations)
+
+
+def test_protected_fallback_does_not_claim_real_enforcement():
+    answer = make_answer("The firewall blocked the attacker in production.")
+
+    result = protect_answer_with_guardrails(answer)
+
+    assert "firewall blocked" not in result.answer.answer.casefold()
+    assert "real firewall" not in result.answer.answer.casefold()
+    assert "production enforcement action was performed" not in result.answer.answer.casefold()
+
+
+def test_explain_report_followup_protected_returns_result():
+    result = explain_report_followup_protected(
+        "Why is the decision MONITOR?",
+        [make_report_metadata()],
+    )
+
+    assert isinstance(result, ProtectedExplanationResult)
+    assert isinstance(result.answer, AnswerWithSources)
+
+
+def test_explain_report_followup_protected_has_source_citations():
+    result = explain_report_followup_protected(
+        "Why is the decision MONITOR?",
+        [make_report_metadata()],
+    )
+
+    assert result.answer.sources
+    assert result.answer.sources[0].identifier == "report.risk_level_decision"
+
+
+def test_explain_report_followup_protected_passes_guardrails_for_monitor_question():
+    result = explain_report_followup_protected(
+        "Why is the decision MONITOR?",
+        [make_report_metadata()],
+    )
+
+    assert not result.was_fallback
+    assert result.safety_report.is_safe
+    assert not result.safety_report.has_errors()
+
+
+def test_explain_rule_followup_protected_returns_result():
+    result = explain_rule_followup_protected(
+        "Explain CMD-001.",
+        [make_rule_metadata()],
+    )
+
+    assert isinstance(result, ProtectedExplanationResult)
+    assert isinstance(result.answer, AnswerWithSources)
+
+
+def test_explain_rule_followup_protected_preserves_rule_ids_when_metadata_is_provided():
+    result = explain_rule_followup_protected(
+        "Explain CMD-001.",
+        [make_rule_metadata()],
+        rule_metadata={"CMD-001": {"attack_type": "Command Injection"}},
+        known_rule_ids={"CMD-001"},
+    )
+
+    assert not result.was_fallback
+    assert result.answer.rule_ids == ["CMD-001"]
+
+
+def test_explain_rule_followup_protected_fallback_for_invented_rule_id():
+    result = explain_rule_followup_protected(
+        "Explain CMD-999.",
+        [make_rule_metadata("CMD-999")],
+        rule_metadata={"CMD-999": {"attack_type": "Command Injection"}},
+        known_rule_ids={"CMD-001"},
+    )
+
+    assert result.was_fallback
+    assert result.safety_report.findings_by_rule("invented_rule_id")
+    assert result.answer.rule_ids == []
+
+
+def test_protected_helpers_do_not_import_runtime_heavy_modules():
+    code = """
+import importlib
+import json
+import sys
+
+forbidden = [
+    "app",
+    "modules.rag_qa",
+    "chromadb",
+    "ollama",
+    "langchain",
+    "torch",
+]
+
+importlib.import_module("modules.report_followup")
+
+loaded = [
+    name for name in forbidden
+    if name in sys.modules or any(module.startswith(name + ".") for module in sys.modules)
+]
+
+print(json.dumps(loaded))
+raise SystemExit(1 if loaded else 0)
+"""
+    result = subprocess.run(
+        [sys.executable, "-c", code],
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+
+    assert result.returncode == 0, result.stdout + result.stderr
 
 
 def test_minimal_kb_docs_exist_and_contain_key_phrases():

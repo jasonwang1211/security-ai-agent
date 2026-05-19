@@ -2,6 +2,12 @@ from __future__ import annotations
 
 import re
 
+from pydantic import BaseModel
+
+from modules.answer_guardrails import AnswerSafetyReport, check_answer_safety
+from modules.rag_explainers import explain_report_question, explain_rule_question
+from modules.rag_metadata import KnowledgeDocMetadata
+from modules.rag_types import AnswerWithSources, SourceCitation
 from modules.types import EvidenceItem, Finding, Incident
 
 Intent = str
@@ -20,6 +26,13 @@ DOCS_BY_INTENT = {
     "read_report": [DOC_READING_REPORT],
     "unknown": [],
 }
+
+SAFETY_FALLBACK_SOURCE = SourceCitation(
+    source="internal/answer_guardrails",
+    kind="knowledge_doc",
+    heading="Protected explanation fallback",
+    identifier="answer_guardrails",
+)
 
 SUGGESTIONS_BY_INTENT = {
     "explain_evidence": [
@@ -56,6 +69,80 @@ SUGGESTIONS_BY_INTENT = {
         "我接下來要查什麼？",
     ],
 }
+
+
+class ProtectedExplanationResult(BaseModel):
+    answer: AnswerWithSources
+    safety_report: AnswerSafetyReport
+    was_fallback: bool = False
+
+
+def protect_answer_with_guardrails(
+    answer: AnswerWithSources,
+    known_evidence_ids: set[str] | None = None,
+    known_finding_ids: set[str] | None = None,
+    known_rule_ids: set[str] | None = None,
+) -> ProtectedExplanationResult:
+    safety_report = check_answer_safety(
+        answer,
+        known_evidence_ids=known_evidence_ids,
+        known_finding_ids=known_finding_ids,
+        known_rule_ids=known_rule_ids,
+    )
+    if not safety_report.has_errors():
+        return ProtectedExplanationResult(answer=answer, safety_report=safety_report)
+
+    fallback = AnswerWithSources(
+        answer=(
+            "This explanation could not be safely returned. The protected helper "
+            "detected unsupported or unsafe claims, so the original answer was "
+            "withheld. Limitations: use the deterministic report, cited evidence, "
+            "and rule metadata as the source of truth. This helper performs no "
+            "firewall, WAF, SIEM, SOAR, cloud, or endpoint action."
+        ),
+        sources=answer.sources or [SAFETY_FALLBACK_SOURCE],
+        confidence="LOW",
+        limitations=[
+            "Original helper output failed deterministic AnswerGuardrails.",
+            "Fallback does not change Risk Level, Decision, evidence, findings, or rules.",
+        ],
+    )
+    return ProtectedExplanationResult(
+        answer=fallback,
+        safety_report=safety_report,
+        was_fallback=True,
+    )
+
+
+def explain_report_followup_protected(
+    question: str,
+    metadata_items: list[KnowledgeDocMetadata],
+    context: dict[str, object] | None = None,
+    known_evidence_ids: set[str] | None = None,
+    known_finding_ids: set[str] | None = None,
+    known_rule_ids: set[str] | None = None,
+) -> ProtectedExplanationResult:
+    answer = explain_report_question(question, metadata_items, context=context)
+    return protect_answer_with_guardrails(
+        answer,
+        known_evidence_ids=known_evidence_ids,
+        known_finding_ids=known_finding_ids,
+        known_rule_ids=known_rule_ids,
+    )
+
+
+def explain_rule_followup_protected(
+    question: str,
+    metadata_items: list[KnowledgeDocMetadata],
+    rule_metadata: dict[str, dict[str, object]] | None = None,
+    known_rule_ids: set[str] | None = None,
+) -> ProtectedExplanationResult:
+    answer = explain_rule_question(
+        question,
+        metadata_items,
+        rule_metadata=rule_metadata,
+    )
+    return protect_answer_with_guardrails(answer, known_rule_ids=known_rule_ids)
 
 
 def classify_followup_intent(question: str) -> Intent:
