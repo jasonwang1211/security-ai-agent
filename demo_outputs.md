@@ -1,8 +1,8 @@
 # Demo Outputs / Demo 輸出範例
 
-This document shows representative output excerpts for the `v1.6-rag-v2-foundation` branch, based on tag `v1.5.0` on `main`.
+This document shows representative output excerpts for the `v1.7-answer-safety-eval-router` branch, based on tag `v1.6.0` on `main`.
 
-本文件整理 merge 後 `main` 上 tag `v1.5.0` 的代表性輸出摘錄。
+本文件整理 v1.7 開發分支在 `v1.6.0` release baseline 之後的代表性輸出摘錄。
 
 The current system emits a unified `[Security Triage Report]` for triage output. Older standalone formats are outdated and should not be used as the expected demo output.
 
@@ -422,7 +422,7 @@ Notes:
 - Dispatch is deterministic by explicit route or tool name.
 - `mode_1` maps to `payload_triage` through the default route map.
 - No Auto Route mode is present.
-- No Smart Router is present.
+- No Smart Router is used by this v1.5 dispatch path.
 - No LLM-driven tool routing is used.
 - Final verdicts remain deterministic and policy-controlled.
 
@@ -454,7 +454,42 @@ Notes:
 - It does not call Chroma, Ollama, embeddings, Torch, or LLM generation.
 - It is explanation-only and does not override deterministic Risk Level, Decision, or simulated policy output.
 
-## Appendix: Deprecated Output Formats / 附錄：已退役輸出格式
+## Demo Case 10: Smart Router and Answer Safety Foundation
+
+Status: Passed
+
+This case documents the v1.7 reliability foundation. It is covered by deterministic tests and is not connected to the CLI menu yet.
+
+Input:
+
+```text
+為什麼是 MONITOR？
+```
+
+Smart Router excerpt:
+
+```text
+input_kind: report_followup
+route: report_followup
+confidence: HIGH
+note: route decision only; no tool execution
+```
+
+AnswerGuardrails excerpt:
+
+```text
+checks: unsafe enforcement claims, RAG-as-detection claims, LLM final verdict override claims
+classifier: deterministic rules only, no LLM safety classifier
+enforcement: no real firewall, WAF, SIEM, or SOAR action
+```
+
+Notes:
+
+- Smart Router is rule-based and not CLI-wired yet.
+- The route decision does not change Risk Level or Decision.
+- Final verdicts remain deterministic and policy-controlled.
+
+## Appendix: Deprecated Output Formats
 
 Historical reference only. These formats are no longer emitted by the current system and are kept to document output schema evolution.
 

@@ -161,13 +161,32 @@ v1.6 adds source-cited RAG v2 helper infrastructure while keeping the existing `
 - Metadata-aware retrieval planning without running vector retrieval.
 - Source assembly from metadata candidates into `SourceCitation` and `AnswerWithSources`.
 - Deterministic Report Explainer v2 and Rule Explainer v2 helpers.
-- Current quality gate: `366 passed`.
+- v1.6 quality gate: `366 passed`.
 
 Boundaries:
 
 - v1.6 helpers are not wired into the existing `modules/rag_qa.py` runtime yet.
 - No Chroma, Ollama, embeddings, Torch, or LLM generation is introduced in these helper paths.
 - RAG remains explanation-only and does not override deterministic verdicts, risk levels, or simulated decisions.
+
+### v1.7 Answer Safety / Evaluation / Smart Router Foundation
+
+v1.7 adds reliability infrastructure before user-facing router activation:
+
+- Evaluation case foundation under `eval_cases/`.
+- Deterministic `AnswerGuardrails` foundation, not an LLM classifier.
+- Deterministic Evaluation Runner foundation.
+- Rule-based Smart Router foundation.
+- CI Gitleaks secret scanning.
+- Reusable log ingestion runner moved into `modules/`.
+- Current quality gate: `445 passed`.
+
+Boundaries:
+
+- Smart Router is not wired into the CLI yet.
+- Smart Router is rule-based, not LLM-based.
+- RAG/LLM remain advisory and explanation-only.
+- Final verdicts remain deterministic and policy-controlled.
 
 ### CLI Modes
 
@@ -195,7 +214,7 @@ python -m ruff check .
 python -m mypy app.py modules tests
 ```
 
-Current expected test result: `366 passed`.
+Current expected test result: `445 passed`.
 
 The test suite includes expanded golden smoke tests, direct consolidated log pipeline tests, Pydantic boundary model tests, incident/export/follow-up/guardrail tests, and Scenario A integration coverage for a mixed authentication log. Deterministic tests do not start the full app or initialize RAGQA, Chroma, embeddings, Torch, Ollama, ChatOllama, or local LLM clients. GitHub Actions CI runs the same quality gate.
 
@@ -224,7 +243,7 @@ python app.py
 
 Current release: tag `v1.6.0` on `main`.
 
-Next development branch: `v1.7-answer-safety-eval-router`.
+Current development branch: `v1.7-answer-safety-eval-router`.
 
 Completed:
 
@@ -237,6 +256,7 @@ Completed:
 - v1.4 Detection-as-Code Lite, including YAML rules, schema validation, detector adapter, rule metadata, and hard-coded fallback
 - v1.5 ControllerAgent and Tool Registry infrastructure, including typed tool specs, deterministic dispatch, six wrapper skills, and integration tests
 - v1.6 RAG v2 Foundation, including source-cited helper types, metadata parsing, intent classification, exact ID extraction, metadata-aware planning, source assembly, and deterministic report/rule explainers
+- v1.7 Answer Safety / Evaluation / Smart Router Foundation, including eval cases, deterministic answer guardrails, eval runner, isolated rule-based Smart Router, CI Gitleaks, and reusable log ingestion runner cleanup
 - Expanded golden smoke tests, direct log pipeline tests, focused boundary model tests, `pytest`, `ruff`, lenient `mypy`, and GitHub Actions CI
 
 ### Further Reading
@@ -278,10 +298,11 @@ See [docs/ROADMAP.md](docs/ROADMAP.md) for delivered items.
 - Deterministic Report Explainer v2 and Rule Explainer v2 helpers
 - Not wired into the existing `RAGQA` runtime
 
-**📋 v1.7 — Answer Safety, Evaluation, and Smart Router** (Next)
+**v1.7 - Answer Safety, Evaluation, and Smart Router Foundation** (Completed foundation)
 
-- v1.7 next: Answer Safety, evaluation datasets, and Smart Router after safety/evaluation foundations
-- v1.8: Advanced AnswerGuardrails and Investigation Planner
+- v1.7 foundation: evaluation datasets, deterministic AnswerGuardrails, Evaluation Runner, and isolated rule-based Smart Router
+- Smart Router is not CLI-wired yet, and no LLM-based routing is introduced
+- v1.8: protected runtime wiring and analyst UX polish
 - v1.9: Analyst UX and demo polish
 
 For the full plan, see [docs/ROADMAP.md](docs/ROADMAP.md).
@@ -387,7 +408,7 @@ python -m ruff check .
 python -m mypy app.py modules tests
 ```
 
-目前預期測試結果：`366 passed`。
+目前預期測試結果：`445 passed`。
 
 測試使用 dummy RAG 與 LLMAssist 物件，不會啟動完整 CLI，也不會初始化 RAGQA、Chroma、embeddings、Torch、Ollama、ChatOllama 或本地 LLM client。GitHub Actions CI 會執行同一組品質檢查。
 
@@ -395,7 +416,7 @@ python -m mypy app.py modules tests
 
 Current release: tag `v1.6.0` on `main`.
 
-Next development branch: `v1.7-answer-safety-eval-router`.
+Current development branch: `v1.7-answer-safety-eval-router`.
 
 已完成：
 
@@ -449,3 +470,11 @@ Next development branch: `v1.7-answer-safety-eval-router`.
 - 尚未接入既有 `RAGQA` runtime；沒有新增 Chroma / Ollama / LLM generation
 
 完整規劃請見 [docs/ROADMAP.md](docs/ROADMAP.md)。
+
+**v1.7 - Answer Safety, Evaluation, and Smart Router Foundation / 答案安全、評估與 Smart Router 基礎**（foundation 已完成）
+
+- small regression eval cases / 小型回歸評估案例
+- deterministic AnswerGuardrails / deterministic 答案安全檢查
+- deterministic Evaluation Runner / deterministic 評估執行器
+- isolated rule-based Smart Router / 隔離的 rule-based Smart Router
+- 尚未接入 CLI；沒有 LLM-based routing；final verdict 仍由 deterministic policy 控制
