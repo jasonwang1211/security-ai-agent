@@ -6,7 +6,7 @@
 # English
 
 > Project: AI-assisted Security Threat Detection and Response System
-> Current branch: `v1.8-protected-runtime-wiring`
+> Current release target: tag `v1.8.0` on `main`
 > Release baseline: tag `v1.7.0`
 > Milestone: Protected Runtime Wiring and Analyst UX
 

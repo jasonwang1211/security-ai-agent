@@ -1,8 +1,8 @@
 # Demo Outputs / Demo 輸出範例
 
-This document shows representative output excerpts for the `v1.8-protected-runtime-wiring` branch, based on the `v1.7.0` release baseline.
+This document shows representative output excerpts for the `v1.8.0` release.
 
-本文件整理 v1.8 開發分支在 `v1.7.0` release baseline 之後的代表性輸出摘錄。
+本文件整理 `v1.8.0` release 的代表性輸出摘錄。
 
 The current system emits a unified `[Security Triage Report]` for triage output. Older standalone formats are outdated and should not be used as the expected demo output.
 

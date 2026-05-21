@@ -265,7 +265,7 @@ python app.py
 
 Current release baseline: tag `v1.7.0`.
 
-Current development branch: `v1.8-protected-runtime-wiring`.
+Current release target: tag `v1.8.0` on `main`.
 
 Completed:
 
@@ -448,7 +448,7 @@ python -m mypy app.py modules tests
 
 Current release baseline: tag `v1.7.0`.
 
-Current development branch: `v1.8-protected-runtime-wiring`.
+Current release target: tag `v1.8.0` on `main`.
 
 已完成：
 

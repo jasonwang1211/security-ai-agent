@@ -6,7 +6,7 @@ This roadmap describes planned development after the v1.8 Protected Runtime Wiri
 
 Current release baseline: tag `v1.7.0`.
 
-Current development branch: `v1.8-protected-runtime-wiring`.
+Current release target: tag `v1.8.0` on `main`.
 
 Completed:
 
@@ -129,7 +129,7 @@ Smart Router is not CLI-wired yet. v1.7 does not add LLM-based routing, an LLM f
 
 ## v1.8 - Protected Runtime Wiring and Analyst UX Polish
 
-Status: Release-ready foundation on `v1.8-protected-runtime-wiring`.
+Status: Release-ready foundation for tag `v1.8.0` on `main`.
 
 Delivered:
 
@@ -167,7 +167,7 @@ All response decisions remain simulated unless explicitly redesigned in a future
 
 目前 release baseline：tag `v1.7.0`。
 
-目前 development branch: `v1.8-protected-runtime-wiring`。
+Current release target: tag `v1.8.0` on `main`.
 
 已完成：
 

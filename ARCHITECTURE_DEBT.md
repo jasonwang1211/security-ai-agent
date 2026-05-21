@@ -1,6 +1,6 @@
 # Architecture Debt Engineering Journal
 
-Current branch: `v1.8-protected-runtime-wiring`
+Current release target: tag `v1.8.0` on `main`
 Current baseline: tag `v1.7.0`
 Current quality gate: `487 passed`
 
