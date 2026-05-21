@@ -1,8 +1,8 @@
 # Demo Outputs / Demo 輸出範例
 
-This document shows representative output excerpts for the `v1.7-answer-safety-eval-router` branch, based on tag `v1.6.0` on `main`.
+This document shows representative output excerpts for the `v1.8-protected-runtime-wiring` branch, based on the `v1.7.0` release baseline.
 
-本文件整理 v1.7 開發分支在 `v1.6.0` release baseline 之後的代表性輸出摘錄。
+本文件整理 v1.8 開發分支在 `v1.7.0` release baseline 之後的代表性輸出摘錄。
 
 The current system emits a unified `[Security Triage Report]` for triage output. Older standalone formats are outdated and should not be used as the expected demo output.
 
@@ -488,6 +488,49 @@ Notes:
 - Smart Router is rule-based and not CLI-wired yet.
 - The route decision does not change Risk Level or Decision.
 - Final verdicts remain deterministic and policy-controlled.
+
+## Demo Case 11: Protected Explanation and Analyst Suggestions
+
+Status: Passed
+
+This case documents the v1.8 protected helper foundation. It is covered by deterministic tests and is not a full CLI auto-route.
+
+Input:
+
+```text
+為什麼是 MONITOR？
+```
+
+Protected explanation excerpt:
+
+```text
+path: protected report/rule explanation helper
+guardrail: AnswerGuardrails applied before returning helper output
+fallback: unsafe output returns conservative Traditional Chinese safety wording
+verdict: Risk Level and Decision are unchanged
+```
+
+Smart Router preview excerpt:
+
+```text
+input_kind: report_followup
+route: report_followup
+would_execute: false
+```
+
+Suggested questions:
+
+```text
+為什麼是 MONITOR？
+EV-003 是什麼意思？
+下一步要查什麼？
+```
+
+Notes:
+
+- Smart Router preview does not execute tools.
+- No LLM routing is used.
+- This is not CLI auto-route behavior.
 
 ## Appendix: Deprecated Output Formats
 

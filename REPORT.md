@@ -6,9 +6,9 @@
 # English
 
 > Project: AI-assisted Security Threat Detection and Response System
-> Current branch: `v1.7-answer-safety-eval-router`
-> Release baseline: tag `v1.6.0` on `main`
-> Milestone: Answer Safety / Evaluation / Smart Router Foundation
+> Current branch: `v1.8-protected-runtime-wiring`
+> Release baseline: tag `v1.7.0`
+> Milestone: Protected Runtime Wiring and Analyst UX
 
 Full CLI excerpts are available in [demo_outputs.md](demo_outputs.md).
 
@@ -128,6 +128,22 @@ Boundary note:
 
 Smart Router classifies input into finalized route categories, but it is not wired into the CLI yet and does not execute tools. Existing CLI behavior remains unchanged. AnswerGuardrails are deterministic checks, not an LLM safety classifier. The quality gate is `445 passed`, with ruff and mypy passing.
 
+## v1.8 Protected Runtime Wiring and Analyst UX
+
+v1.8 starts narrow protected integration, not broad runtime replacement.
+
+What changed:
+
+- Added protected report/rule explanation helpers that use existing RAG v2 helpers and AnswerGuardrails.
+- Refined unsafe helper output to return conservative Traditional Chinese fallback wording.
+- Added Smart Router preview mode for route decisions only; it does not execute tools.
+- Added deterministic analyst follow-up suggestions, not LLM-generated suggestions.
+- Kept existing CLI behavior unchanged.
+
+Boundary note:
+
+`RAGQA` remains the active general knowledge QA runtime. Smart Router preview is not the default CLI path. No LLM routing, final verdict override, Investigation Planner, or real firewall/WAF/SIEM/SOAR enforcement is introduced. The quality gate is `487 passed`, with ruff and mypy passing.
+
 v1.5 verification:
 
 - `python -m pytest` -> `240 passed`
@@ -159,7 +175,7 @@ The current system is an AI-assisted blue-team security triage prototype. It sup
 - Follow-up explanation
 - Unified `[Security Triage Report]` output
 
-The latest milestone adds the v1.7 Answer Safety / Evaluation / Smart Router Foundation: deterministic guardrails, small eval datasets, an eval runner, and an isolated rule-based route decision helper while preserving the existing CLI runtime and unified Security Triage Report contract.
+The latest milestone adds the v1.8 Protected Runtime Wiring and Analyst UX foundation: guarded report/rule explanation helpers, Smart Router preview, and deterministic analyst suggestions while preserving the existing CLI runtime and unified Security Triage Report contract.
 
 ---
 
@@ -242,6 +258,7 @@ Mode 3 RAG is used for knowledge explanation only. It does not decide attack typ
 | D11 | ControllerAgent Dispatch | explicit route / mode hint | Deterministic dispatch through ToolRegistry and wrapper skills | Passed |
 | D12 | RAG v2 Source-Cited Explainers | report/rule question helper | Metadata-aware plan -> SourceCitation -> AnswerWithSources | Passed |
 | D13 | Answer Safety / Eval Runner / Smart Router Foundation | rule-based helper tests | Deterministic guardrails + eval runner + Smart Router route decision | Passed |
+| D14 | Protected Runtime Wiring / Analyst UX Foundation | protected helper tests | Guarded report/rule explanation + Smart Router preview + deterministic follow-up suggestions | Passed |
 
 ---
 
@@ -473,7 +490,8 @@ The current branch also includes a small but important quality foundation:
 - ControllerAgent unit and integration tests for the six v1.5 wrapper skills
 - RAG v2 type, metadata, intent, planner, source assembly, and explainer tests
 - AnswerGuardrails, eval case loader, eval runner, and Smart Router tests
-- `pytest` for regression checks; current expected result is `445 passed`
+- Protected report/rule helper, Smart Router preview, and analyst suggestion tests
+- `pytest` for regression checks; current expected result is `487 passed`
 - `ruff` for linting and import hygiene
 - Lenient `mypy` as a gradual typing baseline
 - GitHub Actions CI for automated quality checks
@@ -497,12 +515,13 @@ The current branch also includes a small but important quality foundation:
 | ControllerAgent deterministic dispatch infrastructure | Passed |
 | RAG v2 source-cited explainer helpers | Passed |
 | AnswerGuardrails / eval runner / Smart Router foundation | Passed |
+| Protected runtime wiring / analyst UX foundation | Passed |
 | Quality checks and CI foundation | Passed |
 
 Overall result:
 
 ```text
-v1.7 reliability foundation is ready as an isolated helper layer. Existing CLI behavior remains unchanged, and deterministic detection / policy still control final verdicts.
+v1.8 protected runtime wiring and analyst UX foundation is release-ready as an isolated helper layer. Existing CLI behavior remains unchanged, and deterministic detection / policy still control final verdicts.
 ```
 
 ---
@@ -677,7 +696,8 @@ Mode 3 RAG 只負責知識解釋，不決定 attack type、risk level 或模擬 
 - direct consolidated log pipeline tests
 - Pydantic boundary model tests
 - AnswerGuardrails / eval runner / Smart Router tests
-- `pytest` (`445 passed`)
+- protected helper / Smart Router preview / analyst suggestion tests
+- `pytest` (`487 passed`)
 - `ruff`
 - lenient `mypy`
 - GitHub Actions CI

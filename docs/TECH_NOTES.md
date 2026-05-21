@@ -208,6 +208,18 @@ v1.7 adds deterministic reliability infrastructure before any user-facing router
 
 The detailed v1.7 design lives in `docs/v1.7-spec.md`; these notes only summarize the technical role of the new foundation.
 
+## v1.8 Protected Runtime Wiring and Analyst UX
+
+v1.8 adds narrow protected helper paths without replacing the existing runtime.
+
+- Protected report/rule helpers wrap source-cited helper output with AnswerGuardrails.
+- Unsafe helper output returns conservative fallback wording with limitations.
+- Smart Router preview calls the route decision helper only and does not execute tools.
+- Analyst follow-up suggestions are deterministic templates.
+- There is no LLM routing, tool execution, RAGQA replacement, or final verdict override.
+
+The detailed v1.8 design lives in `docs/v1.8-spec.md`; these notes only summarize the technical role of the implemented helper layer.
+
 ## Testing Strategy
 
 The project uses several testing layers:
@@ -219,7 +231,7 @@ The project uses several testing layers:
 
 Current quality gate:
 
-- `python -m pytest` -> `445 passed`
+- `python -m pytest` -> `487 passed`
 - `python -m ruff check .`
 - `python -m mypy app.py modules tests`
 
