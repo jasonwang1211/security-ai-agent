@@ -1,8 +1,8 @@
 # Architecture Debt Engineering Journal
 
-Current branch: `v1.7-answer-safety-eval-router`
-Current baseline: tag `v1.6.0` on `main`
-Current quality gate: `445 passed`
+Current branch: `v1.8-protected-runtime-wiring`
+Current baseline: tag `v1.7.0`
+Current quality gate: `487 passed`
 
 This document tracks structural debt cleanup as an engineering discipline: reducing module sprawl, consolidating thin wrappers, and preserving deterministic safety boundaries before adding more agentic behavior.
 
@@ -23,6 +23,7 @@ The project has reached a stable consolidated architecture with:
 - Isolated v1.5 ControllerAgent and Tool Registry infrastructure
 - Isolated v1.6 RAG v2 helper infrastructure for source-cited explanations
 - Isolated v1.7 reliability foundation for eval cases, deterministic AnswerGuardrails, Evaluation Runner, and rule-based Smart Router
+- Isolated v1.8 protected report/rule helpers, guarded fallback behavior, Smart Router preview, and deterministic analyst suggestions
 
 ## Consolidation Outcomes
 
@@ -33,7 +34,7 @@ The project has reached a stable consolidated architecture with:
 | CLI mode wrappers | `modules/skills/*` | `mode_handlers.py` | Consolidated thin CLI wrappers |
 | Log ingestion | parser / normalizer / aggregator / adapter modules | `log_pipeline.py` | Consolidated parse -> normalize -> aggregate -> adapt flow |
 | Boundary contracts | ad-hoc dictionaries | `modules/types.py` | Added Pydantic boundary models for future controller/tool work |
-| Testing foundation | limited smoke coverage | golden + log pipeline + boundary + incident + detection-rule + controller + RAG v2 + v1.7 reliability helper tests | Current quality gate: `445 passed`, ruff, mypy |
+| Testing foundation | limited smoke coverage | golden + log pipeline + boundary + incident + detection-rule + controller + RAG v2 + v1.7 reliability + v1.8 protected helper tests | Current quality gate: `487 passed`, ruff, mypy |
 
 ## v1.3 Phase Outcomes
 
@@ -182,9 +183,20 @@ Architecture note:
 
 v1.7 intentionally keeps Smart Router isolated from CLI runtime. The phase improves reliability and evaluation before wiring. v1.8 should decide the protected wiring strategy for narrow report/rule explanations and any router activation.
 
+## v1.8 Phase Outcomes
+
+- Added protected report/rule explanation helper paths through `report_followup.py`.
+- Refined guarded fallback behavior for unsafe helper output.
+- Added Smart Router preview mode without CLI default wiring or tool execution.
+- Added deterministic analyst follow-up suggestions.
+
+Architecture note:
+
+v1.8 intentionally keeps Smart Router preview isolated from CLI default behavior and does not replace `RAGQA`. v1.9 should decide if protected preview or suggestions become visible in CLI, and can revisit lazy initialization and dependency pinning.
+
 ## Current Quality Gate
 
-- `python -m pytest` -> `445 passed`
+- `python -m pytest` -> `487 passed`
 - `python -m ruff check .` -> passed
 - `python -m mypy app.py modules tests` -> passed
 - CI runs the same quality gate and includes Gitleaks secret scanning
@@ -193,7 +205,7 @@ v1.7 intentionally keeps Smart Router isolated from CLI runtime. The phase impro
 
 ### ControllerAgent / Tool Registry
 
-`ControllerAgent` now exists as an isolated deterministic dispatcher for typed tools. It is not wired into the CLI runtime yet. Future controller work should preserve deterministic policy boundaries and avoid LLM-driven routing until the planned Smart Router milestone.
+`ControllerAgent` now exists as an isolated deterministic dispatcher for typed tools. It is not wired into the CLI runtime yet. Future controller work should preserve deterministic policy boundaries and avoid LLM-driven routing. Smart Router preview is also helper-only and does not execute tools.
 
 ### Follow-up Module Boundary
 
@@ -207,9 +219,9 @@ Future cleanup can keep report formatting in `responder.py` while moving static 
 
 ### RAG Routing
 
-`RAGQueryPlanner` supports preferred source selection for the current small knowledge base. v1.6 adds isolated metadata-aware RAG v2 helper modules for source-cited report/rule explanations, but they are not wired into the current runtime.
+`RAGQueryPlanner` supports preferred source selection for the current small knowledge base. v1.6 adds isolated metadata-aware RAG v2 helper modules for source-cited report/rule explanations, and v1.8 wires them only through protected helper paths.
 
-Future retrieval work can decide when to wire these helpers into runtime paths and when to expand AnswerGuardrails/evaluation coverage. Planned sequencing should follow [docs/ROADMAP.md](docs/ROADMAP.md).
+Future retrieval work can decide whether to expand protected report follow-up integration while keeping `RAGQA` as the active general knowledge QA runtime. Planned sequencing should follow [docs/ROADMAP.md](docs/ROADMAP.md).
 
 ### Startup Cost
 

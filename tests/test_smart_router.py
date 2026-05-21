@@ -5,7 +5,7 @@ import pytest
 from pydantic import ValidationError
 
 from modules.eval_cases import load_router_cases
-from modules.smart_router import SmartRouterDecision, route_user_input
+from modules.smart_router import SmartRouterDecision, SmartRouterPreview, preview_route, route_user_input
 
 
 def _assert_route(user_input: str, expected_input_kind: str, expected_route: str) -> SmartRouterDecision:
@@ -89,6 +89,74 @@ def test_route_user_input_does_not_execute_tools():
 
     assert decision.route == "payload_triage"
     assert isinstance(decision, SmartRouterDecision)
+
+
+def test_preview_route_returns_smart_router_preview():
+    preview = preview_route("<script>alert(1)</script>")
+
+    assert isinstance(preview, SmartRouterPreview)
+    assert isinstance(preview.decision, SmartRouterDecision)
+
+
+def test_preview_route_never_executes_tools():
+    preview = preview_route("<script>alert(1)</script>")
+
+    assert not preview.would_execute
+
+
+def test_preview_route_has_would_execute_false():
+    preview = preview_route("EV-003 是什麼意思？")
+
+    assert preview.would_execute is False
+
+
+def test_preview_route_payload_text_includes_route_and_no_execution_wording():
+    preview = preview_route("<script>alert(1)</script>")
+
+    assert preview.decision.route == "payload_triage"
+    assert "payload_triage" in preview.preview_text
+    assert "不會執行工具" in preview.preview_text
+    assert "不會改變風險等級或決策" in preview.preview_text
+
+
+def test_preview_route_report_followup_text_includes_route_and_no_execution_wording():
+    preview = preview_route("EV-003 ?臭?暻潭???")
+
+    assert preview.decision.route == "report_followup"
+    assert "report_followup" in preview.preview_text
+    assert "不會執行工具" in preview.preview_text
+
+
+def test_preview_route_unknown_input_asks_for_clarification():
+    preview = preview_route("please handle this thing somehow")
+
+    assert preview.decision.route == "clarification_required"
+    assert preview.decision.requires_clarification
+    assert "補充資訊" in preview.preview_text
+    assert "不會執行任何工具" in preview.preview_text
+
+
+def test_preview_route_preserves_route_user_input_decision():
+    user_input = "Export this incident as JSON"
+
+    preview = preview_route(user_input)
+    decision = route_user_input(user_input)
+
+    assert preview.decision == decision
+
+
+def test_smart_router_preview_rejects_blank_preview_text():
+    decision = route_user_input("<script>alert(1)</script>")
+
+    with pytest.raises(ValidationError):
+        SmartRouterPreview(decision=decision, preview_text=" ")
+
+
+def test_smart_router_preview_does_not_allow_would_execute_true():
+    decision = route_user_input("<script>alert(1)</script>")
+
+    with pytest.raises(ValidationError):
+        SmartRouterPreview(decision=decision, preview_text="Preview only.", would_execute=True)
 
 
 def test_bundled_router_cases_match_route_user_input():

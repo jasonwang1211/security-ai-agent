@@ -2,6 +2,12 @@ from __future__ import annotations
 
 import re
 
+from pydantic import BaseModel
+
+from modules.answer_guardrails import AnswerSafetyReport, check_answer_safety
+from modules.rag_explainers import explain_report_question, explain_rule_question
+from modules.rag_metadata import KnowledgeDocMetadata
+from modules.rag_types import AnswerWithSources, SourceCitation
 from modules.types import EvidenceItem, Finding, Incident
 
 Intent = str
@@ -20,6 +26,13 @@ DOCS_BY_INTENT = {
     "read_report": [DOC_READING_REPORT],
     "unknown": [],
 }
+
+SAFETY_FALLBACK_SOURCE = SourceCitation(
+    source="internal/answer_guardrails",
+    kind="knowledge_doc",
+    heading="Protected fallback",
+    identifier="answer_guardrails",
+)
 
 SUGGESTIONS_BY_INTENT = {
     "explain_evidence": [
@@ -56,6 +69,94 @@ SUGGESTIONS_BY_INTENT = {
         "我接下來要查什麼？",
     ],
 }
+
+
+class ProtectedExplanationResult(BaseModel):
+    answer: AnswerWithSources
+    safety_report: AnswerSafetyReport
+    was_fallback: bool = False
+
+
+def protect_answer_with_guardrails(
+    answer: AnswerWithSources,
+    known_evidence_ids: set[str] | None = None,
+    known_finding_ids: set[str] | None = None,
+    known_rule_ids: set[str] | None = None,
+) -> ProtectedExplanationResult:
+    safety_report = check_answer_safety(
+        answer,
+        known_evidence_ids=known_evidence_ids,
+        known_finding_ids=known_finding_ids,
+        known_rule_ids=known_rule_ids,
+    )
+    if not safety_report.has_errors():
+        return ProtectedExplanationResult(answer=answer, safety_report=safety_report)
+
+    fallback = AnswerWithSources(
+        answer=(
+            "此回答未通過安全檢查，因此改以保守說明回覆。請以原始報告證據、"
+            "命中規則與人工複核為準；本系統不會執行真實封鎖，也不會讓 AI "
+            "覆蓋最終判定。"
+        ),
+        sources=_fallback_sources(answer.sources),
+        confidence="LOW",
+        limitations=[
+            "Original helper output failed deterministic AnswerGuardrails.",
+            "Fallback does not change Risk Level, Decision, evidence, findings, or rules.",
+        ],
+    )
+    return ProtectedExplanationResult(
+        answer=fallback,
+        safety_report=safety_report,
+        was_fallback=True,
+    )
+
+
+def _fallback_sources(sources: list[SourceCitation]) -> list[SourceCitation]:
+    fallback_sources = list(sources)
+    if not fallback_sources:
+        return [SAFETY_FALLBACK_SOURCE]
+
+    has_safety_source = any(
+        citation.source == SAFETY_FALLBACK_SOURCE.source
+        and citation.identifier == SAFETY_FALLBACK_SOURCE.identifier
+        for citation in fallback_sources
+    )
+    if not has_safety_source:
+        fallback_sources.append(SAFETY_FALLBACK_SOURCE)
+
+    return fallback_sources
+
+
+def explain_report_followup_protected(
+    question: str,
+    metadata_items: list[KnowledgeDocMetadata],
+    context: dict[str, object] | None = None,
+    known_evidence_ids: set[str] | None = None,
+    known_finding_ids: set[str] | None = None,
+    known_rule_ids: set[str] | None = None,
+) -> ProtectedExplanationResult:
+    answer = explain_report_question(question, metadata_items, context=context)
+    return protect_answer_with_guardrails(
+        answer,
+        known_evidence_ids=known_evidence_ids,
+        known_finding_ids=known_finding_ids,
+        known_rule_ids=known_rule_ids,
+    )
+
+
+def explain_rule_followup_protected(
+    question: str,
+    metadata_items: list[KnowledgeDocMetadata],
+    rule_metadata: dict[str, dict[str, object]] | None = None,
+    known_rule_ids: set[str] | None = None,
+) -> ProtectedExplanationResult:
+    answer = explain_rule_question(
+        question,
+        metadata_items,
+        rule_metadata=rule_metadata,
+    )
+    return protect_answer_with_guardrails(answer, known_rule_ids=known_rule_ids)
 
 
 def classify_followup_intent(question: str) -> Intent:

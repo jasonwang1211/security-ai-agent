@@ -1,12 +1,12 @@
 # Roadmap
 
-This roadmap describes planned development after the v1.7 Answer Safety / Evaluation / Smart Router Foundation milestone.
+This roadmap describes planned development after the v1.8 Protected Runtime Wiring and Analyst UX milestone.
 
 ## Current Baseline
 
-Current release: tag `v1.6.0` on `main`.
+Current release baseline: tag `v1.7.0`.
 
-Current development branch: `v1.7-answer-safety-eval-router`.
+Current development branch: `v1.8-protected-runtime-wiring`.
 
 Completed:
 
@@ -28,11 +28,12 @@ Completed:
 - v1.5 ControllerAgent and Tool Registry infrastructure
 - v1.6 RAG v2 Foundation
 - v1.7 Answer Safety / Evaluation / Smart Router Foundation
+- v1.8 Protected Runtime Wiring and Analyst UX
 - pytest / ruff / mypy / GitHub Actions CI
 
-Current v1.7 quality gate:
+Current v1.8 quality gate:
 
-- `python -m pytest` -> `445 passed`
+- `python -m pytest` -> `487 passed`
 - `python -m ruff check .` -> passed
 - `python -m mypy app.py modules tests` -> passed
 - CI includes Gitleaks secret scanning
@@ -128,25 +129,30 @@ Smart Router is not CLI-wired yet. v1.7 does not add LLM-based routing, an LLM f
 
 ## v1.8 - Protected Runtime Wiring and Analyst UX Polish
 
+Status: Release-ready foundation on `v1.8-protected-runtime-wiring`.
+
+Delivered:
+
+- Protected report/rule explanation helpers through `report_followup.py`
+- AnswerGuardrails-protected fallback behavior for unsafe helper output
+- Smart Router preview mode that shows route decisions without executing tools
+- Deterministic analyst follow-up suggestions
+- 487 passed quality gate
+
+Boundary:
+v1.8 does not replace `RAGQA`, make Smart Router the default CLI path, add LLM routing, implement Investigation Planner, or perform real enforcement.
+
+## v1.9 - Analyst UX and Demo Polish
+
 Status: Next.
 
 Planned:
 
-- Protected runtime wiring for narrow report/rule explanations
-- Smart Router CLI integration only after route safety is proven
-- Optional Investigation Planner after safety coverage is mature
-- Analyst UX polish
-- Advanced `AnswerGuardrails` only if deterministic coverage is insufficient
-
-## v1.9 - Analyst UX and Demo Polish
-
-Status: Later.
-
-Planned:
-
-- Analyst UX improvements
-- Demo polish
-- Dashboard / demo exploration
+- Optional protected CLI preview exposure
+- Broader analyst UX polish
+- Lazy initialization review
+- Dependency / constraints cleanup
+- Optional report-followup integration expansion
 
 ## Non-Goals
 
@@ -155,13 +161,13 @@ All response decisions remain simulated unless explicitly redesigned in a future
 
 # 後續規劃
 
-此 roadmap 描述 v1.6 RAG v2 Foundation 完成後的後續開發方向。
+此 roadmap 描述 v1.8 Protected Runtime Wiring and Analyst UX 完成後的後續開發方向。
 
 ## 目前基準
 
-目前 release：`main` 上的 tag `v1.6.0`。
+目前 release baseline：tag `v1.7.0`。
 
-目前 development branch: `v1.7-answer-safety-eval-router`。
+目前 development branch: `v1.8-protected-runtime-wiring`。
 
 已完成：
 
@@ -183,11 +189,12 @@ All response decisions remain simulated unless explicitly redesigned in a future
 - v1.5 ControllerAgent and Tool Registry infrastructure
 - v1.6 RAG v2 Foundation
 - v1.7 Answer Safety / Evaluation / Smart Router Foundation
+- v1.8 Protected Runtime Wiring and Analyst UX
 - pytest / ruff / mypy / GitHub Actions CI
 
-目前 v1.7 quality gate：
+目前 v1.8 quality gate：
 
-- `python -m pytest` -> `445 passed`
+- `python -m pytest` -> `487 passed`
 - `python -m ruff check .` -> passed
 - `python -m mypy app.py modules tests` -> passed
 
@@ -272,11 +279,15 @@ Status: Foundation completed.
 
 ## v1.8 - Protected Runtime Wiring and Analyst UX Polish
 
-- protected runtime wiring
-- narrow report/rule explanation integration
-- optional Investigation Planner after safety coverage
-- analyst UX polish
+- Status: release-ready foundation
+- protected report/rule explanation helpers
+- guarded fallback behavior
+- Smart Router preview only; no automatic tool execution
+- deterministic analyst follow-up suggestions
+- Boundary: `RAGQA` is not replaced; no LLM routing; no real enforcement
 
 ## v1.9 - Analyst UX and Demo Polish
 
-- Analyst UX / demo polish
+- optional protected CLI preview exposure
+- broader Analyst UX / demo polish
+- lazy initialization and dependency cleanup review

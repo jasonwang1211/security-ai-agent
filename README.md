@@ -179,7 +179,7 @@ v1.7 adds reliability infrastructure before user-facing router activation:
 - Rule-based Smart Router foundation.
 - CI Gitleaks secret scanning.
 - Reusable log ingestion runner moved into `modules/`.
-- Current quality gate: `445 passed`.
+- v1.7 quality gate: `445 passed`.
 
 Boundaries:
 
@@ -187,6 +187,28 @@ Boundaries:
 - Smart Router is rule-based, not LLM-based.
 - RAG/LLM remain advisory and explanation-only.
 - Final verdicts remain deterministic and policy-controlled.
+
+### v1.8 Protected Runtime Wiring and Analyst UX
+
+v1.8 adds the first narrow protected integration helpers while preserving existing CLI behavior:
+
+- Protected report/rule explanation helpers through `report_followup.py`.
+- AnswerGuardrails-protected fallback behavior for unsafe helper output.
+- Smart Router preview mode that shows a route decision without executing tools.
+- Deterministic analyst follow-up suggestions.
+- Current quality gate: `487 passed`.
+
+Boundaries:
+
+- `RAGQA` remains the active general knowledge QA runtime.
+- Smart Router preview is not the default CLI path and does not execute tools.
+- No LLM routing, final verdict override, or real firewall/WAF/SIEM/SOAR enforcement is introduced.
+
+Traditional Chinese summary:
+
+- v1.8 新增受保護的報告/規則說明 helper、AnswerGuardrails 安全 fallback、Smart Router preview，以及 deterministic 分析師追問建議。
+- `RAGQA` 仍是一般知識問答 runtime；Smart Router preview 不會執行工具，也不是預設 CLI 路徑。
+- 沒有 LLM routing、沒有 AI 覆蓋最終判定、沒有真實防火牆/WAF/SIEM/SOAR 執行。
 
 ### CLI Modes
 
@@ -214,7 +236,7 @@ python -m ruff check .
 python -m mypy app.py modules tests
 ```
 
-Current expected test result: `445 passed`.
+Current expected test result: `487 passed`.
 
 The test suite includes expanded golden smoke tests, direct consolidated log pipeline tests, Pydantic boundary model tests, incident/export/follow-up/guardrail tests, and Scenario A integration coverage for a mixed authentication log. Deterministic tests do not start the full app or initialize RAGQA, Chroma, embeddings, Torch, Ollama, ChatOllama, or local LLM clients. GitHub Actions CI runs the same quality gate.
 
@@ -241,9 +263,9 @@ python app.py
 
 ### Current Status
 
-Current release: tag `v1.6.0` on `main`.
+Current release baseline: tag `v1.7.0`.
 
-Current development branch: `v1.7-answer-safety-eval-router`.
+Current development branch: `v1.8-protected-runtime-wiring`.
 
 Completed:
 
@@ -257,6 +279,7 @@ Completed:
 - v1.5 ControllerAgent and Tool Registry infrastructure, including typed tool specs, deterministic dispatch, six wrapper skills, and integration tests
 - v1.6 RAG v2 Foundation, including source-cited helper types, metadata parsing, intent classification, exact ID extraction, metadata-aware planning, source assembly, and deterministic report/rule explainers
 - v1.7 Answer Safety / Evaluation / Smart Router Foundation, including eval cases, deterministic answer guardrails, eval runner, isolated rule-based Smart Router, CI Gitleaks, and reusable log ingestion runner cleanup
+- v1.8 Protected Runtime Wiring and Analyst UX, including protected report/rule explanation helpers, guarded fallback behavior, Smart Router preview mode, and deterministic analyst suggestions
 - Expanded golden smoke tests, direct log pipeline tests, focused boundary model tests, `pytest`, `ruff`, lenient `mypy`, and GitHub Actions CI
 
 ### Further Reading
@@ -302,8 +325,17 @@ See [docs/ROADMAP.md](docs/ROADMAP.md) for delivered items.
 
 - v1.7 foundation: evaluation datasets, deterministic AnswerGuardrails, Evaluation Runner, and isolated rule-based Smart Router
 - Smart Router is not CLI-wired yet, and no LLM-based routing is introduced
-- v1.8: protected runtime wiring and analyst UX polish
-- v1.9: Analyst UX and demo polish
+
+**v1.8 - Protected Runtime Wiring and Analyst UX** (Release-ready foundation)
+
+- Protected report/rule explanation helpers, guarded fallback behavior, Smart Router preview, and deterministic analyst suggestions
+- Existing CLI modes and `RAGQA` remain unchanged
+- Smart Router preview does not execute tools and is not the default CLI route
+- No LLM routing, verdict override, or real enforcement
+
+**v1.9 - Analyst UX and Demo Polish** (Next)
+
+- Optional protected CLI preview exposure, broader analyst UX polish, lazy initialization review, and dependency/constraints cleanup
 
 For the full plan, see [docs/ROADMAP.md](docs/ROADMAP.md).
 
@@ -408,15 +440,15 @@ python -m ruff check .
 python -m mypy app.py modules tests
 ```
 
-目前預期測試結果：`445 passed`。
+目前預期測試結果：`487 passed`。
 
 測試使用 dummy RAG 與 LLMAssist 物件，不會啟動完整 CLI，也不會初始化 RAGQA、Chroma、embeddings、Torch、Ollama、ChatOllama 或本地 LLM client。GitHub Actions CI 會執行同一組品質檢查。
 
 ### 目前狀態
 
-Current release: tag `v1.6.0` on `main`.
+Current release baseline: tag `v1.7.0`.
 
-Current development branch: `v1.7-answer-safety-eval-router`.
+Current development branch: `v1.8-protected-runtime-wiring`.
 
 已完成：
 
@@ -428,6 +460,8 @@ Current development branch: `v1.7-answer-safety-eval-router`.
 - v1.4 Detection-as-Code Lite：YAML detection rules、`DetectionRule` schema、YAML rule loader、detector adapter、rule metadata，並保留 hard-coded fallback
 - v1.5 ControllerAgent / Tool Registry infrastructure：typed `ToolSpec`、deterministic dispatch、six wrapper skills 與 integration tests
 - v1.6 RAG v2 Foundation：source-cited helper types、frontmatter metadata、intent classification、exact ID lookup、metadata-aware planning、source assembly、Report Explainer v2 / Rule Explainer v2
+- v1.7 Answer Safety / Evaluation / Smart Router Foundation
+- v1.8 Protected Runtime Wiring and Analyst UX
 - 邊界：仍是 deterministic rule-based detection，不是 ML detection，也不是 LLM-generated rules；YAML metadata 不會覆蓋 `TriagePolicy`
 - expanded golden smoke tests、direct log pipeline tests、boundary model tests、`pytest`、`ruff`、寬鬆 `mypy` 與 GitHub Actions CI
 
@@ -478,3 +512,11 @@ Current development branch: `v1.7-answer-safety-eval-router`.
 - deterministic Evaluation Runner / deterministic 評估執行器
 - isolated rule-based Smart Router / 隔離的 rule-based Smart Router
 - 尚未接入 CLI；沒有 LLM-based routing；final verdict 仍由 deterministic policy 控制
+
+**v1.8 - Protected Runtime Wiring and Analyst UX / 受保護 runtime wiring 與分析師 UX**（release-ready foundation）
+
+- protected report/rule explanation helpers / 受保護的報告與規則說明 helper
+- AnswerGuardrails fallback / deterministic 安全 fallback
+- Smart Router preview only / Smart Router 只預覽、不執行工具
+- deterministic analyst suggestions / deterministic 分析師追問建議
+- `RAGQA` remains active; no LLM routing, verdict override, or real enforcement
