@@ -4,14 +4,14 @@ import sys
 import pytest
 from pydantic import ValidationError
 
-from modules.rag_intent import build_rag_retrieval_plan
-from modules.rag_metadata import KnowledgeDocMetadata, load_metadata_from_directory
-from modules.rag_retrieval_planner import (
+from modules.rag.intent import build_rag_retrieval_plan
+from modules.rag.metadata import KnowledgeDocMetadata, load_metadata_from_directory
+from modules.rag.retrieval_planner import (
     MetadataAwareRetrievalPlan,
     MetadataRetrievalCandidate,
     build_metadata_aware_retrieval_plan,
 )
-from modules.rag_source_assembly import (
+from modules.rag.source_assembly import (
     assemble_answer_with_sources,
     build_answer_from_plan,
     build_source_citations,
@@ -20,7 +20,7 @@ from modules.rag_source_assembly import (
     source_citation_from_candidate,
     source_citation_from_metadata,
 )
-from modules.rag_types import ExtractedId, ExtractedIds, SourceCitation
+from modules.rag.types import ExtractedId, ExtractedIds, SourceCitation
 
 
 def assert_module_imports_without_runtime_dependencies(module_name: str) -> None:
@@ -30,6 +30,7 @@ import json
 import sys
 
 forbidden = [
+    "app",
     "modules.rag_qa",
     "langchain",
     "chromadb",
@@ -292,4 +293,11 @@ def test_real_report_explainer_metadata_can_be_assembled_into_answer_sources() -
 
 
 def test_module_does_not_import_rag_runtime_modules() -> None:
-    assert_module_imports_without_runtime_dependencies("modules.rag_source_assembly")
+    assert_module_imports_without_runtime_dependencies("modules.rag.source_assembly")
+
+
+def test_legacy_rag_source_assembly_module_re_exports_canonical_symbols() -> None:
+    legacy = __import__("modules.rag_source_assembly", fromlist=["build_answer_from_plan"])
+    canonical = __import__("modules.rag.source_assembly", fromlist=["build_answer_from_plan"])
+
+    assert legacy.build_answer_from_plan is canonical.build_answer_from_plan

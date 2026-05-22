@@ -1,9 +1,9 @@
 import subprocess
 import sys
 
-from modules.rag_intent import build_rag_retrieval_plan
-from modules.rag_metadata import KnowledgeDocMetadata, load_metadata_from_directory
-from modules.rag_retrieval_planner import (
+from modules.rag.intent import build_rag_retrieval_plan
+from modules.rag.metadata import KnowledgeDocMetadata, load_metadata_from_directory
+from modules.rag.retrieval_planner import (
     MetadataAwareRetrievalPlan,
     MetadataRetrievalCandidate,
     build_metadata_aware_retrieval_plan,
@@ -20,6 +20,7 @@ import json
 import sys
 
 forbidden = [
+    "app",
     "modules.rag_qa",
     "langchain",
     "chromadb",
@@ -250,4 +251,20 @@ def test_models_remove_blank_reasons_and_warnings() -> None:
 
 
 def test_planner_module_does_not_import_rag_runtime_modules() -> None:
-    assert_module_imports_without_runtime_dependencies("modules.rag_retrieval_planner")
+    assert_module_imports_without_runtime_dependencies("modules.rag.retrieval_planner")
+
+
+def test_legacy_rag_retrieval_planner_module_re_exports_canonical_symbols() -> None:
+    legacy = __import__(
+        "modules.rag_retrieval_planner",
+        fromlist=["build_metadata_aware_retrieval_plan"],
+    )
+    canonical = __import__(
+        "modules.rag.retrieval_planner",
+        fromlist=["build_metadata_aware_retrieval_plan"],
+    )
+
+    assert (
+        legacy.build_metadata_aware_retrieval_plan
+        is canonical.build_metadata_aware_retrieval_plan
+    )

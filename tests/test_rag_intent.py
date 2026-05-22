@@ -1,14 +1,14 @@
 import subprocess
 import sys
 
-from modules.rag_intent import (
+from modules.rag.intent import (
     build_rag_retrieval_plan,
     classify_rag_intent,
     extract_rag_ids,
     has_missing_ids,
     lookup_extracted_ids,
 )
-from modules.rag_types import ExtractedIds
+from modules.rag.types import ExtractedIds
 
 
 def assert_module_imports_without_runtime_dependencies(module_name: str) -> None:
@@ -18,6 +18,7 @@ import json
 import sys
 
 forbidden = [
+    "app",
     "modules.rag_qa",
     "langchain",
     "chromadb",
@@ -200,4 +201,11 @@ def test_lookup_helpers_do_not_require_filesystem_or_chroma() -> None:
 
 
 def test_module_does_not_import_rag_runtime_modules() -> None:
-    assert_module_imports_without_runtime_dependencies("modules.rag_intent")
+    assert_module_imports_without_runtime_dependencies("modules.rag.intent")
+
+
+def test_legacy_rag_intent_module_re_exports_canonical_symbols() -> None:
+    legacy = __import__("modules.rag_intent", fromlist=["classify_rag_intent"])
+    canonical = __import__("modules.rag.intent", fromlist=["classify_rag_intent"])
+
+    assert legacy.classify_rag_intent is canonical.classify_rag_intent

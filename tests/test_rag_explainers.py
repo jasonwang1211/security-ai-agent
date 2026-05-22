@@ -1,9 +1,9 @@
 import subprocess
 import sys
 
-from modules.rag_explainers import explain_report_question, explain_rule_question
-from modules.rag_metadata import KnowledgeDocMetadata, load_metadata_from_directory
-from modules.rag_types import AnswerWithSources
+from modules.rag.explainers import explain_report_question, explain_rule_question
+from modules.rag.metadata import KnowledgeDocMetadata, load_metadata_from_directory
+from modules.rag.types import AnswerWithSources
 
 
 def assert_module_imports_without_runtime_dependencies(module_name: str) -> None:
@@ -13,6 +13,7 @@ import json
 import sys
 
 forbidden = [
+    "app",
     "modules.rag_qa",
     "langchain",
     "chromadb",
@@ -185,11 +186,18 @@ def test_explain_rule_question_with_no_metadata_candidates_returns_insufficient_
 
 
 def test_report_explainer_does_not_import_rag_runtime_modules() -> None:
-    assert_module_imports_without_runtime_dependencies("modules.rag_explainers")
+    assert_module_imports_without_runtime_dependencies("modules.rag.explainers")
 
 
 def test_rule_explainer_does_not_import_rag_runtime_modules() -> None:
-    assert_module_imports_without_runtime_dependencies("modules.rag_explainers")
+    assert_module_imports_without_runtime_dependencies("modules.rag.explainers")
+
+
+def test_legacy_rag_explainers_module_re_exports_canonical_symbols() -> None:
+    legacy = __import__("modules.rag_explainers", fromlist=["explain_report_question"])
+    canonical = __import__("modules.rag.explainers", fromlist=["explain_report_question"])
+
+    assert legacy.explain_report_question is canonical.explain_report_question
 
 
 def test_real_report_explainer_metadata_can_support_monitor_answer() -> None:

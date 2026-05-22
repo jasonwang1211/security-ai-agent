@@ -5,7 +5,7 @@ import sys
 import pytest
 from pydantic import ValidationError
 
-from modules.rag_metadata import (
+from modules.rag.metadata import (
     KnowledgeDocMetadata,
     load_knowledge_metadata,
     load_metadata_from_directory,
@@ -21,6 +21,7 @@ import json
 import sys
 
 forbidden = [
+    "app",
     "modules.rag_qa",
     "langchain",
     "chromadb",
@@ -266,4 +267,11 @@ def test_all_report_explainer_docs_have_non_empty_keywords() -> None:
 
 
 def test_metadata_parser_does_not_import_or_initialize_rag_runtime_modules() -> None:
-    assert_module_imports_without_runtime_dependencies("modules.rag_metadata")
+    assert_module_imports_without_runtime_dependencies("modules.rag.metadata")
+
+
+def test_legacy_rag_metadata_module_re_exports_canonical_symbols() -> None:
+    legacy = __import__("modules.rag_metadata", fromlist=["KnowledgeDocMetadata"])
+    canonical = __import__("modules.rag.metadata", fromlist=["KnowledgeDocMetadata"])
+
+    assert legacy.KnowledgeDocMetadata is canonical.KnowledgeDocMetadata

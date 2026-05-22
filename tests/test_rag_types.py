@@ -1,9 +1,12 @@
 import json
+import importlib
+import subprocess
+import sys
 
 import pytest
 from pydantic import ValidationError
 
-from modules.rag_types import (
+from modules.rag.types import (
     AnswerWithSources,
     ExtractedId,
     ExtractedIds,
@@ -12,6 +15,49 @@ from modules.rag_types import (
     SourceCitation,
     make_insufficient_answer,
 )
+
+
+def test_legacy_rag_types_module_re_exports_canonical_symbols() -> None:
+    legacy = importlib.import_module("modules.rag_types")
+    canonical = importlib.import_module("modules.rag.types")
+
+    assert legacy.AnswerWithSources is canonical.AnswerWithSources
+    assert legacy.SourceCitation is canonical.SourceCitation
+
+
+def test_rag_types_import_does_not_load_runtime_dependencies() -> None:
+    code = """
+import importlib
+import json
+import sys
+
+forbidden = [
+    "app",
+    "modules.rag_qa",
+    "langchain",
+    "chromadb",
+    "sentence_transformers",
+    "ollama",
+    "torch",
+]
+
+importlib.import_module("modules.rag.types")
+
+loaded = [
+    name for name in forbidden
+    if name in sys.modules or any(mod.startswith(name + ".") for mod in sys.modules)
+]
+
+print(json.dumps(loaded))
+raise SystemExit(1 if loaded else 0)
+"""
+    result = subprocess.run(
+        [sys.executable, "-c", code],
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+    assert result.returncode == 0, result.stdout + result.stderr
 
 
 def make_source() -> SourceCitation:
