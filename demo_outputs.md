@@ -1,8 +1,8 @@
 # Demo Outputs / Demo 輸出範例
 
-This document shows representative output excerpts for the `v1.8.0` release.
+This document shows representative output excerpts for the v1.9 Architecture Cleanup and Orchestration Contracts milestone.
 
-本文件整理 `v1.8.0` release 的代表性輸出摘錄。
+本文件整理 v1.9 Architecture Cleanup and Orchestration Contracts milestone 的代表性輸出摘錄。
 
 The current system emits a unified `[Security Triage Report]` for triage output. Older standalone formats are outdated and should not be used as the expected demo output.
 
@@ -531,6 +531,63 @@ Notes:
 - Smart Router preview does not execute tools.
 - No LLM routing is used.
 - This is not CLI auto-route behavior.
+
+## Demo Case 12: Tool Permission and Workflow Plan Contracts
+
+Status: Passed
+
+This case documents the v1.9 orchestration contract foundation. It is covered by deterministic contract tests and is not a CLI workflow execution feature.
+
+Tool Permission Contract excerpt:
+
+```text
+tool_name: report_explainer
+permission: READ_ONLY
+execution_mode: DIRECT_ALLOWED
+risk_level: LOW
+requires_human_approval: false
+decision: allowed as a read-only helper
+```
+
+Forbidden tool excerpt:
+
+```text
+tool_name: real_firewall_block
+permission: FORBIDDEN
+execution_mode: BLOCKED
+risk_level: CRITICAL
+decision: not allowed
+reason: real firewall enforcement is forbidden
+```
+
+Workflow Plan Contract excerpt:
+
+```text
+plan_id: plan-001
+route: report_followup
+execution_mode: READ_ONLY
+status: READY
+steps:
+  - tool_name: report_explainer
+    permission: READ_ONLY
+    execution_mode: READ_ONLY
+limitations:
+  - Workflow plans are schema-only previews.
+  - This plan does not execute tools or change runtime state.
+```
+
+Notes:
+
+- This is preview-contract only.
+- No tool execution is performed.
+- No runtime workflow execution is wired.
+- Smart Router is not the default CLI auto-route.
+- ControllerAgent does not auto-execute.
+- `RAGQA` is not replaced.
+- Graph RAG and Knowledge Capture remain deferred.
+- AI does not decide attacks or override Risk Level / Decision.
+- `BLOCK`, `MONITOR`, and `ALLOW` remain simulated decisions.
+- No real firewall/WAF/SIEM/SOAR enforcement is performed.
 
 ## Appendix: Deprecated Output Formats
 

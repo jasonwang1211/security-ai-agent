@@ -1,12 +1,12 @@
 # Roadmap
 
-This roadmap describes planned development after the v1.8 Protected Runtime Wiring and Analyst UX milestone.
+This roadmap describes planned development after the v1.9 Architecture Cleanup and Orchestration Contracts milestone.
 
 ## Current Baseline
 
-Current release baseline: tag `v1.7.0`.
+Current release baseline: tag `v1.8.0`.
 
-Current release target: tag `v1.8.0` on `main`.
+Current release target: v1.9 documentation sync on branch `v1.9-orchestration-contracts`.
 
 Completed:
 
@@ -29,11 +29,12 @@ Completed:
 - v1.6 RAG v2 Foundation
 - v1.7 Answer Safety / Evaluation / Smart Router Foundation
 - v1.8 Protected Runtime Wiring and Analyst UX
+- v1.9 Architecture Cleanup and Orchestration Contracts
 - pytest / ruff / mypy / GitHub Actions CI
 
-Current v1.8 quality gate:
+Current v1.9 quality gate:
 
-- `python -m pytest` -> `487 passed`
+- `python -m pytest` -> `525 passed`
 - `python -m ruff check .` -> passed
 - `python -m mypy app.py modules tests` -> passed
 - CI includes Gitleaks secret scanning
@@ -142,17 +143,40 @@ Delivered:
 Boundary:
 v1.8 does not replace `RAGQA`, make Smart Router the default CLI path, add LLM routing, implement Investigation Planner, or perform real enforcement.
 
-## v1.9 - Analyst UX and Demo Polish
+## v1.9 - Architecture Cleanup and Orchestration Contracts
+
+Status: Release-ready documentation and contract milestone.
+
+Delivered:
+
+- `docs/v1.9-spec.md` detailed design source of truth
+- Architecture ownership map
+- ADR foundation
+- Tool Permission Contract and tests
+- Workflow Plan Contract and tests
+- Testing Strategy documentation
+- Package Migration Plan
+- 525 passed quality gate
+
+Boundary:
+v1.9 is contracts-only. It does not implement Graph RAG, Knowledge Capture, LLM tool selection, runtime auto-execution, Smart Router default CLI auto-route, `RAGQA` replacement, AI attack decisions, Risk Level / Decision override, automatic rule changes, or real enforcement.
+
+## v2.0 - Knowledge Graph Foundation / Graph RAG Groundwork
 
 Status: Next.
 
 Planned:
 
-- Optional protected CLI preview exposure
-- Broader analyst UX polish
-- Lazy initialization review
-- Dependency / constraints cleanup
-- Optional report-followup integration expansion
+- Knowledge Graph foundation after v1.9 ownership and contract boundaries are stable
+- Graph RAG groundwork as retrieval infrastructure, not a detector or policy engine
+- Continued preservation of `RAGQA` unless a later phase explicitly replaces it
+
+Deferred beyond initial v2.0 groundwork:
+
+- Graph RAG retrieval as active runtime behavior
+- Knowledge Capture implementation
+- LLM graph extraction
+- automatic rule modification or deployment
 
 ## Non-Goals
 
@@ -165,9 +189,9 @@ All response decisions remain simulated unless explicitly redesigned in a future
 
 ## 目前基準
 
-目前 release baseline：tag `v1.7.0`。
+目前 release baseline：tag `v1.8.0`。
 
-Current release target: tag `v1.8.0` on `main`.
+Current release target: v1.9 documentation sync on branch `v1.9-orchestration-contracts`.
 
 已完成：
 
@@ -190,11 +214,12 @@ Current release target: tag `v1.8.0` on `main`.
 - v1.6 RAG v2 Foundation
 - v1.7 Answer Safety / Evaluation / Smart Router Foundation
 - v1.8 Protected Runtime Wiring and Analyst UX
+- v1.9 Architecture Cleanup and Orchestration Contracts
 - pytest / ruff / mypy / GitHub Actions CI
 
-目前 v1.8 quality gate：
+目前 v1.9 quality gate：
 
-- `python -m pytest` -> `487 passed`
+- `python -m pytest` -> `525 passed`
 - `python -m ruff check .` -> passed
 - `python -m mypy app.py modules tests` -> passed
 
@@ -286,8 +311,19 @@ Status: Foundation completed.
 - deterministic analyst follow-up suggestions
 - Boundary: `RAGQA` is not replaced; no LLM routing; no real enforcement
 
-## v1.9 - Analyst UX and Demo Polish
+## v1.9 - Architecture Cleanup and Orchestration Contracts
 
-- optional protected CLI preview exposure
-- broader Analyst UX / demo polish
-- lazy initialization and dependency cleanup review
+- Status: release-ready documentation and contract milestone
+- architecture ownership map
+- ADR foundation
+- Tool Permission Contract and tests
+- Workflow Plan Contract and tests
+- Testing Strategy documentation
+- Package Migration Plan
+- Boundary: contracts only; no Graph RAG, Knowledge Capture, LLM tool selection, runtime auto-execution, RAGQA replacement, AI verdict override, or real enforcement
+
+## v2.0 - Knowledge Graph Foundation / Graph RAG Groundwork
+
+- Status: next
+- Knowledge Graph foundation after v1.9 ownership and contract boundaries are stable
+- Graph RAG retrieval, Knowledge Capture, and LLM graph extraction remain deferred beyond v1.9

@@ -1,8 +1,8 @@
 # Architecture Debt Engineering Journal
 
-Current release target: tag `v1.8.0` on `main`
-Current baseline: tag `v1.7.0`
-Current quality gate: `487 passed`
+Current release target: v1.9 documentation sync on branch `v1.9-orchestration-contracts`
+Current baseline: tag `v1.8.0`
+Current quality gate: `525 passed`
 
 This document tracks structural debt cleanup as an engineering discipline: reducing module sprawl, consolidating thin wrappers, and preserving deterministic safety boundaries before adding more agentic behavior.
 
@@ -24,6 +24,7 @@ The project has reached a stable consolidated architecture with:
 - Isolated v1.6 RAG v2 helper infrastructure for source-cited explanations
 - Isolated v1.7 reliability foundation for eval cases, deterministic AnswerGuardrails, Evaluation Runner, and rule-based Smart Router
 - Isolated v1.8 protected report/rule helpers, guarded fallback behavior, Smart Router preview, and deterministic analyst suggestions
+- v1.9 architecture cleanup and orchestration contracts: ownership map, ADRs, Tool Permission Contract, Workflow Plan Contract, Testing Strategy, and Package Migration Plan
 
 ## Consolidation Outcomes
 
@@ -34,7 +35,7 @@ The project has reached a stable consolidated architecture with:
 | CLI mode wrappers | `modules/skills/*` | `mode_handlers.py` | Consolidated thin CLI wrappers |
 | Log ingestion | parser / normalizer / aggregator / adapter modules | `log_pipeline.py` | Consolidated parse -> normalize -> aggregate -> adapt flow |
 | Boundary contracts | ad-hoc dictionaries | `modules/types.py` | Added Pydantic boundary models for future controller/tool work |
-| Testing foundation | limited smoke coverage | golden + log pipeline + boundary + incident + detection-rule + controller + RAG v2 + v1.7 reliability + v1.8 protected helper tests | Current quality gate: `487 passed`, ruff, mypy |
+| Testing foundation | limited smoke coverage | golden + log pipeline + boundary + incident + detection-rule + controller + RAG v2 + v1.7 reliability + v1.8 protected helper tests + v1.9 contract tests | Current quality gate: `525 passed`, ruff, mypy |
 
 ## v1.3 Phase Outcomes
 
@@ -192,11 +193,25 @@ v1.7 intentionally keeps Smart Router isolated from CLI runtime. The phase impro
 
 Architecture note:
 
-v1.8 intentionally keeps Smart Router preview isolated from CLI default behavior and does not replace `RAGQA`. v1.9 should decide if protected preview or suggestions become visible in CLI, and can revisit lazy initialization and dependency pinning.
+v1.8 intentionally keeps Smart Router preview isolated from CLI default behavior and does not replace `RAGQA`.
+
+## v1.9 Phase Outcomes
+
+- Added `docs/v1.9-spec.md` as the detailed design source of truth for Architecture Cleanup and Orchestration Contracts.
+- Added `docs/ARCHITECTURE_MAP.md` to document runtime, helper, staged, eval, and docs ownership.
+- Added ADRs for deterministic ControllerAgent behavior, follow-up boundaries, RAGQA/RAG helper coexistence, Tool Permission Model, and Workflow Plan Model.
+- Added schema-only Tool Permission Contract and focused tests.
+- Added schema-only Workflow Plan Contract and focused tests.
+- Added Testing Strategy documentation.
+- Added Package Migration Plan documentation.
+
+Architecture note:
+
+v1.9 intentionally keeps contracts separate from runtime wiring. Tool Policy and Workflow Plan are schema-only. ControllerAgent does not auto-execute, Smart Router does not become the default CLI auto-route, and `RAGQA` remains the active general knowledge QA runtime.
 
 ## Current Quality Gate
 
-- `python -m pytest` -> `487 passed`
+- `python -m pytest` -> `525 passed`
 - `python -m ruff check .` -> passed
 - `python -m mypy app.py modules tests` -> passed
 - CI runs the same quality gate and includes Gitleaks secret scanning
@@ -206,6 +221,15 @@ v1.8 intentionally keeps Smart Router preview isolated from CLI default behavior
 ### ControllerAgent / Tool Registry
 
 `ControllerAgent` now exists as an isolated deterministic dispatcher for typed tools. It is not wired into the CLI runtime yet. Future controller work should preserve deterministic policy boundaries and avoid LLM-driven routing. Smart Router preview is also helper-only and does not execute tools.
+
+Tool Permission and Workflow Plan contracts now document future orchestration boundaries, but they are not runtime enforcement or auto-execution paths.
+
+### v1.9 Deferred Work
+
+- Tool Permission and Workflow Plan contracts are not runtime-wired.
+- Package migration has not been performed.
+- Graph RAG and Knowledge Capture remain deferred until ownership is stable.
+- Documentation sync and release gate verification are the current next release tasks.
 
 ### Follow-up Module Boundary
 

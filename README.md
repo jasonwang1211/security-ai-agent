@@ -196,7 +196,7 @@ v1.8 adds the first narrow protected integration helpers while preserving existi
 - AnswerGuardrails-protected fallback behavior for unsafe helper output.
 - Smart Router preview mode that shows a route decision without executing tools.
 - Deterministic analyst follow-up suggestions.
-- Current quality gate: `487 passed`.
+- v1.8 quality gate: `487 passed`.
 
 Boundaries:
 
@@ -209,6 +209,27 @@ Traditional Chinese summary:
 - v1.8 新增受保護的報告/規則說明 helper、AnswerGuardrails 安全 fallback、Smart Router preview，以及 deterministic 分析師追問建議。
 - `RAGQA` 仍是一般知識問答 runtime；Smart Router preview 不會執行工具，也不是預設 CLI 路徑。
 - 沒有 LLM routing、沒有 AI 覆蓋最終判定、沒有真實防火牆/WAF/SIEM/SOAR 執行。
+
+### v1.9 Architecture Cleanup and Orchestration Contracts
+
+v1.9 is an architecture and contract milestone, not a runtime feature release:
+
+- Architecture ownership map for runtime, helper, staged, eval, and docs boundaries.
+- ADR foundation for ControllerAgent, follow-up boundaries, RAGQA/RAG helper coexistence, Tool Permission Model, and Workflow Plan Model.
+- Schema-only Tool Permission Contract in `modules/tool_policy.py`.
+- Schema-only Workflow Plan Contract in `modules/workflow_types.py`.
+- Testing Strategy documentation for unit, eval, import guard, release gate, and manual LLM/RAG smoke checks.
+- Package Migration Plan for possible future sub-packages without moving files in v1.9.
+- Current quality gate: `525 passed`.
+
+Boundaries:
+
+- v1.9 does not implement Graph RAG or Knowledge Capture.
+- v1.9 does not add LLM tool selection, runtime auto-execution, or Smart Router default CLI auto-route.
+- v1.9 does not replace `RAGQA`.
+- AI does not decide attacks or override Risk Level / Decision.
+- `BLOCK`, `MONITOR`, and `ALLOW` remain simulated decisions.
+- No real firewall, WAF, SIEM, SOAR, cloud, or endpoint enforcement is introduced.
 
 ### CLI Modes
 
@@ -236,7 +257,7 @@ python -m ruff check .
 python -m mypy app.py modules tests
 ```
 
-Current expected test result: `487 passed`.
+Current expected test result: `525 passed`.
 
 The test suite includes expanded golden smoke tests, direct consolidated log pipeline tests, Pydantic boundary model tests, incident/export/follow-up/guardrail tests, and Scenario A integration coverage for a mixed authentication log. Deterministic tests do not start the full app or initialize RAGQA, Chroma, embeddings, Torch, Ollama, ChatOllama, or local LLM clients. GitHub Actions CI runs the same quality gate.
 
@@ -263,9 +284,9 @@ python app.py
 
 ### Current Status
 
-Current release baseline: tag `v1.7.0`.
+Current release baseline: tag `v1.8.0`.
 
-Current release target: tag `v1.8.0` on `main`.
+Current release target: v1.9 documentation sync on branch `v1.9-orchestration-contracts`.
 
 Completed:
 
@@ -280,6 +301,7 @@ Completed:
 - v1.6 RAG v2 Foundation, including source-cited helper types, metadata parsing, intent classification, exact ID extraction, metadata-aware planning, source assembly, and deterministic report/rule explainers
 - v1.7 Answer Safety / Evaluation / Smart Router Foundation, including eval cases, deterministic answer guardrails, eval runner, isolated rule-based Smart Router, CI Gitleaks, and reusable log ingestion runner cleanup
 - v1.8 Protected Runtime Wiring and Analyst UX, including protected report/rule explanation helpers, guarded fallback behavior, Smart Router preview mode, and deterministic analyst suggestions
+- v1.9 Architecture Cleanup and Orchestration Contracts, including architecture ownership map, ADR foundation, Tool Permission Contract, Workflow Plan Contract, Testing Strategy, and Package Migration Plan
 - Expanded golden smoke tests, direct log pipeline tests, focused boundary model tests, `pytest`, `ruff`, lenient `mypy`, and GitHub Actions CI
 
 ### Further Reading
@@ -333,9 +355,15 @@ See [docs/ROADMAP.md](docs/ROADMAP.md) for delivered items.
 - Smart Router preview does not execute tools and is not the default CLI route
 - No LLM routing, verdict override, or real enforcement
 
-**v1.9 - Analyst UX and Demo Polish** (Next)
+**v1.9 - Architecture Cleanup and Orchestration Contracts** (Release-ready documentation and contract milestone)
 
-- Optional protected CLI preview exposure, broader analyst UX polish, lazy initialization review, and dependency/constraints cleanup
+- Architecture ownership map, ADR foundation, Tool Permission Contract, Workflow Plan Contract, Testing Strategy, and Package Migration Plan
+- Contract/schema-only; no runtime auto-execution, LLM tool selection, Graph RAG, Knowledge Capture, RAGQA replacement, AI verdict override, or real enforcement
+
+**v2.0 - Knowledge Graph Foundation / Graph RAG Groundwork** (Next)
+
+- Future knowledge graph groundwork after ownership and orchestration contracts are stable
+- Graph RAG retrieval, Knowledge Capture, and LLM graph extraction remain deferred beyond v1.9
 
 For the full plan, see [docs/ROADMAP.md](docs/ROADMAP.md).
 
@@ -440,15 +468,15 @@ python -m ruff check .
 python -m mypy app.py modules tests
 ```
 
-目前預期測試結果：`487 passed`。
+目前預期測試結果：`525 passed`。
 
 測試使用 dummy RAG 與 LLMAssist 物件，不會啟動完整 CLI，也不會初始化 RAGQA、Chroma、embeddings、Torch、Ollama、ChatOllama 或本地 LLM client。GitHub Actions CI 會執行同一組品質檢查。
 
 ### 目前狀態
 
-Current release baseline: tag `v1.7.0`.
+Current release baseline: tag `v1.8.0`.
 
-Current release target: tag `v1.8.0` on `main`.
+Current release target: v1.9 documentation sync on branch `v1.9-orchestration-contracts`.
 
 已完成：
 

@@ -220,6 +220,31 @@ v1.8 adds narrow protected helper paths without replacing the existing runtime.
 
 The detailed v1.8 design lives in `docs/v1.8-spec.md`; these notes only summarize the technical role of the implemented helper layer.
 
+## v1.9 Architecture Cleanup and Orchestration Contracts
+
+v1.9 adds architecture cleanup documents and schema-only orchestration contracts. It is not a runtime automation milestone.
+
+- `docs/v1.9-spec.md` is the detailed design source of truth.
+- `docs/ARCHITECTURE_MAP.md` documents ownership boundaries.
+- `docs/adr/` records the core architecture decisions.
+- `modules/tool_policy.py` defines a schema-only Tool Permission Contract.
+- `modules/workflow_types.py` defines a schema-only Workflow Plan Contract.
+- `docs/TESTING_STRATEGY.md` documents the testing source of truth.
+- `docs/PACKAGE_MIGRATION_PLAN.md` documents future package migration planning.
+
+Technical boundary:
+
+- Tool Policy does not enforce runtime behavior.
+- Workflow Plan does not execute tools.
+- ControllerAgent does not auto-execute.
+- Smart Router is not the default CLI auto-route.
+- There is no LLM tool selection.
+- There is no Graph RAG or Knowledge Capture implementation.
+- `RAGQA` remains the active general knowledge QA runtime.
+- LLM/RAG output does not decide attacks or override Risk Level / Decision.
+- `BLOCK`, `MONITOR`, and `ALLOW` remain simulated decisions.
+- No real firewall, WAF, SIEM, SOAR, cloud, or endpoint enforcement is performed.
+
 ## Testing Strategy
 
 The project uses several testing layers:
@@ -231,7 +256,7 @@ The project uses several testing layers:
 
 Current quality gate:
 
-- `python -m pytest` -> `487 passed`
+- `python -m pytest` -> `525 passed`
 - `python -m ruff check .`
 - `python -m mypy app.py modules tests`
 

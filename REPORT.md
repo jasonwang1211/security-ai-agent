@@ -6,9 +6,9 @@
 # English
 
 > Project: AI-assisted Security Threat Detection and Response System
-> Current release target: tag `v1.8.0` on `main`
-> Release baseline: tag `v1.7.0`
-> Milestone: Protected Runtime Wiring and Analyst UX
+> Current release target: v1.9 documentation sync on branch `v1.9-orchestration-contracts`
+> Release baseline: tag `v1.8.0`
+> Milestone: Architecture Cleanup and Orchestration Contracts
 
 Full CLI excerpts are available in [demo_outputs.md](demo_outputs.md).
 
@@ -144,6 +144,23 @@ Boundary note:
 
 `RAGQA` remains the active general knowledge QA runtime. Smart Router preview is not the default CLI path. No LLM routing, final verdict override, Investigation Planner, or real firewall/WAF/SIEM/SOAR enforcement is introduced. The quality gate is `487 passed`, with ruff and mypy passing.
 
+## v1.9 Architecture Cleanup and Orchestration Contracts
+
+v1.9 is an engineering milestone for architecture cleanup and orchestration contracts, not a runtime feature release.
+
+What changed:
+
+- Added `docs/v1.9-spec.md` as the detailed v1.9 design source of truth.
+- Added `docs/ARCHITECTURE_MAP.md` for runtime, helper, staged, eval, and docs ownership.
+- Added ADRs for deterministic ControllerAgent behavior, follow-up boundaries, RAGQA/RAG helper coexistence, Tool Permission Model, and Workflow Plan Model.
+- Added schema-only Tool Permission Contract and tests.
+- Added schema-only Workflow Plan Contract and tests.
+- Added Testing Strategy and Package Migration Plan documentation.
+
+Boundary note:
+
+Tool Policy and Workflow Plan are contract-only. They are not runtime-wired, do not execute tools, and do not make Smart Router the default CLI route. `ControllerAgent` does not auto-execute. `RAGQA` remains the active general knowledge QA runtime. Graph RAG and Knowledge Capture remain deferred. AI does not decide attacks or override Risk Level / Decision. `BLOCK`, `MONITOR`, and `ALLOW` remain simulated, with no real firewall/WAF/SIEM/SOAR enforcement. The quality gate is `525 passed`, with ruff and mypy passing.
+
 v1.5 verification:
 
 - `python -m pytest` -> `240 passed`
@@ -175,7 +192,7 @@ The current system is an AI-assisted blue-team security triage prototype. It sup
 - Follow-up explanation
 - Unified `[Security Triage Report]` output
 
-The latest milestone adds the v1.8 Protected Runtime Wiring and Analyst UX foundation: guarded report/rule explanation helpers, Smart Router preview, and deterministic analyst suggestions while preserving the existing CLI runtime and unified Security Triage Report contract.
+The latest milestone adds the v1.9 Architecture Cleanup and Orchestration Contracts foundation: architecture ownership map, ADRs, schema-only tool and workflow contracts, testing strategy, and package migration planning while preserving the existing CLI runtime and unified Security Triage Report contract.
 
 ---
 
@@ -259,6 +276,7 @@ Mode 3 RAG is used for knowledge explanation only. It does not decide attack typ
 | D12 | RAG v2 Source-Cited Explainers | report/rule question helper | Metadata-aware plan -> SourceCitation -> AnswerWithSources | Passed |
 | D13 | Answer Safety / Eval Runner / Smart Router Foundation | rule-based helper tests | Deterministic guardrails + eval runner + Smart Router route decision | Passed |
 | D14 | Protected Runtime Wiring / Analyst UX Foundation | protected helper tests | Guarded report/rule explanation + Smart Router preview + deterministic follow-up suggestions | Passed |
+| D15 | Architecture Cleanup / Orchestration Contracts | docs + contract tests | Ownership map + ADRs + Tool Permission Contract + Workflow Plan Contract + testing/migration docs | Passed |
 
 ---
 
@@ -491,7 +509,9 @@ The current branch also includes a small but important quality foundation:
 - RAG v2 type, metadata, intent, planner, source assembly, and explainer tests
 - AnswerGuardrails, eval case loader, eval runner, and Smart Router tests
 - Protected report/rule helper, Smart Router preview, and analyst suggestion tests
-- `pytest` for regression checks; current expected result is `487 passed`
+- Tool Permission Contract and Workflow Plan Contract tests
+- v1.9 documentation source-of-truth docs for architecture ownership, testing strategy, ADRs, and package migration planning
+- `pytest` for regression checks; current expected result is `525 passed`
 - `ruff` for linting and import hygiene
 - Lenient `mypy` as a gradual typing baseline
 - GitHub Actions CI for automated quality checks
@@ -516,12 +536,13 @@ The current branch also includes a small but important quality foundation:
 | RAG v2 source-cited explainer helpers | Passed |
 | AnswerGuardrails / eval runner / Smart Router foundation | Passed |
 | Protected runtime wiring / analyst UX foundation | Passed |
+| v1.9 architecture cleanup / orchestration contracts | Passed |
 | Quality checks and CI foundation | Passed |
 
 Overall result:
 
 ```text
-v1.8 protected runtime wiring and analyst UX foundation is release-ready as an isolated helper layer. Existing CLI behavior remains unchanged, and deterministic detection / policy still control final verdicts.
+v1.9 architecture cleanup and orchestration contracts are release-ready as a documentation and contract milestone. Existing CLI behavior remains unchanged, contract models are not runtime-wired, and deterministic detection / policy still control final verdicts.
 ```
 
 ---
@@ -697,7 +718,8 @@ Mode 3 RAG 只負責知識解釋，不決定 attack type、risk level 或模擬 
 - Pydantic boundary model tests
 - AnswerGuardrails / eval runner / Smart Router tests
 - protected helper / Smart Router preview / analyst suggestion tests
-- `pytest` (`487 passed`)
+- Tool Permission Contract / Workflow Plan Contract tests
+- `pytest` (`525 passed`)
 - `ruff`
 - lenient `mypy`
 - GitHub Actions CI
@@ -721,6 +743,7 @@ Mode 3 RAG 只負責知識解釋，不決定 attack type、risk level 或模擬 
 | Rule-based Command Injection detection | Passed |
 | YAML Detection-as-Code | Passed |
 | RAG v2 source-cited explainer helpers | Passed |
+| v1.9 architecture cleanup / orchestration contracts | Passed |
 | pytest / ruff / mypy / GitHub Actions CI | Passed |
 
 整體結果：
