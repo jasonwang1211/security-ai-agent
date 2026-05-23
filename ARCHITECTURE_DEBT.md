@@ -2,7 +2,7 @@
 
 Current release target: v1.9 documentation sync on branch `v1.9-orchestration-contracts`
 Current baseline: tag `v1.8.0`
-Current quality gate: `525 passed`
+Current quality gate: `537 passed`
 
 This document tracks structural debt cleanup as an engineering discipline: reducing module sprawl, consolidating thin wrappers, and preserving deterministic safety boundaries before adding more agentic behavior.
 
@@ -25,6 +25,8 @@ The project has reached a stable consolidated architecture with:
 - Isolated v1.7 reliability foundation for eval cases, deterministic AnswerGuardrails, Evaluation Runner, and rule-based Smart Router
 - Isolated v1.8 protected report/rule helpers, guarded fallback behavior, Smart Router preview, and deterministic analyst suggestions
 - v1.9 architecture cleanup and orchestration contracts: ownership map, ADRs, Tool Permission Contract, Workflow Plan Contract, Testing Strategy, and Package Migration Plan
+- Controlled 9B package migration for RAG helper modules and controller/orchestration modules with temporary flat compatibility shims
+- Manual LLM/RAG smoke checklist documented as manual-only, not normal CI, and not yet executed
 
 ## Consolidation Outcomes
 
@@ -35,7 +37,9 @@ The project has reached a stable consolidated architecture with:
 | CLI mode wrappers | `modules/skills/*` | `mode_handlers.py` | Consolidated thin CLI wrappers |
 | Log ingestion | parser / normalizer / aggregator / adapter modules | `log_pipeline.py` | Consolidated parse -> normalize -> aggregate -> adapt flow |
 | Boundary contracts | ad-hoc dictionaries | `modules/types.py` | Added Pydantic boundary models for future controller/tool work |
-| Testing foundation | limited smoke coverage | golden + log pipeline + boundary + incident + detection-rule + controller + RAG v2 + v1.7 reliability + v1.8 protected helper tests + v1.9 contract tests | Current quality gate: `525 passed`, ruff, mypy |
+| RAG helper ownership | flat `modules/rag_*.py` helpers | `modules/rag/` plus flat shims | Controlled helper package migration; `RAGQA` remains active runtime |
+| Controller/orchestration ownership | flat controller/tool/policy/workflow modules | `modules/controller/` plus flat shims | Controlled package migration; no runtime auto-execution added |
+| Testing foundation | limited smoke coverage | golden + log pipeline + boundary + incident + detection-rule + controller + RAG v2 + v1.7 reliability + v1.8 protected helper tests + v1.9 contract tests | Current quality gate: `537 passed`, ruff, mypy |
 
 ## v1.3 Phase Outcomes
 
@@ -204,14 +208,19 @@ v1.8 intentionally keeps Smart Router preview isolated from CLI default behavior
 - Added schema-only Workflow Plan Contract and focused tests.
 - Added Testing Strategy documentation.
 - Added Package Migration Plan documentation.
+- Migrated RAG v2 helper-only modules into `modules/rag/` with flat compatibility shims.
+- Migrated controller/orchestration helper modules into `modules/controller/` with flat compatibility shims.
+- Added manual LLM/RAG smoke checklist documentation as manual-only, not normal CI.
 
 Architecture note:
 
 v1.9 intentionally keeps contracts separate from runtime wiring. Tool Policy and Workflow Plan are schema-only. ControllerAgent does not auto-execute, Smart Router does not become the default CLI auto-route, and `RAGQA` remains the active general knowledge QA runtime.
 
+The controlled package migrations improve ownership boundaries but do not change runtime behavior. `RAGQA` and RAG v2 helpers coexist: `RAGQA` remains the active general knowledge QA runtime, while RAG helper modules remain helper/staged infrastructure. Package shims are temporary compatibility layers and should be removed only after imports are stable and separately scoped.
+
 ## Current Quality Gate
 
-- `python -m pytest` -> `525 passed`
+- `python -m pytest` -> `537 passed`
 - `python -m ruff check .` -> passed
 - `python -m mypy app.py modules tests` -> passed
 - CI runs the same quality gate and includes Gitleaks secret scanning
@@ -227,9 +236,23 @@ Tool Permission and Workflow Plan contracts now document future orchestration bo
 ### v1.9 Deferred Work
 
 - Tool Permission and Workflow Plan contracts are not runtime-wired.
-- Package migration has not been performed.
-- Graph RAG and Knowledge Capture remain deferred until ownership is stable.
-- Documentation sync and release gate verification are the current next release tasks.
+- Partial controlled package migration has been performed for RAG helpers and controller/orchestration helpers, while flat compatibility shims remain.
+- Graph RAG remains deferred until ownership and retrieval contracts are stable.
+- Knowledge Capture remains deferred until ownership, review, and ingest boundaries are stable.
+- Agent Skill Orchestration remains deferred; ControllerAgent does not auto-execute tools or workflows.
+- Smart Router remains preview-only and is not the default CLI auto-route.
+- `RAGQA` has not been replaced.
+- Manual LLM/RAG smoke checklist exists, but it is manual-only, not executed in this phase, and not part of normal CI.
+
+### Quantified Current Debt
+
+| Area | Current measurement / status | Debt note |
+|---|---|---|
+| `report_followup.py` | 421 total LOC, 346 non-empty lines | Above the 400 LOC inspection threshold; future split debt only, no v1.9 split implemented |
+| `tests/test_report_followup.py` | 423 total LOC, 306 non-empty lines | Large focused test file; future test-alignment debt only |
+| RAG helper package shims | flat `modules/rag_*.py` compatibility paths remain | Temporary compatibility layer after `modules/rag/` migration |
+| Controller package shims | flat controller/tool/policy/workflow compatibility paths remain | Temporary compatibility layer after `modules/controller/` migration |
+| Tests layout | owner clusters documented, but tests remain mostly flat | Future alignment only after package ownership is stable |
 
 ### Follow-up Module Boundary
 
