@@ -2,14 +2,14 @@ from typing import cast
 
 from pydantic import BaseModel
 
-from modules.controller_agent import ControllerAgent, build_default_route_map
-from modules.controller_types import (
+from modules.controller.agent import ControllerAgent, build_default_route_map
+from modules.controller.types import (
     KnowledgeQuestionInput,
     PayloadTriageInput,
     ToolExecutionResult,
     ToolSpec,
 )
-from modules.skill_catalog import (
+from modules.controller.skill_catalog import (
     INCIDENT_JSON_EXPORT,
     LOG_FILE_INGEST,
     PAYLOAD_TRIAGE,
@@ -18,7 +18,7 @@ from modules.skill_catalog import (
     REPORT_FOLLOWUP,
     build_v1_5_registry,
 )
-from modules.tool_registry import ToolRegistry
+from modules.controller.registry import ToolRegistry
 
 
 def payload_handler(input_data: BaseModel) -> ToolExecutionResult:
@@ -229,3 +229,9 @@ def test_controller_agent_construction_does_not_require_rag_llm_chroma_or_ollama
 
     assert output.status == "ok"
     assert output.response_text == "rag answer"
+
+
+def test_controller_agent_shim_reexports_canonical_symbol() -> None:
+    from modules.controller_agent import ControllerAgent as ShimControllerAgent
+
+    assert ShimControllerAgent is ControllerAgent

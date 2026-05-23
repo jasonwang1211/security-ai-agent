@@ -1,12 +1,12 @@
 import pytest
 
-from modules.controller_types import (
+from modules.controller.types import (
     KnowledgeQuestionInput,
     PayloadTriageInput,
     ToolExecutionResult,
     ToolSpec,
 )
-from modules.tool_registry import ToolRegistry, build_empty_registry
+from modules.controller.registry import ToolRegistry, build_empty_registry
 
 
 def make_payload_tool() -> ToolSpec:
@@ -134,3 +134,9 @@ def test_build_empty_registry_returns_empty_tool_registry() -> None:
 
     assert isinstance(registry, ToolRegistry)
     assert len(registry) == 0
+
+
+def test_tool_registry_shim_reexports_canonical_symbol() -> None:
+    from modules.tool_registry import ToolRegistry as ShimToolRegistry
+
+    assert ShimToolRegistry is ToolRegistry

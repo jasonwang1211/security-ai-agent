@@ -1,7 +1,7 @@
 import pytest
 from pydantic import BaseModel, ValidationError
 
-from modules.controller_types import (
+from modules.controller.types import (
     ControllerInput,
     ControllerOutput,
     KnowledgeQuestionInput,
@@ -234,3 +234,9 @@ def test_model_serialization_for_controller_input_router_decision_and_output() -
     }
     assert route.model_dump()["input_kind"] == "report_followup"
     assert output.model_dump()["route"]["selected_tool"] == "report_followup"
+
+
+def test_controller_types_shim_reexports_canonical_tool_spec() -> None:
+    from modules.controller_types import ToolSpec as ShimToolSpec
+
+    assert ShimToolSpec is ToolSpec

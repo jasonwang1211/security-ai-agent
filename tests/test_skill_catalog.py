@@ -1,8 +1,8 @@
 import pytest
 from pydantic import ValidationError
 
-from modules.controller_types import IncidentJsonExportInput
-from modules.skill_catalog import (
+from modules.controller.registry import ToolRegistry
+from modules.controller.skill_catalog import (
     INCIDENT_JSON_EXPORT,
     LOG_FILE_INGEST,
     PAYLOAD_TRIAGE,
@@ -12,7 +12,7 @@ from modules.skill_catalog import (
     build_v1_5_registry,
     build_v1_5_tool_specs,
 )
-from modules.tool_registry import ToolRegistry
+from modules.controller.types import IncidentJsonExportInput
 
 EXPECTED_SKILL_NAMES = [
     PAYLOAD_TRIAGE,

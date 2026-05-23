@@ -1,6 +1,6 @@
 import sys
 
-from modules.controller_types import (
+from modules.controller.types import (
     IncidentJsonExportInput,
     KnowledgeQuestionInput,
     LogFileInput,
@@ -9,7 +9,7 @@ from modules.controller_types import (
     ReportFollowupInput,
     ToolExecutionResult,
 )
-from modules.skill_wrappers import (
+from modules.controller.skill_wrappers import (
     run_incident_json_export_skill,
     run_log_file_ingest_skill,
     run_payload_triage_skill,

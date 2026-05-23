@@ -4,7 +4,8 @@ import sys
 import pytest
 from pydantic import ValidationError
 
-from modules.tool_policy import (
+from modules.controller.tool_policy import (
+    ToolPermission,
     ToolPolicy,
     ToolPolicyDecision,
     default_policy_for_tool,
@@ -193,7 +194,7 @@ def test_is_tool_allowed_without_human_approval_true_only_for_safe_read_only_too
 def test_tool_policy_module_does_not_import_runtime_heavy_or_dispatch_modules() -> None:
     code = (
         "import sys; "
-        "import modules.tool_policy; "
+        "import modules.controller.tool_policy; "
         "forbidden={"
         "'app',"
         "'modules.rag_qa',"
@@ -214,3 +215,9 @@ def test_tool_policy_module_does_not_import_runtime_heavy_or_dispatch_modules() 
     result = subprocess.run([sys.executable, "-c", code], check=False)
 
     assert result.returncode == 0
+
+
+def test_tool_policy_shim_reexports_canonical_permission_type() -> None:
+    from modules.tool_policy import ToolPermission as ShimToolPermission
+
+    assert ShimToolPermission is ToolPermission

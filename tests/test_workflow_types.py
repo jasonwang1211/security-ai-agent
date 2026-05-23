@@ -4,7 +4,7 @@ import sys
 import pytest
 from pydantic import ValidationError
 
-from modules.workflow_types import (
+from modules.controller.workflow_types import (
     WorkflowPlan,
     WorkflowStep,
     build_preview_workflow_plan,
@@ -266,7 +266,7 @@ def test_build_preview_workflow_plan_returns_data_only_and_does_not_execute_tool
 def test_workflow_types_module_does_not_import_runtime_heavy_or_dispatch_modules() -> None:
     code = (
         "import sys; "
-        "import modules.workflow_types; "
+        "import modules.controller.workflow_types; "
         "forbidden={"
         "'app',"
         "'modules.rag_qa',"
@@ -287,3 +287,9 @@ def test_workflow_types_module_does_not_import_runtime_heavy_or_dispatch_modules
     result = subprocess.run([sys.executable, "-c", code], check=False)
 
     assert result.returncode == 0
+
+
+def test_workflow_types_shim_reexports_canonical_workflow_plan() -> None:
+    from modules.workflow_types import WorkflowPlan as ShimWorkflowPlan
+
+    assert ShimWorkflowPlan is WorkflowPlan
