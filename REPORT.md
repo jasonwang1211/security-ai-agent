@@ -98,6 +98,12 @@ Boundary note:
 
 This milestone does not change existing CLI behavior. `ControllerAgent` dispatches only by explicit route or tool name; it does not perform LLM routing, free-form input classification, Auto Route, or Smart Router behavior.
 
+v1.5 verification:
+
+- `python -m pytest` -> `240 passed`
+- `python -m ruff check .` -> passed
+- `python -m mypy app.py modules tests` -> passed
+
 ## v1.6 RAG v2 Foundation
 
 v1.6 update:
@@ -156,16 +162,13 @@ What changed:
 - Added schema-only Tool Permission Contract and tests.
 - Added schema-only Workflow Plan Contract and tests.
 - Added Testing Strategy and Package Migration Plan documentation.
+- Migrated RAG helper modules into `modules/rag/` with flat compatibility shims.
+- Migrated controller/orchestration modules into `modules/controller/` with flat compatibility shims.
+- Added manual LLM/RAG smoke checklist documentation as manual-only, not CI, and not executed.
 
 Boundary note:
 
-Tool Policy and Workflow Plan are contract-only. They are not runtime-wired, do not execute tools, and do not make Smart Router the default CLI route. `ControllerAgent` does not auto-execute. `RAGQA` remains the active general knowledge QA runtime. Graph RAG and Knowledge Capture remain deferred. AI does not decide attacks or override Risk Level / Decision. `BLOCK`, `MONITOR`, and `ALLOW` remain simulated, with no real firewall/WAF/SIEM/SOAR enforcement. The quality gate is `525 passed`, with ruff and mypy passing.
-
-v1.5 verification:
-
-- `python -m pytest` -> `240 passed`
-- `python -m ruff check .` -> passed
-- `python -m mypy app.py modules tests` -> passed
+Tool Policy and Workflow Plan are contract-only. They are not runtime-wired, do not execute tools, and do not make Smart Router the default CLI route. `ControllerAgent` does not auto-execute. `RAGQA` remains the active general knowledge QA runtime. Graph RAG, Knowledge Capture, and Agent Skill Orchestration runtime remain deferred. AI does not decide attacks or override Risk Level / Decision. `BLOCK`, `MONITOR`, and `ALLOW` remain simulated, with no real firewall/WAF/SIEM/SOAR enforcement. The quality gate is `537 passed`, with ruff, mypy, and `git diff --check` passing.
 
 ### v1.4 Detection-as-Code Lite / YAML 規則式偵測
 
@@ -192,7 +195,7 @@ The current system is an AI-assisted blue-team security triage prototype. It sup
 - Follow-up explanation
 - Unified `[Security Triage Report]` output
 
-The latest milestone adds the v1.9 Architecture Cleanup and Orchestration Contracts foundation: architecture ownership map, ADRs, schema-only tool and workflow contracts, testing strategy, and package migration planning while preserving the existing CLI runtime and unified Security Triage Report contract.
+The latest milestone adds the v1.9 Architecture Cleanup and Orchestration Contracts foundation: architecture ownership map, ADRs, schema-only tool and workflow contracts, testing strategy, controlled RAG/controller package migrations with flat compatibility shims, and manual LLM/RAG smoke checklist documentation while preserving the existing CLI runtime and unified Security Triage Report contract.
 
 ---
 
@@ -511,7 +514,7 @@ The current branch also includes a small but important quality foundation:
 - Protected report/rule helper, Smart Router preview, and analyst suggestion tests
 - Tool Permission Contract and Workflow Plan Contract tests
 - v1.9 documentation source-of-truth docs for architecture ownership, testing strategy, ADRs, and package migration planning
-- `pytest` for regression checks; current expected result is `525 passed`
+- `pytest` for regression checks; current expected result is `537 passed`
 - `ruff` for linting and import hygiene
 - Lenient `mypy` as a gradual typing baseline
 - GitHub Actions CI for automated quality checks
@@ -579,10 +582,9 @@ For planned future work, see [docs/ROADMAP.md](docs/ROADMAP.md).
 <a id="繁體中文"></a>
 # 繁體中文
 
-> 專案：AI 輔助安全威脅偵測與回應系統  
-> 目前目標：merge 後 `main` 上的 tag `v1.5.0`
-> 里程碑：Detection-as-Code Lite
-
+> 專案：AI 輔助安全威脅偵測與回應系統
+> Current release target: v1.9 documentation sync on branch `v1.9-orchestration-contracts`
+> Milestone: Architecture Cleanup and Orchestration Contracts
 完整 CLI 範例可參考 [demo_outputs.md](demo_outputs.md)。
 
 本報告記錄代表性的 CLI 流程與 pass/fail 驗證，用來確認目前統一 `Security Triage Report` 契約是否穩定。這不是統計式 benchmark；precision / recall、false positive rate 與 retrieval quality evaluation 會留到後續里程碑。
@@ -600,7 +602,7 @@ For planned future work, see [docs/ROADMAP.md](docs/ROADMAP.md).
 - Follow-up explanation
 - Unified Security Triage Report
 
-本里程碑新增 Detection-as-Code Lite：以 YAML-based deterministic detection rules 管理偵測規則，加入 schema validation、detector adapter 與 rule metadata，同時保留統一 Security Triage Report 契約與保守的 hard-coded fallback。
+v1.9 新增 architecture ownership map、ADRs、schema-only Tool Permission / Workflow Plan contracts、testing/package migration docs、controlled RAG/controller package migrations with flat shims，以及 manual LLM/RAG smoke checklist documentation。既有 CLI runtime 維持不變。
 
 ---
 
@@ -719,7 +721,7 @@ Mode 3 RAG 只負責知識解釋，不決定 attack type、risk level 或模擬 
 - AnswerGuardrails / eval runner / Smart Router tests
 - protected helper / Smart Router preview / analyst suggestion tests
 - Tool Permission Contract / Workflow Plan Contract tests
-- `pytest` (`525 passed`)
+- `pytest` (`537 passed`)
 - `ruff`
 - lenient `mypy`
 - GitHub Actions CI
@@ -749,7 +751,7 @@ Mode 3 RAG 只負責知識解釋，不決定 attack type、risk level 或模擬 
 整體結果：
 
 ```text
-Detection-as-Code Lite 里程碑已完成，可作為目前 demo 文件的基準。detector 現在以 YAML 規則作為主要的 deterministic 偵測路徑，同時保留 hard-coded fallback 行為，並維持統一的 Security Triage Report 輸出契約。
+v1.9 architecture cleanup and orchestration contracts are release-ready as a documentation and contract milestone. Existing CLI behavior remains unchanged, contract models are not runtime-wired, and deterministic detection / policy still control final verdicts.
 ```
 
 ---

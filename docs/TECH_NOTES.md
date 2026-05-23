@@ -227,10 +227,13 @@ v1.9 adds architecture cleanup documents and schema-only orchestration contracts
 - `docs/v1.9-spec.md` is the detailed design source of truth.
 - `docs/ARCHITECTURE_MAP.md` documents ownership boundaries.
 - `docs/adr/` records the core architecture decisions.
-- `modules/tool_policy.py` defines a schema-only Tool Permission Contract.
-- `modules/workflow_types.py` defines a schema-only Workflow Plan Contract.
+- `modules/controller/tool_policy.py` defines a schema-only Tool Permission Contract.
+- `modules/controller/workflow_types.py` defines a schema-only Workflow Plan Contract.
 - `docs/TESTING_STRATEGY.md` documents the testing source of truth.
 - `docs/PACKAGE_MIGRATION_PLAN.md` documents future package migration planning.
+- RAG helper modules now live under `modules/rag/` with flat compatibility shims.
+- Controller/orchestration modules now live under `modules/controller/` with flat compatibility shims.
+- The manual LLM/RAG smoke checklist is documented as manual-only, not CI, and not executed.
 
 Technical boundary:
 
@@ -239,7 +242,7 @@ Technical boundary:
 - ControllerAgent does not auto-execute.
 - Smart Router is not the default CLI auto-route.
 - There is no LLM tool selection.
-- There is no Graph RAG or Knowledge Capture implementation.
+- There is no Graph RAG, Knowledge Capture, or Agent Skill Orchestration runtime implementation.
 - `RAGQA` remains the active general knowledge QA runtime.
 - LLM/RAG output does not decide attacks or override Risk Level / Decision.
 - `BLOCK`, `MONITOR`, and `ALLOW` remain simulated decisions.
@@ -256,7 +259,7 @@ The project uses several testing layers:
 
 Current quality gate:
 
-- `python -m pytest` -> `525 passed`
+- `python -m pytest` -> `537 passed`
 - `python -m ruff check .`
 - `python -m mypy app.py modules tests`
 

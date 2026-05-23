@@ -34,7 +34,7 @@ Completed:
 
 Current v1.9 quality gate:
 
-- `python -m pytest` -> `525 passed`
+- `python -m pytest` -> `537 passed`
 - `python -m ruff check .` -> passed
 - `python -m mypy app.py modules tests` -> passed
 - CI includes Gitleaks secret scanning
@@ -156,10 +156,13 @@ Delivered:
 - Workflow Plan Contract and tests
 - Testing Strategy documentation
 - Package Migration Plan
-- 525 passed quality gate
+- Controlled RAG helper migration into `modules/rag/` with flat compatibility shims
+- Controlled controller/orchestration migration into `modules/controller/` with flat compatibility shims
+- Manual LLM/RAG smoke checklist documented as manual-only, not CI, and not executed
+- 537 passed quality gate
 
 Boundary:
-v1.9 is contracts-only. It does not implement Graph RAG, Knowledge Capture, LLM tool selection, runtime auto-execution, Smart Router default CLI auto-route, `RAGQA` replacement, AI attack decisions, Risk Level / Decision override, automatic rule changes, or real enforcement.
+v1.9 keeps contracts separate from runtime automation. It does not implement Graph RAG, Knowledge Capture, Agent Skill Orchestration runtime, LLM tool selection, runtime auto-execution, Smart Router default CLI auto-route, `RAGQA` replacement, AI attack decisions, Risk Level / Decision override, automatic rule changes, or real enforcement.
 
 ## v2.0 - Knowledge Graph Foundation / Graph RAG Groundwork
 
@@ -219,7 +222,7 @@ Current release target: v1.9 documentation sync on branch `v1.9-orchestration-co
 
 目前 v1.9 quality gate：
 
-- `python -m pytest` -> `525 passed`
+- `python -m pytest` -> `537 passed`
 - `python -m ruff check .` -> passed
 - `python -m mypy app.py modules tests` -> passed
 
@@ -320,7 +323,9 @@ Status: Foundation completed.
 - Workflow Plan Contract and tests
 - Testing Strategy documentation
 - Package Migration Plan
-- Boundary: contracts only; no Graph RAG, Knowledge Capture, LLM tool selection, runtime auto-execution, RAGQA replacement, AI verdict override, or real enforcement
+- Controlled `modules/rag/` and `modules/controller/` migrations with flat compatibility shims
+- Manual LLM/RAG smoke checklist documented as manual-only, not CI, and not executed
+- Boundary: contracts stay separate from runtime automation; no Graph RAG, Knowledge Capture, Agent Skill Orchestration runtime, LLM tool selection, runtime auto-execution, RAGQA replacement, AI verdict override, or real enforcement
 
 ## v2.0 - Knowledge Graph Foundation / Graph RAG Groundwork
 

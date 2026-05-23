@@ -216,11 +216,13 @@ v1.9 is an architecture and contract milestone, not a runtime feature release:
 
 - Architecture ownership map for runtime, helper, staged, eval, and docs boundaries.
 - ADR foundation for ControllerAgent, follow-up boundaries, RAGQA/RAG helper coexistence, Tool Permission Model, and Workflow Plan Model.
-- Schema-only Tool Permission Contract in `modules/tool_policy.py`.
-- Schema-only Workflow Plan Contract in `modules/workflow_types.py`.
+- Schema-only Tool Permission Contract in `modules/controller/tool_policy.py`.
+- Schema-only Workflow Plan Contract in `modules/controller/workflow_types.py`.
 - Testing Strategy documentation for unit, eval, import guard, release gate, and manual LLM/RAG smoke checks.
-- Package Migration Plan for possible future sub-packages without moving files in v1.9.
-- Current quality gate: `525 passed`.
+- Controlled RAG helper migration into `modules/rag/` with flat compatibility shims.
+- Controlled controller/orchestration migration into `modules/controller/` with flat compatibility shims.
+- Manual LLM/RAG smoke checklist documented as manual-only, not CI, and not executed.
+- Current quality gate: `537 passed`.
 
 Boundaries:
 
@@ -257,7 +259,7 @@ python -m ruff check .
 python -m mypy app.py modules tests
 ```
 
-Current expected test result: `525 passed`.
+Current expected test result: `537 passed`.
 
 The test suite includes expanded golden smoke tests, direct consolidated log pipeline tests, Pydantic boundary model tests, incident/export/follow-up/guardrail tests, and Scenario A integration coverage for a mixed authentication log. Deterministic tests do not start the full app or initialize RAGQA, Chroma, embeddings, Torch, Ollama, ChatOllama, or local LLM clients. GitHub Actions CI runs the same quality gate.
 
@@ -301,7 +303,7 @@ Completed:
 - v1.6 RAG v2 Foundation, including source-cited helper types, metadata parsing, intent classification, exact ID extraction, metadata-aware planning, source assembly, and deterministic report/rule explainers
 - v1.7 Answer Safety / Evaluation / Smart Router Foundation, including eval cases, deterministic answer guardrails, eval runner, isolated rule-based Smart Router, CI Gitleaks, and reusable log ingestion runner cleanup
 - v1.8 Protected Runtime Wiring and Analyst UX, including protected report/rule explanation helpers, guarded fallback behavior, Smart Router preview mode, and deterministic analyst suggestions
-- v1.9 Architecture Cleanup and Orchestration Contracts, including architecture ownership map, ADR foundation, Tool Permission Contract, Workflow Plan Contract, Testing Strategy, and Package Migration Plan
+- v1.9 Architecture Cleanup and Orchestration Contracts, including architecture ownership map, ADR foundation, Tool Permission Contract, Workflow Plan Contract, Testing Strategy, controlled RAG/controller package migrations with flat compatibility shims, and manual LLM/RAG smoke checklist documentation
 - Expanded golden smoke tests, direct log pipeline tests, focused boundary model tests, `pytest`, `ruff`, lenient `mypy`, and GitHub Actions CI
 
 ### Further Reading
@@ -358,6 +360,8 @@ See [docs/ROADMAP.md](docs/ROADMAP.md) for delivered items.
 **v1.9 - Architecture Cleanup and Orchestration Contracts** (Release-ready documentation and contract milestone)
 
 - Architecture ownership map, ADR foundation, Tool Permission Contract, Workflow Plan Contract, Testing Strategy, and Package Migration Plan
+- Controlled RAG helper and controller/orchestration package migrations with flat compatibility shims
+- Manual LLM/RAG smoke checklist documented as manual-only, not CI, and not executed
 - Contract/schema-only; no runtime auto-execution, LLM tool selection, Graph RAG, Knowledge Capture, RAGQA replacement, AI verdict override, or real enforcement
 
 **v2.0 - Knowledge Graph Foundation / Graph RAG Groundwork** (Next)
@@ -468,7 +472,7 @@ python -m ruff check .
 python -m mypy app.py modules tests
 ```
 
-目前預期測試結果：`525 passed`。
+目前預期測試結果：`537 passed`。
 
 測試使用 dummy RAG 與 LLMAssist 物件，不會啟動完整 CLI，也不會初始化 RAGQA、Chroma、embeddings、Torch、Ollama、ChatOllama 或本地 LLM client。GitHub Actions CI 會執行同一組品質檢查。
 
