@@ -189,6 +189,8 @@ Deferred beyond v2.0:
 - LLM graph extraction
 - Neo4j or vector search
 - runtime agent orchestration
+- `RAGQA` replacement
+- detector / risk / decision override by graph or LLM
 - automatic rule modification or deployment
 
 ## Non-Goals

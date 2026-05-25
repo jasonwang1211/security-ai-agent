@@ -37,6 +37,7 @@ This project explores a hybrid path: deterministic detection and policy produce 
 | Knowledge | RAGQueryPlanner + RAG QA | Local defensive knowledge retrieval and explanation. |
 | Assist | LLMAssist | Advisory reasoning only; it never overrides the final verdict. |
 | Controller | ControllerAgent + Tool Registry | Typed v1.5 agent infrastructure for deterministic dispatch by explicit route or tool name. |
+| Graph | Knowledge Graph Foundation | Deterministic `modules/graph/*` helper infrastructure for in-memory evidence/context structure; not Graph RAG. |
 | Output | Security Triage Report | Unified report format across payload and log flows. |
 | Incident | Evidence / Incident Capability | Stable EV-ID / F-ID evidence handling, sequence correlation, JSON Incident export, and report-aware follow-up. |
 
@@ -87,6 +88,10 @@ Core modules:
 - `modules/rag_query_planner.py`: RAG query planning and source preference selection
 - `modules/rag_qa.py`: local knowledge retrieval and answer generation
 - `modules/types.py`: Pydantic boundary types
+- `modules/graph/types.py`: graph type contracts for in-memory snapshots
+- `modules/graph/builder.py`: deterministic GraphSnapshot builder from structured inputs
+- `modules/graph/lookup.py`: read-only graph lookup helpers
+- `modules/graph/exporter.py`: JSON-ready graph snapshot export helpers
 
 ### v1.3 Evidence and Incident Capability
 
@@ -222,7 +227,7 @@ v1.9 is an architecture and contract milestone, not a runtime feature release:
 - Controlled RAG helper migration into `modules/rag/` with flat compatibility shims.
 - Controlled controller/orchestration migration into `modules/controller/` with flat compatibility shims.
 - Manual LLM/RAG smoke checklist documented as manual-only, not CI, and not executed.
-- Current quality gate: `585 passed`.
+- Latest full release-gate result (v2.0): `585 passed`.
 
 Boundaries:
 
