@@ -6,7 +6,7 @@
 # English
 
 > Project: AI-assisted Security Threat Detection and Response System
-> Current phase: v2.0 Knowledge Graph Foundation documentation update
+> Current phase: v2.0 Knowledge Graph Foundation release gate passed
 > Release baseline: tag `v1.8.0`
 > Release focus: Knowledge Graph Foundation
 
@@ -168,7 +168,7 @@ What changed:
 
 Boundary note:
 
-Tool Policy and Workflow Plan are contract-only. They are not connected to runtime flow, do not execute tools, and do not make Smart Router the default CLI route. `ControllerAgent` does not auto-execute. `RAGQA` remains the active general knowledge QA runtime. Graph RAG, Knowledge Capture, and Agent Skill Orchestration runtime remain deferred. AI does not decide attacks or override Risk Level / Decision. `BLOCK`, `MONITOR`, and `ALLOW` remain simulated, with no real firewall/WAF/SIEM/SOAR enforcement. The quality gate is `537 passed`, with ruff, mypy, and `git diff --check` passing.
+Tool Policy and Workflow Plan are contract-only. They are not connected to runtime flow, do not execute tools, and do not make Smart Router the default CLI route. `ControllerAgent` does not auto-execute. `RAGQA` remains the active general knowledge QA runtime. Graph RAG, Knowledge Capture, and Agent Skill Orchestration runtime remain deferred. AI does not decide attacks or override Risk Level / Decision. `BLOCK`, `MONITOR`, and `ALLOW` remain simulated, with no real firewall/WAF/SIEM/SOAR enforcement. The latest v2.0 release gate is `585 passed`, with ruff, mypy, `git diff --check`, and Gitleaks passing.
 
 ## v2.0 Knowledge Graph Foundation
 
@@ -184,7 +184,7 @@ What changed:
 
 Boundary note:
 
-The graph is evidence/context structure, not detection authority. It does not load YAML or files, infer relationships from free text, call LLM/RAG/vector systems, execute tools, replace `RAGQA`, replace the Rule-Based Detector, write knowledge, or change Risk Level / Decision. `BLOCK`, `MONITOR`, and `ALLOW` remain simulated, and deterministic detector / risk / decision remain final authority. The v2.0 release gate has not been run in this documentation sync.
+The graph is evidence/context structure, not detection authority. It does not load YAML or files, infer relationships from free text, call LLM/RAG/vector systems, execute tools, replace `RAGQA`, replace the Rule-Based Detector, write knowledge, or change Risk Level / Decision. `BLOCK`, `MONITOR`, and `ALLOW` remain simulated, and deterministic detector / risk / decision remain final authority. The v2.0 release gate passed.
 
 ### v1.4 Detection-as-Code Lite / YAML 規則式偵測
 
@@ -531,7 +531,7 @@ The current branch also includes a small but important quality foundation:
 - Tool Permission Contract and Workflow Plan Contract tests
 - v1.9 documentation source-of-truth docs for architecture ownership, testing strategy, ADRs, and package migration planning
 - v2.0 graph type, builder, lookup, and exporter focused tests
-- `pytest` for regression checks; last full expected result is `537 passed`
+- `pytest` for regression checks; latest full release-gate result is `585 passed`
 - `ruff` for linting and import hygiene
 - Lenient `mypy` as a gradual typing baseline
 - GitHub Actions CI for automated quality checks
@@ -601,7 +601,7 @@ For planned future work, see [docs/ROADMAP.md](docs/ROADMAP.md).
 # 繁體中文
 
 > 專案：AI 輔助安全威脅偵測與回應系統
-> 目前里程碑：v2.0 知識圖譜基礎文件同步
+> 目前里程碑：v2.0 知識圖譜基礎 release gate 已通過，準備 tag
 > 里程碑：知識圖譜基礎
 完整 CLI 範例可參考 [demo_outputs.md](demo_outputs.md)。
 
@@ -740,7 +740,7 @@ Mode 3 RAG 只負責知識解釋，不決定 attack type、risk level 或模擬 
 - protected helper / Smart Router preview / analyst suggestion tests
 - Tool Permission Contract / Workflow Plan Contract tests
 - v2.0 graph type / builder / lookup / exporter focused tests
-- `pytest` last full gate (`537 passed`)
+- `pytest` latest full gate (`585 passed`)
 - `ruff`
 - lenient `mypy`
 - GitHub Actions CI

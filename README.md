@@ -222,7 +222,7 @@ v1.9 is an architecture and contract milestone, not a runtime feature release:
 - Controlled RAG helper migration into `modules/rag/` with flat compatibility shims.
 - Controlled controller/orchestration migration into `modules/controller/` with flat compatibility shims.
 - Manual LLM/RAG smoke checklist documented as manual-only, not CI, and not executed.
-- Current quality gate: `537 passed`.
+- Current quality gate: `585 passed`.
 
 Boundaries:
 
@@ -275,7 +275,7 @@ python -m ruff check .
 python -m mypy app.py modules tests
 ```
 
-Last full expected test result: `537 passed`.
+Last full release-gate test result: `585 passed`.
 
 The test suite includes expanded golden smoke tests, direct consolidated log pipeline tests, Pydantic boundary model tests, incident/export/follow-up/guardrail tests, and Scenario A integration coverage for a mixed authentication log. Deterministic tests do not start the full app or initialize RAGQA, Chroma, embeddings, Torch, Ollama, ChatOllama, or local LLM clients. GitHub Actions CI runs the same quality gate.
 
@@ -304,7 +304,7 @@ python app.py
 
 Current release baseline: tag `v1.8.0`.
 
-Current phase: v2.0 Knowledge Graph Foundation documentation update.
+Current phase: v2.0 Knowledge Graph Foundation release gate passed.
 
 Completed:
 
@@ -381,7 +381,7 @@ See [docs/ROADMAP.md](docs/ROADMAP.md) for delivered items.
 - Manual LLM/RAG smoke checklist documented as manual-only, not CI, and not executed
 - Contract/schema-only; no runtime auto-execution, LLM tool selection, Graph RAG, Knowledge Capture, RAGQA replacement, AI verdict override, or real enforcement
 
-**v2.0 - Knowledge Graph Foundation** (Documentation sync)
+**v2.0 - Knowledge Graph Foundation** (Release gate passed; ready to tag)
 
 - Typed graph contracts, snapshot builder, read-only graph query helpers, and JSON-ready snapshot export
 - No `rule_graph.py` for now; explicit `DetectionRule` seed remains inside the builder
@@ -491,7 +491,7 @@ python -m ruff check .
 python -m mypy app.py modules tests
 ```
 
-目前預期測試結果：`537 passed`。
+最近一次完整 release gate 測試結果：`585 passed`。
 
 測試使用 dummy RAG 與 LLMAssist 物件，不會啟動完整 CLI，也不會初始化 RAGQA、Chroma、embeddings、Torch、Ollama、ChatOllama 或本地 LLM client。GitHub Actions CI 會執行同一組品質檢查。
 
@@ -499,7 +499,7 @@ python -m mypy app.py modules tests
 
 Current release baseline: tag `v1.8.0`.
 
-目前里程碑：v2.0 知識圖譜基礎文件同步。
+目前里程碑：v2.0 知識圖譜基礎 release gate 已通過，準備 tag。
 
 已完成：
 
@@ -582,7 +582,7 @@ Current release baseline: tag `v1.8.0`.
 - Manual LLM/RAG smoke checklist documented as manual-only
 - Boundary: no runtime auto-execution, LLM tool selection, Graph RAG, Knowledge Capture, RAGQA replacement, AI verdict override, or real enforcement
 
-**v2.0 - 知識圖譜基礎**（文件同步進行中）
+**v2.0 - 知識圖譜基礎**（release gate 已通過，準備 tag）
 
 - 圖譜型別契約：`GraphNodeKind`、`GraphEdgeKind`、`GraphSourceRef`、`GraphNode`、`GraphEdge`、`GraphSnapshot`
 - 決定性圖譜建構器：`build_graph_snapshot(...)`

@@ -6,7 +6,7 @@ This roadmap describes planned development after the v2.0 Knowledge Graph Founda
 
 Current release baseline: tag `v1.8.0`.
 
-Current phase: v2.0 Knowledge Graph Foundation documentation update.
+Current phase: v2.0 Knowledge Graph Foundation release gate passed.
 
 Completed:
 
@@ -33,9 +33,9 @@ Completed:
 - v2.0 Knowledge Graph Foundation
 - pytest / ruff / mypy / GitHub Actions CI
 
-Last full quality gate (v1.9):
+Last full quality gate (v2.0):
 
-- `python -m pytest` -> `537 passed`
+- `python -m pytest` -> `585 passed`
 - `python -m ruff check .` -> passed
 - `python -m mypy app.py modules tests` -> passed
 - CI includes Gitleaks secret scanning
@@ -160,14 +160,14 @@ Delivered:
 - Controlled RAG helper migration into `modules/rag/` with flat compatibility shims
 - Controlled controller/orchestration migration into `modules/controller/` with flat compatibility shims
 - Manual LLM/RAG smoke checklist documented as manual-only, not CI, and not executed
-- 537 passed quality gate
+- quality gate passed before v2.0 expansion
 
 Boundary:
 v1.9 keeps contracts separate from runtime automation. It does not implement Graph RAG, Knowledge Capture, Agent Skill Orchestration runtime, LLM tool selection, runtime auto-execution, Smart Router default CLI auto-route, `RAGQA` replacement, AI attack decisions, Risk Level / Decision override, automatic rule changes, or real enforcement.
 
 ## v2.0 - Knowledge Graph Foundation
 
-Status: Documentation sync in progress.
+Status: Release gate passed; ready to tag.
 
 Delivered:
 
@@ -204,7 +204,7 @@ All response decisions remain simulated unless explicitly redesigned in a future
 
 目前 release baseline：tag `v1.8.0`。
 
-目前里程碑：v2.0 知識圖譜基礎文件同步。
+目前里程碑：v2.0 知識圖譜基礎 release gate 已通過，準備 tag。
 
 已完成：
 
@@ -231,9 +231,9 @@ All response decisions remain simulated unless explicitly redesigned in a future
 - v2.0 知識圖譜基礎
 - pytest / ruff / mypy / GitHub Actions CI
 
-Last full quality gate (v1.9):
+Last full quality gate (v2.0):
 
-- `python -m pytest` -> `537 passed`
+- `python -m pytest` -> `585 passed`
 - `python -m ruff check .` -> passed
 - `python -m mypy app.py modules tests` -> passed
 
@@ -340,7 +340,7 @@ Status: Foundation completed.
 
 ## v2.0 - 知識圖譜基礎
 
-- Status: 文件同步進行中
+- Status: release gate 已通過，準備 tag
 - 已新增圖譜型別契約、決定性圖譜建構器、唯讀查詢輔助函式，以及可序列化為 JSON 的匯出輔助函式
 - 目前不新增 `rule_graph.py`；KnowledgeDoc 圖譜種子延後到 metadata 盤點後再處理
 - Graph RAG retrieval、Knowledge Capture、LLM graph extraction、Neo4j / vector search、runtime orchestration、tool execution、`RAGQA` replacement，以及 detector / risk / decision override 仍維持延後
