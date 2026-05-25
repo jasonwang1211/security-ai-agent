@@ -140,6 +140,42 @@ def test_graph_snapshot_holds_nodes_and_edges_as_json_serializable_data() -> Non
     assert dumped_json["edges"][0]["id"] == "EDGE-001"
 
 
+def test_default_factories_create_independent_collections() -> None:
+    first_node = GraphNode(id="NODE-1", kind=GraphNodeKind.INCIDENT, label="First")
+    second_node = GraphNode(id="NODE-2", kind=GraphNodeKind.INCIDENT, label="Second")
+    first_node.metadata["risk_level"] = "HIGH"
+    first_node.sources.append(make_source_ref())
+
+    assert second_node.metadata == {}
+    assert second_node.sources == []
+
+    first_edge = GraphEdge(
+        id="EDGE-1",
+        kind=GraphEdgeKind.HAS_EVIDENCE,
+        source_node_id="NODE-1",
+        target_node_id="EV-1",
+    )
+    second_edge = GraphEdge(
+        id="EDGE-2",
+        kind=GraphEdgeKind.HAS_EVIDENCE,
+        source_node_id="NODE-2",
+        target_node_id="EV-2",
+    )
+    first_edge.metadata["confidence"] = "HIGH"
+    first_edge.sources.append(make_source_ref())
+
+    assert second_edge.metadata == {}
+    assert second_edge.sources == []
+
+    first_snapshot = GraphSnapshot()
+    second_snapshot = GraphSnapshot()
+    first_snapshot.nodes.append(first_node)
+    first_snapshot.edges.append(first_edge)
+
+    assert second_snapshot.nodes == []
+    assert second_snapshot.edges == []
+
+
 def test_invalid_node_and_edge_enum_values_are_rejected() -> None:
     with pytest.raises(ValidationError):
         GraphNode(id="INC-001", kind=cast(Any, "UNKNOWN"), label="Unknown")

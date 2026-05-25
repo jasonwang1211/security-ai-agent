@@ -1,3 +1,5 @@
+"""Read-only, edge-driven lookup helpers for in-memory GraphSnapshot objects."""
+
 from typing import TypedDict
 
 from modules.graph.types import GraphEdge, GraphEdgeKind, GraphNode, GraphNodeKind, GraphSnapshot
@@ -14,6 +16,8 @@ class IncidentContext(TypedDict):
 
 
 def get_node(snapshot: GraphSnapshot, node_id: str) -> GraphNode | None:
+    """Return the node with the given ID, or None when it is absent."""
+
     _require_non_blank_id(node_id)
     for node in snapshot.nodes:
         if node.id == node_id:
@@ -22,6 +26,8 @@ def get_node(snapshot: GraphSnapshot, node_id: str) -> GraphNode | None:
 
 
 def get_neighbors(snapshot: GraphSnapshot, node_id: str) -> list[GraphNode]:
+    """Return directly connected nodes from explicit incoming/outgoing edges."""
+
     _require_non_blank_id(node_id)
     node_ids: list[str] = []
     for edge in snapshot.edges:
@@ -33,6 +39,8 @@ def get_neighbors(snapshot: GraphSnapshot, node_id: str) -> list[GraphNode]:
 
 
 def get_edges_for_node(snapshot: GraphSnapshot, node_id: str) -> list[GraphEdge]:
+    """Return incoming and outgoing edges for the given node ID."""
+
     _require_non_blank_id(node_id)
     return [
         edge
@@ -42,10 +50,14 @@ def get_edges_for_node(snapshot: GraphSnapshot, node_id: str) -> list[GraphEdge]
 
 
 def find_nodes_by_kind(snapshot: GraphSnapshot, kind: GraphNodeKind) -> list[GraphNode]:
+    """Return nodes whose kind matches the requested graph vocabulary value."""
+
     return [node for node in snapshot.nodes if node.kind == kind]
 
 
 def get_related_findings(snapshot: GraphSnapshot, evidence_id: str) -> list[GraphNode]:
+    """Return Finding nodes explicitly supported by the given Evidence node."""
+
     _require_non_blank_id(evidence_id)
     finding_ids = [
         edge.source_node_id
@@ -56,6 +68,8 @@ def get_related_findings(snapshot: GraphSnapshot, evidence_id: str) -> list[Grap
 
 
 def get_related_rules(snapshot: GraphSnapshot, finding_id: str) -> list[GraphNode]:
+    """Return DetectionRule nodes explicitly mapped from the given Finding node."""
+
     _require_non_blank_id(finding_id)
     rule_ids = [
         edge.target_node_id
@@ -66,6 +80,13 @@ def get_related_rules(snapshot: GraphSnapshot, finding_id: str) -> list[GraphNod
 
 
 def get_incident_context(snapshot: GraphSnapshot, incident_id: str) -> IncidentContext:
+    """Return a small deterministic lookup summary for one incident.
+
+    This is not a Graph RAG context package. It does not assemble prompts, RAG
+    context, source-cited answers, LLM messages, analyst recommendations, or
+    mutate Risk Level / Decision.
+    """
+
     _require_non_blank_id(incident_id)
     incident = get_node(snapshot, incident_id)
     evidence_ids: list[str] = []

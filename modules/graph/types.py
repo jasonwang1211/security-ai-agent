@@ -1,3 +1,5 @@
+"""Pydantic graph data contracts for the v2.0 Knowledge Graph Foundation."""
+
 from enum import Enum
 from typing import Any
 
@@ -5,6 +7,8 @@ from pydantic import BaseModel, Field, field_validator
 
 
 class GraphNodeKind(str, Enum):
+    """Controlled vocabulary for graph node kinds."""
+
     INCIDENT = "INCIDENT"
     EVIDENCE = "EVIDENCE"
     FINDING = "FINDING"
@@ -21,6 +25,8 @@ class GraphNodeKind(str, Enum):
 
 
 class GraphEdgeKind(str, Enum):
+    """Controlled vocabulary for graph edge kinds."""
+
     HAS_EVIDENCE = "HAS_EVIDENCE"
     HAS_FINDING = "HAS_FINDING"
     SUPPORTED_BY = "SUPPORTED_BY"
@@ -45,6 +51,8 @@ def _require_non_blank(value: str, field_name: str) -> str:
 
 
 class GraphSourceRef(BaseModel):
+    """Provenance reference describing where graph data came from."""
+
     source_type: str
     source_id: str
     field_path: str | None = None
@@ -64,6 +72,8 @@ class GraphSourceRef(BaseModel):
 
 
 class GraphNode(BaseModel):
+    """JSON-serializable graph node contract."""
+
     id: str
     kind: GraphNodeKind
     label: str
@@ -77,6 +87,8 @@ class GraphNode(BaseModel):
 
 
 class GraphEdge(BaseModel):
+    """JSON-serializable explicit relationship between two graph nodes."""
+
     id: str
     kind: GraphEdgeKind
     source_node_id: str
@@ -99,5 +111,7 @@ class GraphEdge(BaseModel):
 
 
 class GraphSnapshot(BaseModel):
+    """In-memory graph container for nodes and edges."""
+
     nodes: list[GraphNode] = Field(default_factory=list)
     edges: list[GraphEdge] = Field(default_factory=list)

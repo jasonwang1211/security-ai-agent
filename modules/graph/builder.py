@@ -1,3 +1,9 @@
+"""Deterministic graph snapshot builder for structured inputs only.
+
+This helper does not load YAML, read files, inspect free text, call
+LLM/RAG/vector systems, execute tools, or change Risk Level / Decision.
+"""
+
 from collections.abc import Sequence
 from typing import Any
 
@@ -17,6 +23,13 @@ def build_graph_snapshot(
     incident: Incident,
     detection_rules: Sequence[DetectionRule] | None = None,
 ) -> GraphSnapshot:
+    """Build a GraphSnapshot from structured incident and rule objects.
+
+    The builder uses only the supplied Incident plus explicitly provided
+    DetectionRule objects. Missing explicit metadata means no edge is emitted,
+    and every emitted edge includes source/reason provenance.
+    """
+
     nodes: dict[str, GraphNode] = {}
     edges: dict[str, GraphEdge] = {}
     rule_index = {rule.id: rule for rule in detection_rules or []}
@@ -382,6 +395,7 @@ def _add_attack_node(
 
 
 def _add_node(nodes: dict[str, GraphNode], node: GraphNode) -> None:
+    # First node wins on ID collisions to keep first-seen snapshot order stable.
     nodes.setdefault(node.id, node)
 
 
