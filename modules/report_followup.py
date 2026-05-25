@@ -1,3 +1,10 @@
+"""Report-aware follow-up helpers for existing incident/report data.
+
+This module explains EV/F-ID references and report outcomes without re-running
+detection, re-judging events, overriding Risk Level / Decision, claiming real
+enforcement, or treating RAG/LLM output as detection authority.
+"""
+
 from __future__ import annotations
 
 import re
@@ -72,6 +79,8 @@ SUGGESTIONS_BY_INTENT = {
 
 
 class ProtectedExplanationResult(BaseModel):
+    """Guardrail-reviewed explanation with fallback and safety details."""
+
     answer: AnswerWithSources
     safety_report: AnswerSafetyReport
     was_fallback: bool = False
@@ -83,6 +92,8 @@ def protect_answer_with_guardrails(
     known_finding_ids: set[str] | None = None,
     known_rule_ids: set[str] | None = None,
 ) -> ProtectedExplanationResult:
+    """Return the answer if safe, otherwise a conservative protected fallback."""
+
     safety_report = check_answer_safety(
         answer,
         known_evidence_ids=known_evidence_ids,
@@ -92,6 +103,7 @@ def protect_answer_with_guardrails(
     if not safety_report.has_errors():
         return ProtectedExplanationResult(answer=answer, safety_report=safety_report)
 
+    # Guardrail failures use conservative wording and never change report facts.
     fallback = AnswerWithSources(
         answer=(
             "此回答未通過安全檢查，因此改以保守說明回覆。請以原始報告證據、"
@@ -113,6 +125,8 @@ def protect_answer_with_guardrails(
 
 
 def _fallback_sources(sources: list[SourceCitation]) -> list[SourceCitation]:
+    """Preserve original citations and add deterministic safety provenance."""
+
     fallback_sources = list(sources)
     if not fallback_sources:
         return [SAFETY_FALLBACK_SOURCE]
@@ -123,6 +137,7 @@ def _fallback_sources(sources: list[SourceCitation]) -> list[SourceCitation]:
         for citation in fallback_sources
     )
     if not has_safety_source:
+        # Rewritten answers carry deterministic provenance for the safety boundary.
         fallback_sources.append(SAFETY_FALLBACK_SOURCE)
 
     return fallback_sources
@@ -136,6 +151,8 @@ def explain_report_followup_protected(
     known_finding_ids: set[str] | None = None,
     known_rule_ids: set[str] | None = None,
 ) -> ProtectedExplanationResult:
+    """Explain report questions with deterministic guardrail protection."""
+
     answer = explain_report_question(question, metadata_items, context=context)
     return protect_answer_with_guardrails(
         answer,
@@ -151,6 +168,8 @@ def explain_rule_followup_protected(
     rule_metadata: dict[str, dict[str, object]] | None = None,
     known_rule_ids: set[str] | None = None,
 ) -> ProtectedExplanationResult:
+    """Explain rule questions without inventing rule authority or IDs."""
+
     answer = explain_rule_question(
         question,
         metadata_items,
@@ -160,6 +179,8 @@ def explain_rule_followup_protected(
 
 
 def classify_followup_intent(question: str) -> Intent:
+    """Classify a follow-up question into deterministic report routes."""
+
     text = str(question or "").strip().lower()
     evidence_ids = extract_evidence_ids(text)
     finding_ids = extract_finding_ids(text)
@@ -190,23 +211,33 @@ def classify_followup_intent(question: str) -> Intent:
 
 
 def extract_evidence_ids(text: str) -> list[str]:
+    """Extract stable EV-ID references in first-seen order."""
+
     return _extract_stable_ids(r"EV-\d+", text)
 
 
 def extract_finding_ids(text: str) -> list[str]:
+    """Extract stable F-ID references in first-seen order."""
+
     return _extract_stable_ids(r"F-\d+", text)
 
 
 def lookup_evidence(incident: Incident, evidence_id: str) -> EvidenceItem | None:
+    """Look up an evidence item by exact normalized ID in an incident."""
+
     return incident.evidence_bundle.get(str(evidence_id or "").upper())
 
 
 def lookup_finding(incident: Incident, finding_id: str) -> Finding | None:
+    """Look up a finding by exact normalized ID in an incident."""
+
     normalized_id = str(finding_id or "").upper()
     return next((finding for finding in incident.findings if finding.id == normalized_id), None)
 
 
 def suggest_followups(intent: str, incident: Incident | None = None) -> list[str]:
+    """Return static follow-up suggestions for the classified intent."""
+
     suggestions = SUGGESTIONS_BY_INTENT.get(intent, SUGGESTIONS_BY_INTENT["unknown"])
     if incident is None:
         return list(suggestions)
@@ -218,6 +249,8 @@ def suggest_followups(intent: str, incident: Incident | None = None) -> list[str
 
 
 def answer_report_followup(question: str, incident: Incident) -> dict[str, object]:
+    """Assemble a deterministic follow-up answer from existing incident data."""
+
     intent = classify_followup_intent(question)
     evidence_ids = extract_evidence_ids(question)
     finding_ids = extract_finding_ids(question)
@@ -270,6 +303,8 @@ def answer_report_followup(question: str, incident: Incident) -> dict[str, objec
 
 
 def _extract_stable_ids(pattern: str, text: str) -> list[str]:
+    """Normalize matched stable IDs while preserving first-seen order."""
+
     seen = set()
     extracted = []
     for match in re.findall(pattern, str(text or ""), flags=re.IGNORECASE):
@@ -284,6 +319,8 @@ def _answer_evidence_lookup(
     incident: Incident,
     evidence_ids: list[str],
 ) -> tuple[str, list[str], str]:
+    """Explain explicitly requested evidence IDs without guessing missing items."""
+
     if not evidence_ids:
         return (
             "請提供 EV-ID，例如 EV-003。我會只解釋目前報告中已存在的 evidence。",
@@ -320,6 +357,8 @@ def _answer_finding_lookup(
     incident: Incident,
     finding_ids: list[str],
 ) -> tuple[str, list[str], list[str], str]:
+    """Explain explicitly requested finding IDs and their linked evidence."""
+
     if not finding_ids:
         return (
             "請提供 F-ID，例如 F-001。我會只解釋目前報告中已存在的 finding。",
@@ -358,6 +397,8 @@ def _answer_finding_lookup(
 
 
 def _answer_why_risk(incident: Incident) -> str:
+    """Explain the existing deterministic Risk Level without recalculating it."""
+
     evidence_count = len(incident.evidence_bundle.items)
     return (
         f"目前報告的 Risk Level 是 {incident.risk_level}。"
@@ -368,6 +409,8 @@ def _answer_why_risk(incident: Incident) -> str:
 
 
 def _answer_why_decision(incident: Incident) -> str:
+    """Explain the existing simulated Decision without changing it."""
+
     return (
         f"目前 Final Decision 是 {incident.decision}。"
         "possible_account_compromise 代表可疑但尚未確認的 compromise；"
@@ -377,6 +420,8 @@ def _answer_why_decision(incident: Incident) -> str:
 
 
 def _answer_next_steps(incident: Incident) -> str:
+    """Suggest analyst review steps without claiming real enforcement."""
+
     source_ips = _evidence_values_by_type(incident, "same_source_ip")
     users = _evidence_values_by_type(incident, "same_user")
     targets = _evidence_values_by_type(incident, "same_target")
@@ -389,6 +434,8 @@ def _answer_next_steps(incident: Incident) -> str:
 
 
 def _answer_ai_assist_disagreement(incident: Incident) -> str:
+    """Explain that AI assist is advisory and cannot override final decisions."""
+
     return (
         f"若 AI Assist 與 Final Decision 不一致，仍以 deterministic Final Decision "
         f"{incident.decision} 為準。AI Assist 是 advisory，不會覆蓋 Risk Level 或 Decision。"
