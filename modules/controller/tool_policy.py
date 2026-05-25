@@ -1,3 +1,9 @@
+"""Schema and decision helpers for controller tool policy boundaries.
+
+ToolPolicy is contract-only in this phase. It does not execute tools, enforce
+runtime permissions, or perform real firewall/WAF/SIEM/SOAR/cloud actions.
+"""
+
 from typing import Literal
 
 from pydantic import BaseModel, field_validator, model_validator
@@ -26,6 +32,8 @@ def _require_non_blank(value: str, field_name: str) -> str:
 
 
 class ToolPolicy(BaseModel):
+    """Static permission and execution-mode contract for one tool."""
+
     tool_name: str
     permission: ToolPermission
     execution_mode: ToolExecutionMode
@@ -64,6 +72,8 @@ class ToolPolicy(BaseModel):
 
 
 class ToolPolicyDecision(BaseModel):
+    """Policy evaluation result; decision data only, not enforcement."""
+
     tool_name: str
     allowed: bool
     permission: ToolPermission
@@ -224,10 +234,13 @@ _KNOWN_TOOL_POLICIES: dict[str, ToolPolicy] = {
 
 
 def default_policy_for_tool(tool_name: str) -> ToolPolicy:
+    """Return a known policy or a safe forbidden default for unknown tools."""
+
     _require_non_blank(tool_name, "tool_name")
     policy = _KNOWN_TOOL_POLICIES.get(tool_name)
     if policy is not None:
         return policy.model_copy()
+    # Unknown tools default to blocked/forbidden as a safety boundary.
     return ToolPolicy(
         tool_name=tool_name,
         permission="FORBIDDEN",
@@ -238,6 +251,8 @@ def default_policy_for_tool(tool_name: str) -> ToolPolicy:
 
 
 def evaluate_tool_policy(tool_name: str) -> ToolPolicyDecision:
+    """Evaluate policy data without executing or enforcing the tool."""
+
     policy = default_policy_for_tool(tool_name)
     allowed = (
         policy.permission in {"READ_ONLY", "WRITE_DRAFT", "SIMULATED_ACTION"}
@@ -258,6 +273,8 @@ def evaluate_tool_policy(tool_name: str) -> ToolPolicyDecision:
 
 
 def is_tool_allowed_without_human_approval(tool_name: str) -> bool:
+    """Return true only for low-risk read-only direct-allowed tools."""
+
     policy = default_policy_for_tool(tool_name)
     return (
         policy.permission == "READ_ONLY"

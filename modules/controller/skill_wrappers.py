@@ -1,3 +1,9 @@
+"""Typed wrappers around existing local controller capabilities.
+
+Wrappers adapt existing behavior to ToolExecutionResult objects. They do not add
+autonomous tool selection, runtime policy enforcement, or real enforcement.
+"""
+
 from typing import Any
 
 from modules.controller.types import (
@@ -47,6 +53,8 @@ def run_payload_triage_skill(
     input_data: PayloadTriageInput,
     agent: Any,
 ) -> ToolExecutionResult:
+    """Run existing payload triage behavior through a typed wrapper."""
+
     try:
         if agent is None or not hasattr(agent, "handle_query"):
             return _clarification("payload_triage requires an agent with handle_query")
@@ -58,6 +66,8 @@ def run_payload_triage_skill(
 
 
 def run_raw_log_translate_skill(input_data: RawLogInput) -> ToolExecutionResult:
+    """Translate one raw log line through the local log pipeline."""
+
     try:
         translation = try_translate_raw_log_input(input_data.raw_log)
         if translation is None:
@@ -76,7 +86,10 @@ def run_raw_log_translate_skill(input_data: RawLogInput) -> ToolExecutionResult:
 
 
 def run_log_file_ingest_skill(input_data: LogFileInput) -> ToolExecutionResult:
+    """Run existing local log file ingestion for an explicit path."""
+
     try:
+        # Lazy import keeps wrapper import lightweight and avoids CLI wiring at import time.
         from modules.mode_handlers import run_log_ingestion
 
         result = run_log_ingestion(input_data.path)
@@ -96,6 +109,8 @@ def run_rag_security_qa_skill(
     input_data: KnowledgeQuestionInput,
     agent: Any,
 ) -> ToolExecutionResult:
+    """Call existing advisory RAG Q&A behavior through an explicit agent method."""
+
     try:
         if agent is None:
             return _clarification(
@@ -119,6 +134,8 @@ def run_report_followup_skill(
     input_data: ReportFollowupInput,
     agent: Any,
 ) -> ToolExecutionResult:
+    """Run report-aware follow-up only when prior context is available."""
+
     try:
         if agent is None or not hasattr(agent, "handle_query"):
             return _clarification("report_followup requires an agent with handle_query")
@@ -136,6 +153,8 @@ def run_report_followup_skill(
 
 
 def run_incident_json_export_skill(input_data: IncidentJsonExportInput) -> ToolExecutionResult:
+    """Return provided incident JSON data without archive lookup or side effects."""
+
     try:
         if input_data.incident:
             return _ok({"incident": input_data.incident})

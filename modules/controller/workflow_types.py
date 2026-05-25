@@ -1,3 +1,9 @@
+"""Schema-only workflow preview contracts for controller tools.
+
+WorkflowPlan objects describe planned steps; they do not execute tools, wire
+runtime behavior, or perform real enforcement actions.
+"""
+
 from typing import Literal
 
 from pydantic import BaseModel, Field, field_validator, model_validator
@@ -22,6 +28,8 @@ def _require_non_blank(value: str, field_name: str) -> str:
 
 
 class WorkflowStep(BaseModel):
+    """One schema-only workflow preview step."""
+
     step_id: str
     tool_name: str
     purpose: str
@@ -65,6 +73,8 @@ class WorkflowStep(BaseModel):
 
 
 class WorkflowPlan(BaseModel):
+    """Schema-only workflow preview composed of ordered steps."""
+
     plan_id: str
     route: str
     execution_mode: WorkflowExecutionMode
@@ -114,6 +124,8 @@ def build_preview_workflow_plan(
     tool_names: list[str],
     summary: str,
 ) -> WorkflowPlan:
+    """Build a schema-only preview plan from tool policy decisions."""
+
     steps = [
         _step_from_tool_policy(index=index, tool_name=tool_name)
         for index, tool_name in enumerate(tool_names, start=1)
@@ -135,6 +147,8 @@ def build_preview_workflow_plan(
 
 
 def is_workflow_executable_without_human_approval(plan: WorkflowPlan) -> bool:
+    """Return true only for ready read-only preview plans."""
+
     if plan.status != "READY" or plan.execution_mode != "READ_ONLY":
         return False
     return all(
@@ -185,6 +199,8 @@ def _workflow_mode_from_policy(
 
 
 def _aggregate_execution_mode(steps: list[WorkflowStep]) -> WorkflowExecutionMode:
+    """Return the most restrictive execution mode represented by the steps."""
+
     modes = {step.execution_mode for step in steps}
     if "FORBIDDEN" in modes:
         return "FORBIDDEN"

@@ -1,3 +1,5 @@
+"""Typed controller contracts for deterministic helper dispatch."""
+
 from typing import Any, Literal
 
 from pydantic import BaseModel, Field, field_validator, model_validator
@@ -26,6 +28,8 @@ def _require_non_blank(value: str, field_name: str) -> str:
 
 
 class ControllerInput(BaseModel):
+    """Raw controller request plus optional local context."""
+
     raw_text: str
     context: dict[str, Any] = Field(default_factory=dict)
     last_incident_id: str | None = None
@@ -37,6 +41,8 @@ class ControllerInput(BaseModel):
 
 
 class RouterDecision(BaseModel):
+    """Deterministic route decision; unknown input must request clarification."""
+
     input_kind: InputKind
     selected_tool: str | None = None
     confidence: RouterConfidence
@@ -59,6 +65,8 @@ class RouterDecision(BaseModel):
 
 
 class PayloadTriageInput(BaseModel):
+    """Input for deterministic payload or event triage."""
+
     raw_text: str
 
     @field_validator("raw_text")
@@ -68,6 +76,8 @@ class PayloadTriageInput(BaseModel):
 
 
 class RawLogInput(BaseModel):
+    """Input for translating one raw log line."""
+
     raw_log: str
 
     @field_validator("raw_log")
@@ -77,6 +87,8 @@ class RawLogInput(BaseModel):
 
 
 class LogFileInput(BaseModel):
+    """Input for local log file ingestion."""
+
     path: str
 
     @field_validator("path")
@@ -86,6 +98,8 @@ class LogFileInput(BaseModel):
 
 
 class KnowledgeQuestionInput(BaseModel):
+    """Input for advisory security knowledge Q&A."""
+
     question: str
 
     @field_validator("question")
@@ -95,6 +109,8 @@ class KnowledgeQuestionInput(BaseModel):
 
 
 class ReportFollowupInput(BaseModel):
+    """Input for report-aware follow-up over existing context."""
+
     question: str
     last_incident_id: str | None = None
 
@@ -105,6 +121,8 @@ class ReportFollowupInput(BaseModel):
 
 
 class IncidentJsonExportInput(BaseModel):
+    """Input for export-only incident JSON handling."""
+
     incident_id: str | None = None
     incident: dict[str, Any] = Field(default_factory=dict)
 
@@ -116,6 +134,8 @@ class IncidentJsonExportInput(BaseModel):
 
 
 class ToolExecutionResult(BaseModel):
+    """Normalized result returned by controller skill wrappers."""
+
     status: ControllerStatus
     output: dict[str, Any] = Field(default_factory=dict)
     warnings: list[str] = Field(default_factory=list)
@@ -123,6 +143,8 @@ class ToolExecutionResult(BaseModel):
 
 
 class RouteExplanation(BaseModel):
+    """Human-readable route explanation for controller output."""
+
     input_kind: InputKind
     selected_tool: str | None = None
     reason: str
@@ -135,6 +157,8 @@ class RouteExplanation(BaseModel):
 
 
 class ControllerOutput(BaseModel):
+    """Controller response envelope with route and structured result details."""
+
     status: ControllerStatus
     selected_tool: str | None = None
     response_text: str
@@ -150,6 +174,8 @@ class ControllerOutput(BaseModel):
 
 
 class ToolSpec(BaseModel):
+    """Typed tool registration contract for explicit controller dispatch."""
+
     name: str
     description: str
     input_model: type[BaseModel]

@@ -1,3 +1,5 @@
+"""Fixed controller skill catalog for existing local capabilities."""
+
 from modules.controller.registry import ToolRegistry
 from modules.controller.types import (
     IncidentJsonExportInput,
@@ -19,6 +21,8 @@ INCIDENT_JSON_EXPORT = "incident_json_export"
 
 
 def build_v1_5_tool_specs() -> list[ToolSpec]:
+    """Return the fixed v1.5 ToolSpec list without deferred skills."""
+
     return [
         ToolSpec(
             name=PAYLOAD_TRIAGE,
@@ -90,4 +94,6 @@ def build_v1_5_tool_specs() -> list[ToolSpec]:
 
 
 def build_v1_5_registry() -> ToolRegistry:
+    """Build a ToolRegistry from the fixed v1.5 skill catalog."""
+
     return ToolRegistry(build_v1_5_tool_specs())

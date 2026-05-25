@@ -1,3 +1,9 @@
+"""Deterministic controller dispatch for explicitly registered tools.
+
+The controller is routing infrastructure, not autonomous LLM routing or
+runtime tool discovery. It dispatches only to handlers supplied by the caller.
+"""
+
 from collections.abc import Callable, Mapping
 from typing import Any
 
@@ -24,6 +30,8 @@ ToolHandler = Callable[[BaseModel], ToolExecutionResult]
 
 
 def build_default_route_map() -> dict[str, str]:
+    """Return the fixed route-to-tool map for supported controller skills."""
+
     return {
         PAYLOAD_TRIAGE: PAYLOAD_TRIAGE,
         RAW_LOG_TRANSLATE: RAW_LOG_TRANSLATE,
@@ -39,6 +47,8 @@ def build_default_route_map() -> dict[str, str]:
 
 
 class ControllerAgent:
+    """Dispatch explicit routes or tool names through a typed registry."""
+
     def __init__(
         self,
         registry: ToolRegistry,
@@ -50,9 +60,13 @@ class ControllerAgent:
         self._route_map = dict(route_map) if route_map is not None else build_default_route_map()
 
     def available_tools(self) -> list[str]:
+        """Return registered tool names in registry order."""
+
         return self._registry.list_names()
 
     def can_handle(self, tool_name: str) -> bool:
+        """Return whether a tool has both a spec and an explicit handler."""
+
         return self._registry.has(tool_name) and tool_name in self._handlers
 
     def dispatch_tool(
@@ -60,6 +74,8 @@ class ControllerAgent:
         tool_name: str,
         payload: dict[str, Any] | BaseModel,
     ) -> ControllerOutput:
+        """Validate payloads and dispatch to the explicitly registered handler."""
+
         if not self._registry.has(tool_name):
             return self._error_output(
                 message=f"Unknown tool: {tool_name}",
@@ -129,6 +145,8 @@ class ControllerAgent:
         route: str,
         payload: dict[str, Any] | BaseModel,
     ) -> ControllerOutput:
+        """Resolve a deterministic route key and dispatch its mapped tool."""
+
         tool_name = self._route_map.get(route)
         if tool_name is None:
             return ControllerOutput(
