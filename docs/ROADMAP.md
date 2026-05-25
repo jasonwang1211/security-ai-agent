@@ -1,12 +1,12 @@
 # Roadmap
 
-This roadmap describes planned development after the v1.9 Architecture Cleanup and Orchestration Contracts milestone.
+This roadmap describes planned development after the v2.0 Knowledge Graph Foundation milestone.
 
 ## Current Baseline
 
 Current release baseline: tag `v1.8.0`.
 
-Current release target: v1.9 documentation sync on branch `v1.9-orchestration-contracts`.
+Current phase: v2.0 Knowledge Graph Foundation documentation update.
 
 Completed:
 
@@ -30,9 +30,10 @@ Completed:
 - v1.7 Answer Safety / Evaluation / Smart Router Foundation
 - v1.8 Protected Runtime Wiring and Analyst UX
 - v1.9 Architecture Cleanup and Orchestration Contracts
+- v2.0 Knowledge Graph Foundation
 - pytest / ruff / mypy / GitHub Actions CI
 
-Current v1.9 quality gate:
+Last full quality gate (v1.9):
 
 - `python -m pytest` -> `537 passed`
 - `python -m ruff check .` -> passed
@@ -164,21 +165,30 @@ Delivered:
 Boundary:
 v1.9 keeps contracts separate from runtime automation. It does not implement Graph RAG, Knowledge Capture, Agent Skill Orchestration runtime, LLM tool selection, runtime auto-execution, Smart Router default CLI auto-route, `RAGQA` replacement, AI attack decisions, Risk Level / Decision override, automatic rule changes, or real enforcement.
 
-## v2.0 - Knowledge Graph Foundation / Graph RAG Groundwork
+## v2.0 - Knowledge Graph Foundation
 
-Status: Next.
+Status: Documentation sync in progress.
 
-Planned:
+Delivered:
 
-- Knowledge Graph foundation after v1.9 ownership and contract boundaries are stable
-- Graph RAG groundwork as retrieval infrastructure, not a detector or policy engine
-- Continued preservation of `RAGQA` unless a later phase explicitly replaces it
+- `docs/v2.0-spec.md` as the detailed boundary source of truth
+- typed graph contracts in `modules/graph/types.py`
+- deterministic `build_graph_snapshot(...)` from structured `Incident` objects and explicitly provided `DetectionRule` objects
+- read-only graph lookup helpers over in-memory `GraphSnapshot` objects
+- JSON-serializable snapshot export helpers
+- 2A-3 decision: no `rule_graph.py` now; KnowledgeDoc graph seeding is deferred until a metadata audit
 
-Deferred beyond initial v2.0 groundwork:
+Boundary:
+
+v2.0 graph helpers are evidence/context structure, not detection authority. They do not load YAML or files, infer relationships from free text, call Chroma/Ollama/LLMs, execute tools, replace `RAGQA`, replace the Rule-Based Detector, or change Risk Level / Decision.
+
+Deferred beyond v2.0:
 
 - Graph RAG retrieval as active runtime behavior
 - Knowledge Capture implementation
 - LLM graph extraction
+- Neo4j or vector search
+- runtime agent orchestration
 - automatic rule modification or deployment
 
 ## Non-Goals
@@ -188,13 +198,13 @@ All response decisions remain simulated unless explicitly redesigned in a future
 
 # 後續規劃
 
-此 roadmap 描述 v1.8 Protected Runtime Wiring and Analyst UX 完成後的後續開發方向。
+此 roadmap 描述目前 v2.0 知識圖譜基礎完成後的後續開發方向。
 
 ## 目前基準
 
 目前 release baseline：tag `v1.8.0`。
 
-Current release target: v1.9 documentation sync on branch `v1.9-orchestration-contracts`.
+目前里程碑：v2.0 知識圖譜基礎文件同步。
 
 已完成：
 
@@ -218,9 +228,10 @@ Current release target: v1.9 documentation sync on branch `v1.9-orchestration-co
 - v1.7 Answer Safety / Evaluation / Smart Router Foundation
 - v1.8 Protected Runtime Wiring and Analyst UX
 - v1.9 Architecture Cleanup and Orchestration Contracts
+- v2.0 知識圖譜基礎
 - pytest / ruff / mypy / GitHub Actions CI
 
-目前 v1.9 quality gate：
+Last full quality gate (v1.9):
 
 - `python -m pytest` -> `537 passed`
 - `python -m ruff check .` -> passed
@@ -327,8 +338,9 @@ Status: Foundation completed.
 - Manual LLM/RAG smoke checklist documented as manual-only, not CI, and not executed
 - Boundary: contracts stay separate from runtime automation; no Graph RAG, Knowledge Capture, Agent Skill Orchestration runtime, LLM tool selection, runtime auto-execution, RAGQA replacement, AI verdict override, or real enforcement
 
-## v2.0 - Knowledge Graph Foundation / Graph RAG Groundwork
+## v2.0 - 知識圖譜基礎
 
-- Status: next
-- Knowledge Graph foundation after v1.9 ownership and contract boundaries are stable
-- Graph RAG retrieval, Knowledge Capture, and LLM graph extraction remain deferred beyond v1.9
+- Status: 文件同步進行中
+- 已新增圖譜型別契約、決定性圖譜建構器、唯讀查詢輔助函式，以及可序列化為 JSON 的匯出輔助函式
+- 目前不新增 `rule_graph.py`；KnowledgeDoc 圖譜種子延後到 metadata 盤點後再處理
+- Graph RAG retrieval、Knowledge Capture、LLM graph extraction、Neo4j / vector search、runtime orchestration、tool execution、`RAGQA` replacement，以及 detector / risk / decision override 仍維持延後

@@ -1,4 +1,4 @@
-# Demo Walkthrough and Verification Report
+﻿# Demo Walkthrough and Verification Report
 
 [English](#english) | [繁體中文](#繁體中文)
 
@@ -6,9 +6,9 @@
 # English
 
 > Project: AI-assisted Security Threat Detection and Response System
-> Current release target: v1.9 documentation sync on branch `v1.9-orchestration-contracts`
+> Current phase: v2.0 Knowledge Graph Foundation documentation update
 > Release baseline: tag `v1.8.0`
-> Milestone: Architecture Cleanup and Orchestration Contracts
+> Release focus: Knowledge Graph Foundation
 
 Full CLI excerpts are available in [demo_outputs.md](demo_outputs.md).
 
@@ -168,7 +168,23 @@ What changed:
 
 Boundary note:
 
-Tool Policy and Workflow Plan are contract-only. They are not runtime-wired, do not execute tools, and do not make Smart Router the default CLI route. `ControllerAgent` does not auto-execute. `RAGQA` remains the active general knowledge QA runtime. Graph RAG, Knowledge Capture, and Agent Skill Orchestration runtime remain deferred. AI does not decide attacks or override Risk Level / Decision. `BLOCK`, `MONITOR`, and `ALLOW` remain simulated, with no real firewall/WAF/SIEM/SOAR enforcement. The quality gate is `537 passed`, with ruff, mypy, and `git diff --check` passing.
+Tool Policy and Workflow Plan are contract-only. They are not connected to runtime flow, do not execute tools, and do not make Smart Router the default CLI route. `ControllerAgent` does not auto-execute. `RAGQA` remains the active general knowledge QA runtime. Graph RAG, Knowledge Capture, and Agent Skill Orchestration runtime remain deferred. AI does not decide attacks or override Risk Level / Decision. `BLOCK`, `MONITOR`, and `ALLOW` remain simulated, with no real firewall/WAF/SIEM/SOAR enforcement. The quality gate is `537 passed`, with ruff, mypy, and `git diff --check` passing.
+
+## v2.0 Knowledge Graph Foundation
+
+v2.0 adds deterministic graph helper infrastructure, not runtime graph retrieval.
+
+What changed:
+
+- Added typed graph contracts: `GraphNodeKind`, `GraphEdgeKind`, `GraphSourceRef`, `GraphNode`, `GraphEdge`, and `GraphSnapshot`.
+- Added `build_graph_snapshot(...)` for structured `Incident` objects and explicitly provided `DetectionRule` objects.
+- Added read-only graph lookup helpers: `get_node`, `get_neighbors`, `get_edges_for_node`, `find_nodes_by_kind`, `get_related_findings`, `get_related_rules`, and `get_incident_context`.
+- Added JSON-serializable graph export helpers: `graph_snapshot_to_dict` and `graph_snapshot_to_json`.
+- Recorded the 2A-3 decision: no `rule_graph.py` for now, explicit `DetectionRule` seed remains inside the builder, and KnowledgeDoc graph seed is deferred until a metadata audit.
+
+Boundary note:
+
+The graph is evidence/context structure, not detection authority. It does not load YAML or files, infer relationships from free text, call LLM/RAG/vector systems, execute tools, replace `RAGQA`, replace the Rule-Based Detector, write knowledge, or change Risk Level / Decision. `BLOCK`, `MONITOR`, and `ALLOW` remain simulated, and deterministic detector / risk / decision remain final authority. The v2.0 release gate has not been run in this documentation sync.
 
 ### v1.4 Detection-as-Code Lite / YAML 規則式偵測
 
@@ -195,7 +211,7 @@ The current system is an AI-assisted blue-team security triage prototype. It sup
 - Follow-up explanation
 - Unified `[Security Triage Report]` output
 
-The latest milestone adds the v1.9 Architecture Cleanup and Orchestration Contracts foundation: architecture ownership map, ADRs, schema-only tool and workflow contracts, testing strategy, controlled RAG/controller package migrations with flat compatibility shims, and manual LLM/RAG smoke checklist documentation while preserving the existing CLI runtime and unified Security Triage Report contract.
+The latest milestone adds the v2.0 Knowledge Graph Foundation: typed graph contracts, a deterministic snapshot builder, read-only graph query helpers, JSON-ready snapshot export, and a decision to defer KnowledgeDoc graph seeding until a metadata audit. Existing CLI runtime and unified Security Triage Report behavior remain unchanged.
 
 ---
 
@@ -514,7 +530,8 @@ The current branch also includes a small but important quality foundation:
 - Protected report/rule helper, Smart Router preview, and analyst suggestion tests
 - Tool Permission Contract and Workflow Plan Contract tests
 - v1.9 documentation source-of-truth docs for architecture ownership, testing strategy, ADRs, and package migration planning
-- `pytest` for regression checks; current expected result is `537 passed`
+- v2.0 graph type, builder, lookup, and exporter focused tests
+- `pytest` for regression checks; last full expected result is `537 passed`
 - `ruff` for linting and import hygiene
 - Lenient `mypy` as a gradual typing baseline
 - GitHub Actions CI for automated quality checks
@@ -540,12 +557,13 @@ The current branch also includes a small but important quality foundation:
 | AnswerGuardrails / eval runner / Smart Router foundation | Passed |
 | Protected runtime wiring / analyst UX foundation | Passed |
 | v1.9 architecture cleanup / orchestration contracts | Passed |
+| v2.0 Knowledge Graph Foundation helpers | Focused phase checks passed |
 | Quality checks and CI foundation | Passed |
 
 Overall result:
 
 ```text
-v1.9 architecture cleanup and orchestration contracts are release-ready as a documentation and contract milestone. Existing CLI behavior remains unchanged, contract models are not runtime-wired, and deterministic detection / policy still control final verdicts.
+v2.0 Knowledge Graph Foundation helpers are documented and covered by focused tests. Existing CLI behavior remains unchanged, graph helpers are not connected to runtime flow, and deterministic detection / policy still control final verdicts.
 ```
 
 ---
@@ -583,8 +601,8 @@ For planned future work, see [docs/ROADMAP.md](docs/ROADMAP.md).
 # 繁體中文
 
 > 專案：AI 輔助安全威脅偵測與回應系統
-> Current release target: v1.9 documentation sync on branch `v1.9-orchestration-contracts`
-> Milestone: Architecture Cleanup and Orchestration Contracts
+> 目前里程碑：v2.0 知識圖譜基礎文件同步
+> 里程碑：知識圖譜基礎
 完整 CLI 範例可參考 [demo_outputs.md](demo_outputs.md)。
 
 本報告記錄代表性的 CLI 流程與 pass/fail 驗證，用來確認目前統一 `Security Triage Report` 契約是否穩定。這不是統計式 benchmark；precision / recall、false positive rate 與 retrieval quality evaluation 會留到後續里程碑。
@@ -602,7 +620,7 @@ For planned future work, see [docs/ROADMAP.md](docs/ROADMAP.md).
 - Follow-up explanation
 - Unified Security Triage Report
 
-v1.9 新增 architecture ownership map、ADRs、schema-only Tool Permission / Workflow Plan contracts、testing/package migration docs、controlled RAG/controller package migrations with flat shims，以及 manual LLM/RAG smoke checklist documentation。既有 CLI runtime 維持不變。
+v2.0 新增知識圖譜基礎：圖譜型別契約、決定性圖譜建構器、唯讀查詢輔助函式，以及可序列化為 JSON 的匯出輔助函式。2A-3 決策為不新增 `rule_graph.py`，明確的 `DetectionRule` 種子仍留在 builder 內，KnowledgeDoc 圖譜種子延後到 metadata 盤點後再處理。既有 CLI 執行流程與 `Security Triage Report` 行為維持不變。
 
 ---
 
@@ -721,7 +739,8 @@ Mode 3 RAG 只負責知識解釋，不決定 attack type、risk level 或模擬 
 - AnswerGuardrails / eval runner / Smart Router tests
 - protected helper / Smart Router preview / analyst suggestion tests
 - Tool Permission Contract / Workflow Plan Contract tests
-- `pytest` (`537 passed`)
+- v2.0 graph type / builder / lookup / exporter focused tests
+- `pytest` last full gate (`537 passed`)
 - `ruff`
 - lenient `mypy`
 - GitHub Actions CI
@@ -746,12 +765,13 @@ Mode 3 RAG 只負責知識解釋，不決定 attack type、risk level 或模擬 
 | YAML Detection-as-Code | Passed |
 | RAG v2 source-cited explainer helpers | Passed |
 | v1.9 architecture cleanup / orchestration contracts | Passed |
+| v2.0 Knowledge Graph Foundation helpers | Focused phase checks passed |
 | pytest / ruff / mypy / GitHub Actions CI | Passed |
 
 整體結果：
 
 ```text
-v1.9 architecture cleanup and orchestration contracts are release-ready as a documentation and contract milestone. Existing CLI behavior remains unchanged, contract models are not runtime-wired, and deterministic detection / policy still control final verdicts.
+v2.0 知識圖譜基礎輔助函式已完成文件同步，並已有 focused tests 覆蓋。既有 CLI 行為維持不變，graph helpers 尚未接入 runtime，最終判定仍由 deterministic 偵測與 policy 控制。
 ```
 
 ---

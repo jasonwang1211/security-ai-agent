@@ -233,6 +233,22 @@ Boundaries:
 - `BLOCK`, `MONITOR`, and `ALLOW` remain simulated decisions.
 - No real firewall, WAF, SIEM, SOAR, cloud, or endpoint enforcement is introduced.
 
+### v2.0 Knowledge Graph Foundation
+
+v2.0 adds a deterministic in-memory Knowledge Graph foundation. The graph is evidence/context structure, not detection authority:
+
+- Typed graph contracts in `modules/graph/types.py`: `GraphNodeKind`, `GraphEdgeKind`, `GraphSourceRef`, `GraphNode`, `GraphEdge`, and `GraphSnapshot`.
+- Snapshot builder in `modules/graph/builder.py` through `build_graph_snapshot(...)`.
+- Read-only graph lookup helpers in `modules/graph/lookup.py`.
+- JSON-ready export helpers in `modules/graph/exporter.py`.
+
+Boundaries:
+
+- The builder uses structured `Incident` objects and explicitly provided `DetectionRule` objects only.
+- No YAML loading, file loading, free-text extraction, guessed relationships, Graph RAG retrieval, Knowledge Capture, LLM graph extraction, Neo4j, vector search, Chroma/Ollama/LLM calls, runtime orchestration, or tool execution is included.
+- Graph lookup does not change Risk Level / Decision, replace the Rule-Based Detector, replace `RAGQA`, write knowledge, call LLMs, or execute tools.
+- Deterministic detector / risk / decision remain final authority, and `BLOCK`, `MONITOR`, and `ALLOW` remain simulated decisions.
+
 ### CLI Modes
 
 ```text
@@ -259,7 +275,7 @@ python -m ruff check .
 python -m mypy app.py modules tests
 ```
 
-Current expected test result: `537 passed`.
+Last full expected test result: `537 passed`.
 
 The test suite includes expanded golden smoke tests, direct consolidated log pipeline tests, Pydantic boundary model tests, incident/export/follow-up/guardrail tests, and Scenario A integration coverage for a mixed authentication log. Deterministic tests do not start the full app or initialize RAGQA, Chroma, embeddings, Torch, Ollama, ChatOllama, or local LLM clients. GitHub Actions CI runs the same quality gate.
 
@@ -288,7 +304,7 @@ python app.py
 
 Current release baseline: tag `v1.8.0`.
 
-Current release target: v1.9 documentation sync on branch `v1.9-orchestration-contracts`.
+Current phase: v2.0 Knowledge Graph Foundation documentation update.
 
 Completed:
 
@@ -304,6 +320,7 @@ Completed:
 - v1.7 Answer Safety / Evaluation / Smart Router Foundation, including eval cases, deterministic answer guardrails, eval runner, isolated rule-based Smart Router, CI Gitleaks, and reusable log ingestion runner cleanup
 - v1.8 Protected Runtime Wiring and Analyst UX, including protected report/rule explanation helpers, guarded fallback behavior, Smart Router preview mode, and deterministic analyst suggestions
 - v1.9 Architecture Cleanup and Orchestration Contracts, including architecture ownership map, ADR foundation, Tool Permission Contract, Workflow Plan Contract, Testing Strategy, controlled RAG/controller package migrations with flat compatibility shims, and manual LLM/RAG smoke checklist documentation
+- v2.0 Knowledge Graph Foundation, including typed graph contracts, snapshot builder, read-only graph query helpers, JSON-ready snapshot export, and the 2A-3 decision to defer KnowledgeDoc graph seeding until a metadata audit
 - Expanded golden smoke tests, direct log pipeline tests, focused boundary model tests, `pytest`, `ruff`, lenient `mypy`, and GitHub Actions CI
 
 ### Further Reading
@@ -364,10 +381,12 @@ See [docs/ROADMAP.md](docs/ROADMAP.md) for delivered items.
 - Manual LLM/RAG smoke checklist documented as manual-only, not CI, and not executed
 - Contract/schema-only; no runtime auto-execution, LLM tool selection, Graph RAG, Knowledge Capture, RAGQA replacement, AI verdict override, or real enforcement
 
-**v2.0 - Knowledge Graph Foundation / Graph RAG Groundwork** (Next)
+**v2.0 - Knowledge Graph Foundation** (Documentation sync)
 
-- Future knowledge graph groundwork after ownership and orchestration contracts are stable
-- Graph RAG retrieval, Knowledge Capture, and LLM graph extraction remain deferred beyond v1.9
+- Typed graph contracts, snapshot builder, read-only graph query helpers, and JSON-ready snapshot export
+- No `rule_graph.py` for now; explicit `DetectionRule` seed remains inside the builder
+- KnowledgeDoc graph seed is deferred until a metadata audit
+- Graph RAG retrieval, Knowledge Capture, LLM graph extraction, Neo4j, vector search, runtime orchestration, tool execution, and `RAGQA` replacement remain deferred
 
 For the full plan, see [docs/ROADMAP.md](docs/ROADMAP.md).
 
@@ -480,7 +499,7 @@ python -m mypy app.py modules tests
 
 Current release baseline: tag `v1.8.0`.
 
-Current release target: v1.9 documentation sync on branch `v1.9-orchestration-contracts`.
+目前里程碑：v2.0 知識圖譜基礎文件同步。
 
 已完成：
 
@@ -494,6 +513,9 @@ Current release target: v1.9 documentation sync on branch `v1.9-orchestration-co
 - v1.6 RAG v2 Foundation：source-cited helper types、frontmatter metadata、intent classification、exact ID lookup、metadata-aware planning、source assembly、Report Explainer v2 / Rule Explainer v2
 - v1.7 Answer Safety / Evaluation / Smart Router Foundation
 - v1.8 Protected Runtime Wiring and Analyst UX
+- v1.9 Architecture Cleanup and Orchestration Contracts：完成 ownership map、ADR foundation、Tool Permission / Workflow Plan contracts、受控的 RAG/controller migration 與 flat compatibility shims，並新增 manual smoke checklist 文件
+- v2.0 知識圖譜基礎：新增圖譜型別契約、決定性圖譜建構器、唯讀查詢輔助函式、可序列化為 JSON 的匯出輔助函式；2A-3 決策為 KnowledgeDoc 圖譜種子延後到 metadata 盤點後再處理
+- 圖譜是證據與脈絡結構，不作為偵測權威或最終判定來源；graph lookup 不會改變 Risk Level / Decision、不會取代規則式偵測器或 `RAGQA`、不會呼叫 LLM、自動寫入知識或執行工具
 - 邊界：仍是 deterministic rule-based detection，不是 ML detection，也不是 LLM-generated rules；YAML metadata 不會覆蓋 `TriagePolicy`
 - expanded golden smoke tests、direct log pipeline tests、boundary model tests、`pytest`、`ruff`、寬鬆 `mypy` 與 GitHub Actions CI
 
@@ -552,3 +574,18 @@ Current release target: v1.9 documentation sync on branch `v1.9-orchestration-co
 - Smart Router preview only / Smart Router 只預覽、不執行工具
 - deterministic analyst suggestions / deterministic 分析師追問建議
 - `RAGQA` remains active; no LLM routing, verdict override, or real enforcement
+
+**v1.9 - Architecture Cleanup and Orchestration Contracts**（已完成）
+
+- Architecture ownership map、ADR foundation、Tool Permission / Workflow Plan contracts
+- Controlled RAG/helper 與 controller/orchestration package migrations，並保留 flat compatibility shims
+- Manual LLM/RAG smoke checklist documented as manual-only
+- Boundary: no runtime auto-execution, LLM tool selection, Graph RAG, Knowledge Capture, RAGQA replacement, AI verdict override, or real enforcement
+
+**v2.0 - 知識圖譜基礎**（文件同步進行中）
+
+- 圖譜型別契約：`GraphNodeKind`、`GraphEdgeKind`、`GraphSourceRef`、`GraphNode`、`GraphEdge`、`GraphSnapshot`
+- 決定性圖譜建構器：`build_graph_snapshot(...)`
+- 唯讀查詢輔助函式，以及可序列化為 JSON 的匯出輔助函式
+- 2A-3 決策：KnowledgeDoc 圖譜種子延後到 metadata 盤點後再處理
+- 邊界：圖譜是證據與脈絡結構，不作為偵測權威或最終判定來源；graph lookup 不會改變 Risk Level / Decision、不會取代規則式偵測器或 `RAGQA`、不會呼叫 LLM、自動寫入知識或執行工具

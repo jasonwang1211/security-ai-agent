@@ -248,6 +248,34 @@ Technical boundary:
 - `BLOCK`, `MONITOR`, and `ALLOW` remain simulated decisions.
 - No real firewall, WAF, SIEM, SOAR, cloud, or endpoint enforcement is performed.
 
+## v2.0 Knowledge Graph Foundation
+
+v2.0 adds a deterministic in-memory graph foundation. The graph organizes evidence and context; it is not a detector, policy engine, RAG runtime, or tool execution system.
+
+Core graph types:
+
+- `GraphNodeKind` and `GraphEdgeKind` define the allowed vocabulary.
+- `GraphSourceRef` records where a node or edge came from.
+- `GraphNode`, `GraphEdge`, and `GraphSnapshot` provide the Pydantic data contract.
+
+The deterministic builder in `modules/graph/builder.py` creates `GraphSnapshot` objects from structured `Incident` data and explicitly provided `DetectionRule` objects. It does not load YAML, read files, inspect free text, guess relationships, call LLMs, call Chroma/Ollama/vector systems, execute tools, or change Risk Level / Decision. Every edge includes source/reason metadata.
+
+The lookup helpers in `modules/graph/lookup.py` are read-only and edge-driven:
+
+- `get_node`
+- `get_neighbors`
+- `get_edges_for_node`
+- `find_nodes_by_kind`
+- `get_related_findings`
+- `get_related_rules`
+- `get_incident_context`
+
+`get_incident_context` returns a small deterministic lookup summary only. It does not assemble prompts, source-cited answers, vector context, RAG context, LLM messages, or analyst recommendations.
+
+The export helpers in `modules/graph/exporter.py` serialize in-memory snapshots with `graph_snapshot_to_dict` and `graph_snapshot_to_json`. They do not add save/load helpers or file persistence.
+
+v2.0 intentionally keeps Graph RAG retrieval, Knowledge Capture, LLM graph extraction, Neo4j, vector search, runtime agent orchestration, tool execution, and KnowledgeDoc graph seed deferred. The 2A-3 decision keeps explicit `DetectionRule` seed inside the builder and defers KnowledgeDoc graph seed until a metadata audit.
+
 ## Testing Strategy
 
 The project uses several testing layers:
@@ -257,7 +285,7 @@ The project uses several testing layers:
 - Integration tests: verify an end-to-end scenario such as Scenario A
 - Lint and type checks: `ruff` and `mypy`
 
-Current quality gate:
+Last full quality gate:
 
 - `python -m pytest` -> `537 passed`
 - `python -m ruff check .`

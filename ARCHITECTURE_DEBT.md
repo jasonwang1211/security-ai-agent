@@ -1,8 +1,8 @@
 # Architecture Debt Engineering Journal
 
-Current release target: v1.9 documentation sync on branch `v1.9-orchestration-contracts`
+Current milestone: v2.0 Knowledge Graph Foundation documentation sync
 Current baseline: tag `v1.8.0`
-Current quality gate: `537 passed`
+Last full quality gate: `537 passed`
 
 This document tracks structural debt cleanup as an engineering discipline: reducing module sprawl, consolidating thin wrappers, and preserving deterministic safety boundaries before adding more agentic behavior.
 
@@ -25,6 +25,7 @@ The project has reached a stable consolidated architecture with:
 - Isolated v1.7 reliability foundation for eval cases, deterministic AnswerGuardrails, Evaluation Runner, and rule-based Smart Router
 - Isolated v1.8 protected report/rule helpers, guarded fallback behavior, Smart Router preview, and deterministic analyst suggestions
 - v1.9 architecture cleanup and orchestration contracts: ownership map, ADRs, Tool Permission Contract, Workflow Plan Contract, Testing Strategy, and Package Migration Plan
+- v2.0 Knowledge Graph Foundation: graph type contracts, deterministic builder, read-only lookup helpers, JSON-serializable export helpers, and 2A-3 seed-scope decision
 - Controlled 9B package migration for RAG helper modules and controller/orchestration modules with temporary flat compatibility shims
 - Manual LLM/RAG smoke checklist documented as manual-only, not normal CI, and not yet executed
 
@@ -39,7 +40,8 @@ The project has reached a stable consolidated architecture with:
 | Boundary contracts | ad-hoc dictionaries | `modules/types.py` | Added Pydantic boundary models for future controller/tool work |
 | RAG helper ownership | flat `modules/rag_*.py` helpers | `modules/rag/` plus flat shims | Controlled helper package migration; `RAGQA` remains active runtime |
 | Controller/orchestration ownership | flat controller/tool/policy/workflow modules | `modules/controller/` plus flat shims | Controlled package migration; no runtime auto-execution added |
-| Testing foundation | limited smoke coverage | golden + log pipeline + boundary + incident + detection-rule + controller + RAG v2 + v1.7 reliability + v1.8 protected helper tests + v1.9 contract tests | Current quality gate: `537 passed`, ruff, mypy |
+| Graph foundation ownership | none | `modules/graph/` | In-memory graph contracts, deterministic builder, read-only lookup, and JSON serialization only; no Graph RAG or persistence |
+| Testing foundation | limited smoke coverage | golden + log pipeline + boundary + incident + detection-rule + controller + RAG v2 + v1.7 reliability + v1.8 protected helper tests + v1.9 contract tests + v2.0 graph focused tests | Last full quality gate: `537 passed`, ruff, mypy |
 
 ## v1.3 Phase Outcomes
 
@@ -218,7 +220,20 @@ v1.9 intentionally keeps contracts separate from runtime wiring. Tool Policy and
 
 The controlled package migrations improve ownership boundaries but do not change runtime behavior. `RAGQA` and RAG v2 helpers coexist: `RAGQA` remains the active general knowledge QA runtime, while RAG helper modules remain helper/staged infrastructure. Package shims are temporary compatibility layers and should be removed only after imports are stable and separately scoped.
 
-## Current Quality Gate
+## v2.0 Phase Outcomes
+
+- Added `docs/v2.0-spec.md` as the detailed design source of truth for Knowledge Graph Foundation.
+- Added graph type contracts: `GraphNodeKind`, `GraphEdgeKind`, `GraphSourceRef`, `GraphNode`, `GraphEdge`, and `GraphSnapshot`.
+- Added deterministic `build_graph_snapshot(...)` for structured `Incident` objects and explicitly provided `DetectionRule` objects.
+- Added read-only graph lookup helpers over in-memory `GraphSnapshot` objects.
+- Added JSON-serializable graph export helpers without save/load or file persistence.
+- Recorded the 2A-3 decision: do not add `rule_graph.py` now; keep explicit `DetectionRule` seed inside the builder; defer KnowledgeDoc graph seed until a metadata audit.
+
+Architecture note:
+
+v2.0 graph helpers are evidence/context infrastructure, not detection authority. They do not load YAML or files, infer relations from free text, call LLM/RAG/vector systems, execute tools, replace `RAGQA`, replace the Rule-Based Detector, write knowledge automatically, or change Risk Level / Decision. `BLOCK`, `MONITOR`, and `ALLOW` remain simulated decisions.
+
+## Last Full Quality Gate
 
 - `python -m pytest` -> `537 passed`
 - `python -m ruff check .` -> passed
@@ -237,8 +252,9 @@ Tool Permission and Workflow Plan contracts now document future orchestration bo
 
 - Tool Permission and Workflow Plan contracts are not runtime-wired.
 - Partial controlled package migration has been performed for RAG helpers and controller/orchestration helpers, while flat compatibility shims remain.
-- Graph RAG remains deferred until ownership and retrieval contracts are stable.
+- Graph RAG remains deferred; v2.0 added graph foundation helpers only.
 - Knowledge Capture remains deferred until ownership, review, and ingest boundaries are stable.
+- KnowledgeDoc graph seed remains deferred until a metadata audit.
 - Agent Skill Orchestration remains deferred; ControllerAgent does not auto-execute tools or workflows.
 - Smart Router remains preview-only and is not the default CLI auto-route.
 - `RAGQA` has not been replaced.
