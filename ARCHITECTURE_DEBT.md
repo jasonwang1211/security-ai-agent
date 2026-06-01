@@ -1,7 +1,7 @@
 # Architecture Debt Engineering Journal
 
-Current milestone: v2.0 Knowledge Graph Foundation release gate passed
-Current baseline: tag `v1.8.0`
+Current milestone: v2.1 Graph-Backed Explanation MVP implemented; release gate pending
+Current baseline: tag `v2.0.0`
 Last full quality gate: `585 passed`
 
 This document tracks structural debt cleanup as an engineering discipline: reducing module sprawl, consolidating thin wrappers, and preserving deterministic safety boundaries before adding more agentic behavior.
@@ -26,6 +26,7 @@ The project has reached a stable consolidated architecture with:
 - Isolated v1.8 protected report/rule helpers, guarded fallback behavior, Smart Router preview, and deterministic analyst suggestions
 - v1.9 architecture cleanup and orchestration contracts: ownership map, ADRs, Tool Permission Contract, Workflow Plan Contract, Testing Strategy, and Package Migration Plan
 - v2.0 Knowledge Graph Foundation: graph type contracts, deterministic builder, read-only lookup helpers, JSON-serializable export helpers, and 2A-3 seed-scope decision
+- v2.1 Graph-Backed Explanation MVP: protected exact-reference graph explanations using explicit graph edges and existing `SourceCitation` provenance
 - Controlled 9B package migration for RAG helper modules and controller/orchestration modules with temporary flat compatibility shims
 - Manual LLM/RAG smoke checklist documented as manual-only, not normal CI, and not yet executed
 
@@ -40,8 +41,8 @@ The project has reached a stable consolidated architecture with:
 | Boundary contracts | ad-hoc dictionaries | `modules/types.py` | Added Pydantic boundary models for future controller/tool work |
 | RAG helper ownership | flat `modules/rag_*.py` helpers | `modules/rag/` plus flat shims | Controlled helper package migration; `RAGQA` remains active runtime |
 | Controller/orchestration ownership | flat controller/tool/policy/workflow modules | `modules/controller/` plus flat shims | Controlled package migration; no runtime auto-execution added |
-| Graph foundation ownership | none | `modules/graph/` | In-memory graph contracts, deterministic builder, read-only lookup, and JSON serialization only; no Graph RAG or persistence |
-| Testing foundation | limited smoke coverage | golden + log pipeline + boundary + incident + detection-rule + controller + RAG v2 + v1.7 reliability + v1.8 protected helper tests + v1.9 contract tests + v2.0 graph focused tests | Last full quality gate: `585 passed`, ruff, mypy |
+| Graph foundation ownership | none | `modules/graph/` | In-memory graph contracts, deterministic builder, read-only lookup, JSON serialization, and protected exact-reference explanation; no Graph RAG or persistence |
+| Testing foundation | limited smoke coverage | golden + log pipeline + boundary + incident + detection-rule + controller + RAG v2 + v1.7 reliability + v1.8 protected helper tests + v1.9 contract tests + v2.0 graph focused tests + v2.1 graph explanation focused tests | Last full quality gate: `585 passed`, ruff, mypy |
 
 ## v1.3 Phase Outcomes
 
@@ -233,6 +234,18 @@ Architecture note:
 
 v2.0 graph helpers are evidence/context infrastructure, not detection authority. They do not load YAML or files, infer relations from free text, call LLM/RAG/vector systems, execute tools, replace `RAGQA`, replace the Rule-Based Detector, write knowledge automatically, or change Risk Level / Decision. `BLOCK`, `MONITOR`, and `ALLOW` remain simulated decisions.
 
+## v2.1 Phase Outcomes
+
+- Added `modules/graph/explainers.py` as the canonical graph-backed explanation helper.
+- Added `explain_graph_reference(snapshot, reference_id) -> AnswerWithSources` for exact `EV-*`, `F-*`, rule ID, and `INC-*` references.
+- Reused existing `SourceCitation.metadata` for graph node, edge, and source provenance without expanding the RAG schema.
+- Added `explain_graph_followup_protected(...)` in `modules/report_followup.py`, so graph-backed answers pass through existing `AnswerGuardrails`.
+- Kept the feature as a protected helper and tested integration path, without CLI auto-routing or new `app.py` mode.
+
+Architecture note:
+
+v2.1 deliberately stays within explicit graph nodes and edges. Missing references do not produce fabricated graph citations, disconnected existing nodes are reported as having no explicit relationship, and graph explanations do not change Risk Level / Decision. Full Graph RAG retrieval, Knowledge Capture, LLM graph extraction, Neo4j/NetworkX, runtime orchestration, tool execution, `RAGQA` replacement, and real enforcement remain deferred.
+
 ## Last Full Quality Gate
 
 - `python -m pytest` -> `585 passed`
@@ -252,7 +265,7 @@ Tool Permission and Workflow Plan contracts now document future orchestration bo
 
 - Tool Permission and Workflow Plan contracts are not runtime-wired.
 - Partial controlled package migration has been performed for RAG helpers and controller/orchestration helpers, while flat compatibility shims remain.
-- Graph RAG remains deferred; v2.0 added graph foundation helpers only.
+- Graph RAG remains deferred; v2.1 added graph-backed explanation helpers only.
 - Knowledge Capture remains deferred until ownership, review, and ingest boundaries are stable.
 - KnowledgeDoc graph seed remains deferred until a metadata audit.
 - Agent Skill Orchestration remains deferred; ControllerAgent does not auto-execute tools or workflows.
@@ -264,8 +277,8 @@ Tool Permission and Workflow Plan contracts now document future orchestration bo
 
 | Area | Current measurement / status | Debt note |
 |---|---|---|
-| `report_followup.py` | 421 total LOC, 346 non-empty lines | Above the 400 LOC inspection threshold; future split debt only, no v1.9 split implemented |
-| `tests/test_report_followup.py` | 423 total LOC, 306 non-empty lines | Large focused test file; future test-alignment debt only |
+| `report_followup.py` | Above the inspection threshold after protected report/rule and graph follow-up helpers | Future split candidate; do not split without a focused ownership phase |
+| `tests/test_report_followup.py` | Expanded further by protected graph follow-up coverage | Large focused test file; future test-alignment debt only |
 | RAG helper package shims | flat `modules/rag_*.py` compatibility paths remain | Temporary compatibility layer after `modules/rag/` migration |
 | Controller package shims | flat controller/tool/policy/workflow compatibility paths remain | Temporary compatibility layer after `modules/controller/` migration |
 | Tests layout | owner clusters documented, but tests remain mostly flat | Future alignment only after package ownership is stable |

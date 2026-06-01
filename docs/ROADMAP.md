@@ -1,12 +1,12 @@
 # Roadmap
 
-This roadmap describes planned development after the v2.0 Knowledge Graph Foundation milestone.
+This roadmap describes planned development after the v2.1 Graph-Backed Explanation MVP milestone.
 
 ## Current Baseline
 
-Current release baseline: tag `v1.8.0`.
+Current release baseline: tag `v2.0.0`.
 
-Current phase: v2.0 Knowledge Graph Foundation release gate passed.
+Current phase: v2.1 Graph-Backed Explanation MVP implemented; release gate pending.
 
 Completed:
 
@@ -31,6 +31,7 @@ Completed:
 - v1.8 Protected Runtime Wiring and Analyst UX
 - v1.9 Architecture Cleanup and Orchestration Contracts
 - v2.0 Knowledge Graph Foundation
+- v2.1 Graph-Backed Explanation MVP
 - pytest / ruff / mypy / GitHub Actions CI
 
 Last full quality gate (v2.0):
@@ -167,7 +168,7 @@ v1.9 keeps contracts separate from runtime automation. It does not implement Gra
 
 ## v2.0 - Knowledge Graph Foundation
 
-Status: Release gate passed; ready to tag.
+Status: Released as `v2.0.0`.
 
 Delivered:
 
@@ -193,6 +194,24 @@ Deferred beyond v2.0:
 - detector / risk / decision override by graph or LLM
 - automatic rule modification or deployment
 
+## v2.1 - Graph-Backed Explanation MVP
+
+Status: Implemented; release gate pending.
+
+Delivered:
+
+- `modules/graph/explainers.py` as the canonical graph-backed explanation helper
+- `explain_graph_reference(snapshot, reference_id) -> AnswerWithSources`
+- exact `EV-*`, `F-*`, rule ID, and `INC-*` explanations from explicit graph nodes and edges
+- graph provenance represented through existing `SourceCitation.metadata`, without expanding the RAG schema
+- protected adapter `explain_graph_followup_protected(...)` in `modules/report_followup.py`
+- rule ID normalization so `CMD-001` and `DETECTION_RULE:CMD-001` produce stable outward-facing `rule_ids`
+- Scenario A focused coverage showing `EV-003` explicitly supports `F-001` while `Decision` remains `MONITOR`
+
+Boundary:
+
+v2.1 is graph-backed explanation, not Graph RAG retrieval. It is a protected helper and tested integration capability, not CLI auto-routing or a new `app.py` mode. It does not implement Knowledge Capture, LLM graph extraction, Neo4j/NetworkX, vector search, runtime orchestration, tool execution, `RAGQA` replacement, graph-driven Risk Level / Decision changes, or real enforcement.
+
 ## Non-Goals
 
 The roadmap does not include offensive automation or real enforcement actions.
@@ -200,13 +219,13 @@ All response decisions remain simulated unless explicitly redesigned in a future
 
 # 後續規劃
 
-此 roadmap 描述目前 v2.0 知識圖譜基礎完成後的後續開發方向。
+此 roadmap 描述目前 v2.1 Graph-Backed Explanation MVP 完成後的後續開發方向。
 
 ## 目前基準
 
-目前 release baseline：tag `v1.8.0`。
+目前 release baseline：tag `v2.0.0`。
 
-目前里程碑：v2.0 知識圖譜基礎 release gate 已通過，準備 tag。
+目前里程碑：v2.1 Graph-Backed Explanation MVP 已實作，release gate 尚未執行。
 
 已完成：
 
@@ -231,6 +250,7 @@ All response decisions remain simulated unless explicitly redesigned in a future
 - v1.8 Protected Runtime Wiring and Analyst UX
 - v1.9 Architecture Cleanup and Orchestration Contracts
 - v2.0 知識圖譜基礎
+- v2.1 Graph-Backed Explanation MVP
 - pytest / ruff / mypy / GitHub Actions CI
 
 Last full quality gate (v2.0):
@@ -342,7 +362,17 @@ Status: Foundation completed.
 
 ## v2.0 - 知識圖譜基礎
 
-- Status: release gate 已通過，準備 tag
+- Status: 已發布為 `v2.0.0`
 - 已新增圖譜型別契約、決定性圖譜建構器、唯讀查詢輔助函式，以及可序列化為 JSON 的匯出輔助函式
 - 目前不新增 `rule_graph.py`；KnowledgeDoc 圖譜種子延後到 metadata 盤點後再處理
 - Graph RAG retrieval、Knowledge Capture、LLM graph extraction、Neo4j / vector search、runtime orchestration、tool execution、`RAGQA` replacement，以及 detector / risk / decision override 仍維持延後
+
+## v2.1 - Graph-Backed Explanation MVP
+
+- Status: 已實作；release gate 尚未執行
+- 新增 `modules/graph/explainers.py` 與 `explain_graph_reference(snapshot, reference_id) -> AnswerWithSources`
+- 支援 EV-ID、F-ID、rule ID 與 INC-ID 的明確圖譜關係解釋，僅跟隨既有節點與邊
+- 圖譜 provenance 透過既有 `SourceCitation.metadata` 表示，沒有擴充 RAG schema
+- 新增 `explain_graph_followup_protected(...)`，讓 graph-backed answer 通過既有 `AnswerGuardrails`
+- Scenario A 覆蓋 `EV-003` 明確支援 `F-001`，且 `Decision` 維持 `MONITOR`
+- Boundary: 這不是 Graph RAG retrieval，也不是 CLI auto-routing、`app.py` 新模式、Knowledge Capture、LLM graph extraction、Neo4j / NetworkX、vector search、runtime orchestration、tool execution、`RAGQA` replacement、Risk Level / Decision override 或 real enforcement

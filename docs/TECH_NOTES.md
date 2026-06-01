@@ -276,6 +276,27 @@ The export helpers in `modules/graph/exporter.py` serialize in-memory snapshots 
 
 v2.0 intentionally keeps Graph RAG retrieval, Knowledge Capture, LLM graph extraction, Neo4j, vector search, runtime agent orchestration, tool execution, and KnowledgeDoc graph seed deferred. The 2A-3 decision keeps explicit `DetectionRule` seed inside the builder and defers KnowledgeDoc graph seed until a metadata audit.
 
+## v2.1 Graph-Backed Explanation MVP
+
+`modules/graph/explainers.py` owns the first visible graph-backed explanation helper. Its public API is `explain_graph_reference(snapshot, reference_id) -> AnswerWithSources`.
+
+The helper supports exact references only:
+
+- `EV-*` follows explicit `SUPPORTED_BY` edges to findings.
+- `F-*` follows explicit `SUPPORTED_BY`, `MAPS_TO_RULE`, and `RELATED_TO_ATTACK` edges.
+- rule IDs such as `CMD-001` or `DETECTION_RULE:CMD-001` follow explicit `MAPS_TO_RULE` and `DETECTS` edges.
+- `INC-*` summarizes explicit incident graph context.
+
+Graph provenance reuses the existing RAG v2 answer contract. `SourceCitation.metadata` carries real graph node, edge, and `GraphSourceRef` provenance already present in the `GraphSnapshot`; no `AnswerWithSources` or `SourceCitation` schema expansion was needed. Outward-facing rule IDs are normalized to stable IDs such as `CMD-001`, while citation metadata keeps the real graph node and edge IDs.
+
+`explain_graph_followup_protected(...)` in `modules/report_followup.py` calls the graph explainer and then runs the result through existing `AnswerGuardrails`. Known evidence, finding, and rule IDs are derived from the supplied `GraphSnapshot`, so protected graph answers stay bounded by actual graph contents.
+
+Missing references return insufficient context without fabricated graph citations. Existing but disconnected graph nodes may be cited as existing nodes while the answer states that no explicit relationship was found.
+
+Safety boundary:
+
+This is graph-backed explanation, not Graph RAG retrieval. It does not call LLMs, Chroma/Ollama/vector systems, execute tools, write knowledge, replace `RAGQA`, change Risk Level / Decision, or perform real enforcement. `BLOCK`, `MONITOR`, and `ALLOW` remain simulated decisions, and deterministic detector / risk / decision remain final authority.
+
 ## Testing Strategy
 
 The project uses several testing layers:

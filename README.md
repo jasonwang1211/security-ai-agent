@@ -37,7 +37,7 @@ This project explores a hybrid path: deterministic detection and policy produce 
 | Knowledge | RAGQueryPlanner + RAG QA | Local defensive knowledge retrieval and explanation. |
 | Assist | LLMAssist | Advisory reasoning only; it never overrides the final verdict. |
 | Controller | ControllerAgent + Tool Registry | Typed v1.5 agent infrastructure for deterministic dispatch by explicit route or tool name. |
-| Graph | Knowledge Graph Foundation | Deterministic `modules/graph/*` helper infrastructure for in-memory evidence/context structure; not Graph RAG. |
+| Graph | Graph-Backed Explanation MVP | Deterministic `modules/graph/*` helper infrastructure for in-memory evidence/context structure and protected exact-reference explanations; not Graph RAG. |
 | Output | Security Triage Report | Unified report format across payload and log flows. |
 | Incident | Evidence / Incident Capability | Stable EV-ID / F-ID evidence handling, sequence correlation, JSON Incident export, and report-aware follow-up. |
 
@@ -92,6 +92,7 @@ Core modules:
 - `modules/graph/builder.py`: deterministic GraphSnapshot builder from structured inputs
 - `modules/graph/lookup.py`: read-only graph lookup helpers
 - `modules/graph/exporter.py`: JSON-ready graph snapshot export helpers
+- `modules/graph/explainers.py`: protected exact-reference graph-backed explanation helper using explicit graph provenance
 
 ### v1.3 Evidence and Incident Capability
 
@@ -307,9 +308,9 @@ python app.py
 
 ### Current Status
 
-Current release baseline: tag `v1.8.0`.
+Current release baseline: tag `v2.0.0`.
 
-Current phase: v2.0 Knowledge Graph Foundation release gate passed.
+Current phase: v2.1 Graph-Backed Explanation MVP implemented; release gate pending.
 
 Completed:
 
@@ -326,6 +327,7 @@ Completed:
 - v1.8 Protected Runtime Wiring and Analyst UX, including protected report/rule explanation helpers, guarded fallback behavior, Smart Router preview mode, and deterministic analyst suggestions
 - v1.9 Architecture Cleanup and Orchestration Contracts, including architecture ownership map, ADR foundation, Tool Permission Contract, Workflow Plan Contract, Testing Strategy, controlled RAG/controller package migrations with flat compatibility shims, and manual LLM/RAG smoke checklist documentation
 - v2.0 Knowledge Graph Foundation, including typed graph contracts, snapshot builder, read-only graph query helpers, JSON-ready snapshot export, and the 2A-3 decision to defer KnowledgeDoc graph seeding until a metadata audit
+- v2.1 Graph-Backed Explanation MVP, including exact EV-ID, F-ID, rule ID, and INC-ID graph explanations from explicit graph edges with existing `SourceCitation` provenance and `AnswerGuardrails` protection
 - Expanded golden smoke tests, direct log pipeline tests, focused boundary model tests, `pytest`, `ruff`, lenient `mypy`, and GitHub Actions CI
 
 ### Further Reading
@@ -386,12 +388,20 @@ See [docs/ROADMAP.md](docs/ROADMAP.md) for delivered items.
 - Manual LLM/RAG smoke checklist documented as manual-only, not CI, and not executed
 - Contract/schema-only; no runtime auto-execution, LLM tool selection, Graph RAG, Knowledge Capture, RAGQA replacement, AI verdict override, or real enforcement
 
-**v2.0 - Knowledge Graph Foundation** (Release gate passed; ready to tag)
+**v2.0 - Knowledge Graph Foundation** (Released as `v2.0.0`)
 
 - Typed graph contracts, snapshot builder, read-only graph query helpers, and JSON-ready snapshot export
 - No `rule_graph.py` for now; explicit `DetectionRule` seed remains inside the builder
 - KnowledgeDoc graph seed is deferred until a metadata audit
 - Graph RAG retrieval, Knowledge Capture, LLM graph extraction, Neo4j, vector search, runtime orchestration, tool execution, and `RAGQA` replacement remain deferred
+
+**v2.1 - Graph-Backed Explanation MVP** (Implemented; release gate pending)
+
+- `modules/graph/explainers.py` adds `explain_graph_reference(snapshot, reference_id) -> AnswerWithSources`
+- Exact EV-ID, F-ID, rule ID, and INC-ID references can be explained from explicit graph nodes and edges with protected citations
+- `modules/report_followup.py` adds `explain_graph_followup_protected(...)`, which routes graph answers through existing `AnswerGuardrails`
+- Rule IDs such as `CMD-001` and `DETECTION_RULE:CMD-001` normalize outward-facing `rule_ids` to stable IDs while citations retain graph provenance
+- This is a protected helper and tested integration capability, not CLI auto-routing, an `app.py` mode, Graph RAG retrieval, Knowledge Capture, `RAGQA` replacement, decision override, or real enforcement
 
 For the full plan, see [docs/ROADMAP.md](docs/ROADMAP.md).
 
@@ -502,9 +512,9 @@ python -m mypy app.py modules tests
 
 ### 目前狀態
 
-Current release baseline: tag `v1.8.0`.
+Current release baseline: tag `v2.0.0`.
 
-目前里程碑：v2.0 知識圖譜基礎 release gate 已通過，準備 tag。
+目前里程碑：v2.1 Graph-Backed Explanation MVP 已實作，release gate 尚未執行。
 
 已完成：
 
@@ -520,6 +530,7 @@ Current release baseline: tag `v1.8.0`.
 - v1.8 Protected Runtime Wiring and Analyst UX
 - v1.9 Architecture Cleanup and Orchestration Contracts：完成 ownership map、ADR foundation、Tool Permission / Workflow Plan contracts、受控的 RAG/controller migration 與 flat compatibility shims，並新增 manual smoke checklist 文件
 - v2.0 知識圖譜基礎：新增圖譜型別契約、決定性圖譜建構器、唯讀查詢輔助函式、可序列化為 JSON 的匯出輔助函式；2A-3 決策為 KnowledgeDoc 圖譜種子延後到 metadata 盤點後再處理
+- v2.1 Graph-Backed Explanation MVP：新增 `modules/graph/explainers.py`，可針對 EV-ID、F-ID、rule ID 與 INC-ID 從明確圖譜節點與邊產生受保護、帶 citation 的解釋
 - 圖譜是證據與脈絡結構，不作為偵測權威或最終判定來源；graph lookup 不會改變 Risk Level / Decision、不會取代規則式偵測器或 `RAGQA`、不會呼叫 LLM、自動寫入知識或執行工具
 - 邊界：仍是 deterministic rule-based detection，不是 ML detection，也不是 LLM-generated rules；YAML metadata 不會覆蓋 `TriagePolicy`
 - expanded golden smoke tests、direct log pipeline tests、boundary model tests、`pytest`、`ruff`、寬鬆 `mypy` 與 GitHub Actions CI
@@ -587,10 +598,18 @@ Current release baseline: tag `v1.8.0`.
 - Manual LLM/RAG smoke checklist documented as manual-only
 - Boundary: no runtime auto-execution, LLM tool selection, Graph RAG, Knowledge Capture, RAGQA replacement, AI verdict override, or real enforcement
 
-**v2.0 - 知識圖譜基礎**（release gate 已通過，準備 tag）
+**v2.0 - 知識圖譜基礎**（已發布為 `v2.0.0`）
 
 - 圖譜型別契約：`GraphNodeKind`、`GraphEdgeKind`、`GraphSourceRef`、`GraphNode`、`GraphEdge`、`GraphSnapshot`
 - 決定性圖譜建構器：`build_graph_snapshot(...)`
 - 唯讀查詢輔助函式，以及可序列化為 JSON 的匯出輔助函式
 - 2A-3 決策：KnowledgeDoc 圖譜種子延後到 metadata 盤點後再處理
 - 邊界：圖譜是證據與脈絡結構，不作為偵測權威或最終判定來源；graph lookup 不會改變 Risk Level / Decision、不會取代規則式偵測器或 `RAGQA`、不會呼叫 LLM、自動寫入知識或執行工具
+
+**v2.1 - Graph-Backed Explanation MVP**（已實作；release gate 尚未執行）
+
+- `explain_graph_reference(snapshot, reference_id)` 可用明確圖譜邊解釋 EV-ID、F-ID、rule ID 與 INC-ID
+- `explain_graph_followup_protected(...)` 會將圖譜解釋交給既有 `AnswerGuardrails` 保護
+- `SourceCitation.metadata` 重用真實圖譜節點、邊與 source provenance；沒有擴充 RAG schema
+- Scenario A 展示 `EV-003` 明確支援 `F-001`，且 incident `Decision` 仍為 `MONITOR`
+- 這不是 Graph RAG retrieval，也不是 CLI auto-routing、`app.py` 新模式、Knowledge Capture、`RAGQA` replacement、Risk Level / Decision override、tool execution 或 real enforcement
