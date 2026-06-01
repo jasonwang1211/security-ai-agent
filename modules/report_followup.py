@@ -12,6 +12,8 @@ import re
 from pydantic import BaseModel
 
 from modules.answer_guardrails import AnswerSafetyReport, check_answer_safety
+from modules.graph.explainers import explain_graph_reference
+from modules.graph.types import GraphNodeKind, GraphSnapshot
 from modules.rag_explainers import explain_report_question, explain_rule_question
 from modules.rag_metadata import KnowledgeDocMetadata
 from modules.rag_types import AnswerWithSources, SourceCitation
@@ -178,6 +180,21 @@ def explain_rule_followup_protected(
     return protect_answer_with_guardrails(answer, known_rule_ids=known_rule_ids)
 
 
+def explain_graph_followup_protected(
+    snapshot: GraphSnapshot,
+    reference_id: str,
+) -> ProtectedExplanationResult:
+    """Explain graph references and protect the answer with guardrails."""
+
+    answer = explain_graph_reference(snapshot, reference_id)
+    return protect_answer_with_guardrails(
+        answer,
+        known_evidence_ids=_known_graph_ids(snapshot, GraphNodeKind.EVIDENCE),
+        known_finding_ids=_known_graph_ids(snapshot, GraphNodeKind.FINDING),
+        known_rule_ids=_known_rule_ids(snapshot),
+    )
+
+
 def classify_followup_intent(question: str) -> Intent:
     """Classify a follow-up question into deterministic report routes."""
 
@@ -313,6 +330,18 @@ def _extract_stable_ids(pattern: str, text: str) -> list[str]:
             extracted.append(normalized)
             seen.add(normalized)
     return extracted
+
+
+def _known_graph_ids(snapshot: GraphSnapshot, kind: GraphNodeKind) -> set[str]:
+    return {node.id for node in snapshot.nodes if node.kind == kind}
+
+
+def _known_rule_ids(snapshot: GraphSnapshot) -> set[str]:
+    return {
+        node.id.removeprefix("DETECTION_RULE:")
+        for node in snapshot.nodes
+        if node.kind == GraphNodeKind.DETECTION_RULE
+    }
 
 
 def _answer_evidence_lookup(

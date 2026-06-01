@@ -1,6 +1,8 @@
 from pathlib import Path
 
 from modules.evidence_correlator import correlate_auth_sequence
+from modules.graph.builder import build_graph_snapshot
+from modules.graph.explainers import explain_graph_reference
 from modules.incident_exporter import (
     incident_to_json_dict,
     incident_to_json_string,
@@ -46,6 +48,15 @@ def test_scenario_a_mixed_auth_log_end_to_end():
 
     assert "EV-003" in evidence_answer["referenced_evidence"]
     assert "EV-003" in str(evidence_answer["answer"])
+
+    graph_snapshot = build_graph_snapshot(incident)
+    graph_answer = explain_graph_reference(graph_snapshot, "EV-003")
+
+    assert "EV-003" in graph_answer.answer
+    assert "F-001" in graph_answer.answer
+    assert "EV-003" in graph_answer.evidence_ids
+    assert "F-001" in graph_answer.finding_ids
+    assert any("EV-003" in str(source.model_dump(mode="json")) for source in graph_answer.sources)
 
     decision_answer = answer_report_followup("為什麼是 MONITOR？", incident)
 

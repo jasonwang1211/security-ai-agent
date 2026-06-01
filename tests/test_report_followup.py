@@ -3,6 +3,7 @@ import sys
 from pathlib import Path
 
 from modules.evidence_correlator import correlate_auth_sequence
+from modules.graph.types import GraphEdge, GraphEdgeKind, GraphNode, GraphNodeKind, GraphSnapshot
 from modules.rag_metadata import KnowledgeDocMetadata
 from modules.rag_types import AnswerWithSources, SourceCitation
 from modules.report_followup import (
@@ -10,6 +11,7 @@ from modules.report_followup import (
     answer_report_followup,
     extract_evidence_ids,
     extract_finding_ids,
+    explain_graph_followup_protected,
     explain_report_followup_protected,
     explain_rule_followup_protected,
     classify_followup_intent,
@@ -104,6 +106,39 @@ def make_rule_metadata(rule_id: str = "CMD-001") -> KnowledgeDocMetadata:
         keywords=["command injection", "rule"],
         rule_ids=[rule_id],
         source_path="detections/blue_team/command_injection.yml",
+    )
+
+
+def make_graph_snapshot() -> GraphSnapshot:
+    return GraphSnapshot(
+        nodes=[
+            GraphNode(id="EV-003", kind=GraphNodeKind.EVIDENCE, label="Successful login"),
+            GraphNode(id="F-001", kind=GraphNodeKind.FINDING, label="Possible account compromise"),
+            GraphNode(id="DETECTION_RULE:CMD-001", kind=GraphNodeKind.DETECTION_RULE, label="Command injection rule"),
+            GraphNode(id="ATTACK_TYPE:Command Injection", kind=GraphNodeKind.ATTACK_TYPE, label="Command Injection"),
+            GraphNode(id="RISK_LEVEL:HIGH", kind=GraphNodeKind.RISK_LEVEL, label="HIGH"),
+            GraphNode(id="DECISION:MONITOR", kind=GraphNodeKind.DECISION, label="MONITOR"),
+        ],
+        edges=[
+            GraphEdge(
+                id="EDGE:SUPPORTED_BY:F-001->EV-003",
+                kind=GraphEdgeKind.SUPPORTED_BY,
+                source_node_id="F-001",
+                target_node_id="EV-003",
+            ),
+            GraphEdge(
+                id="EDGE:MAPS_TO_RULE:F-001->DETECTION_RULE:CMD-001",
+                kind=GraphEdgeKind.MAPS_TO_RULE,
+                source_node_id="F-001",
+                target_node_id="DETECTION_RULE:CMD-001",
+            ),
+            GraphEdge(
+                id="EDGE:DETECTS:DETECTION_RULE:CMD-001->ATTACK_TYPE:Command Injection",
+                kind=GraphEdgeKind.DETECTS,
+                source_node_id="DETECTION_RULE:CMD-001",
+                target_node_id="ATTACK_TYPE:Command Injection",
+            )
+        ],
     )
 
 
@@ -293,6 +328,57 @@ def test_protected_fallback_preserves_safety_report_error_findings():
     assert result.was_fallback
     assert result.safety_report.findings_by_rule("real_enforcement_claim")
     assert result.safety_report.findings_by_rule("real_enforcement_claim")[0].severity == "ERROR"
+
+
+def test_explain_graph_followup_protected_returns_result():
+    result = explain_graph_followup_protected(make_graph_snapshot(), "EV-003")
+
+    assert isinstance(result, ProtectedExplanationResult)
+    assert isinstance(result.answer, AnswerWithSources)
+
+
+def test_explain_graph_followup_protected_safe_answer_does_not_fallback():
+    result = explain_graph_followup_protected(make_graph_snapshot(), "EV-003")
+
+    assert not result.was_fallback
+    assert result.safety_report.is_safe
+    assert "F-001" in result.answer.answer
+
+
+def test_explain_graph_followup_protected_accepts_prefixed_rule_reference():
+    result = explain_graph_followup_protected(make_graph_snapshot(), "DETECTION_RULE:CMD-001")
+
+    assert not result.was_fallback
+    assert result.safety_report.is_safe
+    assert result.answer.rule_ids == ["CMD-001"]
+    assert "F-001" in result.answer.answer
+    assert "Command Injection" in result.answer.answer
+
+
+def test_existing_guardrails_still_fallback_for_unsafe_graph_like_answer():
+    answer = AnswerWithSources(
+        answer="Graph context says the firewall blocked the attacker in production.",
+        sources=[SourceCitation(source="graph:EDGE-1", kind="incident_evidence")],
+        evidence_ids=["EV-999"],
+        confidence="MEDIUM",
+    )
+
+    result = protect_answer_with_guardrails(answer, known_evidence_ids={"EV-003"})
+
+    assert result.was_fallback
+    assert result.safety_report.findings_by_rule("real_enforcement_claim")
+    assert result.safety_report.findings_by_rule("invented_evidence_id")
+
+
+def test_graph_followup_does_not_mutate_risk_or_decision_nodes():
+    snapshot = make_graph_snapshot()
+    before = snapshot.model_dump(mode="json")
+
+    explain_graph_followup_protected(snapshot, "EV-003")
+
+    assert snapshot.model_dump(mode="json") == before
+    assert [node.label for node in snapshot.nodes if node.kind == GraphNodeKind.RISK_LEVEL] == ["HIGH"]
+    assert [node.label for node in snapshot.nodes if node.kind == GraphNodeKind.DECISION] == ["MONITOR"]
 
 
 def test_explain_report_followup_protected_returns_result():
