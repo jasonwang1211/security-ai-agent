@@ -6,7 +6,7 @@
 # English
 
 > Project: AI-assisted Security Threat Detection and Response System
-> Current phase: v2.1 Graph-Backed Explanation MVP implemented; release gate pending
+> Current phase: v2.1 Graph-Backed Explanation MVP release gate passed; ready to tag
 > Release baseline: tag `v2.0.0`
 > Release focus: Graph-backed protected explanation
 
@@ -168,7 +168,7 @@ What changed:
 
 Boundary note:
 
-Tool Policy and Workflow Plan are contract-only. They are not connected to runtime flow, do not execute tools, and do not make Smart Router the default CLI route. `ControllerAgent` does not auto-execute. `RAGQA` remains the active general knowledge QA runtime. Graph RAG, Knowledge Capture, and Agent Skill Orchestration runtime remain deferred. AI does not decide attacks or override Risk Level / Decision. `BLOCK`, `MONITOR`, and `ALLOW` remain simulated, with no real firewall/WAF/SIEM/SOAR enforcement. The latest v2.0 release gate is `585 passed`, with ruff, mypy, `git diff --check`, and Gitleaks passing.
+Tool Policy and Workflow Plan are contract-only. They are not connected to runtime flow, do not execute tools, and do not make Smart Router the default CLI route. `ControllerAgent` does not auto-execute. `RAGQA` remains the active general knowledge QA runtime. Graph RAG, Knowledge Capture, and Agent Skill Orchestration runtime remain deferred. AI does not decide attacks or override Risk Level / Decision. `BLOCK`, `MONITOR`, and `ALLOW` remain simulated, with no real firewall/WAF/SIEM/SOAR enforcement. The latest v2.1 release gate is `600 passed`, with ruff, mypy, `git diff --check`, and Gitleaks passing.
 
 ## v2.0 Knowledge Graph Foundation
 
@@ -557,7 +557,7 @@ The current branch also includes a small but important quality foundation:
 - v1.9 documentation source-of-truth docs for architecture ownership, testing strategy, ADRs, and package migration planning
 - v2.0 graph type, builder, lookup, and exporter focused tests
 - v2.1 graph-backed explanation, protected adapter, and Scenario A focused tests
-- `pytest` for regression checks; latest full release-gate result is `585 passed`
+- `pytest` for regression checks; latest full release-gate result is `600 passed`
 - `ruff` for linting and import hygiene
 - Lenient `mypy` as a gradual typing baseline
 - GitHub Actions CI for automated quality checks
@@ -584,7 +584,7 @@ The current branch also includes a small but important quality foundation:
 | Protected runtime wiring / analyst UX foundation | Passed |
 | v1.9 architecture cleanup / orchestration contracts | Passed |
 | v2.0 Knowledge Graph Foundation helpers | Focused phase checks passed |
-| v2.1 Graph-Backed Explanation MVP | Focused phase checks passed; release gate pending |
+| v2.1 Graph-Backed Explanation MVP | Release gate passed |
 | Quality checks and CI foundation | Passed |
 
 Overall result:
@@ -628,7 +628,7 @@ For planned future work, see [docs/ROADMAP.md](docs/ROADMAP.md).
 # 繁體中文
 
 > 專案：AI 輔助安全威脅偵測與回應系統
-> 目前里程碑：v2.1 Graph-Backed Explanation MVP 已實作，release gate 尚未執行
+> 目前里程碑：v2.1 Graph-Backed Explanation MVP release gate 已通過，準備 tag
 > 里程碑：受保護的圖譜輔助解釋
 完整 CLI 範例可參考 [demo_outputs.md](demo_outputs.md)。
 
@@ -779,7 +779,7 @@ Mode 3 RAG 只負責知識解釋，不決定 attack type、risk level 或模擬 
 - Tool Permission Contract / Workflow Plan Contract tests
 - v2.0 graph type / builder / lookup / exporter focused tests
 - v2.1 graph-backed explanation / protected adapter / Scenario A focused tests
-- `pytest` latest full gate (`585 passed`)
+- `pytest` latest full gate (`600 passed`)
 - `ruff`
 - lenient `mypy`
 - GitHub Actions CI
@@ -805,7 +805,7 @@ Mode 3 RAG 只負責知識解釋，不決定 attack type、risk level 或模擬 
 | RAG v2 source-cited explainer helpers | Passed |
 | v1.9 architecture cleanup / orchestration contracts | Passed |
 | v2.0 Knowledge Graph Foundation helpers | Focused phase checks passed |
-| v2.1 Graph-Backed Explanation MVP | Focused phase checks passed; release gate pending |
+| v2.1 Graph-Backed Explanation MVP | Release gate passed |
 | pytest / ruff / mypy / GitHub Actions CI | Passed |
 
 整體結果：

@@ -6,7 +6,7 @@ This roadmap describes planned development after the v2.1 Graph-Backed Explanati
 
 Current release baseline: tag `v2.0.0`.
 
-Current phase: v2.1 Graph-Backed Explanation MVP implemented; release gate pending.
+Current phase: v2.1 Graph-Backed Explanation MVP release gate passed; ready to tag.
 
 Completed:
 
@@ -34,9 +34,9 @@ Completed:
 - v2.1 Graph-Backed Explanation MVP
 - pytest / ruff / mypy / GitHub Actions CI
 
-Last full quality gate (v2.0):
+Last full quality gate (v2.1):
 
-- `python -m pytest` -> `585 passed`
+- `python -m pytest` -> `600 passed`
 - `python -m ruff check .` -> passed
 - `python -m mypy app.py modules tests` -> passed
 - CI includes Gitleaks secret scanning
@@ -196,7 +196,7 @@ Deferred beyond v2.0:
 
 ## v2.1 - Graph-Backed Explanation MVP
 
-Status: Implemented; release gate pending.
+Status: Release gate passed; ready to tag.
 
 Delivered:
 
@@ -225,7 +225,7 @@ All response decisions remain simulated unless explicitly redesigned in a future
 
 目前 release baseline：tag `v2.0.0`。
 
-目前里程碑：v2.1 Graph-Backed Explanation MVP 已實作，release gate 尚未執行。
+目前里程碑：v2.1 Graph-Backed Explanation MVP release gate 已通過，準備 tag。
 
 已完成：
 
@@ -253,9 +253,9 @@ All response decisions remain simulated unless explicitly redesigned in a future
 - v2.1 Graph-Backed Explanation MVP
 - pytest / ruff / mypy / GitHub Actions CI
 
-Last full quality gate (v2.0):
+Last full quality gate (v2.1):
 
-- `python -m pytest` -> `585 passed`
+- `python -m pytest` -> `600 passed`
 - `python -m ruff check .` -> passed
 - `python -m mypy app.py modules tests` -> passed
 
@@ -369,7 +369,7 @@ Status: Foundation completed.
 
 ## v2.1 - Graph-Backed Explanation MVP
 
-- Status: 已實作；release gate 尚未執行
+- Status: release gate 已通過；準備 tag
 - 新增 `modules/graph/explainers.py` 與 `explain_graph_reference(snapshot, reference_id) -> AnswerWithSources`
 - 支援 EV-ID、F-ID、rule ID 與 INC-ID 的明確圖譜關係解釋，僅跟隨既有節點與邊
 - 圖譜 provenance 透過既有 `SourceCitation.metadata` 表示，沒有擴充 RAG schema

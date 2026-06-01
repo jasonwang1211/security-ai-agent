@@ -308,7 +308,7 @@ The project uses several testing layers:
 
 Last full quality gate:
 
-- `python -m pytest` -> `585 passed`
+- `python -m pytest` -> `600 passed`
 - `python -m ruff check .`
 - `python -m mypy app.py modules tests`
 

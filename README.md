@@ -228,7 +228,7 @@ v1.9 is an architecture and contract milestone, not a runtime feature release:
 - Controlled RAG helper migration into `modules/rag/` with flat compatibility shims.
 - Controlled controller/orchestration migration into `modules/controller/` with flat compatibility shims.
 - Manual LLM/RAG smoke checklist documented as manual-only, not CI, and not executed.
-- Latest full release-gate result (v2.0): `585 passed`.
+- Latest full release-gate result (v2.1): `600 passed`.
 
 Boundaries:
 
@@ -281,7 +281,7 @@ python -m ruff check .
 python -m mypy app.py modules tests
 ```
 
-Last full release-gate test result: `585 passed`.
+Last full release-gate test result: `600 passed`.
 
 The test suite includes expanded golden smoke tests, direct consolidated log pipeline tests, Pydantic boundary model tests, incident/export/follow-up/guardrail tests, and Scenario A integration coverage for a mixed authentication log. Deterministic tests do not start the full app or initialize RAGQA, Chroma, embeddings, Torch, Ollama, ChatOllama, or local LLM clients. GitHub Actions CI runs the same quality gate.
 
@@ -310,7 +310,7 @@ python app.py
 
 Current release baseline: tag `v2.0.0`.
 
-Current phase: v2.1 Graph-Backed Explanation MVP implemented; release gate pending.
+Current phase: v2.1 Graph-Backed Explanation MVP release gate passed; ready to tag.
 
 Completed:
 
@@ -395,7 +395,7 @@ See [docs/ROADMAP.md](docs/ROADMAP.md) for delivered items.
 - KnowledgeDoc graph seed is deferred until a metadata audit
 - Graph RAG retrieval, Knowledge Capture, LLM graph extraction, Neo4j, vector search, runtime orchestration, tool execution, and `RAGQA` replacement remain deferred
 
-**v2.1 - Graph-Backed Explanation MVP** (Implemented; release gate pending)
+**v2.1 - Graph-Backed Explanation MVP** (Release gate passed; ready to tag)
 
 - `modules/graph/explainers.py` adds `explain_graph_reference(snapshot, reference_id) -> AnswerWithSources`
 - Exact EV-ID, F-ID, rule ID, and INC-ID references can be explained from explicit graph nodes and edges with protected citations
@@ -506,7 +506,7 @@ python -m ruff check .
 python -m mypy app.py modules tests
 ```
 
-最近一次完整 release gate 測試結果：`585 passed`。
+最近一次完整 release gate 測試結果：`600 passed`。
 
 測試使用 dummy RAG 與 LLMAssist 物件，不會啟動完整 CLI，也不會初始化 RAGQA、Chroma、embeddings、Torch、Ollama、ChatOllama 或本地 LLM client。GitHub Actions CI 會執行同一組品質檢查。
 
@@ -514,7 +514,7 @@ python -m mypy app.py modules tests
 
 Current release baseline: tag `v2.0.0`.
 
-目前里程碑：v2.1 Graph-Backed Explanation MVP 已實作，release gate 尚未執行。
+目前里程碑：v2.1 Graph-Backed Explanation MVP release gate 已通過，準備 tag。
 
 已完成：
 
@@ -606,7 +606,7 @@ Current release baseline: tag `v2.0.0`.
 - 2A-3 決策：KnowledgeDoc 圖譜種子延後到 metadata 盤點後再處理
 - 邊界：圖譜是證據與脈絡結構，不作為偵測權威或最終判定來源；graph lookup 不會改變 Risk Level / Decision、不會取代規則式偵測器或 `RAGQA`、不會呼叫 LLM、自動寫入知識或執行工具
 
-**v2.1 - Graph-Backed Explanation MVP**（已實作；release gate 尚未執行）
+**v2.1 - Graph-Backed Explanation MVP**（release gate 已通過；準備 tag）
 
 - `explain_graph_reference(snapshot, reference_id)` 可用明確圖譜邊解釋 EV-ID、F-ID、rule ID 與 INC-ID
 - `explain_graph_followup_protected(...)` 會將圖譜解釋交給既有 `AnswerGuardrails` 保護

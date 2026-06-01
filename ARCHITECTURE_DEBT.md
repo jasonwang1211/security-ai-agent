@@ -1,8 +1,8 @@
 # Architecture Debt Engineering Journal
 
-Current milestone: v2.1 Graph-Backed Explanation MVP implemented; release gate pending
+Current milestone: v2.1 Graph-Backed Explanation MVP release gate passed; ready to tag
 Current baseline: tag `v2.0.0`
-Last full quality gate: `585 passed`
+Last full quality gate: `600 passed`
 
 This document tracks structural debt cleanup as an engineering discipline: reducing module sprawl, consolidating thin wrappers, and preserving deterministic safety boundaries before adding more agentic behavior.
 
@@ -42,7 +42,7 @@ The project has reached a stable consolidated architecture with:
 | RAG helper ownership | flat `modules/rag_*.py` helpers | `modules/rag/` plus flat shims | Controlled helper package migration; `RAGQA` remains active runtime |
 | Controller/orchestration ownership | flat controller/tool/policy/workflow modules | `modules/controller/` plus flat shims | Controlled package migration; no runtime auto-execution added |
 | Graph foundation ownership | none | `modules/graph/` | In-memory graph contracts, deterministic builder, read-only lookup, JSON serialization, and protected exact-reference explanation; no Graph RAG or persistence |
-| Testing foundation | limited smoke coverage | golden + log pipeline + boundary + incident + detection-rule + controller + RAG v2 + v1.7 reliability + v1.8 protected helper tests + v1.9 contract tests + v2.0 graph focused tests + v2.1 graph explanation focused tests | Last full quality gate: `585 passed`, ruff, mypy |
+| Testing foundation | limited smoke coverage | golden + log pipeline + boundary + incident + detection-rule + controller + RAG v2 + v1.7 reliability + v1.8 protected helper tests + v1.9 contract tests + v2.0 graph focused tests + v2.1 graph explanation focused tests | Last full quality gate: `600 passed`, ruff, mypy |
 
 ## v1.3 Phase Outcomes
 
@@ -248,7 +248,7 @@ v2.1 deliberately stays within explicit graph nodes and edges. Missing reference
 
 ## Last Full Quality Gate
 
-- `python -m pytest` -> `585 passed`
+- `python -m pytest` -> `600 passed`
 - `python -m ruff check .` -> passed
 - `python -m mypy app.py modules tests` -> passed
 - CI runs the same quality gate and includes Gitleaks secret scanning
