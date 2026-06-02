@@ -22,13 +22,19 @@ def _normalize_upper_values(values: list[str]) -> list[str]:
 class KnowledgeDocMetadata(BaseModel):
     doc_id: str
     doc_type: str
+    title: str | None = None
+    review_status: str | None = None
     applies_to: list[str] = Field(default_factory=list)
     related_tools: list[str] = Field(default_factory=list)
     attack_types: list[str] = Field(default_factory=list)
+    finding_types: list[str] = Field(default_factory=list)
+    evidence_types: list[str] = Field(default_factory=list)
     severity: list[str] = Field(default_factory=list)
+    decision_labels: list[str] = Field(default_factory=list)
     rule_ids: list[str] = Field(default_factory=list)
     mitre_techniques: list[str] = Field(default_factory=list)
     keywords: list[str] = Field(default_factory=list)
+    tags: list[str] = Field(default_factory=list)
     source_path: str | None = None
 
     @field_validator("doc_id")
@@ -41,18 +47,28 @@ class KnowledgeDocMetadata(BaseModel):
     def doc_type_must_not_be_empty(cls, value: str) -> str:
         return _require_non_blank(value, "doc_type")
 
+    @field_validator("title", "review_status")
+    @classmethod
+    def optional_string_fields_must_not_be_empty(cls, value: str | None) -> str | None:
+        if value is not None:
+            return _require_non_blank(value, "title/review_status")
+        return value
+
     @field_validator(
         "applies_to",
         "related_tools",
         "attack_types",
+        "finding_types",
+        "evidence_types",
         "severity",
         "keywords",
+        "tags",
     )
     @classmethod
     def list_fields_should_not_include_blanks(cls, value: list[str]) -> list[str]:
         return _remove_blank_strings(value)
 
-    @field_validator("rule_ids", "mitre_techniques")
+    @field_validator("decision_labels", "rule_ids", "mitre_techniques")
     @classmethod
     def id_fields_should_be_uppercase_without_blanks(cls, value: list[str]) -> list[str]:
         return _normalize_upper_values(value)

@@ -495,8 +495,18 @@ def test_minimal_kb_docs_exist_and_contain_key_phrases():
         Path("knowledge/blue_team/report_explainer/ai_assist_limitations.md"),
         Path("knowledge/blue_team/report_explainer/disagreement_handling.md"),
         Path("knowledge/blue_team/report_explainer/incident_response_next_steps.md"),
+        Path("knowledge/blue_team/report_explainer/possible_account_compromise.md"),
+        Path("knowledge/blue_team/report_explainer/success_after_failures.md"),
+        Path("knowledge/blue_team/report_explainer/monitor_decision_investigation.md"),
+        Path("knowledge/blue_team/report_explainer/authentication_investigation_checklist.md"),
+        Path("knowledge/blue_team/report_explainer/authentication_false_positive_considerations.md"),
+        Path("knowledge/blue_team/report_explainer/xss_explainer.md"),
+        Path("knowledge/blue_team/report_explainer/sql_injection_explainer.md"),
+        Path("knowledge/blue_team/report_explainer/path_traversal_explainer.md"),
+        Path("knowledge/blue_team/report_explainer/command_injection_explainer.md"),
     ]
 
+    assert len(docs) == 20
     for doc in docs:
         assert doc.exists()
         content = doc.read_text(encoding="utf-8")
