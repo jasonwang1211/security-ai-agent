@@ -6,8 +6,8 @@
 # English
 
 > Project: AI-assisted Security Threat Detection and Response System
-> Current phase: v2.2 release gate passed; ready to tag
-> Release baseline: tag `v2.1.0`
+> Current phase: v2.2 released as `v2.2.0`
+> Release baseline: tag `v2.2.0`
 > Release focus: Reviewed curated KB metadata, KnowledgeDoc seed candidates, and protected hybrid explanation assembly
 
 Full CLI excerpts are available in [demo_outputs.md](demo_outputs.md).
@@ -212,7 +212,7 @@ This is graph-backed explanation, not Graph RAG retrieval. It is currently a pro
 
 ## v2.2 Curated RAG Graph Seed Foundation
 
-v2.2 release gate passed; ready to tag.
+v2.2 released as `v2.2.0`.
 
 Batch 2.2-A promoted reviewed curated knowledge:
 
@@ -632,14 +632,14 @@ The current branch also includes a small but important quality foundation:
 | v1.9 architecture cleanup / orchestration contracts | Passed |
 | v2.0 Knowledge Graph Foundation helpers | Focused phase checks passed |
 | v2.1 Graph-Backed Explanation MVP | Release gate passed |
-| v2.2 Curated RAG Graph Seed Foundation | Release gate passed; ready to tag |
+| v2.2 Curated RAG Graph Seed Foundation | Released as `v2.2.0` |
 | v2.2 focused pytest / Ruff / Mypy / diff-check | Passed |
 | v2.2 full release gate | Passed: `628 passed`, Ruff, Mypy, diff-check, Gitleaks |
 
 Overall result:
 
 ```text
-v2.2 release gate passed; ready to tag. The current feature branch contains reviewed curated KB promotion, reviewed KnowledgeDoc seed candidates, and protected hybrid graph/knowledge explanation assembly. Existing CLI behavior remains unchanged, automatic Graph RAG retrieval is not implemented, and deterministic detection / policy still control final verdicts.
+v2.2 released as `v2.2.0`. The current feature branch contains reviewed curated KB promotion, reviewed KnowledgeDoc seed candidates, and protected hybrid graph/knowledge explanation assembly. Existing CLI behavior remains unchanged, automatic Graph RAG retrieval is not implemented, and deterministic detection / policy still control final verdicts.
 ```
 
 ---
@@ -677,7 +677,7 @@ For planned future work, see [docs/ROADMAP.md](docs/ROADMAP.md).
 # 繁體中文
 
 > 專案：AI 輔助安全威脅偵測與回應系統
-> 目前里程碑：v2.2 release gate 已通過，準備 tag
+> 目前里程碑：v2.2 已發布為 `v2.2.0`
 > 里程碑：reviewed curated KB metadata、KnowledgeDoc seed candidates 與 protected hybrid explanation assembly
 完整 CLI 範例可參考 [demo_outputs.md](demo_outputs.md)。
 
@@ -865,14 +865,14 @@ Mode 3 RAG 只負責知識解釋，不決定 attack type、risk level 或模擬 
 | v1.9 architecture cleanup / orchestration contracts | Passed |
 | v2.0 Knowledge Graph Foundation helpers | Focused phase checks passed |
 | v2.1 Graph-Backed Explanation MVP | Release gate passed |
-| v2.2 Curated RAG Graph Seed Foundation | release gate 已通過；準備 tag |
+| v2.2 Curated RAG Graph Seed Foundation | 已發布為 `v2.2.0` |
 | v2.2 focused pytest / Ruff / Mypy / diff-check | 通過 |
 | v2.2 full release gate | 通過：`628 passed`、Ruff、Mypy、diff-check、Gitleaks |
 
 整體結果：
 
 ```text
-v2.2 release gate 已通過，準備 tag。此分支包含 reviewed curated KB promotion、reviewed KnowledgeDoc seed candidates，以及 protected hybrid graph/knowledge explanation assembly。既有 CLI 行為維持不變，automatic Graph RAG retrieval 尚未實作，最終判定仍由 deterministic 偵測與 policy 控制。
+v2.2 已發布為 `v2.2.0`。此分支包含 reviewed curated KB promotion、reviewed KnowledgeDoc seed candidates，以及 protected hybrid graph/knowledge explanation assembly。既有 CLI 行為維持不變，automatic Graph RAG retrieval 尚未實作，最終判定仍由 deterministic 偵測與 policy 控制。
 ```
 
 ---

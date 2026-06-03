@@ -299,7 +299,7 @@ This is graph-backed explanation, not Graph RAG retrieval. It does not call LLMs
 
 ## v2.2 Curated RAG Graph Seed Foundation
 
-v2.2 release gate passed; ready to tag.
+v2.2 released as `v2.2.0`.
 
 Batch 2.2-A promotes reviewed curated Traditional Chinese knowledge into the live report-explainer corpus while keeping the runtime contract narrow:
 

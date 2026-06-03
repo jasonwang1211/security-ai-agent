@@ -273,7 +273,7 @@ Boundaries:
 
 ### v2.2 Curated RAG Graph Seed Foundation
 
-v2.2 release gate passed; ready to tag.
+v2.2 released as `v2.2.0`.
 
 v2.2 promotes reviewed curated Traditional Chinese report-explainer content and adds narrow protected graph/knowledge assembly helpers:
 
@@ -355,9 +355,9 @@ python app.py
 
 ### Current Status
 
-Current release baseline: tag `v2.1.0`.
+Current release baseline: tag `v2.2.0`.
 
-Current phase: v2.2 release gate passed; ready to tag.
+Current phase: v2.2 released as `v2.2.0`.
 
 Completed:
 
@@ -451,7 +451,7 @@ See [docs/ROADMAP.md](docs/ROADMAP.md) for delivered items.
 - Rule IDs such as `CMD-001` and `DETECTION_RULE:CMD-001` normalize outward-facing `rule_ids` to stable IDs while citations retain graph provenance
 - This is a protected helper and tested integration capability, not CLI auto-routing, an `app.py` mode, Graph RAG retrieval, Knowledge Capture, `RAGQA` replacement, decision override, or real enforcement
 
-**v2.2 - Curated RAG Graph Seed Foundation** (Release gate passed; ready to tag)
+**v2.2 - Curated RAG Graph Seed Foundation** (Released as `v2.2.0`)
 
 - 9 reviewed Traditional Chinese report-explainer KB documents promoted into live `knowledge/blue_team/report_explainer/`
 - Live report-explainer coverage expanded from 11 to 20 documents
@@ -564,15 +564,15 @@ python -m ruff check .
 python -m mypy app.py modules tests
 ```
 
-最近一次完整 release gate 測試結果：v2.2 `628 passed`，Ruff、Mypy、`git diff --check` 與 Gitleaks 均通過。v2.2 release gate 已通過，準備 tag。
+最近一次完整 release gate 測試結果：v2.2 `628 passed`，Ruff、Mypy、`git diff --check` 與 Gitleaks 均通過。v2.2 已發布為 `v2.2.0`。
 
 測試使用 dummy RAG 與 LLMAssist 物件，不會啟動完整 CLI，也不會初始化 RAGQA、Chroma、embeddings、Torch、Ollama、ChatOllama 或本地 LLM client。GitHub Actions CI 會執行同一組品質檢查。
 
 ### 目前狀態
 
-Current release baseline: tag `v2.1.0`.
+Current release baseline: tag `v2.2.0`.
 
-目前里程碑：v2.2 release gate 已通過，準備 tag。
+目前里程碑：v2.2 已發布為 `v2.2.0`。
 
 已完成：
 
@@ -673,7 +673,7 @@ Current release baseline: tag `v2.1.0`.
 - Scenario A 展示 `EV-003` 明確支援 `F-001`，且 incident `Decision` 仍為 `MONITOR`
 - 這不是 Graph RAG retrieval，也不是 CLI auto-routing、`app.py` 新模式、Knowledge Capture、`RAGQA` replacement、Risk Level / Decision override、tool execution 或 real enforcement
 
-**v2.2 - Curated RAG Graph Seed Foundation**（release gate 已通過；準備 tag）
+**v2.2 - Curated RAG Graph Seed Foundation**（已發布為 `v2.2.0`）
 
 - 9 篇 reviewed Traditional Chinese report-explainer KB 文件已提升到 live `knowledge/blue_team/report_explainer/`
 - live report-explainer coverage 從 11 篇擴充到 20 篇

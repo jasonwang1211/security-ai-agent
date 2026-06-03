@@ -4,9 +4,9 @@ This roadmap describes planned development after the v2.2 curated RAG graph seed
 
 ## Current Baseline
 
-Current release baseline: tag `v2.1.0`.
+Current release baseline: tag `v2.2.0`.
 
-Current phase: v2.2 release gate passed; ready to tag.
+Current phase: v2.2 released as `v2.2.0`.
 
 Completed:
 
@@ -221,7 +221,7 @@ v2.1 is graph-backed explanation, not Graph RAG retrieval. It is a protected hel
 
 ## v2.2 - Curated RAG Graph Seed Foundation
 
-Status: Release gate passed; ready to tag.
+Status: Released as `v2.2.0`.
 
 Delivered:
 
@@ -266,9 +266,9 @@ All response decisions remain simulated unless explicitly redesigned in a future
 
 ## 目前基準
 
-目前 release baseline：tag `v2.1.0`。
+目前 release baseline：tag `v2.2.0`。
 
-目前里程碑：v2.2 release gate 已通過，準備 tag。
+目前里程碑：v2.2 已發布為 `v2.2.0`。
 
 已完成：
 
@@ -430,7 +430,7 @@ Status: Foundation completed.
 
 ## v2.2 - Curated RAG Graph Seed Foundation
 
-- Status: release gate 已通過；準備 tag
+- Status: 已發布為 `v2.2.0`
 - 9 篇 reviewed Traditional Chinese report-explainer KB 文件已提升到 live `knowledge/blue_team/report_explainer/`
 - live report-explainer coverage 從 11 篇擴充到 20 篇
 - 新增 `title`、`review_status`、`finding_types`、`evidence_types`、`decision_labels`、`tags` 的最小 typed metadata 支援
