@@ -2,13 +2,16 @@ import subprocess
 import sys
 from pathlib import Path
 
+from modules.detection_rules import DetectionRule
 from modules.evidence_correlator import correlate_auth_sequence
+from modules.graph.knowledge_doc_seed import build_knowledge_doc_seed
 from modules.graph.types import GraphEdge, GraphEdgeKind, GraphNode, GraphNodeKind, GraphSnapshot
 from modules.rag_metadata import KnowledgeDocMetadata
 from modules.rag_types import AnswerWithSources, SourceCitation
 from modules.report_followup import (
     ProtectedExplanationResult,
     answer_report_followup,
+    combine_hybrid_explanation_protected,
     extract_evidence_ids,
     extract_finding_ids,
     explain_graph_followup_protected,
@@ -77,6 +80,76 @@ def make_answer(
     )
 
 
+def make_auth_hybrid_graph_answer(text: str = "EV-003 explicitly supports F-001.") -> AnswerWithSources:
+    return AnswerWithSources(
+        answer=text,
+        sources=[
+            SourceCitation(
+                source="graph:EDGE:SUPPORTED_BY:F-001->EV-003",
+                kind="incident_evidence",
+                heading="SUPPORTED_BY",
+                identifier="EDGE:SUPPORTED_BY:F-001->EV-003",
+            )
+        ],
+        evidence_ids=["EV-003"],
+        finding_ids=["F-001"],
+        confidence="HIGH",
+        limitations=["Graph explanation uses explicit in-memory graph edges only."],
+    )
+
+
+def make_auth_hybrid_knowledge_answer(
+    text: str = "Curated KB explains success_after_failures and the simulated MONITOR boundary.",
+) -> AnswerWithSources:
+    return AnswerWithSources(
+        answer=text,
+        sources=[
+            SourceCitation(
+                source="knowledge/blue_team/report_explainer/success_after_failures.md",
+                kind="knowledge_doc",
+                identifier="report.success_after_failures",
+            )
+        ],
+        confidence="MEDIUM",
+        limitations=["Curated knowledge source context only."],
+    )
+
+
+def make_command_hybrid_graph_answer(text: str = "KnowledgeDoc seed maps CMD-001 to Command Injection.") -> AnswerWithSources:
+    return AnswerWithSources(
+        answer=text,
+        sources=[
+            SourceCitation(
+                source="graph:EDGE:MAPS_TO_RULE:KNOWLEDGE_DOC:report.command_injection_explainer->DETECTION_RULE:CMD-001",
+                kind="knowledge_doc",
+                heading="MAPS_TO_RULE",
+                identifier="EDGE:MAPS_TO_RULE:KNOWLEDGE_DOC:report.command_injection_explainer->DETECTION_RULE:CMD-001",
+            )
+        ],
+        rule_ids=["CMD-001"],
+        confidence="HIGH",
+        limitations=["KnowledgeDoc seed uses reviewed metadata and supplied DetectionRule objects only."],
+    )
+
+
+def make_command_hybrid_knowledge_answer(
+    text: str = "Curated KB explains CMD-001; BLOCK remains simulated.",
+) -> AnswerWithSources:
+    return AnswerWithSources(
+        answer=text,
+        sources=[
+            SourceCitation(
+                source="knowledge/blue_team/report_explainer/command_injection_explainer.md",
+                kind="knowledge_doc",
+                identifier="report.command_injection_explainer",
+            )
+        ],
+        rule_ids=["CMD-001"],
+        confidence="MEDIUM",
+        limitations=["Curated knowledge source context only."],
+    )
+
+
 def make_answer_without_sources(text: str) -> AnswerWithSources:
     return AnswerWithSources.model_construct(
         answer=text,
@@ -106,6 +179,30 @@ def make_rule_metadata(rule_id: str = "CMD-001") -> KnowledgeDocMetadata:
         keywords=["command injection", "rule"],
         rule_ids=[rule_id],
         source_path="detections/blue_team/command_injection.yml",
+    )
+
+
+def make_command_injection_doc_metadata() -> KnowledgeDocMetadata:
+    return KnowledgeDocMetadata(
+        doc_id="report.command_injection_explainer",
+        doc_type="report_explainer",
+        title="Command Injection 攻擊判讀",
+        review_status="approved_for_runtime_promotion",
+        attack_types=["Command Injection"],
+        rule_ids=["CMD-001"],
+        source_path="knowledge/blue_team/report_explainer/command_injection_explainer.md",
+    )
+
+
+def make_command_injection_rule() -> DetectionRule:
+    return DetectionRule(
+        id="CMD-001",
+        title="Basic Command Injection Indicators",
+        attack_type="Command Injection",
+        severity="HIGH",
+        confidence=0.9,
+        patterns=["; rm "],
+        source_path="detections/blue_team/command_injection/command_injection_basic.yml",
     )
 
 
@@ -445,6 +542,147 @@ def test_explain_rule_followup_protected_fallback_for_invented_rule_id():
     assert result.was_fallback
     assert result.safety_report.findings_by_rule("invented_rule_id")
     assert result.answer.rule_ids == []
+
+
+def test_combine_hybrid_explanation_protected_combines_graph_and_knowledge_answers():
+    result = combine_hybrid_explanation_protected(
+        make_auth_hybrid_graph_answer(),
+        make_auth_hybrid_knowledge_answer(),
+        known_evidence_ids={"EV-003"},
+        known_finding_ids={"F-001"},
+    )
+
+    assert isinstance(result, ProtectedExplanationResult)
+    assert not result.was_fallback
+    assert "明確圖譜脈絡" in result.answer.answer
+    assert "整理後知識脈絡" in result.answer.answer
+    assert result.answer.evidence_ids == ["EV-003"]
+    assert result.answer.finding_ids == ["F-001"]
+    assert result.answer.rule_ids == []
+
+
+def test_combine_hybrid_explanation_protected_retains_both_citation_types():
+    result = combine_hybrid_explanation_protected(
+        make_auth_hybrid_graph_answer(),
+        make_auth_hybrid_knowledge_answer(),
+        known_evidence_ids={"EV-003"},
+        known_finding_ids={"F-001"},
+    )
+
+    assert [source.source for source in result.answer.sources] == [
+        "graph:EDGE:SUPPORTED_BY:F-001->EV-003",
+        "knowledge/blue_team/report_explainer/success_after_failures.md",
+    ]
+
+
+def test_combine_hybrid_explanation_protected_deduplicates_rule_ids():
+    result = combine_hybrid_explanation_protected(
+        make_command_hybrid_graph_answer(),
+        make_command_hybrid_knowledge_answer(),
+        known_rule_ids={"CMD-001"},
+    )
+
+    assert result.answer.rule_ids == ["CMD-001"]
+
+
+def test_combine_hybrid_explanation_protected_fallbacks_for_unsafe_combined_answer():
+    result = combine_hybrid_explanation_protected(
+        make_auth_hybrid_graph_answer(),
+        make_auth_hybrid_knowledge_answer("The firewall blocked the attacker in production."),
+        known_evidence_ids={"EV-003"},
+        known_finding_ids={"F-001"},
+    )
+
+    assert result.was_fallback
+    assert result.safety_report.findings_by_rule("real_enforcement_claim")
+    assert "firewall blocked" not in result.answer.answer.casefold()
+
+
+def test_combine_hybrid_explanation_protected_does_not_mutate_inputs():
+    graph_answer = make_auth_hybrid_graph_answer()
+    knowledge_answer = make_auth_hybrid_knowledge_answer()
+    before_graph = graph_answer.model_dump(mode="json")
+    before_knowledge = knowledge_answer.model_dump(mode="json")
+
+    combine_hybrid_explanation_protected(
+        graph_answer,
+        knowledge_answer,
+        known_evidence_ids={"EV-003"},
+        known_finding_ids={"F-001"},
+    )
+
+    assert graph_answer.model_dump(mode="json") == before_graph
+    assert knowledge_answer.model_dump(mode="json") == before_knowledge
+
+
+def test_combine_hybrid_explanation_protected_is_assembly_only_boundary():
+    result = combine_hybrid_explanation_protected(
+        make_auth_hybrid_graph_answer("Graph context says Decision remains simulated MONITOR."),
+        make_auth_hybrid_knowledge_answer("Curated KB says MONITOR is simulated only."),
+        known_evidence_ids={"EV-003"},
+        known_finding_ids={"F-001"},
+    )
+
+    assert not result.was_fallback
+    assert "不會自行檢索資料，也不會改變 Risk Level 或 Decision" in result.answer.answer
+    assert "firewall blocked" not in result.answer.answer.casefold()
+    assert "production enforcement" not in result.answer.answer.casefold()
+
+
+def test_command_injection_seed_and_hybrid_answer_keep_simulated_block_boundary():
+    seed = build_knowledge_doc_seed(
+        [make_command_injection_doc_metadata()],
+        [make_command_injection_rule()],
+    )
+
+    assert {node.id for node in seed.nodes} == {
+        "KNOWLEDGE_DOC:report.command_injection_explainer",
+        "ATTACK_TYPE:Command Injection",
+        "DETECTION_RULE:CMD-001",
+    }
+    assert {
+        (edge.kind, edge.source_node_id, edge.target_node_id)
+        for edge in seed.edges
+    } == {
+        (
+            GraphEdgeKind.RELATED_TO_ATTACK,
+            "KNOWLEDGE_DOC:report.command_injection_explainer",
+            "ATTACK_TYPE:Command Injection",
+        ),
+        (
+            GraphEdgeKind.MAPS_TO_RULE,
+            "KNOWLEDGE_DOC:report.command_injection_explainer",
+            "DETECTION_RULE:CMD-001",
+        ),
+    }
+
+    rule_edge = next(edge for edge in seed.edges if edge.kind == GraphEdgeKind.MAPS_TO_RULE)
+    graph_answer = AnswerWithSources(
+        answer="KnowledgeDoc seed maps CMD-001 to Command Injection. Decision remains simulated BLOCK.",
+        sources=[
+            SourceCitation(
+                source=f"graph:{rule_edge.id}",
+                kind="knowledge_doc",
+                heading=rule_edge.kind.value,
+                identifier=rule_edge.id,
+                metadata={"edge": rule_edge.model_dump(mode="json")},
+            )
+        ],
+        rule_ids=["CMD-001"],
+        confidence="HIGH",
+        limitations=["KnowledgeDoc seed uses reviewed metadata and supplied DetectionRule objects only."],
+    )
+    result = combine_hybrid_explanation_protected(
+        graph_answer,
+        make_command_hybrid_knowledge_answer(),
+        known_rule_ids={"CMD-001"},
+    )
+
+    assert not result.was_fallback
+    assert any(source.source.startswith("graph:EDGE:MAPS_TO_RULE") for source in result.answer.sources)
+    assert any(source.identifier == "report.command_injection_explainer" for source in result.answer.sources)
+    assert "simulated BLOCK" in result.answer.answer
+    assert "firewall blocked" not in result.answer.answer.casefold()
 
 
 def test_protected_helpers_do_not_import_runtime_heavy_modules():

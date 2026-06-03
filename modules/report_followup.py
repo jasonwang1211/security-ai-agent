@@ -16,7 +16,7 @@ from modules.graph.explainers import explain_graph_reference
 from modules.graph.types import GraphNodeKind, GraphSnapshot
 from modules.rag_explainers import explain_report_question, explain_rule_question
 from modules.rag_metadata import KnowledgeDocMetadata
-from modules.rag_types import AnswerWithSources, SourceCitation
+from modules.rag_types import AnswerWithSources, RAGConfidence, SourceCitation
 from modules.types import EvidenceItem, Finding, Incident
 
 Intent = str
@@ -195,6 +195,38 @@ def explain_graph_followup_protected(
     )
 
 
+def combine_hybrid_explanation_protected(
+    graph_answer: AnswerWithSources,
+    knowledge_answer: AnswerWithSources,
+    *,
+    known_evidence_ids: set[str] | None = None,
+    known_finding_ids: set[str] | None = None,
+    known_rule_ids: set[str] | None = None,
+) -> ProtectedExplanationResult:
+    """Combine already-built graph and curated knowledge answers safely."""
+
+    combined = AnswerWithSources(
+        answer=(
+            f"明確圖譜脈絡：{graph_answer.answer} "
+            f"整理後知識脈絡：{knowledge_answer.answer} "
+            "此受保護的混合解釋僅組合已提供的圖譜與知識回答；"
+            "不會自行檢索資料，也不會改變 Risk Level 或 Decision。"
+        ),
+        sources=_dedupe_sources([*graph_answer.sources, *knowledge_answer.sources]),
+        evidence_ids=_dedupe([*graph_answer.evidence_ids, *knowledge_answer.evidence_ids]),
+        finding_ids=_dedupe([*graph_answer.finding_ids, *knowledge_answer.finding_ids]),
+        rule_ids=_dedupe([*graph_answer.rule_ids, *knowledge_answer.rule_ids]),
+        confidence=_combined_confidence(graph_answer.confidence, knowledge_answer.confidence),
+        limitations=_dedupe([*graph_answer.limitations, *knowledge_answer.limitations, "Hybrid explanation is assembly-only."]),
+    )
+    return protect_answer_with_guardrails(
+        combined,
+        known_evidence_ids=known_evidence_ids,
+        known_finding_ids=known_finding_ids,
+        known_rule_ids=known_rule_ids,
+    )
+
+
 def classify_followup_intent(question: str) -> Intent:
     """Classify a follow-up question into deterministic report routes."""
 
@@ -342,6 +374,22 @@ def _known_rule_ids(snapshot: GraphSnapshot) -> set[str]:
         for node in snapshot.nodes
         if node.kind == GraphNodeKind.DETECTION_RULE
     }
+
+
+def _dedupe_sources(sources: list[SourceCitation]) -> list[SourceCitation]:
+    deduped: list[SourceCitation] = []
+    seen: set[tuple[str, str | None, str | None]] = set()
+    for source in sources:
+        key = (source.source, source.identifier, source.heading)
+        if key not in seen:
+            deduped.append(source)
+            seen.add(key)
+    return deduped
+
+
+def _combined_confidence(left: RAGConfidence, right: RAGConfidence) -> RAGConfidence:
+    rank: dict[RAGConfidence, int] = {"LOW": 1, "MEDIUM": 2, "HIGH": 3}
+    return min((left, right), key=lambda value: rank.get(value, 1))
 
 
 def _answer_evidence_lookup(
