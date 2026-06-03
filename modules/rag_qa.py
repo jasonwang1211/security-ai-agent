@@ -9,7 +9,12 @@ from langchain_community.vectorstores import Chroma
 from langchain_core.prompts import ChatPromptTemplate
 
 from config import CHROMA_PATH, EMBED_MODEL, MODEL_NAME, TOP_K
+from modules.rag.controlled_retrieval import ControlledRetrievalResult, select_controlled_sources
+from modules.rag.metadata import load_metadata_from_directory
+from modules.rag.source_assembly import source_citation_from_metadata
+from modules.rag.types import AnswerWithSources, SourceCitation
 from modules.rag_query_planner import KNOWLEDGE_ROOT, RAGQueryPlanner
+from modules.report_followup import protect_answer_with_guardrails
 
 OpenCCClass: Any = None
 try:
@@ -19,6 +24,29 @@ except Exception:
 
 
 class RAGQA:
+    CONTROLLED_KNOWLEDGE_DIR = KNOWLEDGE_ROOT / "report_explainer"
+    CANONICAL_RAG_TERM = "RAG（Retrieval-Augmented Generation，檢索增強生成）"
+    CANONICAL_LLM_TERM = "LLM（Large Language Model，大型語言模型）"
+    MODE3_AUTHORITY_NOTICE = (
+        "最終的 Risk Level 與 Decision 由本專案的 deterministic 系統流程產生；"
+        "分析師可進行複核與後續調查，但 RAG 與 LLM 不會覆蓋這些最終欄位。"
+    )
+    INTERNAL_METADATA_TERMS = (
+        "structured signals",
+        "payload_indicator",
+        "payload indicator",
+        "payload-indicator",
+        "rule_match",
+        "rule match",
+        "rule-match",
+    )
+    MODE3_BOUNDARY_NOTICE = (
+        "安全邊界：本專案中的 BLOCK、MONITOR 與 ALLOW 皆為模擬決策。"
+        "RAG 與 LLM 僅提供解釋與輔助資訊，不會覆蓋最終的 Risk Level 或 Decision。"
+        "此回答不代表已執行真實封鎖、監控部署、密碼重設、"
+        "防火牆／WAF／EDR 設定變更或帳號處置。"
+    )
+
     PROJECT_ANSWER_RULES = """
 專案知識回答規則：
 1. 請使用提供的本專案 blue-team knowledge 內容回答，不要改用通用資安報告格式。
@@ -36,6 +64,8 @@ class RAGQA:
 6. 說明 LLM Suggested Decision 只是 AI assist，不是 final decision。
 7. 如果問題詢問 login failure、登入失敗、多次登入失敗、brute force 或暴力破解分析，且 context 中有相關內容，必須涵蓋 source_ip、target/endpoint、user、failed_count、HTTP 401/403、time window、false positive considerations。
 8. 不要主要根據 Structured Signals 回答；Structured Signals 只能當作 metadata hints。
+9. 若提到 RAG，其全名固定為 Retrieval-Augmented Generation（檢索增強生成），不得展開為其他名稱。
+10. 最終的 Risk Level 與 Decision 由本專案的 deterministic 系統流程產生；分析師可進行複核與後續調查，但 RAG 與 LLM 不會覆蓋這些最終欄位。
 """.strip()
     REPORT_GUIDE_ANSWER_RULES = """
 Security Triage Report 回答要求：
@@ -68,6 +98,7 @@ Metadata suppression rules:
         self.llm = None
         self.query_planner = None
         self._query_plan_cache = {}
+        self.controlled_metadata_items = self._load_controlled_metadata()
         self.vectorstore = None
         self.init_error = None
 
@@ -126,6 +157,12 @@ Metadata suppression rules:
         )
 
         self._initialize_components()
+
+    def _load_controlled_metadata(self):
+        try:
+            return load_metadata_from_directory(self.CONTROLLED_KNOWLEDGE_DIR)
+        except Exception:
+            return []
 
     def _initialize_components(self):
         try:
@@ -205,6 +242,101 @@ Metadata suppression rules:
                     return ""
         except Exception:
             return ""
+
+    def select_controlled_sources(self, query: str) -> ControlledRetrievalResult:
+        return select_controlled_sources(query, self.controlled_metadata_items)
+
+    def retrieve_controlled_context(self, query: str):
+        result = self.select_controlled_sources(query)
+        if not result.has_matches:
+            return "", False, result
+
+        sections = []
+        for match in result.matches:
+            source_path = match.metadata.source_path
+            if not source_path:
+                continue
+
+            source_text = self.load_full_source_text(source_path)
+            if source_text.strip():
+                sections.append(f"[Source: {source_path}]\n{source_text.strip()}")
+
+        context = "\n\n".join(sections).strip()
+        return context, bool(context), result
+
+    def answer_question(self, query: str) -> str | None:
+        controlled_context, ok, controlled_result = self.retrieve_controlled_context(query)
+        if ok:
+            answer = self.generate_answer(query, controlled_context)
+            citations = [
+                source_citation_from_metadata(match.metadata)
+                for match in controlled_result.matches
+            ]
+            return self._protect_mode3_answer(
+                answer,
+                citations,
+                rule_ids=self._rule_ids_from_controlled_result(controlled_result),
+                limitations=["Controlled curated retrieval selected approved runtime metadata."],
+            )
+
+        context, ok = self.retrieve_context(query)
+        if not ok:
+            return None
+
+        answer = self.generate_answer(query, context)
+        return self._protect_mode3_answer(
+            answer,
+            [
+                SourceCitation(
+                    source="runtime/vector_fallback",
+                    kind="knowledge_doc",
+                    heading="Existing vector fallback",
+                    identifier="vector_fallback",
+                )
+            ],
+            limitations=["Existing vector retrieval fallback was used."],
+        )
+
+    def _protect_mode3_answer(
+        self,
+        answer: str,
+        citations: list[SourceCitation],
+        *,
+        rule_ids: list[str] | None = None,
+        limitations: list[str] | None = None,
+    ) -> str:
+        protected_input = AnswerWithSources(
+            answer=self._append_mode3_boundary(self._strip_structured_signals(answer)),
+            sources=citations,
+            rule_ids=rule_ids or [],
+            confidence="MEDIUM",
+            limitations=limitations or [],
+        )
+        protected = protect_answer_with_guardrails(
+            protected_input,
+            known_rule_ids=self._known_controlled_rule_ids(),
+        )
+        return protected.answer.answer
+
+    def _append_mode3_boundary(self, answer: str) -> str:
+        if self.MODE3_BOUNDARY_NOTICE in answer:
+            return answer
+        return f"{answer.rstrip()}\n\n{self.MODE3_BOUNDARY_NOTICE}"
+
+    def _rule_ids_from_controlled_result(self, result: ControlledRetrievalResult) -> list[str]:
+        rule_ids: list[str] = []
+        for match in result.matches:
+            for rule_id in match.metadata.rule_ids:
+                if rule_id not in rule_ids:
+                    rule_ids.append(rule_id)
+        return rule_ids
+
+    def _known_controlled_rule_ids(self) -> set[str]:
+        return {
+            rule_id
+            for metadata in self.controlled_metadata_items
+            for rule_id in metadata.rule_ids
+        }
 
     def _resolve_knowledge_source(self, source_path: str):
         try:
@@ -386,7 +518,96 @@ Metadata suppression rules:
         for pattern in patterns:
             result = re.sub(pattern, "", result).rstrip()
 
+        result = self._strip_inline_internal_metadata(result)
+        result = self._normalize_visible_terminology(result)
+        result = self._normalize_final_authority_claims(result)
         return result if result else text
+
+    def _strip_inline_internal_metadata(self, text: str) -> str:
+        sanitized_paragraphs = []
+        for paragraph in re.split(r"\n+", text):
+            sanitized = self._strip_metadata_sentences(paragraph.strip())
+            if sanitized:
+                sanitized_paragraphs.append(sanitized)
+
+        return "\n".join(sanitized_paragraphs).strip()
+
+    def _strip_metadata_sentences(self, paragraph: str) -> str:
+        if not paragraph or not self._contains_internal_metadata_term(paragraph):
+            return paragraph
+
+        pieces = re.split(r"(?<=[。.!?！？])\s*", paragraph)
+        safe_pieces = [
+            piece.strip()
+            for piece in pieces
+            if piece.strip() and not self._contains_internal_metadata_term(piece)
+        ]
+        return " ".join(safe_pieces).strip()
+
+    def _contains_internal_metadata_term(self, text: str) -> bool:
+        normalized = text.casefold()
+        return any(term in normalized for term in self.INTERNAL_METADATA_TERMS)
+
+    def _normalize_visible_terminology(self, text: str) -> str:
+        result = text
+        rag_patterns = (
+            r"RAG\s*\(\s*Retrieval-Augmented Generation\s*\)",
+            r"RAG（\s*Retrieval-Augmented Generation\s*）",
+            r"RAG\s*\(\s*Reasoning and Generation with Alternatives\s*\)",
+            r"RAG（\s*Reasoning and Generation with Alternatives\s*）",
+        )
+        llm_patterns = (
+            r"LLM\s*\(\s*Large Language Model\s*\)",
+            r"LLM（\s*Large Language Model\s*）",
+            r"LLM\s*\(\s*Language Learning Model\s*\)",
+            r"LLM（\s*Language Learning Model\s*）",
+        )
+
+        for pattern in rag_patterns:
+            result = re.sub(pattern, self.CANONICAL_RAG_TERM, result, flags=re.IGNORECASE)
+        for pattern in llm_patterns:
+            result = re.sub(pattern, self.CANONICAL_LLM_TERM, result, flags=re.IGNORECASE)
+
+        return result
+
+    def _normalize_final_authority_claims(self, text: str) -> str:
+        normalized_paragraphs = []
+        for paragraph in re.split(r"\n+", text):
+            normalized = self._normalize_final_authority_paragraph(paragraph.strip())
+            if normalized:
+                normalized_paragraphs.append(normalized)
+
+        return "\n".join(normalized_paragraphs).strip()
+
+    def _normalize_final_authority_paragraph(self, paragraph: str) -> str:
+        if not paragraph:
+            return paragraph
+
+        pieces = re.split(r"(?<=[。.!?！？])\s*", paragraph)
+        normalized_pieces: list[str] = []
+        authority_added = False
+        for piece in pieces:
+            stripped_piece = piece.strip()
+            if not stripped_piece:
+                continue
+            if self._is_conflicting_final_authority_claim(stripped_piece):
+                if not authority_added:
+                    normalized_pieces.append(self.MODE3_AUTHORITY_NOTICE)
+                    authority_added = True
+                continue
+            normalized_pieces.append(stripped_piece)
+
+        return " ".join(normalized_pieces).strip()
+
+    def _is_conflicting_final_authority_claim(self, text: str) -> bool:
+        normalized = text.casefold()
+        has_final_field = "risk level" in normalized or "decision" in normalized
+        has_analyst_actor = "analyst" in normalized or "分析師" in normalized
+        has_decision_action = any(
+            term in normalized
+            for term in ("decide", "decides", "decided", "決定", "判定", "裁定")
+        )
+        return has_final_field and has_analyst_actor and has_decision_action
 
     def generate_answer(self, query: str, context: str):
         if not query:

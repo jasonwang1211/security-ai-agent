@@ -147,6 +147,13 @@ def test_classify_rag_intent_returns_unknown_with_low_confidence_for_unrelated_t
     assert decision.confidence == "LOW"
 
 
+def test_classify_rag_intent_returns_attack_knowledge_for_sql_injection_question() -> None:
+    decision = classify_rag_intent("什麼是 SQL Injection？")
+
+    assert decision.intent == "attack_knowledge"
+    assert decision.requires_context is False
+
+
 def test_unknown_intent_requires_confidence_low() -> None:
     decision = classify_rag_intent("Unrelated notebook reminder.")
 

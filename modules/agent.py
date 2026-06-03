@@ -151,6 +151,10 @@ class SecurityAgent:
         if not self.rag_qa.is_ready():
             return self.KB_UNAVAILABLE_MESSAGE
 
+        if hasattr(self.rag_qa, "answer_question"):
+            answer = self.rag_qa.answer_question(query)
+            return answer if answer is not None else self.NO_CONTEXT_MESSAGE
+
         context, ok = self.rag_qa.retrieve_context(query)
         if not ok:
             return self.NO_CONTEXT_MESSAGE
