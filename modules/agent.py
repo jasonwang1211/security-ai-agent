@@ -1,5 +1,7 @@
 import re
 
+from modules.event_followup import answer_event_followup, build_active_event_context
+
 
 def extract_signals(query):
     normalized = (query or "").lower()
@@ -283,6 +285,14 @@ class SecurityAgent:
             state["last_answer"] = answer
             return answer
 
+        event_answer = answer_event_followup(
+            query,
+            state.get("active_event_context"),
+        )
+        if event_answer is not None:
+            self._update_state(state, query, event_answer, keep_focus=True)
+            return event_answer
+
         if self.followup_handler.is_natural_followup(query):
             if not state["last_focus"]:
                 return self.NO_FOLLOWUP_TOPIC_MESSAGE
@@ -335,6 +345,13 @@ class SecurityAgent:
             decision_result,
             defense_result,
             llm_result,
+        )
+        state["active_event_context"] = build_active_event_context(
+            detector_result=detector_result,
+            risk_result=risk_result,
+            decision_result=decision_result,
+            defense_result=defense_result,
+            rendered_report=answer,
         )
         self._update_state(state, query, answer, keep_focus=False)
         return answer
