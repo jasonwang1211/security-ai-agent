@@ -177,7 +177,7 @@ def main():
         try:
             if choice == "2":
                 print("[Mode 2] Reading and summarizing log file...")
-                summary_output = run_log_ingestion(user_input)
+                summary_output = run_log_ingestion(user_input, agent=agent)
                 print(summary_output)
                 if summary_output.startswith("\n讀取 log 檔案失敗"):
                     continue

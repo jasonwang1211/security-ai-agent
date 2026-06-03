@@ -1,6 +1,7 @@
 import re
 
 from modules.event_followup import answer_event_followup, build_active_event_context
+from modules.incident_followup import answer_incident_followup
 
 
 def extract_signals(query):
@@ -285,13 +286,39 @@ class SecurityAgent:
             state["last_answer"] = answer
             return answer
 
-        event_answer = answer_event_followup(
-            query,
-            state.get("active_event_context"),
-        )
-        if event_answer is not None:
-            self._update_state(state, query, event_answer, keep_focus=True)
-            return event_answer
+        active_context_kind = state.get("active_context_kind")
+        if active_context_kind == "incident":
+            incident_answer = answer_incident_followup(
+                query,
+                state.get("active_incident_context"),
+            )
+            if incident_answer is not None:
+                self._update_state(state, query, incident_answer, keep_focus=True)
+                return incident_answer
+        elif active_context_kind == "event":
+            event_answer = answer_event_followup(
+                query,
+                state.get("active_event_context"),
+            )
+            if event_answer is not None:
+                self._update_state(state, query, event_answer, keep_focus=True)
+                return event_answer
+        else:
+            event_answer = answer_event_followup(
+                query,
+                state.get("active_event_context"),
+            )
+            if event_answer is not None:
+                self._update_state(state, query, event_answer, keep_focus=True)
+                return event_answer
+
+            incident_answer = answer_incident_followup(
+                query,
+                state.get("active_incident_context"),
+            )
+            if incident_answer is not None:
+                self._update_state(state, query, incident_answer, keep_focus=True)
+                return incident_answer
 
         if self.followup_handler.is_natural_followup(query):
             if not state["last_focus"]:
@@ -353,6 +380,7 @@ class SecurityAgent:
             defense_result=defense_result,
             rendered_report=answer,
         )
+        state["active_context_kind"] = "event"
         self._update_state(state, query, answer, keep_focus=False)
         return answer
 

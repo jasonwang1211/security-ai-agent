@@ -3,6 +3,12 @@ import threading
 import time
 from collections import Counter
 
+from modules.evidence_correlator import correlate_auth_sequence
+from modules.incident_followup import (
+    ActiveAuthIncidentContext,
+    build_active_auth_incident_context,
+    format_active_auth_incident_summary,
+)
 from modules.log_ingestion_runner import SECTION_TITLES, process_lines, read_log_lines
 from modules.log_pipeline import (
     events_to_agent_inputs,
@@ -18,6 +24,12 @@ CURRENT_STAGE_LINES = [
     "Current Stage:",
     "Log ingestion only. Events are not sent into SecurityAgent yet.",
 ]
+AGENT_STAGE_LINES = [
+    "Current Stage:",
+    "Log ingestion and deterministic authentication-incident correlation completed.",
+    "Structured incident follow-up is available when an incident is detected.",
+    "Optional SecurityAgent analysis of aggregated events has not been run unless requested below.",
+]
 BRUTE_FORCE_EVENT_TYPE = "brute_force_candidate"
 WEB_REQUEST_EVENT_TYPE = "web_request"
 LOG_AGENT_ANALYSIS_EMPTY_MESSAGE = "No analyzable log events were produced."
@@ -32,6 +44,9 @@ def get_agent_state(agent):
             "last_answer": "",
             "last_points": [],
             "last_focus": "",
+            "active_event_context": None,
+            "active_incident_context": None,
+            "active_context_kind": "",
         }
 
     return agent.cli_state
@@ -169,7 +184,14 @@ def _extend_optional_section(lines, section):
         lines.extend(["", *section])
 
 
-def _format_summary(log_path, lines, parsed_logs, normalized_events, aggregated_events):
+def _format_summary(
+    log_path,
+    lines,
+    parsed_logs,
+    normalized_events,
+    aggregated_events,
+    stage_lines=None,
+):
     summary = [
         SUMMARY_TITLE,
         "",
@@ -184,7 +206,7 @@ def _format_summary(log_path, lines, parsed_logs, normalized_events, aggregated_
 
     _extend_optional_section(summary, _format_aggregated_findings(aggregated_events))
     _extend_optional_section(summary, _format_preserved_payloads(normalized_events))
-    summary.extend(["", *CURRENT_STAGE_LINES])
+    summary.extend(["", *(stage_lines or CURRENT_STAGE_LINES)])
     return "\n".join(summary)
 
 
@@ -209,7 +231,49 @@ def _read_and_process_log(log_path):
     return None, (lines, parsed_logs, normalized_events, aggregated_events)
 
 
-def run_log_ingestion(log_path: str, include_json: bool = False, include_summary: bool = True) -> str:
+def _clear_structured_followup_context(agent) -> None:
+    if agent is None:
+        return
+
+    state = get_agent_state(agent)
+    state["active_incident_context"] = None
+    state["active_event_context"] = None
+    state["active_context_kind"] = ""
+
+
+def _store_active_auth_incident_context(
+    agent,
+    normalized_events,
+    rendered_summary: str,
+) -> ActiveAuthIncidentContext | None:
+    if agent is None:
+        return None
+
+    incident = correlate_auth_sequence(
+        normalized_events,
+        failure_threshold=5,
+        window_minutes=5,
+    )
+    if incident is None:
+        _clear_structured_followup_context(agent)
+        return None
+
+    state = get_agent_state(agent)
+    context = build_active_auth_incident_context(
+        incident,
+        rendered_summary=rendered_summary,
+    )
+    state["active_incident_context"] = context
+    state["active_context_kind"] = "incident"
+    return context
+
+
+def run_log_ingestion(
+    log_path: str,
+    include_json: bool = False,
+    include_summary: bool = True,
+    agent=None,
+) -> str:
     # Thin wrapper around the existing log ingestion demo pipeline.
     error, result = _read_and_process_log(log_path)
     if error:
@@ -225,13 +289,19 @@ def run_log_ingestion(log_path: str, include_json: bool = False, include_summary
                 parsed_logs,
                 normalized_events,
                 aggregated_events,
+                AGENT_STAGE_LINES if agent is not None else CURRENT_STAGE_LINES,
             )
         )
 
     if include_json:
         output_parts.append(_format_detailed_json(parsed_logs, normalized_events, aggregated_events))
 
-    return "\n\n".join(output_parts)
+    output = "\n\n".join(output_parts)
+    context = _store_active_auth_incident_context(agent, normalized_events, output)
+    if context is not None:
+        output_parts.append(format_active_auth_incident_summary(context))
+        output = "\n\n".join(output_parts)
+    return output
 
 
 def _select_agent_inputs(agent_inputs, scope):
