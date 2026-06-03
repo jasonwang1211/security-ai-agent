@@ -1,8 +1,8 @@
 # Architecture Debt Engineering Journal
 
-Current milestone: v2.1 Graph-Backed Explanation MVP release gate passed; ready to tag
-Current baseline: tag `v2.0.0`
-Last full quality gate: `600 passed`
+Current milestone: v2.2 implemented; release gate pending
+Current baseline: tag `v2.1.0`
+Last full quality gate: v2.1 `600 passed`; v2.2 focused validation completed, full release gate pending
 
 This document tracks structural debt cleanup as an engineering discipline: reducing module sprawl, consolidating thin wrappers, and preserving deterministic safety boundaries before adding more agentic behavior.
 
@@ -27,6 +27,7 @@ The project has reached a stable consolidated architecture with:
 - v1.9 architecture cleanup and orchestration contracts: ownership map, ADRs, Tool Permission Contract, Workflow Plan Contract, Testing Strategy, and Package Migration Plan
 - v2.0 Knowledge Graph Foundation: graph type contracts, deterministic builder, read-only lookup helpers, JSON-serializable export helpers, and 2A-3 seed-scope decision
 - v2.1 Graph-Backed Explanation MVP: protected exact-reference graph explanations using explicit graph edges and existing `SourceCitation` provenance
+- v2.2 Curated RAG Graph Seed Foundation: 9 reviewed Traditional Chinese report-explainer KB documents promoted to live, 20 live report-explainer docs, minimal typed metadata support, reviewed KnowledgeDoc graph seed candidates, and protected hybrid graph/knowledge explanation assembly
 - Controlled 9B package migration for RAG helper modules and controller/orchestration modules with temporary flat compatibility shims
 - Manual LLM/RAG smoke checklist documented as manual-only, not normal CI, and not yet executed
 
@@ -41,8 +42,8 @@ The project has reached a stable consolidated architecture with:
 | Boundary contracts | ad-hoc dictionaries | `modules/types.py` | Added Pydantic boundary models for future controller/tool work |
 | RAG helper ownership | flat `modules/rag_*.py` helpers | `modules/rag/` plus flat shims | Controlled helper package migration; `RAGQA` remains active runtime |
 | Controller/orchestration ownership | flat controller/tool/policy/workflow modules | `modules/controller/` plus flat shims | Controlled package migration; no runtime auto-execution added |
-| Graph foundation ownership | none | `modules/graph/` | In-memory graph contracts, deterministic builder, read-only lookup, JSON serialization, and protected exact-reference explanation; no Graph RAG or persistence |
-| Testing foundation | limited smoke coverage | golden + log pipeline + boundary + incident + detection-rule + controller + RAG v2 + v1.7 reliability + v1.8 protected helper tests + v1.9 contract tests + v2.0 graph focused tests + v2.1 graph explanation focused tests | Last full quality gate: `600 passed`, ruff, mypy |
+| Graph foundation ownership | none | `modules/graph/` | In-memory graph contracts, deterministic builder, read-only lookup, JSON serialization, protected exact-reference explanation, and reviewed KnowledgeDoc seed candidates; no automatic Graph RAG or persistence |
+| Testing foundation | limited smoke coverage | golden + log pipeline + boundary + incident + detection-rule + controller + RAG v2 + v1.7 reliability + v1.8 protected helper tests + v1.9 contract tests + v2.0 graph focused tests + v2.1 graph explanation focused tests + v2.2 focused metadata/seed/hybrid tests | Last full quality gate: v2.1 `600 passed`; v2.2 release gate pending |
 
 ## v1.3 Phase Outcomes
 
@@ -246,12 +247,39 @@ Architecture note:
 
 v2.1 deliberately stays within explicit graph nodes and edges. Missing references do not produce fabricated graph citations, disconnected existing nodes are reported as having no explicit relationship, and graph explanations do not change Risk Level / Decision. Full Graph RAG retrieval, Knowledge Capture, LLM graph extraction, Neo4j/NetworkX, runtime orchestration, tool execution, `RAGQA` replacement, and real enforcement remain deferred.
 
+## v2.2 Phase Outcomes
+
+- Promoted 9 reviewed Traditional Chinese report-explainer KB documents into live `knowledge/blue_team/report_explainer/`.
+- Expanded live report-explainer coverage from 11 to 20 documents.
+- Added minimal typed metadata support for `title`, `review_status`, `finding_types`, `evidence_types`, `decision_labels`, and `tags`.
+- Promoted documents use `schema_version: v2.2-live1` and `review_status: approved_for_runtime_promotion`.
+- Kept five authentication documents retrieval/explanation-only with no graph-seed edges.
+- Retained reviewed attack/rule metadata for XSS / `XSS-001` / `MEDIUM` / simulated `MONITOR`, SQL Injection / `SQLI-001` / `HIGH` / simulated `BLOCK`, Path Traversal / `PATH-001` / `HIGH` / simulated `BLOCK`, and Command Injection / `CMD-001` / `HIGH` / simulated `BLOCK`.
+- Added `modules/graph/knowledge_doc_seed.py` for reviewed KnowledgeDoc graph seed candidates.
+- Added `build_knowledge_doc_seed(...)`, which accepts parsed `KnowledgeDocMetadata` plus explicitly supplied `DetectionRule` objects.
+- Limited seed edges to `RELATED_TO_ATTACK` and `MAPS_TO_RULE`, with provenance from `frontmatter.attack_types` and `frontmatter.rule_ids`.
+- Added `combine_hybrid_explanation_protected(...)` in `modules/report_followup.py`.
+- Combined already-built graph context and already-built curated knowledge context, preserved citations, and applied existing deterministic guardrails.
+- Demonstrated Scenario A authentication hybrid context with `Decision` remaining simulated `MONITOR`.
+- Demonstrated Command Injection hybrid context with `Decision` remaining simulated `BLOCK`.
+
+Architecture note:
+
+v2.2 implements protected hybrid explanation/context assembly using explicit graph context plus curated knowledge source context. It does not implement automatic Graph RAG retrieval, vector-to-graph expansion, Knowledge Capture, LLM graph extraction, `RAGQA` replacement, CLI auto-route, graph or LLM Risk Level / Decision override, tool execution, real enforcement, or real monitoring deployment. Existing legacy KB documents remain supported, and full corpus schema migration is deferred.
+
 ## Last Full Quality Gate
 
-- `python -m pytest` -> `600 passed`
+- `python -m pytest` -> `600 passed` for v2.1
 - `python -m ruff check .` -> passed
 - `python -m mypy app.py modules tests` -> passed
 - CI runs the same quality gate and includes Gitleaks secret scanning
+
+## v2.2 Focused Validation
+
+- Batch 2.2-A focused validation: `67 passed`, Ruff passed, Mypy passed, `git diff --check` passed
+- Batch 2.2-B focused validation: `96 passed`, Ruff passed, Mypy passed, `git diff --check` passed
+- Do not treat these overlapping focused-test counts as a combined suite total
+- v2.2 full release gate remains pending
 
 ## Remaining Engineering Notes
 
@@ -261,13 +289,14 @@ v2.1 deliberately stays within explicit graph nodes and edges. Missing reference
 
 Tool Permission and Workflow Plan contracts now document future orchestration boundaries, but they are not runtime enforcement or auto-execution paths.
 
-### v1.9 Deferred Work
+### Deferred Work After v2.2
 
 - Tool Permission and Workflow Plan contracts are not runtime-wired.
 - Partial controlled package migration has been performed for RAG helpers and controller/orchestration helpers, while flat compatibility shims remain.
-- Graph RAG remains deferred; v2.1 added graph-backed explanation helpers only.
+- Automatic Graph RAG retrieval remains deferred; v2.2 adds deterministic KnowledgeDoc seed helpers and protected hybrid explanation/context assembly only.
 - Knowledge Capture remains deferred until ownership, review, and ingest boundaries are stable.
-- KnowledgeDoc graph seed remains deferred until a metadata audit.
+- Automatic vector-to-graph expansion and automatic retrieval-to-graph expansion remain deferred.
+- Full legacy KB corpus schema migration remains deferred; existing legacy KB documents remain supported.
 - Agent Skill Orchestration remains deferred; ControllerAgent does not auto-execute tools or workflows.
 - Smart Router remains preview-only and is not the default CLI auto-route.
 - `RAGQA` has not been replaced.

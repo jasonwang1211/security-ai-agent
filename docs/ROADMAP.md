@@ -1,12 +1,12 @@
 # Roadmap
 
-This roadmap describes planned development after the v2.1 Graph-Backed Explanation MVP milestone.
+This roadmap describes planned development after the v2.2 curated RAG graph seed foundation milestone.
 
 ## Current Baseline
 
-Current release baseline: tag `v2.0.0`.
+Current release baseline: tag `v2.1.0`.
 
-Current phase: v2.1 Graph-Backed Explanation MVP release gate passed; ready to tag.
+Current phase: v2.2 implemented; release gate pending.
 
 Completed:
 
@@ -23,7 +23,7 @@ Completed:
 - JSON Incident Report export
 - Report-aware follow-up
 - LLM Safety Layer
-- 11 `report_explainer` KB docs
+- v1.3 initially delivered 11 `report_explainer` KB docs; v2.2 expands the live report-explainer corpus to 20 documents
 - YAML detection rules with schema validation and metadata
 - v1.5 ControllerAgent and Tool Registry infrastructure
 - v1.6 RAG v2 Foundation
@@ -32,6 +32,7 @@ Completed:
 - v1.9 Architecture Cleanup and Orchestration Contracts
 - v2.0 Knowledge Graph Foundation
 - v2.1 Graph-Backed Explanation MVP
+- v2.2 Curated RAG Graph Seed Foundation
 - pytest / ruff / mypy / GitHub Actions CI
 
 Last full quality gate (v2.1):
@@ -40,6 +41,12 @@ Last full quality gate (v2.1):
 - `python -m ruff check .` -> passed
 - `python -m mypy app.py modules tests` -> passed
 - CI includes Gitleaks secret scanning
+
+Focused v2.2 validation already completed:
+
+- Batch 2.2-A focused validation: `67 passed`, Ruff passed, Mypy passed, `git diff --check` passed
+- Batch 2.2-B focused validation: `96 passed`, Ruff passed, Mypy passed, `git diff --check` passed
+- The v2.2 full release gate remains pending
 
 ## v1.3 — Evidence and Incident Capability
 
@@ -122,7 +129,7 @@ Delivered:
 - Deterministic AnswerGuardrails foundation
 - Deterministic Evaluation Runner foundation
 - Isolated rule-based Smart Router foundation
-- RAG v2 runtime integration and follow-up ownership decisions documented
+- RAG v2 protected-wiring strategy and follow-up ownership decisions documented
 - CI Gitleaks secret scanning
 - Reusable log ingestion runner moved into `modules/`
 - 445 passed quality gate
@@ -196,7 +203,7 @@ Deferred beyond v2.0:
 
 ## v2.1 - Graph-Backed Explanation MVP
 
-Status: Release gate passed; ready to tag.
+Status: Release gate passed in the previous milestone.
 
 Delivered:
 
@@ -212,6 +219,43 @@ Boundary:
 
 v2.1 is graph-backed explanation, not Graph RAG retrieval. It is a protected helper and tested integration capability, not CLI auto-routing or a new `app.py` mode. It does not implement Knowledge Capture, LLM graph extraction, Neo4j/NetworkX, vector search, runtime orchestration, tool execution, `RAGQA` replacement, graph-driven Risk Level / Decision changes, or real enforcement.
 
+## v2.2 - Curated RAG Graph Seed Foundation
+
+Status: Implemented; release gate pending.
+
+Delivered:
+
+- Promoted 9 reviewed Traditional Chinese report-explainer KB documents into live `knowledge/blue_team/report_explainer/`.
+- Expanded live report-explainer coverage from 11 to 20 documents.
+- Added minimal typed metadata support for `title`, `review_status`, `finding_types`, `evidence_types`, `decision_labels`, and `tags`.
+- Promoted documents use `schema_version: v2.2-live1` and `review_status: approved_for_runtime_promotion`.
+- Five authentication documents remain retrieval/explanation context only and do not define graph-seed edges.
+- Four verified rule explainers retain reviewed attack/rule metadata for XSS / `XSS-001` / `MEDIUM` / simulated `MONITOR`, SQL Injection / `SQLI-001` / `HIGH` / simulated `BLOCK`, Path Traversal / `PATH-001` / `HIGH` / simulated `BLOCK`, and Command Injection / `CMD-001` / `HIGH` / simulated `BLOCK`.
+- Resolved references were added before live promotion.
+- Added `modules/graph/knowledge_doc_seed.py`.
+- `build_knowledge_doc_seed(...)` accepts parsed `KnowledgeDocMetadata` plus explicitly supplied `DetectionRule` objects.
+- Seed candidates must be approved for runtime promotion and cross-validated against supplied detection rules.
+- Retrieval-only documents with empty attack/rule metadata produce no seed graph output.
+- Seed helper creates only `KNOWLEDGE_DOC -> ATTACK_TYPE` through `RELATED_TO_ATTACK` and `KNOWLEDGE_DOC -> DETECTION_RULE` through `MAPS_TO_RULE`.
+- Added `combine_hybrid_explanation_protected(...)` in `modules/report_followup.py`.
+- Hybrid helper combines already-built graph context and already-built curated knowledge context, preserves citations, and applies existing deterministic guardrails.
+- Scenario A authentication hybrid context keeps `Decision` simulated `MONITOR`.
+- Command Injection hybrid context keeps `Decision` simulated `BLOCK`.
+
+Boundary:
+
+v2.2 implements protected hybrid explanation/context assembly using explicit graph context plus curated knowledge source context. It does not implement automatic Graph RAG retrieval, vector-to-graph expansion, Knowledge Capture, LLM graph extraction, `RAGQA` replacement, CLI auto-route, graph or LLM Risk Level / Decision override, tool execution, real enforcement, or real monitoring deployment. Existing legacy KB documents remain supported, and full corpus schema migration is deferred.
+
+Deferred beyond v2.2:
+
+- Full release gate execution for the v2.2 feature branch
+- Automatic Graph RAG retrieval
+- Vector-to-graph expansion
+- Knowledge Capture implementation
+- LLM graph extraction
+- Full legacy KB schema migration
+- Runtime wiring or CLI auto-route for hybrid explanations
+
 ## Non-Goals
 
 The roadmap does not include offensive automation or real enforcement actions.
@@ -219,13 +263,13 @@ All response decisions remain simulated unless explicitly redesigned in a future
 
 # 後續規劃
 
-此 roadmap 描述目前 v2.1 Graph-Backed Explanation MVP 完成後的後續開發方向。
+此 roadmap 描述目前 v2.2 curated RAG graph seed foundation 實作後的後續開發方向。
 
 ## 目前基準
 
-目前 release baseline：tag `v2.0.0`。
+目前 release baseline：tag `v2.1.0`。
 
-目前里程碑：v2.1 Graph-Backed Explanation MVP release gate 已通過，準備 tag。
+目前里程碑：v2.2 已實作，release gate 尚待執行。
 
 已完成：
 
@@ -242,7 +286,7 @@ All response decisions remain simulated unless explicitly redesigned in a future
 - JSON Incident Report export
 - Report-aware follow-up
 - LLM Safety Layer
-- 11 篇 `report_explainer` KB docs
+- v1.3 initially delivered 11 篇 `report_explainer` KB docs；v2.2 將 live report-explainer corpus 擴充為 20 篇文件
 - YAML detection rules、schema validation 與 rule metadata
 - v1.5 ControllerAgent and Tool Registry infrastructure
 - v1.6 RAG v2 Foundation
@@ -251,6 +295,7 @@ All response decisions remain simulated unless explicitly redesigned in a future
 - v1.9 Architecture Cleanup and Orchestration Contracts
 - v2.0 知識圖譜基礎
 - v2.1 Graph-Backed Explanation MVP
+- v2.2 Curated RAG Graph Seed Foundation
 - pytest / ruff / mypy / GitHub Actions CI
 
 Last full quality gate (v2.1):
@@ -258,6 +303,12 @@ Last full quality gate (v2.1):
 - `python -m pytest` -> `600 passed`
 - `python -m ruff check .` -> passed
 - `python -m mypy app.py modules tests` -> passed
+
+v2.2 focused validation:
+
+- Batch 2.2-A：`67 passed`，Ruff、Mypy、`git diff --check` 通過
+- Batch 2.2-B：`96 passed`，Ruff、Mypy、`git diff --check` 通過
+- v2.2 full release gate 尚待執行
 
 ## v1.3 — Evidence and Incident Capability / 證據與事件能力
 
@@ -335,7 +386,7 @@ Status: Foundation completed.
 - deterministic AnswerGuardrails
 - deterministic Evaluation Runner
 - isolated rule-based Smart Router
-- RAG v2 runtime integration and follow-up ownership decisions documented
+- 已記錄 RAG v2 protected-wiring strategy 與 follow-up ownership decisions
 - Boundary: Smart Router is not CLI-wired; no LLM-based routing; RAGQA is not replaced
 
 ## v1.8 - Protected Runtime Wiring and Analyst UX Polish
@@ -369,10 +420,25 @@ Status: Foundation completed.
 
 ## v2.1 - Graph-Backed Explanation MVP
 
-- Status: release gate 已通過；準備 tag
+- Status: release gate 已於前一里程碑通過
 - 新增 `modules/graph/explainers.py` 與 `explain_graph_reference(snapshot, reference_id) -> AnswerWithSources`
 - 支援 EV-ID、F-ID、rule ID 與 INC-ID 的明確圖譜關係解釋，僅跟隨既有節點與邊
 - 圖譜 provenance 透過既有 `SourceCitation.metadata` 表示，沒有擴充 RAG schema
 - 新增 `explain_graph_followup_protected(...)`，讓 graph-backed answer 通過既有 `AnswerGuardrails`
 - Scenario A 覆蓋 `EV-003` 明確支援 `F-001`，且 `Decision` 維持 `MONITOR`
 - Boundary: 這不是 Graph RAG retrieval，也不是 CLI auto-routing、`app.py` 新模式、Knowledge Capture、LLM graph extraction、Neo4j / NetworkX、vector search、runtime orchestration、tool execution、`RAGQA` replacement、Risk Level / Decision override 或 real enforcement
+
+## v2.2 - Curated RAG Graph Seed Foundation
+
+- Status: 已實作；release gate 尚待執行
+- 9 篇 reviewed Traditional Chinese report-explainer KB 文件已提升到 live `knowledge/blue_team/report_explainer/`
+- live report-explainer coverage 從 11 篇擴充到 20 篇
+- 新增 `title`、`review_status`、`finding_types`、`evidence_types`、`decision_labels`、`tags` 的最小 typed metadata 支援
+- `build_knowledge_doc_seed(...)` 只接收 parsed `KnowledgeDocMetadata` 與明確提供的 `DetectionRule` objects
+- reviewed graph seed candidates 只從 `attack_types` / `rule_ids` 產生，並需通過 explicit `DetectionRule` cross-validation
+- retrieval-only authentication docs 不產生 graph seed output
+- seed helper 只建立 `RELATED_TO_ATTACK` 與 `MAPS_TO_RULE` 兩種邊
+- `combine_hybrid_explanation_protected(...)` 只組合已建立的 graph context 與 curated knowledge context，保留 citations，並套用既有 deterministic guardrails
+- Scenario A authentication hybrid context 的 `Decision` 維持 simulated `MONITOR`
+- Command Injection hybrid context 的 `Decision` 維持 simulated `BLOCK`
+- Boundary: v2.2 不包含 automatic Graph RAG retrieval、vector-to-graph expansion、Knowledge Capture、LLM graph extraction、`RAGQA` replacement、CLI auto-route、Risk Level / Decision override、tool execution、real enforcement 或 real monitoring deployment

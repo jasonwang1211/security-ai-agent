@@ -297,6 +297,51 @@ Safety boundary:
 
 This is graph-backed explanation, not Graph RAG retrieval. It does not call LLMs, Chroma/Ollama/vector systems, execute tools, write knowledge, replace `RAGQA`, change Risk Level / Decision, or perform real enforcement. `BLOCK`, `MONITOR`, and `ALLOW` remain simulated decisions, and deterministic detector / risk / decision remain final authority.
 
+## v2.2 Curated RAG Graph Seed Foundation
+
+v2.2 implemented; release gate pending.
+
+Batch 2.2-A promotes reviewed curated Traditional Chinese knowledge into the live report-explainer corpus while keeping the runtime contract narrow:
+
+- 9 reviewed Traditional Chinese report-explainer KB documents were promoted into live `knowledge/blue_team/report_explainer/`.
+- Live report-explainer coverage expanded from 11 to 20 documents.
+- The typed RAG metadata model now supports only the v2.2-consumed fields: `title`, `review_status`, `finding_types`, `evidence_types`, `decision_labels`, and `tags`.
+- Promoted documents use `schema_version: v2.2-live1` and `review_status: approved_for_runtime_promotion`.
+- Five authentication documents remain retrieval/explanation context only and do not define graph-seed edges.
+- Four verified rule explainers retain reviewed attack/rule metadata: XSS / `XSS-001` / `MEDIUM` / simulated `MONITOR`; SQL Injection / `SQLI-001` / `HIGH` / simulated `BLOCK`; Path Traversal / `PATH-001` / `HIGH` / simulated `BLOCK`; Command Injection / `CMD-001` / `HIGH` / simulated `BLOCK`.
+- Resolved references were added before live promotion.
+
+`modules/graph/knowledge_doc_seed.py` defines the v2.2 seed helper. Its public API is:
+
+```python
+build_knowledge_doc_seed(
+    metadata_items: Sequence[KnowledgeDocMetadata],
+    detection_rules: Sequence[DetectionRule],
+) -> GraphSnapshot
+```
+
+The helper accepts already parsed metadata items and explicitly supplied `DetectionRule` objects. It does not load Markdown, parse YAML files, inspect prose, parse `graph_links`, call RAG, call LLMs, run vector search, ingest knowledge, or modify `modules/graph/builder.py`.
+
+Graph-seed candidates require `review_status == "approved_for_runtime_promotion"`. Retrieval-only documents with empty `attack_types` and `rule_ids` produce empty seed output. Edges are emitted only when supplied detection rules confirm both the rule ID and the corresponding attack type.
+
+The v2.2 seed vocabulary is deliberately small:
+
+- `KNOWLEDGE_DOC -> ATTACK_TYPE` through `RELATED_TO_ATTACK`
+- `KNOWLEDGE_DOC -> DETECTION_RULE` through `MAPS_TO_RULE`
+
+Edge provenance comes from `frontmatter.attack_types` and `frontmatter.rule_ids`.
+
+`combine_hybrid_explanation_protected(...)` in `modules/report_followup.py` combines already-built graph context and already-built curated knowledge context. It preserves both graph provenance and curated KB citations, then applies existing deterministic guardrails. It is assembly-only: it does not perform automatic retrieval, vector-to-graph expansion, intent classification, RAG calls, LLM calls, detector changes, Risk Level changes, or Decision changes.
+
+Demonstrated coverage:
+
+- Scenario A authentication hybrid explanation combines graph context for `EV-003` supporting `F-001` with curated authentication KB context. The generic KB answer has no fixed `EV-003` or `F-001` bindings, and `Decision` remains simulated `MONITOR`.
+- Command Injection hybrid explanation uses the approved KnowledgeDoc seed to connect the command-injection explainer to `ATTACK_TYPE:Command Injection` and `DETECTION_RULE:CMD-001`. Graph provenance and curated KB citations coexist, and `Decision` remains simulated `BLOCK`.
+
+Safety boundary:
+
+Deterministic detector / risk / decision remain final authority. Graph and curated RAG context provide explanation/support only. `ALLOW`, `MONITOR`, and `BLOCK` remain simulated decisions. v2.2 does not implement automatic Graph RAG retrieval, vector-to-graph expansion, Knowledge Capture, LLM graph extraction, `RAGQA` replacement, CLI auto-route, real enforcement, or real monitoring deployment. Existing legacy KB documents remain supported, and full corpus schema migration is deferred.
+
 ## Testing Strategy
 
 The project uses several testing layers:
@@ -308,9 +353,15 @@ The project uses several testing layers:
 
 Last full quality gate:
 
-- `python -m pytest` -> `600 passed`
+- `python -m pytest` -> `600 passed` for v2.1
 - `python -m ruff check .`
 - `python -m mypy app.py modules tests`
+
+Focused v2.2 validation already completed:
+
+- Batch 2.2-A focused validation: `67 passed`, Ruff passed, Mypy passed, `git diff --check` passed
+- Batch 2.2-B focused validation: `96 passed`, Ruff passed, Mypy passed, `git diff --check` passed
+- The v2.2 full release gate remains pending
 
 Deterministic tests do not require Ollama, Chroma, embeddings, Torch, ChatOllama, or app startup.
 

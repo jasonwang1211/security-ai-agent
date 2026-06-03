@@ -6,9 +6,9 @@
 # English
 
 > Project: AI-assisted Security Threat Detection and Response System
-> Current phase: v2.1 Graph-Backed Explanation MVP release gate passed; ready to tag
-> Release baseline: tag `v2.0.0`
-> Release focus: Graph-backed protected explanation
+> Current phase: v2.2 implemented; release gate pending
+> Release baseline: tag `v2.1.0`
+> Release focus: Reviewed curated KB metadata, KnowledgeDoc seed candidates, and protected hybrid explanation assembly
 
 Full CLI excerpts are available in [demo_outputs.md](demo_outputs.md).
 
@@ -210,6 +210,47 @@ Boundary note:
 
 This is graph-backed explanation, not Graph RAG retrieval. It is currently a protected helper and tested integration capability, not CLI auto-routing or a new `app.py` mode. Missing references do not produce fabricated graph citations, disconnected existing nodes are reported as having no explicit relationship, and graph explanations do not change Risk Level / Decision.
 
+## v2.2 Curated RAG Graph Seed Foundation
+
+v2.2 implemented; release gate pending.
+
+Batch 2.2-A promoted reviewed curated knowledge:
+
+- Promoted 9 reviewed Traditional Chinese report-explainer KB documents into live `knowledge/blue_team/report_explainer/`.
+- Expanded live report-explainer coverage from 11 to 20 documents.
+- Added minimal typed metadata support for `title`, `review_status`, `finding_types`, `evidence_types`, `decision_labels`, and `tags`.
+- Promoted documents use `schema_version: v2.2-live1` and `review_status: approved_for_runtime_promotion`.
+- Five authentication documents remain retrieval/explanation context only and do not define graph-seed edges.
+- Four verified rule explainers retain reviewed attack/rule metadata: XSS / `XSS-001` / `MEDIUM` / simulated `MONITOR`; SQL Injection / `SQLI-001` / `HIGH` / simulated `BLOCK`; Path Traversal / `PATH-001` / `HIGH` / simulated `BLOCK`; Command Injection / `CMD-001` / `HIGH` / simulated `BLOCK`.
+- Resolved references were added before live promotion.
+
+Batch 2.2-B added narrow protected graph/knowledge assembly:
+
+- Added `modules/graph/knowledge_doc_seed.py`.
+- `build_knowledge_doc_seed(...)` accepts parsed `KnowledgeDocMetadata` plus explicitly supplied `DetectionRule` objects.
+- Graph-seed candidates must be approved for runtime promotion.
+- Retrieval-only documents with empty attack/rule metadata produce no seed graph output.
+- Seed helper creates only `KNOWLEDGE_DOC -> ATTACK_TYPE` through `RELATED_TO_ATTACK` and `KNOWLEDGE_DOC -> DETECTION_RULE` through `MAPS_TO_RULE`.
+- Seed uses reviewed `attack_types` / `rule_ids` and explicit `DetectionRule` cross-validation.
+- It does not load files, parse prose, parse `graph_links`, call RAG/LLM/vector systems, or change detector/risk/decision behavior.
+- Added `combine_hybrid_explanation_protected(...)` in `modules/report_followup.py`.
+- Hybrid helper combines already-built graph context and already-built curated knowledge context, preserves citations, then applies existing deterministic guardrails.
+- Hybrid helper is assembly-only; it does not perform automatic retrieval.
+
+Demonstrated coverage:
+
+- Scenario A authentication hybrid case combines graph context for `EV-003` supporting `F-001` with curated authentication KB context. The Decision remains simulated `MONITOR`, and generic KB does not introduce KnowledgeDoc-to-Evidence/Finding edges.
+- Command Injection hybrid case connects the approved command-injection explainer to `ATTACK_TYPE:Command Injection` and `DETECTION_RULE:CMD-001`. Graph provenance and curated KB citations coexist, the Decision remains simulated `BLOCK`, and no real enforcement occurs.
+
+Focused validation already completed:
+
+- Batch 2.2-A focused validation: `67 passed`, Ruff passed, Mypy passed, `git diff --check` passed.
+- Batch 2.2-B focused validation: `96 passed`, Ruff passed, Mypy passed, `git diff --check` passed.
+
+Boundary note:
+
+Deterministic detector / risk / decision remain final authority. Graph and curated RAG context provide explanation/support only. `ALLOW`, `MONITOR`, and `BLOCK` remain simulated decisions. v2.2 implements protected hybrid explanation/context assembly using explicit graph context plus curated knowledge source context; it does not implement automatic Graph RAG retrieval, vector-to-graph expansion, Knowledge Capture, LLM graph extraction, `RAGQA` replacement, CLI auto-route, Risk Level / Decision override, or real enforcement. Existing legacy KB documents remain supported, and full corpus schema migration is deferred.
+
 ### v1.4 Detection-as-Code Lite / YAML 規則式偵測
 
 v1.4 將 XSS、SQL Injection、Path Traversal、Command Injection 的 payload signatures 移至 `detections/blue_team/` YAML 規則。系統新增 `DetectionRule` schema 與 YAML rule loader，detector adapter 以 YAML 作為主要偵測路徑，並在 detector result 中保留 rule ID、source path、severity、confidence、MITRE techniques 與 references 等 metadata。
@@ -235,7 +276,7 @@ The current system is an AI-assisted blue-team security triage prototype. It sup
 - Follow-up explanation
 - Unified `[Security Triage Report]` output
 
-The latest milestone adds the v2.1 Graph-Backed Explanation MVP: protected exact-reference explanations over explicit in-memory graph edges, using existing `SourceCitation` provenance and `AnswerGuardrails`. Existing CLI runtime and unified Security Triage Report behavior remain unchanged.
+The latest milestone adds v2.2 curated knowledge promotion, reviewed KnowledgeDoc graph seed candidates, and protected hybrid graph/knowledge explanation assembly. Existing CLI runtime and unified Security Triage Report behavior remain unchanged.
 
 ---
 
@@ -321,6 +362,8 @@ Mode 3 RAG is used for knowledge explanation only. It does not decide attack typ
 | D14 | Protected Runtime Wiring / Analyst UX Foundation | protected helper tests | Guarded report/rule explanation + Smart Router preview + deterministic follow-up suggestions | Passed |
 | D15 | Architecture Cleanup / Orchestration Contracts | docs + contract tests | Ownership map + ADRs + Tool Permission Contract + Workflow Plan Contract + testing/migration docs | Passed |
 | D16 | v2.1 Graph-Backed Explanation MVP | Scenario A / EV-003 | EV-003 explicitly supports F-001; Decision remains MONITOR | Passed (focused test) |
+| D17 | v2.2 Scenario A Hybrid Explanation | graph + curated auth KB context | EV-003 supports F-001, curated auth KB citations coexist, Decision remains simulated MONITOR | Passed (focused test) |
+| D18 | v2.2 Command Injection Hybrid Explanation | approved KnowledgeDoc seed + curated rule KB | Command Injection explainer maps to ATTACK_TYPE:Command Injection and DETECTION_RULE:CMD-001; Decision remains simulated BLOCK | Passed (focused test) |
 
 ---
 
@@ -557,7 +600,9 @@ The current branch also includes a small but important quality foundation:
 - v1.9 documentation source-of-truth docs for architecture ownership, testing strategy, ADRs, and package migration planning
 - v2.0 graph type, builder, lookup, and exporter focused tests
 - v2.1 graph-backed explanation, protected adapter, and Scenario A focused tests
-- `pytest` for regression checks; latest full release-gate result is `600 passed`
+- v2.2 focused metadata, KnowledgeDoc seed, protected hybrid explanation, and Scenario A integration checks
+- `pytest` for regression checks; latest full release-gate result is v2.1 `600 passed`
+- v2.2 focused validation: Batch 2.2-A `67 passed`; Batch 2.2-B `96 passed`; both with Ruff, Mypy, and `git diff --check` passing
 - `ruff` for linting and import hygiene
 - Lenient `mypy` as a gradual typing baseline
 - GitHub Actions CI for automated quality checks
@@ -585,12 +630,14 @@ The current branch also includes a small but important quality foundation:
 | v1.9 architecture cleanup / orchestration contracts | Passed |
 | v2.0 Knowledge Graph Foundation helpers | Focused phase checks passed |
 | v2.1 Graph-Backed Explanation MVP | Release gate passed |
-| Quality checks and CI foundation | Passed |
+| v2.2 Curated RAG Graph Seed Foundation | Implemented; release gate pending |
+| v2.2 focused pytest / Ruff / Mypy / diff-check | Passed |
+| v2.2 full release gate / CI verification | Pending |
 
 Overall result:
 
 ```text
-v2.1 Graph-Backed Explanation MVP is implemented as a protected helper path with focused test coverage. Existing CLI behavior remains unchanged, graph explanations are not CLI auto-routed, and deterministic detection / policy still control final verdicts.
+v2.2 implemented; release gate pending. The current feature branch contains reviewed curated KB promotion, reviewed KnowledgeDoc seed candidates, and protected hybrid graph/knowledge explanation assembly. Existing CLI behavior remains unchanged, automatic Graph RAG retrieval is not implemented, and deterministic detection / policy still control final verdicts.
 ```
 
 ---
@@ -628,8 +675,8 @@ For planned future work, see [docs/ROADMAP.md](docs/ROADMAP.md).
 # 繁體中文
 
 > 專案：AI 輔助安全威脅偵測與回應系統
-> 目前里程碑：v2.1 Graph-Backed Explanation MVP release gate 已通過，準備 tag
-> 里程碑：受保護的圖譜輔助解釋
+> 目前里程碑：v2.2 已實作，release gate 尚待執行
+> 里程碑：reviewed curated KB metadata、KnowledgeDoc seed candidates 與 protected hybrid explanation assembly
 完整 CLI 範例可參考 [demo_outputs.md](demo_outputs.md)。
 
 本報告記錄代表性的 CLI 流程與 pass/fail 驗證，用來確認目前統一 `Security Triage Report` 契約是否穩定。這不是統計式 benchmark；precision / recall、false positive rate 與 retrieval quality evaluation 會留到後續里程碑。
@@ -647,17 +694,22 @@ For planned future work, see [docs/ROADMAP.md](docs/ROADMAP.md).
 - Follow-up explanation
 - Unified Security Triage Report
 
-v2.1 新增 Graph-Backed Explanation MVP：`modules/graph/explainers.py` 可透過明確的圖譜節點與邊，針對 EV-ID、F-ID、rule ID 與 INC-ID 產生 `AnswerWithSources` 解釋。`explain_graph_followup_protected(...)` 會把圖譜解釋交給既有 `AnswerGuardrails` 保護。既有 CLI 執行流程與 `Security Triage Report` 行為維持不變。
+v2.2 新增 curated knowledge promotion、reviewed KnowledgeDoc graph seed candidates，以及 protected hybrid graph/knowledge explanation assembly。既有 CLI 執行流程與 `Security Triage Report` 行為維持不變。
 
 Focused verification 範例：
 
 ```text
 Scenario A:
 EV-003 explicitly supports F-001.
-Decision remains MONITOR.
+Curated authentication KB context is combined with graph citations.
+Decision remains simulated MONITOR.
+
+Command Injection:
+KnowledgeDoc seed maps the command-injection explainer to CMD-001.
+Decision remains simulated BLOCK.
 ```
 
-此能力是 graph-backed explanation，不是 Graph RAG retrieval。圖譜解釋只跟隨明確節點與邊；missing reference 不會產生虛構 citation，既有但未連線的節點會被說明為沒有明確關係。圖譜不改變 Risk Level / Decision、不取代規則式偵測器或 `RAGQA`、不呼叫 LLM 或 vector system、不執行工具，也不代表真實 enforcement。
+此能力是受保護的 hybrid explanation/context assembly，不是 automatic Graph RAG retrieval。Graph 與 curated RAG context 只提供 explanation/support，不改變 Risk Level / Decision、不取代規則式偵測器或 `RAGQA`、不呼叫 LLM 或 vector system、不執行工具，也不代表真實 enforcement。
 
 ---
 
@@ -763,6 +815,8 @@ Mode 3 RAG 只負責知識解釋，不決定 attack type、risk level 或模擬 
 | D11 | ControllerAgent Dispatch | explicit route / mode hint | 透過 ToolRegistry 與 wrapper skills 進行 deterministic dispatch | Passed |
 | D12 | RAG v2 Source-Cited Explainers | report/rule question helper | Metadata-aware plan -> SourceCitation -> AnswerWithSources | Passed |
 | D16 | v2.1 Graph-Backed Explanation MVP | Scenario A / EV-003 | EV-003 明確支援 F-001；Decision 維持 MONITOR | Passed（focused test） |
+| D17 | v2.2 Scenario A hybrid explanation | graph + curated auth KB context | curated auth KB 與 graph citation coexist；Decision 維持 simulated MONITOR | Passed（focused test） |
+| D18 | v2.2 Command Injection hybrid explanation | approved KnowledgeDoc seed + curated rule KB | Command Injection explainer 對應 `CMD-001`；Decision 維持 simulated BLOCK | Passed（focused test） |
 
 ---
 
@@ -779,7 +833,9 @@ Mode 3 RAG 只負責知識解釋，不決定 attack type、risk level 或模擬 
 - Tool Permission Contract / Workflow Plan Contract tests
 - v2.0 graph type / builder / lookup / exporter focused tests
 - v2.1 graph-backed explanation / protected adapter / Scenario A focused tests
-- `pytest` latest full gate (`600 passed`)
+- v2.2 metadata / KnowledgeDoc seed / protected hybrid explanation focused tests
+- `pytest` latest full gate：v2.1 `600 passed`
+- v2.2 focused validation：Batch 2.2-A `67 passed`；Batch 2.2-B `96 passed`；兩者 Ruff、Mypy、`git diff --check` 均通過
 - `ruff`
 - lenient `mypy`
 - GitHub Actions CI
@@ -806,12 +862,14 @@ Mode 3 RAG 只負責知識解釋，不決定 attack type、risk level 或模擬 
 | v1.9 architecture cleanup / orchestration contracts | Passed |
 | v2.0 Knowledge Graph Foundation helpers | Focused phase checks passed |
 | v2.1 Graph-Backed Explanation MVP | Release gate passed |
-| pytest / ruff / mypy / GitHub Actions CI | Passed |
+| v2.2 Curated RAG Graph Seed Foundation | 已實作；release gate 尚待執行 |
+| v2.2 focused pytest / Ruff / Mypy / diff-check | 通過 |
+| v2.2 full release gate / CI verification | 尚待執行 |
 
 整體結果：
 
 ```text
-v2.1 Graph-Backed Explanation MVP 已完成 protected helper 與 focused tests。既有 CLI 行為維持不變，graph explanations 尚未成為 CLI auto-route，最終判定仍由 deterministic 偵測與 policy 控制。
+v2.2 已實作，release gate 尚待執行。此分支包含 reviewed curated KB promotion、reviewed KnowledgeDoc seed candidates，以及 protected hybrid graph/knowledge explanation assembly。既有 CLI 行為維持不變，automatic Graph RAG retrieval 尚未實作，最終判定仍由 deterministic 偵測與 policy 控制。
 ```
 
 ---
