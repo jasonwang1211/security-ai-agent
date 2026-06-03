@@ -1,8 +1,8 @@
 # Architecture Debt Engineering Journal
 
-Current milestone: v2.2 implemented; release gate pending
+Current milestone: v2.2 release gate passed; ready to tag
 Current baseline: tag `v2.1.0`
-Last full quality gate: v2.1 `600 passed`; v2.2 focused validation completed, full release gate pending
+Last full quality gate: v2.2 `628 passed`; Ruff, Mypy, diff-check, and Gitleaks passed
 
 This document tracks structural debt cleanup as an engineering discipline: reducing module sprawl, consolidating thin wrappers, and preserving deterministic safety boundaries before adding more agentic behavior.
 
@@ -43,7 +43,7 @@ The project has reached a stable consolidated architecture with:
 | RAG helper ownership | flat `modules/rag_*.py` helpers | `modules/rag/` plus flat shims | Controlled helper package migration; `RAGQA` remains active runtime |
 | Controller/orchestration ownership | flat controller/tool/policy/workflow modules | `modules/controller/` plus flat shims | Controlled package migration; no runtime auto-execution added |
 | Graph foundation ownership | none | `modules/graph/` | In-memory graph contracts, deterministic builder, read-only lookup, JSON serialization, protected exact-reference explanation, and reviewed KnowledgeDoc seed candidates; no automatic Graph RAG or persistence |
-| Testing foundation | limited smoke coverage | golden + log pipeline + boundary + incident + detection-rule + controller + RAG v2 + v1.7 reliability + v1.8 protected helper tests + v1.9 contract tests + v2.0 graph focused tests + v2.1 graph explanation focused tests + v2.2 focused metadata/seed/hybrid tests | Last full quality gate: v2.1 `600 passed`; v2.2 release gate pending |
+| Testing foundation | limited smoke coverage | golden + log pipeline + boundary + incident + detection-rule + controller + RAG v2 + v1.7 reliability + v1.8 protected helper tests + v1.9 contract tests + v2.0 graph focused tests + v2.1 graph explanation focused tests + v2.2 focused metadata/seed/hybrid tests | Last full quality gate: v2.2 `628 passed`, Ruff, Mypy, diff-check, and Gitleaks |
 
 ## v1.3 Phase Outcomes
 
@@ -269,17 +269,18 @@ v2.2 implements protected hybrid explanation/context assembly using explicit gra
 
 ## Last Full Quality Gate
 
-- `python -m pytest` -> `600 passed` for v2.1
+- `python -m pytest` -> `628 passed` for v2.2
 - `python -m ruff check .` -> passed
-- `python -m mypy app.py modules tests` -> passed
-- CI runs the same quality gate and includes Gitleaks secret scanning
+- `python -m mypy app.py modules tests` -> passed, `99 source files`
+- `git diff --check` -> passed
+- Gitleaks -> passed, no leaks found across 160 commits scanned
 
 ## v2.2 Focused Validation
 
 - Batch 2.2-A focused validation: `67 passed`, Ruff passed, Mypy passed, `git diff --check` passed
 - Batch 2.2-B focused validation: `96 passed`, Ruff passed, Mypy passed, `git diff --check` passed
 - Do not treat these overlapping focused-test counts as a combined suite total
-- v2.2 full release gate remains pending
+- v2.2 full release gate passed with `628 passed`, Ruff, Mypy, diff-check, and Gitleaks
 
 ## Remaining Engineering Notes
 

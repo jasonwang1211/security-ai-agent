@@ -229,7 +229,7 @@ v1.9 is an architecture and contract milestone, not a runtime feature release:
 - Controlled RAG helper migration into `modules/rag/` with flat compatibility shims.
 - Controlled controller/orchestration migration into `modules/controller/` with flat compatibility shims.
 - Manual LLM/RAG smoke checklist documented as manual-only, not CI, and not executed.
-- Latest full release-gate result (v2.1): `600 passed`.
+- Historical v2.1 release-gate result: `600 passed`.
 
 Boundaries:
 
@@ -273,7 +273,7 @@ Boundaries:
 
 ### v2.2 Curated RAG Graph Seed Foundation
 
-v2.2 implemented; release gate pending.
+v2.2 release gate passed; ready to tag.
 
 v2.2 promotes reviewed curated Traditional Chinese report-explainer content and adds narrow protected graph/knowledge assembly helpers:
 
@@ -324,9 +324,11 @@ python -m ruff check .
 python -m mypy app.py modules tests
 ```
 
-Last full release-gate test result: `600 passed` for v2.1.
+Last full release-gate test result: `628 passed` for v2.2.
 
-v2.2 focused validation already completed: Batch 2.2-A `67 passed`, Ruff passed, Mypy passed, and `git diff --check` passed; Batch 2.2-B `96 passed`, Ruff passed, Mypy passed, and `git diff --check` passed. The v2.2 full release gate is pending.
+v2.2 full release gate passed: `python -m pytest` -> `628 passed`, `python -m ruff check .` passed, `python -m mypy app.py modules tests` passed across 99 source files, `git diff --check` passed, and Gitleaks passed with no leaks found across 160 commits scanned. The local gate used a fresh writable pytest basetemp directory.
+
+v2.2 focused validation remains recorded separately: Batch 2.2-A `67 passed`, Ruff passed, Mypy passed, and `git diff --check` passed; Batch 2.2-B `96 passed`, Ruff passed, Mypy passed, and `git diff --check` passed.
 
 The test suite includes expanded golden smoke tests, direct consolidated log pipeline tests, Pydantic boundary model tests, incident/export/follow-up/guardrail tests, and Scenario A integration coverage for a mixed authentication log. Deterministic tests do not start the full app or initialize RAGQA, Chroma, embeddings, Torch, Ollama, ChatOllama, or local LLM clients. GitHub Actions CI runs the same quality gate.
 
@@ -355,7 +357,7 @@ python app.py
 
 Current release baseline: tag `v2.1.0`.
 
-Current phase: v2.2 implemented; release gate pending.
+Current phase: v2.2 release gate passed; ready to tag.
 
 Completed:
 
@@ -449,7 +451,7 @@ See [docs/ROADMAP.md](docs/ROADMAP.md) for delivered items.
 - Rule IDs such as `CMD-001` and `DETECTION_RULE:CMD-001` normalize outward-facing `rule_ids` to stable IDs while citations retain graph provenance
 - This is a protected helper and tested integration capability, not CLI auto-routing, an `app.py` mode, Graph RAG retrieval, Knowledge Capture, `RAGQA` replacement, decision override, or real enforcement
 
-**v2.2 - Curated RAG Graph Seed Foundation** (Implemented; release gate pending)
+**v2.2 - Curated RAG Graph Seed Foundation** (Release gate passed; ready to tag)
 
 - 9 reviewed Traditional Chinese report-explainer KB documents promoted into live `knowledge/blue_team/report_explainer/`
 - Live report-explainer coverage expanded from 11 to 20 documents
@@ -562,7 +564,7 @@ python -m ruff check .
 python -m mypy app.py modules tests
 ```
 
-最近一次完整 release gate 測試結果：v2.1 `600 passed`。v2.2 已實作，release gate 尚待執行。
+最近一次完整 release gate 測試結果：v2.2 `628 passed`，Ruff、Mypy、`git diff --check` 與 Gitleaks 均通過。v2.2 release gate 已通過，準備 tag。
 
 測試使用 dummy RAG 與 LLMAssist 物件，不會啟動完整 CLI，也不會初始化 RAGQA、Chroma、embeddings、Torch、Ollama、ChatOllama 或本地 LLM client。GitHub Actions CI 會執行同一組品質檢查。
 
@@ -570,7 +572,7 @@ python -m mypy app.py modules tests
 
 Current release baseline: tag `v2.1.0`.
 
-目前里程碑：v2.2 已實作，release gate 尚待執行。
+目前里程碑：v2.2 release gate 已通過，準備 tag。
 
 已完成：
 
@@ -671,7 +673,7 @@ Current release baseline: tag `v2.1.0`.
 - Scenario A 展示 `EV-003` 明確支援 `F-001`，且 incident `Decision` 仍為 `MONITOR`
 - 這不是 Graph RAG retrieval，也不是 CLI auto-routing、`app.py` 新模式、Knowledge Capture、`RAGQA` replacement、Risk Level / Decision override、tool execution 或 real enforcement
 
-**v2.2 - Curated RAG Graph Seed Foundation**（已實作；release gate 尚待執行）
+**v2.2 - Curated RAG Graph Seed Foundation**（release gate 已通過；準備 tag）
 
 - 9 篇 reviewed Traditional Chinese report-explainer KB 文件已提升到 live `knowledge/blue_team/report_explainer/`
 - live report-explainer coverage 從 11 篇擴充到 20 篇

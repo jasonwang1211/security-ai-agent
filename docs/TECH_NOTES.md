@@ -299,7 +299,7 @@ This is graph-backed explanation, not Graph RAG retrieval. It does not call LLMs
 
 ## v2.2 Curated RAG Graph Seed Foundation
 
-v2.2 implemented; release gate pending.
+v2.2 release gate passed; ready to tag.
 
 Batch 2.2-A promotes reviewed curated Traditional Chinese knowledge into the live report-explainer corpus while keeping the runtime contract narrow:
 
@@ -353,15 +353,18 @@ The project uses several testing layers:
 
 Last full quality gate:
 
-- `python -m pytest` -> `600 passed` for v2.1
-- `python -m ruff check .`
-- `python -m mypy app.py modules tests`
+- `python -m pytest` -> `628 passed` for v2.2
+- `python -m ruff check .` -> passed
+- `python -m mypy app.py modules tests` -> passed, `99 source files`
+- `git diff --check` -> passed
+- Gitleaks -> passed, no leaks found across 160 commits scanned
+
+The full v2.2 release gate used a fresh writable pytest basetemp directory for local Windows temp-directory safety.
 
 Focused v2.2 validation already completed:
 
 - Batch 2.2-A focused validation: `67 passed`, Ruff passed, Mypy passed, `git diff --check` passed
 - Batch 2.2-B focused validation: `96 passed`, Ruff passed, Mypy passed, `git diff --check` passed
-- The v2.2 full release gate remains pending
 
 Deterministic tests do not require Ollama, Chroma, embeddings, Torch, ChatOllama, or app startup.
 

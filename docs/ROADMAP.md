@@ -6,7 +6,7 @@ This roadmap describes planned development after the v2.2 curated RAG graph seed
 
 Current release baseline: tag `v2.1.0`.
 
-Current phase: v2.2 implemented; release gate pending.
+Current phase: v2.2 release gate passed; ready to tag.
 
 Completed:
 
@@ -35,18 +35,18 @@ Completed:
 - v2.2 Curated RAG Graph Seed Foundation
 - pytest / ruff / mypy / GitHub Actions CI
 
-Last full quality gate (v2.1):
+Last full quality gate (v2.2):
 
-- `python -m pytest` -> `600 passed`
+- `python -m pytest` -> `628 passed`
 - `python -m ruff check .` -> passed
-- `python -m mypy app.py modules tests` -> passed
-- CI includes Gitleaks secret scanning
+- `python -m mypy app.py modules tests` -> passed, `99 source files`
+- `git diff --check` -> passed
+- Gitleaks -> passed, no leaks found across 160 commits scanned
 
 Focused v2.2 validation already completed:
 
 - Batch 2.2-A focused validation: `67 passed`, Ruff passed, Mypy passed, `git diff --check` passed
 - Batch 2.2-B focused validation: `96 passed`, Ruff passed, Mypy passed, `git diff --check` passed
-- The v2.2 full release gate remains pending
 
 ## v1.3 — Evidence and Incident Capability
 
@@ -221,7 +221,7 @@ v2.1 is graph-backed explanation, not Graph RAG retrieval. It is a protected hel
 
 ## v2.2 - Curated RAG Graph Seed Foundation
 
-Status: Implemented; release gate pending.
+Status: Release gate passed; ready to tag.
 
 Delivered:
 
@@ -248,7 +248,6 @@ v2.2 implements protected hybrid explanation/context assembly using explicit gra
 
 Deferred beyond v2.2:
 
-- Full release gate execution for the v2.2 feature branch
 - Automatic Graph RAG retrieval
 - Vector-to-graph expansion
 - Knowledge Capture implementation
@@ -269,7 +268,7 @@ All response decisions remain simulated unless explicitly redesigned in a future
 
 目前 release baseline：tag `v2.1.0`。
 
-目前里程碑：v2.2 已實作，release gate 尚待執行。
+目前里程碑：v2.2 release gate 已通過，準備 tag。
 
 已完成：
 
@@ -298,17 +297,18 @@ All response decisions remain simulated unless explicitly redesigned in a future
 - v2.2 Curated RAG Graph Seed Foundation
 - pytest / ruff / mypy / GitHub Actions CI
 
-Last full quality gate (v2.1):
+Last full quality gate (v2.2):
 
-- `python -m pytest` -> `600 passed`
+- `python -m pytest` -> `628 passed`
 - `python -m ruff check .` -> passed
-- `python -m mypy app.py modules tests` -> passed
+- `python -m mypy app.py modules tests` -> passed，`99 source files`
+- `git diff --check` -> passed
+- Gitleaks -> passed，no leaks found，160 commits scanned
 
 v2.2 focused validation:
 
 - Batch 2.2-A：`67 passed`，Ruff、Mypy、`git diff --check` 通過
 - Batch 2.2-B：`96 passed`，Ruff、Mypy、`git diff --check` 通過
-- v2.2 full release gate 尚待執行
 
 ## v1.3 — Evidence and Incident Capability / 證據與事件能力
 
@@ -430,7 +430,7 @@ Status: Foundation completed.
 
 ## v2.2 - Curated RAG Graph Seed Foundation
 
-- Status: 已實作；release gate 尚待執行
+- Status: release gate 已通過；準備 tag
 - 9 篇 reviewed Traditional Chinese report-explainer KB 文件已提升到 live `knowledge/blue_team/report_explainer/`
 - live report-explainer coverage 從 11 篇擴充到 20 篇
 - 新增 `title`、`review_status`、`finding_types`、`evidence_types`、`decision_labels`、`tags` 的最小 typed metadata 支援

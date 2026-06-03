@@ -6,7 +6,7 @@
 # English
 
 > Project: AI-assisted Security Threat Detection and Response System
-> Current phase: v2.2 implemented; release gate pending
+> Current phase: v2.2 release gate passed; ready to tag
 > Release baseline: tag `v2.1.0`
 > Release focus: Reviewed curated KB metadata, KnowledgeDoc seed candidates, and protected hybrid explanation assembly
 
@@ -168,7 +168,7 @@ What changed:
 
 Boundary note:
 
-Tool Policy and Workflow Plan are contract-only. They are not connected to runtime flow, do not execute tools, and do not make Smart Router the default CLI route. `ControllerAgent` does not auto-execute. `RAGQA` remains the active general knowledge QA runtime. Graph RAG, Knowledge Capture, and Agent Skill Orchestration runtime remain deferred. AI does not decide attacks or override Risk Level / Decision. `BLOCK`, `MONITOR`, and `ALLOW` remain simulated, with no real firewall/WAF/SIEM/SOAR enforcement. The latest v2.1 release gate is `600 passed`, with ruff, mypy, `git diff --check`, and Gitleaks passing.
+Tool Policy and Workflow Plan are contract-only. They are not connected to runtime flow, do not execute tools, and do not make Smart Router the default CLI route. `ControllerAgent` does not auto-execute. `RAGQA` remains the active general knowledge QA runtime. Graph RAG, Knowledge Capture, and Agent Skill Orchestration runtime remain deferred. AI does not decide attacks or override Risk Level / Decision. `BLOCK`, `MONITOR`, and `ALLOW` remain simulated, with no real firewall/WAF/SIEM/SOAR enforcement. The historical v2.1 release gate was `600 passed`, with ruff, mypy, `git diff --check`, and Gitleaks passing.
 
 ## v2.0 Knowledge Graph Foundation
 
@@ -212,7 +212,7 @@ This is graph-backed explanation, not Graph RAG retrieval. It is currently a pro
 
 ## v2.2 Curated RAG Graph Seed Foundation
 
-v2.2 implemented; release gate pending.
+v2.2 release gate passed; ready to tag.
 
 Batch 2.2-A promoted reviewed curated knowledge:
 
@@ -246,6 +246,7 @@ Focused validation already completed:
 
 - Batch 2.2-A focused validation: `67 passed`, Ruff passed, Mypy passed, `git diff --check` passed.
 - Batch 2.2-B focused validation: `96 passed`, Ruff passed, Mypy passed, `git diff --check` passed.
+- Full v2.2 release gate: `628 passed`, Ruff passed, Mypy passed across 99 source files, `git diff --check` passed, and Gitleaks found no leaks across 160 commits scanned.
 
 Boundary note:
 
@@ -601,10 +602,11 @@ The current branch also includes a small but important quality foundation:
 - v2.0 graph type, builder, lookup, and exporter focused tests
 - v2.1 graph-backed explanation, protected adapter, and Scenario A focused tests
 - v2.2 focused metadata, KnowledgeDoc seed, protected hybrid explanation, and Scenario A integration checks
-- `pytest` for regression checks; latest full release-gate result is v2.1 `600 passed`
+- `pytest` for regression checks; latest full release-gate result is v2.2 `628 passed`
 - v2.2 focused validation: Batch 2.2-A `67 passed`; Batch 2.2-B `96 passed`; both with Ruff, Mypy, and `git diff --check` passing
 - `ruff` for linting and import hygiene
 - Lenient `mypy` as a gradual typing baseline
+- v2.2 release gate also passed `git diff --check` and Gitleaks with no leaks found across 160 commits scanned
 - GitHub Actions CI for automated quality checks
 
 ---
@@ -630,14 +632,14 @@ The current branch also includes a small but important quality foundation:
 | v1.9 architecture cleanup / orchestration contracts | Passed |
 | v2.0 Knowledge Graph Foundation helpers | Focused phase checks passed |
 | v2.1 Graph-Backed Explanation MVP | Release gate passed |
-| v2.2 Curated RAG Graph Seed Foundation | Implemented; release gate pending |
+| v2.2 Curated RAG Graph Seed Foundation | Release gate passed; ready to tag |
 | v2.2 focused pytest / Ruff / Mypy / diff-check | Passed |
-| v2.2 full release gate / CI verification | Pending |
+| v2.2 full release gate | Passed: `628 passed`, Ruff, Mypy, diff-check, Gitleaks |
 
 Overall result:
 
 ```text
-v2.2 implemented; release gate pending. The current feature branch contains reviewed curated KB promotion, reviewed KnowledgeDoc seed candidates, and protected hybrid graph/knowledge explanation assembly. Existing CLI behavior remains unchanged, automatic Graph RAG retrieval is not implemented, and deterministic detection / policy still control final verdicts.
+v2.2 release gate passed; ready to tag. The current feature branch contains reviewed curated KB promotion, reviewed KnowledgeDoc seed candidates, and protected hybrid graph/knowledge explanation assembly. Existing CLI behavior remains unchanged, automatic Graph RAG retrieval is not implemented, and deterministic detection / policy still control final verdicts.
 ```
 
 ---
@@ -675,7 +677,7 @@ For planned future work, see [docs/ROADMAP.md](docs/ROADMAP.md).
 # 繁體中文
 
 > 專案：AI 輔助安全威脅偵測與回應系統
-> 目前里程碑：v2.2 已實作，release gate 尚待執行
+> 目前里程碑：v2.2 release gate 已通過，準備 tag
 > 里程碑：reviewed curated KB metadata、KnowledgeDoc seed candidates 與 protected hybrid explanation assembly
 完整 CLI 範例可參考 [demo_outputs.md](demo_outputs.md)。
 
@@ -834,8 +836,9 @@ Mode 3 RAG 只負責知識解釋，不決定 attack type、risk level 或模擬 
 - v2.0 graph type / builder / lookup / exporter focused tests
 - v2.1 graph-backed explanation / protected adapter / Scenario A focused tests
 - v2.2 metadata / KnowledgeDoc seed / protected hybrid explanation focused tests
-- `pytest` latest full gate：v2.1 `600 passed`
+- `pytest` latest full gate：v2.2 `628 passed`
 - v2.2 focused validation：Batch 2.2-A `67 passed`；Batch 2.2-B `96 passed`；兩者 Ruff、Mypy、`git diff --check` 均通過
+- v2.2 full release gate：Ruff、Mypy（99 source files）、`git diff --check` 與 Gitleaks（no leaks found；160 commits scanned）均通過
 - `ruff`
 - lenient `mypy`
 - GitHub Actions CI
@@ -862,14 +865,14 @@ Mode 3 RAG 只負責知識解釋，不決定 attack type、risk level 或模擬 
 | v1.9 architecture cleanup / orchestration contracts | Passed |
 | v2.0 Knowledge Graph Foundation helpers | Focused phase checks passed |
 | v2.1 Graph-Backed Explanation MVP | Release gate passed |
-| v2.2 Curated RAG Graph Seed Foundation | 已實作；release gate 尚待執行 |
+| v2.2 Curated RAG Graph Seed Foundation | release gate 已通過；準備 tag |
 | v2.2 focused pytest / Ruff / Mypy / diff-check | 通過 |
-| v2.2 full release gate / CI verification | 尚待執行 |
+| v2.2 full release gate | 通過：`628 passed`、Ruff、Mypy、diff-check、Gitleaks |
 
 整體結果：
 
 ```text
-v2.2 已實作，release gate 尚待執行。此分支包含 reviewed curated KB promotion、reviewed KnowledgeDoc seed candidates，以及 protected hybrid graph/knowledge explanation assembly。既有 CLI 行為維持不變，automatic Graph RAG retrieval 尚未實作，最終判定仍由 deterministic 偵測與 policy 控制。
+v2.2 release gate 已通過，準備 tag。此分支包含 reviewed curated KB promotion、reviewed KnowledgeDoc seed candidates，以及 protected hybrid graph/knowledge explanation assembly。既有 CLI 行為維持不變，automatic Graph RAG retrieval 尚未實作，最終判定仍由 deterministic 偵測與 policy 控制。
 ```
 
 ---
