@@ -344,7 +344,7 @@ Deterministic detector / risk / decision remain final authority. Graph and curat
 
 ## v2.3 Controlled Retrieval and Structured Follow-Up
 
-v2.3 release gate passed; ready to tag.
+v2.3 released as `v2.3.0`.
 
 Mode 3 runtime:
 

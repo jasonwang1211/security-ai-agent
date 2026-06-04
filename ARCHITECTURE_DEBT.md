@@ -1,7 +1,7 @@
 # Architecture Debt Engineering Journal
 
-Current milestone: v2.3 release gate passed; ready to tag
-Current baseline: tag `v2.2.0`
+Current milestone: v2.3 released as `v2.3.0`
+Current baseline: tag `v2.3.0`
 Last full quality gate: v2.3 `670 passed in 8.23s`; Ruff, Mypy, diff-check, and Gitleaks passed
 
 This document tracks structural debt cleanup as an engineering discipline: reducing module sprawl, consolidating thin wrappers, and preserving deterministic safety boundaries before adding more agentic behavior.
@@ -281,7 +281,7 @@ v2.2 implements protected hybrid explanation/context assembly using explicit gra
 
 Architecture note:
 
-v2.3 uses graph-grounded follow-up only for the current structured authentication incident. It does not implement direct-input Auto Router, Agent Skill Orchestration, LLM-assisted skill selection, Similar-Case Graph RAG, approved historical-case retrieval, Knowledge Capture or event write-back, automatic vector-to-graph expansion, the deferred Mode 3 KnowledgeDoc graph-expansion WIP, real firewall/WAF/EDR/account action, or RAG/LLM override of deterministic `Risk Level` or `Decision`. v2.3 release gate has passed and the milestone is ready to tag.
+v2.3 uses graph-grounded follow-up only for the current structured authentication incident. It does not implement direct-input Auto Router, Agent Skill Orchestration, LLM-assisted skill selection, Similar-Case Graph RAG, approved historical-case retrieval, Knowledge Capture or event write-back, automatic vector-to-graph expansion, the deferred Mode 3 KnowledgeDoc graph-expansion WIP, real firewall/WAF/EDR/account action, or RAG/LLM override of deterministic `Risk Level` or `Decision`. v2.3 has been released as `v2.3.0`.
 
 ## Last Full Quality Gate
 

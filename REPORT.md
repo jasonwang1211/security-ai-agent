@@ -6,8 +6,8 @@
 # English
 
 > Project: AI-assisted Security Threat Detection and Response System
-> Current phase: v2.3 release gate passed; ready to tag.
-> Release baseline: tag `v2.2.0`
+> Current phase: v2.3 released as `v2.3.0`.
+> Release baseline: tag `v2.3.0`
 > Release focus: Protected controlled retrieval, event-grounded payload follow-up, and graph-grounded authentication incident follow-up
 
 Full CLI excerpts are available in [demo_outputs.md](demo_outputs.md).
@@ -254,7 +254,7 @@ Deterministic detector / risk / decision remain final authority. Graph and curat
 
 ## v2.3 Controlled Retrieval and Structured Follow-Up
 
-v2.3 release gate passed; ready to tag.
+v2.3 released as `v2.3.0`.
 
 Implemented and manually verified runtime scope:
 
@@ -662,13 +662,13 @@ The current branch also includes a small but important quality foundation:
 | v2.2 focused pytest / Ruff / Mypy / diff-check | Passed |
 | v2.2 full release gate | Passed: `628 passed`, Ruff, Mypy, diff-check, Gitleaks |
 | v2.3 full release gate | Passed: `670 passed in 8.23s`, Ruff, Mypy across 106 source files, diff-check, Gitleaks across 167 commits |
-| v2.3 Controlled Retrieval and Structured Follow-Up | Release gate passed; ready to tag |
+| v2.3 Controlled Retrieval and Structured Follow-Up | Released as `v2.3.0` |
 | v2.3 manual runtime smoke | Passed for Mode 3 controlled retrieval, Mode 1 event follow-up, and Mode 2 graph-grounded incident follow-up |
 
 Overall result:
 
 ```text
-v2.3 release gate passed; ready to tag. The current feature branch contains protected controlled Mode 3 retrieval, event-grounded Mode 1 follow-up, and graph-grounded current-incident Mode 2 authentication follow-up. Automatic Graph RAG retrieval, Auto Router, Skill Orchestration, Knowledge Capture, real enforcement, and Risk Level / Decision override remain deferred.
+v2.3 released as `v2.3.0`. The current feature branch contains protected controlled Mode 3 retrieval, event-grounded Mode 1 follow-up, and graph-grounded current-incident Mode 2 authentication follow-up. Automatic Graph RAG retrieval, Auto Router, Skill Orchestration, Knowledge Capture, real enforcement, and Risk Level / Decision override remain deferred.
 ```
 
 ---
@@ -706,7 +706,7 @@ For planned future work, see [docs/ROADMAP.md](docs/ROADMAP.md).
 # 繁體中文
 
 > 專案：AI 輔助安全威脅偵測與回應系統
-> 目前里程碑：v2.3 release gate 已通過，準備 tag。
+> 目前里程碑：v2.3 已發布為 `v2.3.0`。
 > 里程碑：受保護 controlled retrieval、current payload-event follow-up，以及 current authentication-incident graph-grounded follow-up
 完整 CLI 範例可參考 [demo_outputs.md](demo_outputs.md)。
 
@@ -725,7 +725,7 @@ For planned future work, see [docs/ROADMAP.md](docs/ROADMAP.md).
 - Follow-up explanation
 - Unified Security Triage Report
 
-v2.3 新增 protected controlled Mode 3 retrieval、透過 `ActiveEventContext` 進行 Mode 1 current payload-event follow-up，以及透過 `ActiveAuthIncidentContext` 與 explicit `GraphSnapshot` facts 進行 Mode 2 current authentication-incident graph-grounded follow-up。此狀態為 release gate 已通過，準備 tag；不代表 Auto Router、Skill Orchestration、Similar-Case Graph RAG、Knowledge Capture、real enforcement 或 Risk Level / Decision override 已實作。
+v2.3 新增 protected controlled Mode 3 retrieval、透過 `ActiveEventContext` 進行 Mode 1 current payload-event follow-up，以及透過 `ActiveAuthIncidentContext` 與 explicit `GraphSnapshot` facts 進行 Mode 2 current authentication-incident graph-grounded follow-up。此狀態為已發布為 `v2.3.0`；不代表 Auto Router、Skill Orchestration、Similar-Case Graph RAG、Knowledge Capture、real enforcement 或 Risk Level / Decision override 已實作。
 
 Focused verification 範例：
 
@@ -899,13 +899,13 @@ Mode 3 RAG 只負責知識解釋，不決定 attack type、risk level 或模擬 
 | v2.2 Curated RAG Graph Seed Foundation | 已發布為 `v2.2.0` |
 | v2.2 focused pytest / Ruff / Mypy / diff-check | 通過 |
 | v2.2 full release gate | 通過：`628 passed`、Ruff、Mypy、diff-check、Gitleaks |
-| v2.3 Controlled Retrieval and Structured Follow-Up | release gate 已通過，準備 tag |
+| v2.3 Controlled Retrieval and Structured Follow-Up | 已發布為 `v2.3.0` |
 | v2.3 manual runtime smoke | Mode 3 controlled retrieval、Mode 1 event follow-up、Mode 2 graph-grounded incident follow-up 已通過人工 smoke |
 
 整體結果：
 
 ```text
-v2.3 release gate 已通過，準備 tag。此分支包含 protected controlled Mode 3 retrieval、Mode 1 current-event follow-up，以及 Mode 2 current-incident GraphSnapshot authentication follow-up。Automatic Graph RAG retrieval、Auto Router、Skill Orchestration、Knowledge Capture、real enforcement 與 Risk Level / Decision override 仍維持延後。
+v2.3 已發布為 `v2.3.0`。此版本包含 protected controlled Mode 3 retrieval、Mode 1 current-event follow-up，以及 Mode 2 current-incident GraphSnapshot authentication follow-up。Automatic Graph RAG retrieval、Auto Router、Skill Orchestration、Knowledge Capture、real enforcement 與 Risk Level / Decision override 仍維持延後。
 ```
 
 ---

@@ -4,9 +4,9 @@ This roadmap describes planned development after the v2.3 controlled retrieval a
 
 ## Current Baseline
 
-Current release baseline: tag `v2.2.0`.
+Current release baseline: tag `v2.3.0`.
 
-Current phase: v2.3 release gate passed; ready to tag.
+Current phase: v2.3 released as `v2.3.0`.
 
 Completed:
 
@@ -258,7 +258,7 @@ Deferred beyond v2.2:
 
 ## v2.3 - Controlled Retrieval and Structured Follow-Up
 
-Status: Release gate passed; ready to tag.
+Status: Released as `v2.3.0`.
 
 Delivered:
 
@@ -291,9 +291,9 @@ All response decisions remain simulated unless explicitly redesigned in a future
 
 ## 目前基準
 
-目前 release baseline：tag `v2.2.0`。
+目前 release baseline：tag `v2.3.0`。
 
-目前里程碑：v2.3 release gate 已通過，準備 tag。
+目前里程碑：v2.3 已發布為 `v2.3.0`。
 
 已完成：
 
