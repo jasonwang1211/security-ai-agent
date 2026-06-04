@@ -1,4 +1,4 @@
-﻿# Demo Walkthrough and Verification Report
+# Demo Walkthrough and Verification Report
 
 [English](#english) | [繁體中文](#繁體中文)
 
@@ -6,9 +6,9 @@
 # English
 
 > Project: AI-assisted Security Threat Detection and Response System
-> Current phase: v2.3 released as `v2.3.0`.
+> Current phase: v2.4 implementation complete; release gate pending.
 > Release baseline: tag `v2.3.0`
-> Release focus: Protected controlled retrieval, event-grounded payload follow-up, and graph-grounded authentication incident follow-up
+> Release focus: Deterministic direct-input Agent Skill Orchestration over protected v2.3 runtime capabilities
 
 Full CLI excerpts are available in [demo_outputs.md](demo_outputs.md).
 
@@ -276,6 +276,41 @@ Boundary note:
 
 v2.3 includes graph-grounded follow-up for the current structured authentication incident only. The runtime uses explicit current-event graph relationships for evidence/finding explanation; it is not Similar-Case Graph RAG and not LLM-generated graph reasoning. v2.3 does not implement direct-input Auto Router, Agent Skill Orchestration, LLM-assisted skill selection, approved historical-case retrieval, Knowledge Capture or event write-back, automatic vector-to-graph expansion, the deferred Mode 3 KnowledgeDoc graph-expansion WIP, real firewall/WAF/EDR/account action, or RAG/LLM override of deterministic `Risk Level` or `Decision`.
 
+## v2.4 Deterministic Agent Skill Orchestration Runtime
+
+v2.4 implementation complete; release gate pending. The current released baseline remains tag `v2.3.0` until the v2.4 release gate, tag, merge, and push are completed.
+
+Implemented runtime scope:
+
+- Direct user input is now the primary CLI interaction path.
+- Users can enter a suspicious payload, authentication log path, active-context follow-up question, or general security knowledge question without manually selecting Mode 1 / 2 / 3 / 4 first.
+- Typing `menu` preserves the legacy four-mode interface as a debug/demo fallback.
+- The runtime deterministically routes to `AnalyzePayloadSkill`, `AnalyzeAuthenticationLogSkill`, `ExplainActiveEventSkill`, `ExplainActiveIncidentSkill`, or `KnowledgeQASkill`.
+- Skill selection is deterministic and not LLM-selected.
+- The skill layer wraps already-working v2.3 runtime capabilities rather than redefining detector, incident, graph, or RAG authority.
+- `ToolPolicy` gating permits approved read/analysis flows and keeps future write-capable behavior blocked or approval-required.
+- Payload analysis can retain `ActiveEventContext`; qualifying authentication log analysis can retain `ActiveAuthIncidentContext`.
+- Structured current-event/current-incident follow-up takes precedence when applicable.
+- General knowledge Q&A may be used while an active context exists and does not overwrite that structured context.
+
+Focused implementation validation already completed:
+
+- Pytest: `110 passed in 1.64s`
+- Ruff: passed
+- Mypy: passed across 108 source files
+- `git diff --check`: passed
+- Mojibake scan over v2.4-A touched files: no known corrupted fragments found
+
+Manual runtime smoke evidence:
+
+- Direct payload input `test; rm -rf /tmp/test` routed to payload analysis without selecting Mode 1, produced Command Injection / `HIGH` / simulated `BLOCK`, and preserved current-event follow-up.
+- Direct log input `demo_logs\scenario_a_mixed_auth.log` routed to authentication log correlation without selecting Mode 2, produced the structured Scenario A incident, and preserved current-incident graph follow-up.
+- SQL Injection knowledge input used the protected knowledge path while the active incident context remained available for later `EV-003` follow-up.
+- `menu` opened the legacy four-mode interface.
+
+Boundary note:
+
+v2.4 orchestrates existing v2.3 runtime capabilities. It does not replace the detector, graph facts, or protected RAG logic. It does not implement or release LLM-assisted skill selection, `RetrieveSimilarCaseSkill`, executable `DraftCaseCaptureSkill`, Similar-Case Graph RAG, historical-case retrieval, Knowledge Capture or event write-back, automatic live ingestion, real firewall/WAF/EDR/account enforcement, real monitoring deployment, or RAG/LLM override of deterministic `Risk Level` or `Decision`. Any future write-capable capture skill must require explicit approval and human review before live ingestion.
 ### v1.4 Detection-as-Code Lite / YAML 規則式偵測
 
 v1.4 將 XSS、SQL Injection、Path Traversal、Command Injection 的 payload signatures 移至 `detections/blue_team/` YAML 規則。系統新增 `DetectionRule` schema 與 YAML rule loader，detector adapter 以 YAML 作為主要偵測路徑，並在 detector result 中保留 rule ID、source path、severity、confidence、MITRE techniques 與 references 等 metadata。
@@ -301,7 +336,7 @@ The current system is an AI-assisted blue-team security triage prototype. It sup
 - Follow-up explanation
 - Unified `[Security Triage Report]` output
 
-The latest milestone adds v2.3 protected controlled Mode 3 retrieval, Mode 1 current payload-event follow-up through `ActiveEventContext`, and Mode 2 current authentication-incident graph-grounded follow-up through `ActiveAuthIncidentContext` and explicit `GraphSnapshot` facts. It does not implement Auto Router, Skill Orchestration, Similar-Case Graph RAG, Knowledge Capture, real enforcement, or Risk Level / Decision override.
+The latest milestone adds v2.4 deterministic direct-input Agent Skill Orchestration over the protected v2.3 runtime capabilities. Direct input can route to payload analysis, authentication log analysis, active-context follow-up, or protected knowledge Q&A while preserving `ActiveEventContext` and `ActiveAuthIncidentContext`. Skill selection is deterministic, not LLM-selected, and does not implement Similar-Case Graph RAG, Knowledge Capture, real enforcement, or Risk Level / Decision override.
 
 ---
 
@@ -391,6 +426,7 @@ Mode 3 RAG is used for knowledge explanation only. It does not decide attack typ
 | D18 | v2.2 Command Injection Hybrid Explanation | approved KnowledgeDoc seed + curated rule KB | Command Injection explainer maps to ATTACK_TYPE:Command Injection and DETECTION_RULE:CMD-001; Decision remains simulated BLOCK | Passed (focused test) |
 | D19 | v2.3 Event-Grounded Payload Follow-Up | `test; rm -rf /tmp/test` + Mode 4 follow-ups | Current `ActiveEventContext` explains Command Injection, `HIGH / BLOCK`, simulated boundary, exploitation uncertainty, and investigation next steps | Passed (manual smoke) |
 | D20 | v2.3 Graph-Grounded Authentication Incident Follow-Up | `demo_logs\scenario_a_mixed_auth.log` + Mode 4 follow-ups | Current `ActiveAuthIncidentContext` explains `INC-20260501-001`, `EV-003`, `F-001`, `HIGH / MONITOR`, explicit support relation, and no confirmed compromise | Passed (manual smoke) |
+| D21 | v2.4 Direct-Input Agent Runtime | direct payload, log path, active follow-ups, SQL Injection question, `menu` | Deterministic skill orchestration routes to approved skills, preserves active contexts, and leaves the legacy menu available | Passed (manual smoke) |
 
 ---
 
@@ -664,11 +700,13 @@ The current branch also includes a small but important quality foundation:
 | v2.3 full release gate | Passed: `670 passed in 8.23s`, Ruff, Mypy across 106 source files, diff-check, Gitleaks across 167 commits |
 | v2.3 Controlled Retrieval and Structured Follow-Up | Released as `v2.3.0` |
 | v2.3 manual runtime smoke | Passed for Mode 3 controlled retrieval, Mode 1 event follow-up, and Mode 2 graph-grounded incident follow-up |
+| v2.4 focused deterministic validation | Passed: `110 passed in 1.64s`, Ruff, Mypy across 108 source files, diff-check, mojibake scan |
+| v2.4 direct-input manual runtime smoke | Passed for payload input, auth log path input, active follow-up, protected knowledge Q&A, and `menu` fallback |
 
 Overall result:
 
 ```text
-v2.3 released as `v2.3.0`. The current feature branch contains protected controlled Mode 3 retrieval, event-grounded Mode 1 follow-up, and graph-grounded current-incident Mode 2 authentication follow-up. Automatic Graph RAG retrieval, Auto Router, Skill Orchestration, Knowledge Capture, real enforcement, and Risk Level / Decision override remain deferred.
+v2.4 implementation complete; release gate pending. The current feature branch contains deterministic direct-input skill orchestration over protected controlled Mode 3 retrieval, event-grounded Mode 1 follow-up, and graph-grounded current-incident Mode 2 authentication follow-up. LLM-assisted skill selection, Similar-Case Graph RAG, Knowledge Capture, real enforcement, and Risk Level / Decision override remain deferred.
 ```
 
 ---
@@ -693,9 +731,9 @@ This demo remains a functional prototype with the following limitations:
 - `BLOCK`, `MONITOR`, and `ALLOW` are simulated decisions only.
 - LLM suggestions do not override the final system `Decision`.
 - RAG is not used for primary detection.
-- The current CLI is still menu-based and is not yet a full Main Controller Agent.
+- Direct input is now the primary CLI path, while the legacy menu remains available as a debug/demo fallback.
 - Startup still initializes heavy RAG, embedding, and Chroma components.
-- Smart Input Router / Main Controller Agent behavior remains future work.
+- LLM-assisted Smart Input Router behavior and autonomous write-capable skills remain future work.
 - `RAGQueryPlanner` improves retrieval, but answer quality still depends on the quality of knowledge files and local LLM output.
 
 For planned future work, see [docs/ROADMAP.md](docs/ROADMAP.md).
@@ -706,8 +744,9 @@ For planned future work, see [docs/ROADMAP.md](docs/ROADMAP.md).
 # 繁體中文
 
 > 專案：AI 輔助安全威脅偵測與回應系統
-> 目前里程碑：v2.3 已發布為 `v2.3.0`。
-> 里程碑：受保護 controlled retrieval、current payload-event follow-up，以及 current authentication-incident graph-grounded follow-up
+> 目前里程碑：v2.4 實作已完成；release gate 尚待執行。
+> 目前 release baseline：tag `v2.3.0`
+> 里程碑：deterministic direct-input Agent Skill Orchestration，沿用受保護的 v2.3 runtime capabilities
 完整 CLI 範例可參考 [demo_outputs.md](demo_outputs.md)。
 
 本報告記錄代表性的 CLI 流程與 pass/fail 驗證，用來確認目前統一 `Security Triage Report` 契約是否穩定。這不是統計式 benchmark；precision / recall、false positive rate 與 retrieval quality evaluation 會留到後續里程碑。
@@ -725,7 +764,7 @@ For planned future work, see [docs/ROADMAP.md](docs/ROADMAP.md).
 - Follow-up explanation
 - Unified Security Triage Report
 
-v2.3 新增 protected controlled Mode 3 retrieval、透過 `ActiveEventContext` 進行 Mode 1 current payload-event follow-up，以及透過 `ActiveAuthIncidentContext` 與 explicit `GraphSnapshot` facts 進行 Mode 2 current authentication-incident graph-grounded follow-up。此狀態為已發布為 `v2.3.0`；不代表 Auto Router、Skill Orchestration、Similar-Case Graph RAG、Knowledge Capture、real enforcement 或 Risk Level / Decision override 已實作。
+v2.4 新增 deterministic direct-input Agent Skill Orchestration，讓使用者可直接輸入 payload、authentication log path、active-context follow-up 或 security knowledge question，不必先手動選擇 Mode 1 / 2 / 3 / 4。此狀態為實作已完成、release gate 尚待執行；目前 release baseline 仍為 `v2.3.0`。Skill selection 是 deterministic，不是 LLM-selected；此版本不代表 LLM-assisted skill selection、Similar-Case Graph RAG、Knowledge Capture、real enforcement 或 Risk Level / Decision override 已實作。
 
 Focused verification 範例：
 
@@ -905,7 +944,7 @@ Mode 3 RAG 只負責知識解釋，不決定 attack type、risk level 或模擬 
 整體結果：
 
 ```text
-v2.3 已發布為 `v2.3.0`。此版本包含 protected controlled Mode 3 retrieval、Mode 1 current-event follow-up，以及 Mode 2 current-incident GraphSnapshot authentication follow-up。Automatic Graph RAG retrieval、Auto Router、Skill Orchestration、Knowledge Capture、real enforcement 與 Risk Level / Decision override 仍維持延後。
+v2.4 實作已完成；release gate 尚待執行。目前 release baseline 仍為 `v2.3.0`。此分支包含 deterministic direct-input skill orchestration，並沿用 protected controlled Mode 3 retrieval、Mode 1 current-event follow-up，以及 Mode 2 current-incident GraphSnapshot authentication follow-up。LLM-assisted skill selection、Similar-Case Graph RAG、Knowledge Capture、real enforcement 與 Risk Level / Decision override 仍維持延後。
 ```
 
 ---

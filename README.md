@@ -319,6 +319,44 @@ Boundaries:
 - The graph facts come from explicit current-event `GraphSnapshot` relationships, not LLM-generated graph reasoning.
 - v2.3 does not implement direct-input Auto Router, Agent Skill Orchestration, LLM-assisted skill selection, Similar-Case Graph RAG, approved historical-case retrieval, Knowledge Capture or event write-back, automatic vector-to-graph expansion, the deferred Mode 3 KnowledgeDoc graph-expansion WIP, real firewall/WAF/EDR/account action, or RAG/LLM override of deterministic `Risk Level` or `Decision`.
 
+### v2.4 Deterministic Agent Skill Orchestration Runtime
+
+v2.4 implementation complete; release gate pending. The current released baseline remains tag `v2.3.0` until the v2.4 full release gate, tag, merge, and push are completed.
+
+Direct-input Agent runtime:
+
+- Direct user input is now the primary CLI interaction path.
+- Users can enter a suspicious payload, authentication log path, active-context follow-up question, or general security knowledge question without selecting Mode 1 / 2 / 3 / 4 first.
+- Typing `menu` preserves the legacy four-mode interface as a debug/demo fallback.
+
+Deterministic skill orchestration:
+
+- The runtime deterministically routes to `AnalyzePayloadSkill`, `AnalyzeAuthenticationLogSkill`, `ExplainActiveEventSkill`, `ExplainActiveIncidentSkill`, or `KnowledgeQASkill`.
+- Skill selection is deterministic and not LLM-selected.
+- The skill layer wraps already-working v2.3 runtime capabilities; it does not redefine detector, incident, graph, or RAG authority.
+- `ToolPolicy` permits approved read/analysis flows and keeps future write-capable behavior blocked or approval-required.
+
+Active-context behavior:
+
+- Payload analysis can retain `ActiveEventContext`; qualifying authentication log analysis can retain `ActiveAuthIncidentContext`.
+- Structured current-event/current-incident follow-up takes precedence when applicable.
+- General knowledge Q&A may run while an active context exists and does not overwrite that structured context.
+- v2.4 reuses v2.3 event-grounded payload follow-up, graph-grounded current authentication incident follow-up, and protected controlled knowledge Q&A.
+
+Focused implementation validation already completed:
+
+- Pytest: `110 passed in 1.64s`
+- Ruff: passed
+- Mypy: passed across 108 source files
+- `git diff --check`: passed
+- Mojibake scan over v2.4-A touched files: no known corrupted fragments found
+
+Manual runtime smoke was also completed for direct payload input, direct authentication log input, active-context follow-up, protected SQL Injection knowledge Q&A, and `menu` legacy fallback.
+
+Boundaries:
+
+- v2.4 does not implement or release LLM-assisted skill selection, `RetrieveSimilarCaseSkill`, executable `DraftCaseCaptureSkill`, Similar-Case Graph RAG, historical-case retrieval, Knowledge Capture or event write-back, automatic live ingestion, real firewall/WAF/EDR/account enforcement, real monitoring deployment, or RAG/LLM override of deterministic `Risk Level` or `Decision`.
+- Any future write-capable capture skill must require explicit approval and human review before live ingestion.
 ### CLI Modes
 
 ```text
@@ -353,7 +391,7 @@ Historical v2.2 full release gate remains recorded separately: `628 passed`, Ruf
 
 v2.2 focused validation remains recorded separately: Batch 2.2-A `67 passed`, Ruff passed, Mypy passed, and `git diff --check` passed; Batch 2.2-B `96 passed`, Ruff passed, Mypy passed, and `git diff --check` passed.
 
-The test suite includes expanded golden smoke tests, direct consolidated log pipeline tests, Pydantic boundary model tests, incident/export/follow-up/guardrail tests, and Scenario A integration coverage for a mixed authentication log. Deterministic tests do not start the full app or initialize RAGQA, Chroma, embeddings, Torch, Ollama, ChatOllama, or local LLM clients. GitHub Actions CI runs the same quality gate.
+The test suite includes expanded golden smoke tests, direct consolidated log pipeline tests, Pydantic boundary model tests, incident/export/follow-up/guardrail tests, Scenario A integration coverage for a mixed authentication log, and deterministic v2.4 skill orchestration coverage. Deterministic tests do not start the full app or initialize RAGQA, Chroma, embeddings, Torch, Ollama, ChatOllama, or local LLM clients. GitHub Actions CI runs the same quality gate.
 
 ### Local Model Prerequisites
 
@@ -380,9 +418,10 @@ python app.py
 
 Current release baseline: tag `v2.3.0`.
 
-Current phase: v2.3 released as `v2.3.0`.
+Current phase: v2.4 implementation complete; release gate pending.
 
-目前里程碑：v2.3 已發布為 `v2.3.0`。
+目前 release baseline：tag `v2.3.0`。
+目前里程碑：v2.4 實作已完成；release gate 尚待執行。
 
 Completed:
 
@@ -402,6 +441,7 @@ Completed:
 - v2.1 Graph-Backed Explanation MVP, including exact EV-ID, F-ID, rule ID, and INC-ID graph explanations from explicit graph edges with existing `SourceCitation` provenance and `AnswerGuardrails` protection
 - v2.2 Curated RAG Graph Seed Foundation, including 9 promoted reviewed Traditional Chinese report-explainer KB documents, 20 live report-explainer docs, minimal typed metadata support, reviewed KnowledgeDoc graph seed candidates, and protected hybrid graph/knowledge explanation assembly
 - v2.3 Controlled Retrieval and Structured Follow-Up, including protected controlled Mode 3 retrieval, Mode 1 active payload-event follow-up, and Mode 2 current-incident graph-grounded authentication follow-up
+- v2.4 Deterministic Agent Skill Orchestration Runtime, including direct-input primary CLI path, deterministic read/analysis skill routing, active-context preservation, protected knowledge Q&A reuse, and legacy menu fallback
 - Expanded golden smoke tests, direct log pipeline tests, focused boundary model tests, `pytest`, `ruff`, lenient `mypy`, and GitHub Actions CI
 
 ### Further Reading
@@ -599,7 +639,7 @@ python -m ruff check .
 python -m mypy app.py modules tests
 ```
 
-最近一次完整 release gate 測試結果：v2.3 `670 passed in 8.23s`，Ruff、Mypy（106 source files）、`git diff --check` 與 Gitleaks（no leaks found；167 commits scanned）均通過。v2.3 已發布為 `v2.3.0`；目前 release baseline 為 `v2.3.0`。
+最近一次完整 release gate 測試結果仍為 v2.3：`670 passed in 8.23s`，Ruff、Mypy（106 source files）、`git diff --check` 與 Gitleaks（no leaks found；167 commits scanned）均通過。v2.4 full release gate 尚待執行；目前 release baseline 為 `v2.3.0`。
 
 測試使用 dummy RAG 與 LLMAssist 物件，不會啟動完整 CLI，也不會初始化 RAGQA、Chroma、embeddings、Torch、Ollama、ChatOllama 或本地 LLM client。GitHub Actions CI 會執行同一組品質檢查。
 
@@ -607,7 +647,10 @@ python -m mypy app.py modules tests
 
 Current release baseline: tag `v2.3.0`.
 
-目前里程碑：v2.3 已發布為 `v2.3.0`。
+Current phase: v2.4 implementation complete; release gate pending.
+
+目前 release baseline：tag `v2.3.0`。
+目前里程碑：v2.4 實作已完成；release gate 尚待執行。
 
 已完成：
 

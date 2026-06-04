@@ -1,6 +1,6 @@
 # Demo Outputs / Demo 輸出範例
 
-This document shows representative output excerpts for the current CLI/runtime demo flows, including the v2.3 controlled retrieval and structured follow-up implementation.
+This document shows representative output excerpts for the current CLI/runtime demo flows, including the v2.4 deterministic direct-input Agent Skill Orchestration implementation.
 
 本文件整理目前 CLI/runtime demo flows 的代表性輸出摘錄，包含 v2.3 controlled retrieval and structured follow-up 實作。
 
@@ -676,6 +676,89 @@ Boundaries:
 - It is graph-grounded follow-up for the current structured authentication incident, not Similar-Case Graph RAG.
 - It does not use LLM-generated graph reasoning, historical-case retrieval, Knowledge Capture, event write-back, real monitoring deployment, or Risk Level / Decision override.
 
+## Demo Case 15: v2.4 Deterministic Agent Skill Orchestration / Direct-Input Runtime
+
+Status: Passed by manual runtime smoke.
+
+This excerpt records stable fields and behavior verified from the real runtime. It is not a full verbatim transcript.
+
+Direct payload input:
+
+```text
+test; rm -rf /tmp/test
+```
+
+Observed runtime behavior:
+
+- Without selecting Mode 1, the Agent executed payload analysis.
+- Output included `Attack Type: Command Injection`, `Risk Level: HIGH`, and `Decision: BLOCK`.
+- Matched signatures included `; rm` and `; rm -rf`.
+- The simulation notice stated that no actual system or firewall setting was modified.
+
+Follow-up evidence:
+
+```text
+User: follow-up asking whether the matched payload proves execution or compromise
+Observed: The answer states that matching a payload, signature, or rule does not prove successful execution, data exfiltration, system compromise, or confirmed intrusion.
+Observed: The answer suggests checking command execution sinks, process/audit logs, file changes, privilege changes, outbound connections, and host/container logs.
+
+User: natural follow-up asking what to check next
+Observed: The system retained the current Command Injection investigation context and provided additional relevant checks.
+```
+
+Direct authentication log input:
+
+```text
+demo_logs\scenario_a_mixed_auth.log
+```
+
+Observed runtime behavior:
+
+- Without selecting Mode 2, the Agent executed deterministic authentication log correlation.
+- Output included `[Structured Authentication Incident]`.
+- Output included `Incident ID: INC-20260501-001`.
+- Output included `Attack Type: Possible Account Compromise`.
+- Output included `Risk Level: HIGH`.
+- Output included `Decision: MONITOR` with simulated-decision wording.
+- `Evidence IDs` included `EV-003`.
+- `Finding IDs` included `F-001`.
+
+Follow-up evidence:
+
+```text
+User: EV-003 follow-up
+Observed: The answer used the current structured incident and explicit GraphSnapshot facts.
+
+User: EV-003 / F-001 support follow-up
+Observed: The answer used explicit current-incident graph edges and preserved the no-confirmed-compromise boundary.
+
+User: MONITOR follow-up
+Observed: The answer preserved the no-real-monitoring-deployment boundary and stated that this is graph lookup over current incident edges, not Graph RAG.
+```
+
+Knowledge question during active incident context:
+
+```text
+User: SQL Injection knowledge question
+Observed: The system answered through the protected knowledge path.
+
+User: EV-003 follow-up after the knowledge question
+Observed: The system still answered from the previously retained active authentication incident context.
+```
+
+Legacy fallback:
+
+```text
+menu
+```
+
+Observed behavior: The legacy four-mode interface remained available.
+
+Boundaries:
+
+- Direct-input routing is deterministic and not LLM-selected.
+- The skill layer reuses existing v2.3 runtime capabilities rather than replacing detector, graph facts, or protected RAG logic.
+- It does not implement Similar-Case Graph RAG, Knowledge Capture, event write-back, real enforcement, real monitoring deployment, or Risk Level / Decision override.
 ## Appendix: Deprecated Output Formats
 
 Historical reference only. These formats are no longer emitted by the current system and are kept to document output schema evolution.

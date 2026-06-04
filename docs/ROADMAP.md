@@ -1,12 +1,12 @@
 # Roadmap
 
-This roadmap describes planned development after the v2.3 controlled retrieval and structured follow-up implementation.
+This roadmap describes planned development after the v2.4 deterministic Agent Skill Orchestration implementation.
 
 ## Current Baseline
 
 Current release baseline: tag `v2.3.0`.
 
-Current phase: v2.3 released as `v2.3.0`.
+Current phase: v2.4 implementation complete; release gate pending.
 
 Completed:
 
@@ -34,6 +34,7 @@ Completed:
 - v2.1 Graph-Backed Explanation MVP
 - v2.2 Curated RAG Graph Seed Foundation
 - v2.3 Controlled Retrieval and Structured Follow-Up
+- v2.4 Deterministic Agent Skill Orchestration Runtime
 - pytest / ruff / mypy / GitHub Actions CI
 
 Last full quality gate (v2.3):
@@ -43,6 +44,14 @@ Last full quality gate (v2.3):
 - `python -m mypy app.py modules tests` -> passed, `106 source files`
 - `git diff --check` -> passed
 - Gitleaks -> passed, no leaks found across 167 commits scanned using `gitleaks detect --source . --verbose --redact`
+
+Focused v2.4-A deterministic validation already completed:
+
+- Pytest: `110 passed in 1.64s`
+- Ruff: passed
+- Mypy: passed across 108 source files
+- `git diff --check`: passed
+- Mojibake scan over v2.4-A touched files: no known corrupted fragments found
 
 Focused v2.2 validation already completed:
 
@@ -280,6 +289,34 @@ Boundary:
 
 v2.3 includes graph-grounded follow-up for the current structured authentication incident only. It is not Similar-Case Graph RAG, LLM-generated graph reasoning, automatic historical-case retrieval, Knowledge Capture, event write-back, Auto Router, Skill Orchestration, LLM-assisted skill selection, automatic vector-to-graph expansion, restored Mode 3 KnowledgeDoc graph expansion, real enforcement, real monitoring deployment, or RAG/LLM override of deterministic `Risk Level` or `Decision`.
 
+## v2.4 - Deterministic Agent Skill Orchestration Runtime
+
+Status: Implementation complete; release gate pending.
+
+Delivered:
+
+- Direct user input is now the primary CLI interaction path.
+- Users can enter suspicious payloads, authentication log paths, active-context follow-up questions, or general security knowledge questions without manually selecting Mode 1 / 2 / 3 / 4 first.
+- `menu` preserves the legacy four-mode interface as a debug/demo fallback.
+- Deterministic routing and invocation now covers `AnalyzePayloadSkill`, `AnalyzeAuthenticationLogSkill`, `ExplainActiveEventSkill`, `ExplainActiveIncidentSkill`, and `KnowledgeQASkill`.
+- Skill selection is deterministic, not LLM-selected.
+- `ToolPolicy` permits approved read/analysis flows and keeps future write-capable behavior blocked or approval-required.
+- `ActiveEventContext` and `ActiveAuthIncidentContext` are preserved for structured current-event/current-incident follow-up precedence.
+- General knowledge Q&A may run while an active context exists and does not overwrite that structured context.
+- The runtime reuses v2.3 event-grounded payload follow-up, graph-grounded current authentication incident follow-up, and protected controlled knowledge Q&A.
+
+Focused validation:
+
+- Pytest: `110 passed in 1.64s`
+- Ruff: passed
+- Mypy: passed across 108 source files
+- `git diff --check`: passed
+- Mojibake scan over v2.4-A touched files: no known corrupted fragments found
+- Manual runtime smoke passed for direct payload input, direct authentication log input, active follow-up, protected SQL Injection knowledge Q&A, and legacy `menu` fallback.
+
+Boundary:
+
+v2.4 does not replace detector, incident, graph, or protected RAG authority. It does not implement or release LLM-assisted skill selection, `RetrieveSimilarCaseSkill`, executable `DraftCaseCaptureSkill`, Similar-Case Graph RAG, historical-case retrieval, Knowledge Capture or event write-back, automatic live ingestion, real firewall/WAF/EDR/account enforcement, real monitoring deployment, or RAG/LLM override of deterministic `Risk Level` or `Decision`. Any future write-capable capture skill must require explicit approval and human review before live ingestion.
 ## Non-Goals
 
 The roadmap does not include offensive automation or real enforcement actions.
@@ -287,13 +324,13 @@ All response decisions remain simulated unless explicitly redesigned in a future
 
 # 後續規劃
 
-此 roadmap 描述目前 v2.3 controlled retrieval and structured follow-up 實作後的後續開發方向。
+本 roadmap 說明 v2.4 deterministic Agent Skill Orchestration implementation 之後的規劃。
 
 ## 目前基準
 
 目前 release baseline：tag `v2.3.0`。
-
-目前里程碑：v2.3 已發布為 `v2.3.0`。
+目前里程碑：v2.4 實作已完成；release gate 尚待執行。
+已完成：
 
 已完成：
 
@@ -321,6 +358,7 @@ All response decisions remain simulated unless explicitly redesigned in a future
 - v2.1 Graph-Backed Explanation MVP
 - v2.2 Curated RAG Graph Seed Foundation
 - v2.3 Controlled Retrieval and Structured Follow-Up
+- v2.4 Deterministic Agent Skill Orchestration Runtime
 - pytest / ruff / mypy / GitHub Actions CI
 
 Last full quality gate (v2.3):

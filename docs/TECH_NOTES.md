@@ -242,7 +242,7 @@ Technical boundary:
 - ControllerAgent does not auto-execute.
 - Smart Router is not the default CLI auto-route.
 - There is no LLM tool selection.
-- There is no Graph RAG, Knowledge Capture, or Agent Skill Orchestration runtime implementation.
+- At the v1.9 contract stage there was no Graph RAG, Knowledge Capture, or Agent Skill Orchestration runtime implementation; v2.4 later adds deterministic read/analysis skill orchestration only.
 - `RAGQA` remains the active general knowledge QA runtime.
 - LLM/RAG output does not decide attacks or override Risk Level / Decision.
 - `BLOCK`, `MONITOR`, and `ALLOW` remain simulated decisions.
@@ -371,6 +371,39 @@ Safety boundary:
 
 v2.3 uses graph-grounded follow-up only for the current structured authentication incident. It is not Similar-Case Graph RAG, not automatic historical-case retrieval, and not LLM-generated graph reasoning. It does not implement direct-input Auto Router, Agent Skill Orchestration, LLM-assisted skill selection, Knowledge Capture, event write-back, automatic vector-to-graph expansion, the deferred Mode 3 KnowledgeDoc graph-expansion WIP, real firewall/WAF/EDR/account action, or RAG/LLM override of deterministic `Risk Level` or `Decision`.
 
+## v2.4 Deterministic Agent Skill Orchestration Runtime
+
+v2.4 implementation complete; release gate pending. The current released baseline remains tag `v2.3.0` until the v2.4 full release gate, tag, merge, and push are completed.
+
+Runtime ownership:
+
+- Direct user input is now the primary CLI path.
+- The `menu` command preserves the legacy four-mode interface as a debug/demo fallback.
+- The deterministic skill layer invokes `AnalyzePayloadSkill`, `AnalyzeAuthenticationLogSkill`, `ExplainActiveEventSkill`, `ExplainActiveIncidentSkill`, and `KnowledgeQASkill`.
+- Skill selection is deterministic and rule-based; it is not LLM-selected.
+- The skill layer wraps existing v2.3 runtime paths rather than redefining detector, incident, graph, or RAG authority.
+
+Context behavior:
+
+- Payload analysis can retain `ActiveEventContext` for current-event follow-up.
+- Qualifying authentication log analysis can retain `ActiveAuthIncidentContext` and current-incident `GraphSnapshot` facts for graph-grounded follow-up.
+- Structured current-event/current-incident follow-up takes precedence when applicable.
+- General knowledge Q&A can run while structured context exists and does not overwrite that context.
+
+Policy boundary:
+
+- `ToolPolicy` permits approved read/analysis flows and keeps future write-capable behavior blocked or approval-required.
+- v2.4 does not implement or release LLM-assisted skill selection, `RetrieveSimilarCaseSkill`, executable `DraftCaseCaptureSkill`, Similar-Case Graph RAG, historical-case retrieval, Knowledge Capture or event write-back, automatic live ingestion, real firewall/WAF/EDR/account enforcement, real monitoring deployment, or RAG/LLM override of deterministic `Risk Level` or `Decision`.
+- Any future write-capable capture skill must require explicit approval and human review before live ingestion.
+
+Focused validation:
+
+- Pytest: `110 passed in 1.64s`
+- Ruff: passed
+- Mypy: passed across 108 source files
+- `git diff --check`: passed
+- Mojibake scan over v2.4-A touched files: no known corrupted fragments found
+- Manual runtime smoke passed for direct payload input, direct authentication log input, active follow-up, protected SQL Injection knowledge Q&A, and legacy `menu` fallback.
 ## Testing Strategy
 
 The project uses several testing layers:

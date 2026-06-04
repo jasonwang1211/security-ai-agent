@@ -1,6 +1,6 @@
 # Architecture Debt Engineering Journal
 
-Current milestone: v2.3 released as `v2.3.0`
+Current milestone: v2.4 implementation complete; release gate pending
 Current baseline: tag `v2.3.0`
 Last full quality gate: v2.3 `670 passed in 8.23s`; Ruff, Mypy, diff-check, and Gitleaks passed
 
@@ -29,6 +29,7 @@ The project has reached a stable consolidated architecture with:
 - v2.1 Graph-Backed Explanation MVP: protected exact-reference graph explanations using explicit graph edges and existing `SourceCitation` provenance
 - v2.2 Curated RAG Graph Seed Foundation: 9 reviewed Traditional Chinese report-explainer KB documents promoted to live, 20 live report-explainer docs, minimal typed metadata support, reviewed KnowledgeDoc graph seed candidates, and protected hybrid graph/knowledge explanation assembly
 - v2.3 Controlled Retrieval and Structured Follow-Up: protected controlled Mode 3 retrieval, Mode 1 active payload-event follow-up, and Mode 2 current-incident graph-grounded authentication follow-up
+- v2.4 Deterministic Agent Skill Orchestration Runtime: direct-input primary CLI path, deterministic read/analysis skill routing, active-context preservation, protected knowledge Q&A reuse, and legacy menu fallback
 - Controlled 9B package migration for RAG helper modules and controller/orchestration modules with temporary flat compatibility shims
 - Manual smoke remains manual-only, not normal CI; targeted v2.3 runtime smoke has been completed for Mode 3 controlled retrieval, Mode 1 event follow-up, and Mode 2 graph-grounded incident follow-up
 
@@ -44,7 +45,7 @@ The project has reached a stable consolidated architecture with:
 | RAG helper ownership | flat `modules/rag_*.py` helpers | `modules/rag/` plus flat shims | Controlled helper package migration; `RAGQA` remains active runtime |
 | Controller/orchestration ownership | flat controller/tool/policy/workflow modules | `modules/controller/` plus flat shims | Controlled package migration; no runtime auto-execution added |
 | Graph foundation ownership | none | `modules/graph/` | In-memory graph contracts, deterministic builder, read-only lookup, JSON serialization, protected exact-reference explanation, and reviewed KnowledgeDoc seed candidates; no automatic Graph RAG or persistence |
-| Testing foundation | limited smoke coverage | golden + log pipeline + boundary + incident + detection-rule + controller + RAG v2 + v1.7 reliability + v1.8 protected helper tests + v1.9 contract tests + v2.0 graph focused tests + v2.1 graph explanation focused tests + v2.2 focused metadata/seed/hybrid tests | Last full quality gate: v2.3 `670 passed in 8.23s`, Ruff, Mypy, diff-check, and Gitleaks |
+| Testing foundation | limited smoke coverage | golden + log pipeline + boundary + incident + detection-rule + controller + RAG v2 + v1.7 reliability + v1.8 protected helper tests + v1.9 contract tests + v2.0 graph focused tests + v2.1 graph explanation focused tests + v2.2 focused metadata/seed/hybrid tests + v2.4 deterministic skill orchestration tests | Last full quality gate: v2.3 `670 passed in 8.23s`, Ruff, Mypy, diff-check, and Gitleaks; focused v2.4-A validation: `110 passed in 1.64s`, Ruff, Mypy across 108 source files, diff-check, and mojibake scan |
 
 ## v1.3 Phase Outcomes
 
@@ -283,6 +284,23 @@ Architecture note:
 
 v2.3 uses graph-grounded follow-up only for the current structured authentication incident. It does not implement direct-input Auto Router, Agent Skill Orchestration, LLM-assisted skill selection, Similar-Case Graph RAG, approved historical-case retrieval, Knowledge Capture or event write-back, automatic vector-to-graph expansion, the deferred Mode 3 KnowledgeDoc graph-expansion WIP, real firewall/WAF/EDR/account action, or RAG/LLM override of deterministic `Risk Level` or `Decision`. v2.3 has been released as `v2.3.0`.
 
+## v2.4 Phase Outcomes
+
+- Direct user input is now the primary CLI interaction path.
+- Users can enter suspicious payloads, authentication log paths, active-context follow-up questions, or general security knowledge questions without manually selecting Mode 1 / 2 / 3 / 4 first.
+- `menu` preserves the legacy four-mode interface as a debug/demo fallback.
+- Deterministic routing and invocation now covers `AnalyzePayloadSkill`, `AnalyzeAuthenticationLogSkill`, `ExplainActiveEventSkill`, `ExplainActiveIncidentSkill`, and `KnowledgeQASkill`.
+- Skill selection is deterministic, not LLM-selected.
+- The skill layer wraps already-working v2.3 runtime capabilities rather than redefining detector, incident, graph, or RAG authority.
+- `ToolPolicy` permits approved read/analysis flows and keeps future write-capable behavior blocked or approval-required.
+- `ActiveEventContext` and `ActiveAuthIncidentContext` are preserved for structured current-event/current-incident follow-up precedence.
+- General knowledge Q&A may run while an active context exists and does not overwrite that structured context.
+- Focused deterministic validation passed with `110 passed in 1.64s`, Ruff, Mypy across 108 source files, `git diff --check`, and a clean mojibake scan over v2.4-A touched files.
+- Manual runtime smoke passed for direct payload input, direct authentication log path input, active-context follow-up, protected SQL Injection knowledge Q&A, and legacy `menu` fallback.
+
+Architecture note:
+
+v2.4 orchestrates existing v2.3 runtime capabilities. It does not replace detector, incident, graph, or protected RAG authority. It does not implement or release LLM-assisted skill selection, `RetrieveSimilarCaseSkill`, executable `DraftCaseCaptureSkill`, Similar-Case Graph RAG, historical-case retrieval, Knowledge Capture or event write-back, automatic live ingestion, real firewall/WAF/EDR/account enforcement, real monitoring deployment, or RAG/LLM override of deterministic `Risk Level` or `Decision`. Any future write-capable capture skill must require explicit approval and human review before live ingestion.
 ## Last Full Quality Gate
 
 - `python -m pytest` -> `670 passed in 8.23s` for v2.3
@@ -307,18 +325,19 @@ v2.3 uses graph-grounded follow-up only for the current structured authenticatio
 
 Tool Permission and Workflow Plan contracts now document future orchestration boundaries, but they are not runtime enforcement or auto-execution paths.
 
-### Deferred Work After v2.3
+### Deferred Work After v2.4
 
 - Tool Permission and Workflow Plan contracts are not runtime-wired.
 - Partial controlled package migration has been performed for RAG helpers and controller/orchestration helpers, while flat compatibility shims remain.
 - Automatic Graph RAG retrieval remains deferred; v2.2 adds deterministic KnowledgeDoc seed helpers and protected hybrid explanation/context assembly only.
 - Knowledge Capture remains deferred until ownership, review, and ingest boundaries are stable.
 - Automatic vector-to-graph expansion and automatic retrieval-to-graph expansion remain deferred.
-- Similar-Case Graph RAG and approved historical-case retrieval remain deferred after v2.3.
-- Direct-input Auto Router, Agent Skill Orchestration, and LLM-assisted skill selection remain deferred after v2.3.
+- Similar-Case Graph RAG and approved historical-case retrieval remain deferred after v2.4.
+- LLM-assisted skill selection remains deferred after v2.4; v2.4 skill selection is deterministic.
+- `RetrieveSimilarCaseSkill` and executable `DraftCaseCaptureSkill` remain deferred.
+- Future write-capable capture must require explicit approval and human review before live ingestion.
 - The deferred Mode 3 KnowledgeDoc graph-expansion WIP remains deferred.
 - Full legacy KB corpus schema migration remains deferred; existing legacy KB documents remain supported.
-- Agent Skill Orchestration remains deferred; ControllerAgent does not auto-execute tools or workflows.
 - Smart Router remains preview-only and is not the default CLI auto-route.
 - `RAGQA` has not been replaced.
 - Manual LLM/RAG smoke remains manual-only and is not part of normal CI. Targeted v2.3 manual runtime smoke was executed and recorded for Mode 3 controlled retrieval, Mode 1 event follow-up, and Mode 2 graph-grounded incident follow-up.
