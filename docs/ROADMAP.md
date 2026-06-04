@@ -4,9 +4,9 @@ This roadmap describes planned development after the v2.4 deterministic Agent Sk
 
 ## Current Baseline
 
-Current release baseline: tag `v2.3.0`.
+Current release baseline: tag `v2.4.0`.
 
-Current phase: v2.4 release gate passed; ready to tag.
+Current phase: v2.4 released as `v2.4.0`.
 
 Completed:
 
@@ -291,7 +291,7 @@ v2.3 includes graph-grounded follow-up for the current structured authentication
 
 ## v2.4 - Deterministic Agent Skill Orchestration Runtime
 
-Status: Release gate passed; ready to tag.
+Status: Released as `v2.4.0`.
 
 Delivered:
 
@@ -328,8 +328,8 @@ All response decisions remain simulated unless explicitly redesigned in a future
 
 ## 目前基準
 
-目前 release baseline：tag `v2.3.0`。
-目前里程碑：v2.4 release gate 已通過；準備 tag。
+目前 release baseline：tag `v2.4.0`。
+目前里程碑：v2.4 已發布為 `v2.4.0`。
 已完成：
 
 已完成：

@@ -6,8 +6,8 @@
 # English
 
 > Project: AI-assisted Security Threat Detection and Response System
-> Current phase: v2.4 release gate passed; ready to tag.
-> Release baseline: tag `v2.3.0`
+> Current phase: v2.4 released as `v2.4.0`.
+> Release baseline: tag `v2.4.0`
 > Release focus: Deterministic direct-input Agent Skill Orchestration over protected v2.3 runtime capabilities
 
 Full CLI excerpts are available in [demo_outputs.md](demo_outputs.md).
@@ -278,7 +278,7 @@ v2.3 includes graph-grounded follow-up for the current structured authentication
 
 ## v2.4 Deterministic Agent Skill Orchestration Runtime
 
-v2.4 release gate passed; ready to tag. The current released baseline remains tag `v2.3.0` until the v2.4 tag, merge, and push are completed.
+v2.4 released as `v2.4.0`. The current release baseline is tag `v2.4.0`.
 
 Implemented runtime scope:
 
@@ -707,7 +707,7 @@ The current branch also includes a small but important quality foundation:
 Overall result:
 
 ```text
-v2.4 release gate passed; ready to tag. The current feature branch contains deterministic direct-input skill orchestration over protected controlled Mode 3 retrieval, event-grounded Mode 1 follow-up, and graph-grounded current-incident Mode 2 authentication follow-up. LLM-assisted skill selection, Similar-Case Graph RAG, Knowledge Capture, real enforcement, and Risk Level / Decision override remain deferred.
+v2.4 released as `v2.4.0`. The current branch contains deterministic direct-input skill orchestration over protected controlled Mode 3 retrieval, event-grounded Mode 1 follow-up, and graph-grounded current-incident Mode 2 authentication follow-up. LLM-assisted skill selection, Similar-Case Graph RAG, Knowledge Capture, real enforcement, and Risk Level / Decision override remain deferred.
 ```
 
 ---
@@ -745,8 +745,8 @@ For planned future work, see [docs/ROADMAP.md](docs/ROADMAP.md).
 # 繁體中文
 
 > 專案：AI 輔助安全威脅偵測與回應系統
-> 目前里程碑：v2.4 release gate 已通過；準備 tag。
-> 目前 release baseline：tag `v2.3.0`
+> 目前里程碑：v2.4 已發布為 `v2.4.0`。
+> 目前 release baseline：tag `v2.4.0`
 > 里程碑：deterministic direct-input Agent Skill Orchestration，沿用受保護的 v2.3 runtime capabilities
 完整 CLI 範例可參考 [demo_outputs.md](demo_outputs.md)。
 
@@ -765,7 +765,7 @@ For planned future work, see [docs/ROADMAP.md](docs/ROADMAP.md).
 - Follow-up explanation
 - Unified Security Triage Report
 
-v2.4 新增 deterministic direct-input Agent Skill Orchestration，讓使用者可直接輸入 payload、authentication log path、active-context follow-up 或 security knowledge question，不必先手動選擇 Mode 1 / 2 / 3 / 4。此狀態為 release gate 已通過、準備 tag；目前 release baseline 仍為 `v2.3.0`。Skill selection 是 deterministic，不是 LLM-selected；此版本不代表 LLM-assisted skill selection、Similar-Case Graph RAG、Knowledge Capture、real enforcement 或 Risk Level / Decision override 已實作。
+v2.4 新增 deterministic direct-input Agent Skill Orchestration，讓使用者可直接輸入 payload、authentication log path、active-context follow-up 或 security knowledge question，不必先手動選擇 Mode 1 / 2 / 3 / 4。此狀態為已發布為 `v2.4.0`；目前 release baseline 為 `v2.4.0`。Skill selection 是 deterministic，不是 LLM-selected；此版本不代表 LLM-assisted skill selection、Similar-Case Graph RAG、Knowledge Capture、real enforcement 或 Risk Level / Decision override 已實作。
 
 Focused verification 範例：
 
@@ -945,7 +945,7 @@ Mode 3 RAG 只負責知識解釋，不決定 attack type、risk level 或模擬 
 整體結果：
 
 ```text
-v2.4 release gate 已通過；準備 tag。目前 release baseline 仍為 `v2.3.0`。此分支包含 deterministic direct-input skill orchestration，並沿用 protected controlled Mode 3 retrieval、Mode 1 current-event follow-up，以及 Mode 2 current-incident GraphSnapshot authentication follow-up。LLM-assisted skill selection、Similar-Case Graph RAG、Knowledge Capture、real enforcement 與 Risk Level / Decision override 仍維持延後。
+v2.4 已發布為 `v2.4.0`。目前 release baseline 為 `v2.4.0`。此分支包含 deterministic direct-input skill orchestration，並沿用 protected controlled Mode 3 retrieval、Mode 1 current-event follow-up，以及 Mode 2 current-incident GraphSnapshot authentication follow-up。LLM-assisted skill selection、Similar-Case Graph RAG、Knowledge Capture、real enforcement 與 Risk Level / Decision override 仍維持延後。
 ```
 
 ---

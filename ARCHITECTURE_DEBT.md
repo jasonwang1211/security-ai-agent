@@ -1,7 +1,7 @@
 # Architecture Debt Engineering Journal
 
-Current milestone: v2.4 release gate passed; ready to tag
-Current baseline: tag `v2.3.0`
+Current milestone: v2.4 released as `v2.4.0`
+Current baseline: tag `v2.4.0`
 Last full quality gate: v2.4 `693 passed in 14.72s`; Ruff, Mypy across 108 source files, diff-check, and Gitleaks passed across 171 commits scanned
 
 This document tracks structural debt cleanup as an engineering discipline: reducing module sprawl, consolidating thin wrappers, and preserving deterministic safety boundaries before adding more agentic behavior.

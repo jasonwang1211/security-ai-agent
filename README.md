@@ -321,7 +321,7 @@ Boundaries:
 
 ### v2.4 Deterministic Agent Skill Orchestration Runtime
 
-v2.4 release gate passed; ready to tag. The current released baseline remains tag `v2.3.0` until the v2.4 tag, merge, and push are completed.
+v2.4 released as `v2.4.0`. The current release baseline is tag `v2.4.0`.
 
 Direct-input Agent runtime:
 
@@ -418,12 +418,12 @@ python app.py
 
 ### Current Status
 
-Current release baseline: tag `v2.3.0`.
+Current release baseline: tag `v2.4.0`.
 
-Current phase: v2.4 release gate passed; ready to tag.
+Current phase: v2.4 released as `v2.4.0`.
 
-目前 release baseline：tag `v2.3.0`。
-目前里程碑：v2.4 release gate 已通過；準備 tag。
+目前 release baseline：tag `v2.4.0`。
+目前里程碑：v2.4 已發布為 `v2.4.0`。
 
 Completed:
 
@@ -641,18 +641,18 @@ python -m ruff check .
 python -m mypy app.py modules tests
 ```
 
-最近一次完整 release gate 測試結果為 v2.4：`693 passed in 14.72s`，Ruff、Mypy（108 source files）、`git diff --check` 與 Gitleaks（no leaks found；171 commits scanned）均通過。v2.4 release gate 已通過；準備 tag；目前 release baseline 仍為 `v2.3.0`。
+最近一次完整 release gate 測試結果為 v2.4：`693 passed in 14.72s`，Ruff、Mypy（108 source files）、`git diff --check` 與 Gitleaks（no leaks found；171 commits scanned）均通過。v2.4 已發布為 `v2.4.0`；目前 release baseline 為 `v2.4.0`。
 
 測試使用 dummy RAG 與 LLMAssist 物件，不會啟動完整 CLI，也不會初始化 RAGQA、Chroma、embeddings、Torch、Ollama、ChatOllama 或本地 LLM client。GitHub Actions CI 會執行同一組品質檢查。
 
 ### 目前狀態
 
-Current release baseline: tag `v2.3.0`.
+Current release baseline: tag `v2.4.0`.
 
-Current phase: v2.4 release gate passed; ready to tag.
+Current phase: v2.4 released as `v2.4.0`.
 
-目前 release baseline：tag `v2.3.0`。
-目前里程碑：v2.4 release gate 已通過；準備 tag。
+目前 release baseline：tag `v2.4.0`。
+目前里程碑：v2.4 已發布為 `v2.4.0`。
 
 已完成：
 

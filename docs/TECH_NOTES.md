@@ -373,7 +373,7 @@ v2.3 uses graph-grounded follow-up only for the current structured authenticatio
 
 ## v2.4 Deterministic Agent Skill Orchestration Runtime
 
-v2.4 release gate passed; ready to tag. The current released baseline remains tag `v2.3.0` until the v2.4 tag, merge, and push are completed.
+v2.4 released as `v2.4.0`. The current release baseline is tag `v2.4.0`.
 
 Runtime ownership:
 
