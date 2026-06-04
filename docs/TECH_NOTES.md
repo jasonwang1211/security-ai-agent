@@ -342,6 +342,35 @@ Safety boundary:
 
 Deterministic detector / risk / decision remain final authority. Graph and curated RAG context provide explanation/support only. `ALLOW`, `MONITOR`, and `BLOCK` remain simulated decisions. v2.2 does not implement automatic Graph RAG retrieval, vector-to-graph expansion, Knowledge Capture, LLM graph extraction, `RAGQA` replacement, CLI auto-route, real enforcement, or real monitoring deployment. Existing legacy KB documents remain supported, and full corpus schema migration is deferred.
 
+## v2.3 Controlled Retrieval and Structured Follow-Up
+
+v2.3 implementation complete; release gate pending.
+
+Mode 3 runtime:
+
+- `RAGQA.answer_question(...)` first attempts controlled approved-source selection for reviewed targets including SQL Injection, `CMD-001`, and `success_after_failures`.
+- If controlled selection has no match, the existing vector fallback remains available.
+- Returned Mode 3 answers use the protected return path with Traditional Chinese safety boundary text, internal metadata-label suppression, canonical visible RAG / LLM terminology, and deterministic final-authority wording.
+- RAG and LLM remain explanation-only and cannot override deterministic `Risk Level` or `Decision`.
+
+Mode 1 event follow-up:
+
+- Payload analysis stores an in-memory `ActiveEventContext` with facts from the current payload-analysis flow only.
+- Mode 4 can answer current-event questions about classification reasoning, matched rule/signature evidence, simulated Decision boundary, uncertainty about successful exploitation, and defensive investigation or remediation guidance.
+- Manual smoke verified `test; rm -rf /tmp/test` as Command Injection with `HIGH / BLOCK`, command-injection signatures, and simulation notice. Follow-up confirmed that simulated `BLOCK` is not real enforcement and that a rule match does not prove successful command execution.
+
+Mode 2 authentication incident follow-up:
+
+- Qualifying authentication logs use deterministic correlation to create structured `Incident`, `Evidence`, and `Finding` values.
+- Scenario A stores `ActiveAuthIncidentContext` and builds an explicit in-memory `GraphSnapshot` from the current incident.
+- Mode 2 visible output includes the structured incident summary with `INC-20260501-001`, `Possible Account Compromise`, `HIGH`, simulated `MONITOR`, `EV-003`, and `F-001`.
+- Mode 4 can explain `EV-003`, the explicit `EV-003` / `F-001` support relationship, simulated `MONITOR`, compromise uncertainty, and investigation next steps.
+- New non-qualifying Mode 2 log analysis clears stale structured context.
+
+Safety boundary:
+
+v2.3 uses graph-grounded follow-up only for the current structured authentication incident. It is not Similar-Case Graph RAG, not automatic historical-case retrieval, and not LLM-generated graph reasoning. It does not implement direct-input Auto Router, Agent Skill Orchestration, LLM-assisted skill selection, Knowledge Capture, event write-back, automatic vector-to-graph expansion, the deferred Mode 3 KnowledgeDoc graph-expansion WIP, real firewall/WAF/EDR/account action, or RAG/LLM override of deterministic `Risk Level` or `Decision`.
+
 ## Testing Strategy
 
 The project uses several testing layers:

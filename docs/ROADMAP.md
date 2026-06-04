@@ -1,12 +1,12 @@
 # Roadmap
 
-This roadmap describes planned development after the v2.2 curated RAG graph seed foundation milestone.
+This roadmap describes planned development after the v2.3 controlled retrieval and structured follow-up implementation.
 
 ## Current Baseline
 
 Current release baseline: tag `v2.2.0`.
 
-Current phase: v2.2 released as `v2.2.0`.
+Current phase: v2.3 implementation complete; release gate pending.
 
 Completed:
 
@@ -33,6 +33,7 @@ Completed:
 - v2.0 Knowledge Graph Foundation
 - v2.1 Graph-Backed Explanation MVP
 - v2.2 Curated RAG Graph Seed Foundation
+- v2.3 Controlled Retrieval and Structured Follow-Up
 - pytest / ruff / mypy / GitHub Actions CI
 
 Last full quality gate (v2.2):
@@ -255,6 +256,30 @@ Deferred beyond v2.2:
 - Full legacy KB schema migration
 - Runtime wiring or CLI auto-route for hybrid explanations
 
+## v2.3 - Controlled Retrieval and Structured Follow-Up
+
+Status: Implementation complete; release gate pending.
+
+Delivered:
+
+- Mode 3 controlled approved-source retrieval before vector fallback for reviewed targets including SQL Injection, `CMD-001`, and `success_after_failures`.
+- Protected Mode 3 return path with Traditional Chinese safety boundary, internal metadata-label suppression, canonical visible RAG / LLM terminology, and deterministic final-authority wording.
+- Mode 1 stores `ActiveEventContext` with only facts produced by the current payload-analysis flow.
+- Mode 4 current-event follow-up covers classification reasoning, matched rule/signature evidence, simulated Decision boundary, exploitation uncertainty, and defensive investigation/remediation guidance.
+- Mode 2 qualifying authentication logs create structured `Incident`, `Evidence`, and `Finding` values through deterministic correlation.
+- Scenario A stores `ActiveAuthIncidentContext`, builds an explicit current-incident `GraphSnapshot`, and shows a structured summary with `INC-20260501-001`, `EV-003`, `F-001`, `HIGH`, and simulated `MONITOR`.
+- Mode 4 graph-grounded authentication incident follow-up explains `EV-003`, the explicit `EV-003` / `F-001` support relationship, simulated `MONITOR`, compromise uncertainty, and investigation next steps.
+- Non-qualifying Mode 2 log analysis clears stale structured context.
+
+Manual smoke:
+
+- Command Injection payload `test; rm -rf /tmp/test` retained `Command Injection`, `HIGH`, `BLOCK`, matched signatures, and simulation notice. Follow-up confirmed `BLOCK` is simulated and a rule match does not prove successful execution.
+- Scenario A log `demo_logs\scenario_a_mixed_auth.log` produced `INC-20260501-001`, `Possible Account Compromise`, `HIGH`, simulated `MONITOR`, `EV-003`, and `F-001`. Follow-up used explicit current `GraphSnapshot` facts and did not claim confirmed intrusion or real monitoring deployment.
+
+Boundary:
+
+v2.3 includes graph-grounded follow-up for the current structured authentication incident only. It is not Similar-Case Graph RAG, LLM-generated graph reasoning, automatic historical-case retrieval, Knowledge Capture, event write-back, Auto Router, Skill Orchestration, LLM-assisted skill selection, automatic vector-to-graph expansion, restored Mode 3 KnowledgeDoc graph expansion, real enforcement, real monitoring deployment, or RAG/LLM override of deterministic `Risk Level` or `Decision`.
+
 ## Non-Goals
 
 The roadmap does not include offensive automation or real enforcement actions.
@@ -262,13 +287,13 @@ All response decisions remain simulated unless explicitly redesigned in a future
 
 # 後續規劃
 
-此 roadmap 描述目前 v2.2 curated RAG graph seed foundation 實作後的後續開發方向。
+此 roadmap 描述目前 v2.3 controlled retrieval and structured follow-up 實作後的後續開發方向。
 
 ## 目前基準
 
 目前 release baseline：tag `v2.2.0`。
 
-目前里程碑：v2.2 已發布為 `v2.2.0`。
+目前里程碑：v2.3 實作已完成；release gate 尚待執行。
 
 已完成：
 
@@ -295,6 +320,7 @@ All response decisions remain simulated unless explicitly redesigned in a future
 - v2.0 知識圖譜基礎
 - v2.1 Graph-Backed Explanation MVP
 - v2.2 Curated RAG Graph Seed Foundation
+- v2.3 Controlled Retrieval and Structured Follow-Up
 - pytest / ruff / mypy / GitHub Actions CI
 
 Last full quality gate (v2.2):

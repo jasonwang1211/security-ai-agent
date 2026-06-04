@@ -6,9 +6,9 @@
 # English
 
 > Project: AI-assisted Security Threat Detection and Response System
-> Current phase: v2.2 released as `v2.2.0`
+> Current phase: v2.3 implementation complete; release gate pending.
 > Release baseline: tag `v2.2.0`
-> Release focus: Reviewed curated KB metadata, KnowledgeDoc seed candidates, and protected hybrid explanation assembly
+> Release focus: Protected controlled retrieval, event-grounded payload follow-up, and graph-grounded authentication incident follow-up
 
 Full CLI excerpts are available in [demo_outputs.md](demo_outputs.md).
 
@@ -252,6 +252,30 @@ Boundary note:
 
 Deterministic detector / risk / decision remain final authority. Graph and curated RAG context provide explanation/support only. `ALLOW`, `MONITOR`, and `BLOCK` remain simulated decisions. v2.2 implements protected hybrid explanation/context assembly using explicit graph context plus curated knowledge source context; it does not implement automatic Graph RAG retrieval, vector-to-graph expansion, Knowledge Capture, LLM graph extraction, `RAGQA` replacement, CLI auto-route, Risk Level / Decision override, or real enforcement. Existing legacy KB documents remain supported, and full corpus schema migration is deferred.
 
+## v2.3 Controlled Retrieval and Structured Follow-Up
+
+v2.3 implementation complete; release gate pending.
+
+Implemented and manually verified runtime scope:
+
+- v2.3-A protected controlled Mode 3 retrieval selects reviewed approved sources before the existing vector fallback for reviewed targets including SQL Injection, `CMD-001`, and `success_after_failures`.
+- Mode 3 applies the protected answer path with Traditional Chinese safety boundary text, internal metadata-label suppression, canonical visible RAG / LLM terminology, and deterministic final-authority wording.
+- v2.3-B Mode 1 payload analysis stores `ActiveEventContext` with facts from the current payload-analysis flow only.
+- Mode 4 can answer current payload-event questions about classification reasoning, matched rule/signature evidence, simulated Decision boundary, successful-exploitation uncertainty, and defensive investigation/remediation guidance.
+- v2.3-C Mode 2 qualifying authentication logs create structured `Incident`, `Evidence`, and `Finding` values through deterministic correlation.
+- Scenario A stores `ActiveAuthIncidentContext`, builds an explicit in-memory `GraphSnapshot`, and displays the current structured incident summary with `INC-20260501-001`, `EV-003`, `F-001`, `HIGH`, and simulated `MONITOR`.
+- Mode 4 can explain `EV-003`, the explicit `EV-003` / `F-001` support relationship, why `MONITOR` was selected, why the sequence does not confirm account compromise, and defensive investigation next steps.
+- Non-qualifying Mode 2 log analysis clears stale structured context so follow-up cannot accidentally use an older incident.
+
+Manual smoke evidence:
+
+- Mode 1 input `test; rm -rf /tmp/test` retained `Command Injection`, `HIGH`, `BLOCK`, matched command-injection signatures, and simulation notice. Follow-up confirmed `BLOCK` is simulated and the rule match does not prove successful command execution.
+- Mode 2 input `demo_logs\scenario_a_mixed_auth.log` produced a structured authentication incident summary containing `Incident ID: INC-20260501-001`, `Attack Type: Possible Account Compromise`, `Risk Level: HIGH`, `Decision: MONITOR` with simulated-decision wording, `EV-003`, and `F-001`. Follow-up used explicit `GraphSnapshot` facts and did not claim confirmed intrusion or real monitoring deployment.
+
+Boundary note:
+
+v2.3 includes graph-grounded follow-up for the current structured authentication incident only. The runtime uses explicit current-event graph relationships for evidence/finding explanation; it is not Similar-Case Graph RAG and not LLM-generated graph reasoning. v2.3 does not implement direct-input Auto Router, Agent Skill Orchestration, LLM-assisted skill selection, approved historical-case retrieval, Knowledge Capture or event write-back, automatic vector-to-graph expansion, the deferred Mode 3 KnowledgeDoc graph-expansion WIP, real firewall/WAF/EDR/account action, or RAG/LLM override of deterministic `Risk Level` or `Decision`.
+
 ### v1.4 Detection-as-Code Lite / YAML 規則式偵測
 
 v1.4 將 XSS、SQL Injection、Path Traversal、Command Injection 的 payload signatures 移至 `detections/blue_team/` YAML 規則。系統新增 `DetectionRule` schema 與 YAML rule loader，detector adapter 以 YAML 作為主要偵測路徑，並在 detector result 中保留 rule ID、source path、severity、confidence、MITRE techniques 與 references 等 metadata。
@@ -277,7 +301,7 @@ The current system is an AI-assisted blue-team security triage prototype. It sup
 - Follow-up explanation
 - Unified `[Security Triage Report]` output
 
-The latest milestone adds v2.2 curated knowledge promotion, reviewed KnowledgeDoc graph seed candidates, and protected hybrid graph/knowledge explanation assembly. Existing CLI runtime and unified Security Triage Report behavior remain unchanged.
+The latest milestone adds v2.3 protected controlled Mode 3 retrieval, Mode 1 current payload-event follow-up through `ActiveEventContext`, and Mode 2 current authentication-incident graph-grounded follow-up through `ActiveAuthIncidentContext` and explicit `GraphSnapshot` facts. It does not implement Auto Router, Skill Orchestration, Similar-Case Graph RAG, Knowledge Capture, real enforcement, or Risk Level / Decision override.
 
 ---
 
@@ -365,6 +389,8 @@ Mode 3 RAG is used for knowledge explanation only. It does not decide attack typ
 | D16 | v2.1 Graph-Backed Explanation MVP | Scenario A / EV-003 | EV-003 explicitly supports F-001; Decision remains MONITOR | Passed (focused test) |
 | D17 | v2.2 Scenario A Hybrid Explanation | graph + curated auth KB context | EV-003 supports F-001, curated auth KB citations coexist, Decision remains simulated MONITOR | Passed (focused test) |
 | D18 | v2.2 Command Injection Hybrid Explanation | approved KnowledgeDoc seed + curated rule KB | Command Injection explainer maps to ATTACK_TYPE:Command Injection and DETECTION_RULE:CMD-001; Decision remains simulated BLOCK | Passed (focused test) |
+| D19 | v2.3 Event-Grounded Payload Follow-Up | `test; rm -rf /tmp/test` + Mode 4 follow-ups | Current `ActiveEventContext` explains Command Injection, `HIGH / BLOCK`, simulated boundary, exploitation uncertainty, and investigation next steps | Passed (manual smoke) |
+| D20 | v2.3 Graph-Grounded Authentication Incident Follow-Up | `demo_logs\scenario_a_mixed_auth.log` + Mode 4 follow-ups | Current `ActiveAuthIncidentContext` explains `INC-20260501-001`, `EV-003`, `F-001`, `HIGH / MONITOR`, explicit support relation, and no confirmed compromise | Passed (manual smoke) |
 
 ---
 
@@ -635,11 +661,13 @@ The current branch also includes a small but important quality foundation:
 | v2.2 Curated RAG Graph Seed Foundation | Released as `v2.2.0` |
 | v2.2 focused pytest / Ruff / Mypy / diff-check | Passed |
 | v2.2 full release gate | Passed: `628 passed`, Ruff, Mypy, diff-check, Gitleaks |
+| v2.3 Controlled Retrieval and Structured Follow-Up | Implementation complete; release gate pending |
+| v2.3 manual runtime smoke | Passed for Mode 3 controlled retrieval, Mode 1 event follow-up, and Mode 2 graph-grounded incident follow-up |
 
 Overall result:
 
 ```text
-v2.2 released as `v2.2.0`. The current feature branch contains reviewed curated KB promotion, reviewed KnowledgeDoc seed candidates, and protected hybrid graph/knowledge explanation assembly. Existing CLI behavior remains unchanged, automatic Graph RAG retrieval is not implemented, and deterministic detection / policy still control final verdicts.
+v2.3 implementation complete; release gate pending. The current feature branch contains protected controlled Mode 3 retrieval, event-grounded Mode 1 follow-up, and graph-grounded current-incident Mode 2 authentication follow-up. Automatic Graph RAG retrieval, Auto Router, Skill Orchestration, Knowledge Capture, real enforcement, and Risk Level / Decision override remain deferred.
 ```
 
 ---
@@ -677,8 +705,8 @@ For planned future work, see [docs/ROADMAP.md](docs/ROADMAP.md).
 # 繁體中文
 
 > 專案：AI 輔助安全威脅偵測與回應系統
-> 目前里程碑：v2.2 已發布為 `v2.2.0`
-> 里程碑：reviewed curated KB metadata、KnowledgeDoc seed candidates 與 protected hybrid explanation assembly
+> 目前里程碑：v2.3 實作已完成；release gate 尚待執行。
+> 里程碑：受保護 controlled retrieval、current payload-event follow-up，以及 current authentication-incident graph-grounded follow-up
 完整 CLI 範例可參考 [demo_outputs.md](demo_outputs.md)。
 
 本報告記錄代表性的 CLI 流程與 pass/fail 驗證，用來確認目前統一 `Security Triage Report` 契約是否穩定。這不是統計式 benchmark；precision / recall、false positive rate 與 retrieval quality evaluation 會留到後續里程碑。
@@ -696,7 +724,7 @@ For planned future work, see [docs/ROADMAP.md](docs/ROADMAP.md).
 - Follow-up explanation
 - Unified Security Triage Report
 
-v2.2 新增 curated knowledge promotion、reviewed KnowledgeDoc graph seed candidates，以及 protected hybrid graph/knowledge explanation assembly。既有 CLI 執行流程與 `Security Triage Report` 行為維持不變。
+v2.3 新增 protected controlled Mode 3 retrieval、透過 `ActiveEventContext` 進行 Mode 1 current payload-event follow-up，以及透過 `ActiveAuthIncidentContext` 與 explicit `GraphSnapshot` facts 進行 Mode 2 current authentication-incident graph-grounded follow-up。此狀態為 implementation complete；release gate 尚待執行；不代表 Auto Router、Skill Orchestration、Similar-Case Graph RAG、Knowledge Capture、real enforcement 或 Risk Level / Decision override 已實作。
 
 Focused verification 範例：
 
@@ -819,6 +847,8 @@ Mode 3 RAG 只負責知識解釋，不決定 attack type、risk level 或模擬 
 | D16 | v2.1 Graph-Backed Explanation MVP | Scenario A / EV-003 | EV-003 明確支援 F-001；Decision 維持 MONITOR | Passed（focused test） |
 | D17 | v2.2 Scenario A hybrid explanation | graph + curated auth KB context | curated auth KB 與 graph citation coexist；Decision 維持 simulated MONITOR | Passed（focused test） |
 | D18 | v2.2 Command Injection hybrid explanation | approved KnowledgeDoc seed + curated rule KB | Command Injection explainer 對應 `CMD-001`；Decision 維持 simulated BLOCK | Passed（focused test） |
+| D19 | v2.3 Event-grounded payload follow-up | `test; rm -rf /tmp/test` + Mode 4 follow-ups | `ActiveEventContext` 解釋 Command Injection、`HIGH / BLOCK`、simulated boundary、exploitation uncertainty 與 investigation next steps | Passed（manual smoke） |
+| D20 | v2.3 Graph-grounded authentication incident follow-up | `demo_logs\scenario_a_mixed_auth.log` + Mode 4 follow-ups | `ActiveAuthIncidentContext` 解釋 `INC-20260501-001`、`EV-003`、`F-001`、`HIGH / MONITOR`、explicit support relation，且不宣稱 confirmed compromise | Passed（manual smoke） |
 
 ---
 
@@ -868,11 +898,13 @@ Mode 3 RAG 只負責知識解釋，不決定 attack type、risk level 或模擬 
 | v2.2 Curated RAG Graph Seed Foundation | 已發布為 `v2.2.0` |
 | v2.2 focused pytest / Ruff / Mypy / diff-check | 通過 |
 | v2.2 full release gate | 通過：`628 passed`、Ruff、Mypy、diff-check、Gitleaks |
+| v2.3 Controlled Retrieval and Structured Follow-Up | 實作已完成；release gate 尚待執行 |
+| v2.3 manual runtime smoke | Mode 3 controlled retrieval、Mode 1 event follow-up、Mode 2 graph-grounded incident follow-up 已通過人工 smoke |
 
 整體結果：
 
 ```text
-v2.2 已發布為 `v2.2.0`。此分支包含 reviewed curated KB promotion、reviewed KnowledgeDoc seed candidates，以及 protected hybrid graph/knowledge explanation assembly。既有 CLI 行為維持不變，automatic Graph RAG retrieval 尚未實作，最終判定仍由 deterministic 偵測與 policy 控制。
+v2.3 實作已完成；release gate 尚待執行。此分支包含 protected controlled Mode 3 retrieval、Mode 1 current-event follow-up，以及 Mode 2 current-incident GraphSnapshot authentication follow-up。Automatic Graph RAG retrieval、Auto Router、Skill Orchestration、Knowledge Capture、real enforcement 與 Risk Level / Decision override 仍維持延後。
 ```
 
 ---

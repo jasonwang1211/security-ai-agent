@@ -1,8 +1,8 @@
 # Demo Outputs / Demo 輸出範例
 
-This document shows representative output excerpts for the v1.9 Architecture Cleanup and Orchestration Contracts milestone.
+This document shows representative output excerpts for the current CLI/runtime demo flows, including the v2.3 controlled retrieval and structured follow-up implementation.
 
-本文件整理 v1.9 Architecture Cleanup and Orchestration Contracts milestone 的代表性輸出摘錄。
+本文件整理目前 CLI/runtime demo flows 的代表性輸出摘錄，包含 v2.3 controlled retrieval and structured follow-up 實作。
 
 The current system emits a unified `[Security Triage Report]` for triage output. Older standalone formats are outdated and should not be used as the expected demo output.
 
@@ -588,6 +588,93 @@ Notes:
 - AI does not decide attacks or override Risk Level / Decision.
 - `BLOCK`, `MONITOR`, and `ALLOW` remain simulated decisions.
 - No real firewall/WAF/SIEM/SOAR enforcement is performed.
+
+## Demo Case 13: v2.3 Event-Grounded Payload Follow-Up
+
+Status: Passed by manual runtime smoke.
+
+This excerpt records stable fields and follow-up behavior verified from the real runtime. It is not a full verbatim transcript.
+
+Mode 1 input:
+
+```text
+test; rm -rf /tmp/test
+```
+
+Observed stable Mode 1 output fields:
+
+```text
+Attack Type: Command Injection
+Risk Level: HIGH
+Decision: BLOCK
+Matched Signatures: command-injection indicators including ; rm and ; rm -rf
+Simulation Notice: BLOCK is a simulated training decision, not real enforcement.
+```
+
+Mode 4 follow-up evidence:
+
+```text
+User: BLOCK 是否代表真實封鎖？
+Observed: The answer states that BLOCK is simulated and does not mean a real firewall, WAF, EDR, or account action was executed.
+
+User: 這代表命令已經成功執行了嗎？
+Observed: The answer states that a payload/rule match does not prove successful command execution; analysts should check server-side execution, process/audit logs, and outbound connections.
+
+User: 我現在應該先做哪些調查與修補？
+Observed: The answer gives defensive investigation/remediation guidance such as reviewing command execution sinks, validating inputs, using allowlists, and avoiding shell invocation where possible.
+```
+
+Boundaries:
+
+- Follow-up uses the current in-memory `ActiveEventContext`.
+- It does not fabricate `EV-*`, `F-*`, or `INC-*` IDs for Mode 1 payload events.
+- It does not claim confirmed compromise, successful command execution, real blocking, or real enforcement.
+
+## Demo Case 14: v2.3 Graph-Grounded Authentication Incident Follow-Up
+
+Status: Passed by manual runtime smoke.
+
+This excerpt records stable fields and follow-up behavior verified from the real runtime. It is not a full verbatim transcript.
+
+Mode 2 input:
+
+```text
+demo_logs\scenario_a_mixed_auth.log
+```
+
+Observed structured incident summary fields:
+
+```text
+Incident ID: INC-20260501-001
+Status: SUSPICIOUS
+Attack Type: Possible Account Compromise
+Risk Level: HIGH
+Decision: MONITOR (simulated decision)
+Evidence IDs: includes EV-003
+Finding IDs: F-001
+```
+
+Mode 4 follow-up evidence:
+
+```text
+User: EV-003 是什麼意思？
+Observed: The answer explains EV-003 as the successful authentication after repeated failures.
+
+User: EV-003 和 F-001 有什麼關係？
+Observed: The answer uses explicit current GraphSnapshot facts and states that F-001 is explicitly supported by EV-003.
+
+User: 為什麼是 MONITOR？
+Observed: The answer keeps MONITOR as a simulated decision for analyst review and does not claim real monitoring deployment.
+
+User: 這代表帳號已經被入侵了嗎？
+Observed: The answer states that the failure-then-success sequence is suspicious but does not confirm account compromise by itself.
+```
+
+Boundaries:
+
+- Follow-up uses the current in-memory `ActiveAuthIncidentContext` and explicit current-incident `GraphSnapshot`.
+- It is graph-grounded follow-up for the current structured authentication incident, not Similar-Case Graph RAG.
+- It does not use LLM-generated graph reasoning, historical-case retrieval, Knowledge Capture, event write-back, real monitoring deployment, or Risk Level / Decision override.
 
 ## Appendix: Deprecated Output Formats
 

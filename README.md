@@ -298,6 +298,27 @@ Boundaries:
 - v2.2 does not implement automatic Graph RAG retrieval, vector-to-graph expansion, Knowledge Capture, LLM graph extraction, `RAGQA` replacement, CLI auto-route, or real enforcement.
 - Existing legacy KB documents remain supported; full corpus schema migration is deferred.
 
+### v2.3 Controlled Retrieval and Structured Follow-Up
+
+v2.3 implementation complete; release gate pending.
+
+v2.3 documents the committed and manually verified runtime scope on the feature branch:
+
+- Mode 3 knowledge Q&A now tries controlled approved-source selection before the existing vector fallback for reviewed targets including SQL Injection, `CMD-001`, and `success_after_failures`.
+- Mode 3 answers use the protected return path with Traditional Chinese safety boundary text, internal metadata-label suppression, canonical visible RAG / LLM terminology, and deterministic final-authority wording.
+- Mode 1 payload analysis retains an in-memory `ActiveEventContext` containing only facts produced by the current payload-analysis flow.
+- Mode 4 can answer current payload-event follow-ups about classification reasoning, matched rule/signature evidence, simulated Decision boundaries, exploitation uncertainty, and defensive investigation or remediation guidance.
+- Mode 2 qualifying authentication logs create structured `Incident`, `Evidence`, and `Finding` values through existing deterministic correlation.
+- Scenario A stores `ActiveAuthIncidentContext`, builds an explicit in-memory `GraphSnapshot` from the current incident, and shows a structured summary with `INC-20260501-001`, `EV-003`, `F-001`, `HIGH`, and simulated `MONITOR`.
+- Mode 4 can explain `EV-003`, the explicit `EV-003` / `F-001` support relationship, why `MONITOR` was selected, why the sequence does not confirm account compromise, and defensive investigation next steps.
+- Non-qualifying Mode 2 log analysis clears stale structured context so follow-up cannot accidentally use an older incident.
+
+Boundaries:
+
+- v2.3 includes graph-grounded follow-up for the current structured authentication incident only.
+- The graph facts come from explicit current-event `GraphSnapshot` relationships, not LLM-generated graph reasoning.
+- v2.3 does not implement direct-input Auto Router, Agent Skill Orchestration, LLM-assisted skill selection, Similar-Case Graph RAG, approved historical-case retrieval, Knowledge Capture or event write-back, automatic vector-to-graph expansion, the deferred Mode 3 KnowledgeDoc graph-expansion WIP, real firewall/WAF/EDR/account action, or RAG/LLM override of deterministic `Risk Level` or `Decision`.
+
 ### CLI Modes
 
 ```text
@@ -357,7 +378,9 @@ python app.py
 
 Current release baseline: tag `v2.2.0`.
 
-Current phase: v2.2 released as `v2.2.0`.
+Current phase: v2.3 implementation complete; release gate pending.
+
+目前里程碑：v2.3 實作已完成；release gate 尚待執行。
 
 Completed:
 
@@ -376,6 +399,7 @@ Completed:
 - v2.0 Knowledge Graph Foundation, including typed graph contracts, snapshot builder, read-only graph query helpers, JSON-ready snapshot export, and the 2A-3 decision to defer KnowledgeDoc graph seeding until a metadata audit
 - v2.1 Graph-Backed Explanation MVP, including exact EV-ID, F-ID, rule ID, and INC-ID graph explanations from explicit graph edges with existing `SourceCitation` provenance and `AnswerGuardrails` protection
 - v2.2 Curated RAG Graph Seed Foundation, including 9 promoted reviewed Traditional Chinese report-explainer KB documents, 20 live report-explainer docs, minimal typed metadata support, reviewed KnowledgeDoc graph seed candidates, and protected hybrid graph/knowledge explanation assembly
+- v2.3 Controlled Retrieval and Structured Follow-Up, including protected controlled Mode 3 retrieval, Mode 1 active payload-event follow-up, and Mode 2 current-incident graph-grounded authentication follow-up
 - Expanded golden smoke tests, direct log pipeline tests, focused boundary model tests, `pytest`, `ruff`, lenient `mypy`, and GitHub Actions CI
 
 ### Further Reading
@@ -460,6 +484,15 @@ See [docs/ROADMAP.md](docs/ROADMAP.md) for delivered items.
 - Protected hybrid explanation helper that combines already-built graph context and curated knowledge context, then applies existing guardrails
 - Scenario A authentication hybrid context keeps `Decision` simulated `MONITOR`; Command Injection hybrid context keeps `Decision` simulated `BLOCK`
 - Boundary: no automatic Graph RAG retrieval, vector-to-graph expansion, Knowledge Capture, LLM graph extraction, `RAGQA` replacement, CLI auto-route, Risk Level / Decision override, or real enforcement
+
+**v2.3 - Controlled Retrieval and Structured Follow-Up** (Implementation complete; release gate pending)
+
+- Mode 3 protected controlled retrieval for reviewed knowledge targets before vector fallback
+- Mode 1 `ActiveEventContext` follow-up for the latest payload/event analysis
+- Mode 2 `ActiveAuthIncidentContext` and current-incident `GraphSnapshot` follow-up for Scenario A authentication correlation
+- Manual smoke verified Command Injection `HIGH / BLOCK` remains simulated and does not prove command execution
+- Manual smoke verified Scenario A `INC-20260501-001`, `EV-003`, `F-001`, `HIGH / MONITOR` with explicit graph facts and no confirmed-compromise claim
+- Boundary: no Auto Router, Skill Orchestration, LLM-assisted skill selection, Similar-Case Graph RAG, Knowledge Capture, event write-back, real enforcement, real monitoring deployment, or Risk Level / Decision override
 
 For the full plan, see [docs/ROADMAP.md](docs/ROADMAP.md).
 
@@ -572,7 +605,7 @@ python -m mypy app.py modules tests
 
 Current release baseline: tag `v2.2.0`.
 
-目前里程碑：v2.2 已發布為 `v2.2.0`。
+目前里程碑：v2.3 實作已完成；release gate 尚待執行。
 
 已完成：
 
@@ -590,6 +623,7 @@ Current release baseline: tag `v2.2.0`.
 - v2.0 知識圖譜基礎：新增圖譜型別契約、決定性圖譜建構器、唯讀查詢輔助函式、可序列化為 JSON 的匯出輔助函式；2A-3 決策為 KnowledgeDoc 圖譜種子延後到 metadata 盤點後再處理
 - v2.1 Graph-Backed Explanation MVP：新增 `modules/graph/explainers.py`，可針對 EV-ID、F-ID、rule ID 與 INC-ID 從明確圖譜節點與邊產生受保護、帶 citation 的解釋
 - v2.2 Curated RAG Graph Seed Foundation：已將 9 篇 reviewed Traditional Chinese report-explainer KB 文件提升到 live corpus，使 live report-explainer 從 11 篇擴充到 20 篇；新增最小 typed metadata、reviewed KnowledgeDoc graph seed helper，以及 protected hybrid graph/knowledge explanation assembly
+- v2.3 Controlled Retrieval and Structured Follow-Up：Mode 3 受保護 controlled retrieval、Mode 1 active payload-event follow-up，以及 Mode 2 current-incident GraphSnapshot authentication follow-up 已完成實作；release gate 尚待執行
 - 圖譜是證據與脈絡結構，不作為偵測權威或最終判定來源；graph lookup 不會改變 Risk Level / Decision、不會取代規則式偵測器或 `RAGQA`、不會呼叫 LLM、自動寫入知識或執行工具
 - 邊界：仍是 deterministic rule-based detection，不是 ML detection，也不是 LLM-generated rules；YAML metadata 不會覆蓋 `TriagePolicy`
 - expanded golden smoke tests、direct log pipeline tests、boundary model tests、`pytest`、`ruff`、寬鬆 `mypy` 與 GitHub Actions CI

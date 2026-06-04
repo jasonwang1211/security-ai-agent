@@ -1,6 +1,6 @@
 # Architecture Debt Engineering Journal
 
-Current milestone: v2.2 released as `v2.2.0`
+Current milestone: v2.3 implementation complete; release gate pending
 Current baseline: tag `v2.2.0`
 Last full quality gate: v2.2 `628 passed`; Ruff, Mypy, diff-check, and Gitleaks passed
 
@@ -28,8 +28,9 @@ The project has reached a stable consolidated architecture with:
 - v2.0 Knowledge Graph Foundation: graph type contracts, deterministic builder, read-only lookup helpers, JSON-serializable export helpers, and 2A-3 seed-scope decision
 - v2.1 Graph-Backed Explanation MVP: protected exact-reference graph explanations using explicit graph edges and existing `SourceCitation` provenance
 - v2.2 Curated RAG Graph Seed Foundation: 9 reviewed Traditional Chinese report-explainer KB documents promoted to live, 20 live report-explainer docs, minimal typed metadata support, reviewed KnowledgeDoc graph seed candidates, and protected hybrid graph/knowledge explanation assembly
+- v2.3 Controlled Retrieval and Structured Follow-Up: protected controlled Mode 3 retrieval, Mode 1 active payload-event follow-up, and Mode 2 current-incident graph-grounded authentication follow-up
 - Controlled 9B package migration for RAG helper modules and controller/orchestration modules with temporary flat compatibility shims
-- Manual LLM/RAG smoke checklist documented as manual-only, not normal CI, and not yet executed
+- Manual smoke remains manual-only, not normal CI; targeted v2.3 runtime smoke has been completed for Mode 3 controlled retrieval, Mode 1 event follow-up, and Mode 2 graph-grounded incident follow-up
 
 ## Consolidation Outcomes
 
@@ -267,6 +268,21 @@ Architecture note:
 
 v2.2 implements protected hybrid explanation/context assembly using explicit graph context plus curated knowledge source context. It does not implement automatic Graph RAG retrieval, vector-to-graph expansion, Knowledge Capture, LLM graph extraction, `RAGQA` replacement, CLI auto-route, graph or LLM Risk Level / Decision override, tool execution, real enforcement, or real monitoring deployment. Existing legacy KB documents remain supported, and full corpus schema migration is deferred.
 
+## v2.3 Phase Outcomes
+
+- Added protected controlled Mode 3 retrieval before vector fallback for reviewed targets including SQL Injection, `CMD-001`, and `success_after_failures`.
+- Mode 3 answers now return through the protected path with Traditional Chinese safety boundary text, internal metadata-label suppression, canonical visible RAG / LLM terminology, and deterministic final-authority wording.
+- Mode 1 payload analysis retains an in-memory `ActiveEventContext` with facts produced by the current payload-analysis flow only.
+- Mode 4 current-event follow-up explains classification reasoning, matched rule/signature evidence, simulated Decision boundary, exploitation uncertainty, and defensive investigation/remediation guidance.
+- Mode 2 qualifying authentication logs create structured `Incident`, `Evidence`, and `Finding` values through deterministic correlation.
+- Scenario A stores `ActiveAuthIncidentContext`, builds an explicit current-incident `GraphSnapshot`, and displays `INC-20260501-001`, `EV-003`, `F-001`, `HIGH`, and simulated `MONITOR`.
+- Mode 4 graph-grounded authentication follow-up explains `EV-003`, the explicit `EV-003` / `F-001` support relationship, simulated `MONITOR`, compromise uncertainty, and investigation next steps.
+- Non-qualifying Mode 2 log analysis clears stale structured context.
+
+Architecture note:
+
+v2.3 uses graph-grounded follow-up only for the current structured authentication incident. It does not implement direct-input Auto Router, Agent Skill Orchestration, LLM-assisted skill selection, Similar-Case Graph RAG, approved historical-case retrieval, Knowledge Capture or event write-back, automatic vector-to-graph expansion, the deferred Mode 3 KnowledgeDoc graph-expansion WIP, real firewall/WAF/EDR/account action, or RAG/LLM override of deterministic `Risk Level` or `Decision`. v2.3 implementation is complete, but the full release gate is still pending.
+
 ## Last Full Quality Gate
 
 - `python -m pytest` -> `628 passed` for v2.2
@@ -290,18 +306,21 @@ v2.2 implements protected hybrid explanation/context assembly using explicit gra
 
 Tool Permission and Workflow Plan contracts now document future orchestration boundaries, but they are not runtime enforcement or auto-execution paths.
 
-### Deferred Work After v2.2
+### Deferred Work After v2.3
 
 - Tool Permission and Workflow Plan contracts are not runtime-wired.
 - Partial controlled package migration has been performed for RAG helpers and controller/orchestration helpers, while flat compatibility shims remain.
 - Automatic Graph RAG retrieval remains deferred; v2.2 adds deterministic KnowledgeDoc seed helpers and protected hybrid explanation/context assembly only.
 - Knowledge Capture remains deferred until ownership, review, and ingest boundaries are stable.
 - Automatic vector-to-graph expansion and automatic retrieval-to-graph expansion remain deferred.
+- Similar-Case Graph RAG and approved historical-case retrieval remain deferred after v2.3.
+- Direct-input Auto Router, Agent Skill Orchestration, and LLM-assisted skill selection remain deferred after v2.3.
+- The deferred Mode 3 KnowledgeDoc graph-expansion WIP remains deferred.
 - Full legacy KB corpus schema migration remains deferred; existing legacy KB documents remain supported.
 - Agent Skill Orchestration remains deferred; ControllerAgent does not auto-execute tools or workflows.
 - Smart Router remains preview-only and is not the default CLI auto-route.
 - `RAGQA` has not been replaced.
-- Manual LLM/RAG smoke checklist exists, but it is manual-only, not executed in this phase, and not part of normal CI.
+- Manual LLM/RAG smoke remains manual-only and is not part of normal CI. Targeted v2.3 manual runtime smoke was executed and recorded for Mode 3 controlled retrieval, Mode 1 event follow-up, and Mode 2 graph-grounded incident follow-up.
 
 ### Quantified Current Debt
 
