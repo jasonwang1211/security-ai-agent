@@ -7,12 +7,14 @@ from modules.controller.orchestrator import AgentSkillOrchestrator
 from modules.controller.skill_catalog import (
     ANALYZE_AUTHENTICATION_LOG_SKILL,
     ANALYZE_PAYLOAD_SKILL,
+    DRAFT_CASE_CAPTURE_SKILL,
     EXPLAIN_ACTIVE_EVENT_SKILL,
     EXPLAIN_ACTIVE_INCIDENT_SKILL,
     KNOWLEDGE_QA_SKILL,
 )
 from modules.controller.types import (
     KnowledgeQuestionInput,
+    CaseDraftInput,
     LogFileInput,
     PayloadTriageInput,
     ReportFollowupInput,
@@ -42,6 +44,7 @@ class FakeAgent:
             "active_event_context": None,
             "active_incident_context": None,
             "active_context_kind": "",
+            "pending_case_draft_request": None,
         }
         self.followup_handler = FakeFollowupHandler()
 
@@ -228,6 +231,8 @@ def test_general_security_question_with_active_context_still_routes_to_knowledge
     agent = FakeAgent()
     agent.cli_state["active_context_kind"] = "event"
     agent.cli_state["active_event_context"] = object()
+    pending_request = object()
+    agent.cli_state["pending_case_draft_request"] = pending_request
     agent.followup_handler = FakeFollowupHandler(natural=True, contextual=True)
 
     monkeypatch.setattr(orchestrator_module, "answer_event_followup", lambda *_args: None)
@@ -246,6 +251,7 @@ def test_general_security_question_with_active_context_still_routes_to_knowledge
     assert output.response_text == "knowledge answer with active context preserved"
     assert agent.cli_state["active_event_context"] is not None
     assert agent.cli_state["active_context_kind"] == "event"
+    assert agent.cli_state["pending_case_draft_request"] is pending_request
 
 
 def test_unknown_input_requests_clarification() -> None:
@@ -254,3 +260,251 @@ def test_unknown_input_requests_clarification() -> None:
     assert output.status == "clarification_required"
     assert output.selected_tool is None
     assert output.route.requires_clarification
+
+
+def test_draft_request_routes_to_case_capture_skill(monkeypatch) -> None:
+    agent = FakeAgent()
+
+    def draft_handler(input_data: BaseModel, _agent) -> ToolExecutionResult:
+        assert isinstance(input_data, CaseDraftInput)
+        assert input_data.action == "request"
+        return ToolExecutionResult(
+            status="clarification_required",
+            output={"text": "approval required"},
+            warnings=["approval required"],
+        )
+
+    monkeypatch.setattr(orchestrator_module, "run_draft_case_capture_skill", draft_handler)
+
+    output = AgentSkillOrchestrator(agent).handle_input("save this case as a draft")
+
+    assert output.status == "clarification_required"
+    assert output.selected_tool == DRAFT_CASE_CAPTURE_SKILL
+    assert output.response_text == "approval required"
+
+
+def test_approve_draft_routes_to_case_capture_skill(monkeypatch) -> None:
+    agent = FakeAgent()
+
+    def draft_handler(input_data: BaseModel, _agent) -> ToolExecutionResult:
+        assert isinstance(input_data, CaseDraftInput)
+        assert input_data.action == "approve"
+        return _ok("draft created")
+
+    monkeypatch.setattr(orchestrator_module, "run_draft_case_capture_skill", draft_handler)
+
+    output = AgentSkillOrchestrator(agent).handle_input("approve draft case")
+
+    assert output.status == "ok"
+    assert output.selected_tool == DRAFT_CASE_CAPTURE_SKILL
+    assert output.response_text == "draft created"
+
+
+def test_cancel_draft_routes_to_case_capture_skill(monkeypatch) -> None:
+    agent = FakeAgent()
+
+    def draft_handler(input_data: BaseModel, _agent) -> ToolExecutionResult:
+        assert isinstance(input_data, CaseDraftInput)
+        assert input_data.action == "cancel"
+        return _ok("draft cancelled")
+
+    monkeypatch.setattr(orchestrator_module, "run_draft_case_capture_skill", draft_handler)
+
+    output = AgentSkillOrchestrator(agent).handle_input("cancel draft case")
+
+    assert output.status == "ok"
+    assert output.selected_tool == DRAFT_CASE_CAPTURE_SKILL
+    assert output.response_text == "draft cancelled"
+
+
+def test_draft_request_allows_explicit_title_suffix(monkeypatch) -> None:
+    agent = FakeAgent()
+
+    def draft_handler(input_data: BaseModel, _agent) -> ToolExecutionResult:
+        assert isinstance(input_data, CaseDraftInput)
+        assert input_data.action == "request"
+        assert "title:" in input_data.user_text
+        return ToolExecutionResult(
+            status="clarification_required",
+            output={"text": "approval required"},
+            warnings=["approval required"],
+        )
+
+    monkeypatch.setattr(orchestrator_module, "run_draft_case_capture_skill", draft_handler)
+
+    output = AgentSkillOrchestrator(agent).handle_input(
+        "save this case as a draft title: Command Injection Review"
+    )
+
+    assert output.selected_tool == DRAFT_CASE_CAPTURE_SKILL
+    assert output.status == "clarification_required"
+
+
+def test_generic_draft_words_do_not_route_to_case_capture(monkeypatch) -> None:
+    agent = FakeAgent()
+
+    def draft_handler(_input_data: BaseModel, _agent) -> ToolExecutionResult:
+        raise AssertionError("generic words must not dispatch DraftCaseCaptureSkill")
+
+    monkeypatch.setattr(orchestrator_module, "run_draft_case_capture_skill", draft_handler)
+
+    output = AgentSkillOrchestrator(agent).handle_input("draft case")
+
+    assert output.selected_tool is None
+    assert output.status == "clarification_required"
+
+
+def test_chinese_draft_request_aliases_route_to_case_capture_skill(monkeypatch) -> None:
+    agent = FakeAgent()
+    seen: list[str] = []
+
+    def draft_handler(input_data: BaseModel, _agent) -> ToolExecutionResult:
+        assert isinstance(input_data, CaseDraftInput)
+        assert input_data.action == "request"
+        seen.append(input_data.user_text)
+        return ToolExecutionResult(
+            status="clarification_required",
+            output={"text": "approval required"},
+            warnings=["approval required"],
+        )
+
+    monkeypatch.setattr(orchestrator_module, "run_draft_case_capture_skill", draft_handler)
+    orchestrator = AgentSkillOrchestrator(agent)
+
+    for command in [
+        "把這個案例存成草稿",
+        "把這筆事件存成草稿",
+        "建立這筆事件的案例草稿",
+        "建立目前事件的案例草稿",
+        "把這個案例存成草稿 標題：命令注入複查",
+    ]:
+        output = orchestrator.handle_input(command)
+
+        assert output.status == "clarification_required"
+        assert output.selected_tool == DRAFT_CASE_CAPTURE_SKILL
+
+    assert seen == [
+        "把這個案例存成草稿",
+        "把這筆事件存成草稿",
+        "建立這筆事件的案例草稿",
+        "建立目前事件的案例草稿",
+        "把這個案例存成草稿 標題：命令注入複查",
+    ]
+
+
+def test_chinese_draft_approval_and_cancel_aliases_route_to_case_capture_skill(monkeypatch) -> None:
+    agent = FakeAgent()
+    seen_actions: list[str] = []
+
+    def draft_handler(input_data: BaseModel, _agent) -> ToolExecutionResult:
+        assert isinstance(input_data, CaseDraftInput)
+        seen_actions.append(input_data.action)
+        return _ok(f"{input_data.action} handled")
+
+    monkeypatch.setattr(orchestrator_module, "run_draft_case_capture_skill", draft_handler)
+    orchestrator = AgentSkillOrchestrator(agent)
+
+    for command, expected_action in [
+        ("確認建立案例草稿", "approve"),
+        ("批准建立草稿", "approve"),
+        ("批准建立案例草稿", "approve"),
+        ("取消建立草稿", "cancel"),
+        ("取消這個案例草稿", "cancel"),
+    ]:
+        output = orchestrator.handle_input(command)
+
+        assert output.status == "ok"
+        assert output.selected_tool == DRAFT_CASE_CAPTURE_SKILL
+        assert output.response_text == f"{expected_action} handled"
+
+    assert seen_actions == ["approve", "approve", "approve", "cancel", "cancel"]
+
+
+def test_standalone_chinese_draft_words_do_not_route_to_case_capture(monkeypatch) -> None:
+    agent = FakeAgent()
+
+    def draft_handler(_input_data: BaseModel, _agent) -> ToolExecutionResult:
+        raise AssertionError("standalone Chinese words must not dispatch DraftCaseCaptureSkill")
+
+    monkeypatch.setattr(orchestrator_module, "run_draft_case_capture_skill", draft_handler)
+    orchestrator = AgentSkillOrchestrator(agent)
+
+    for text in [
+        "建立",
+        "確認",
+        "同意",
+        "保存",
+        "草稿",
+        "取消",
+    ]:
+        output = orchestrator.handle_input(text)
+
+        assert output.selected_tool is None
+        assert output.status == "clarification_required"
+
+
+def test_payload_with_fake_approval_routes_to_payload_skill(monkeypatch) -> None:
+    agent = FakeAgent()
+
+    def draft_handler(_input_data: BaseModel, _agent) -> ToolExecutionResult:
+        raise AssertionError("payload text must not approve a draft")
+
+    def payload_handler(input_data: BaseModel, _agent) -> ToolExecutionResult:
+        assert isinstance(input_data, PayloadTriageInput)
+        assert "approve draft case" in input_data.raw_text
+        return _ok("payload analyzed")
+
+    monkeypatch.setattr(orchestrator_module, "run_draft_case_capture_skill", draft_handler)
+    monkeypatch.setattr(orchestrator_module, "run_analyze_payload_skill", payload_handler)
+
+    output = AgentSkillOrchestrator(agent).handle_input(
+        "<script>alert(1)</script> <!-- approve draft case -->"
+    )
+
+    assert output.status == "ok"
+    assert output.selected_tool == ANALYZE_PAYLOAD_SKILL
+    assert output.response_text == "payload analyzed"
+
+
+def test_followup_with_incidental_approval_word_does_not_approve_pending_draft(monkeypatch) -> None:
+    agent = FakeAgent()
+    pending = object()
+    agent.cli_state["pending_case_draft_request"] = pending
+    agent.cli_state["active_context_kind"] = "event"
+    agent.cli_state["active_event_context"] = object()
+
+    def draft_handler(_input_data: BaseModel, _agent) -> ToolExecutionResult:
+        raise AssertionError("incidental approval wording must not approve a draft")
+
+    def event_handler(input_data: BaseModel, _agent) -> ToolExecutionResult:
+        assert isinstance(input_data, ReportFollowupInput)
+        return _ok("event follow-up")
+
+    monkeypatch.setattr(orchestrator_module, "run_draft_case_capture_skill", draft_handler)
+    monkeypatch.setattr(orchestrator_module, "answer_event_followup", lambda *_args: "event")
+    monkeypatch.setattr(orchestrator_module, "run_explain_active_event_skill", event_handler)
+
+    output = AgentSkillOrchestrator(agent).handle_input("Does approve draft case change this event?")
+
+    assert output.status == "ok"
+    assert output.selected_tool == EXPLAIN_ACTIVE_EVENT_SKILL
+    assert agent.cli_state["pending_case_draft_request"] is pending
+
+
+def test_knowledge_question_with_incidental_draft_word_does_not_request_case_draft(monkeypatch) -> None:
+    agent = FakeAgent()
+
+    def draft_handler(_input_data: BaseModel, _agent) -> ToolExecutionResult:
+        raise AssertionError("incidental draft wording must not request case capture")
+
+    def knowledge_handler(input_data: BaseModel, _agent) -> ToolExecutionResult:
+        assert isinstance(input_data, KnowledgeQuestionInput)
+        return _ok("knowledge answer")
+
+    monkeypatch.setattr(orchestrator_module, "run_draft_case_capture_skill", draft_handler)
+    monkeypatch.setattr(orchestrator_module, "run_knowledge_qa_skill", knowledge_handler)
+
+    output = AgentSkillOrchestrator(agent).handle_input("What is SQL Injection draft this case?")
+
+    assert output.status == "ok"
+    assert output.selected_tool == KNOWLEDGE_QA_SKILL

@@ -2,7 +2,7 @@
 
 from typing import Any, Literal
 
-from pydantic import BaseModel, Field, field_validator, model_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
 InputKind = Literal[
     "payload_or_event",
@@ -10,6 +10,7 @@ InputKind = Literal[
     "log_file_path",
     "security_knowledge_question",
     "report_followup",
+    "case_draft_request",
     "unknown",
 ]
 RouterConfidence = Literal["LOW", "MEDIUM", "HIGH"]
@@ -17,8 +18,10 @@ ControllerStatus = Literal["ok", "error", "clarification_required"]
 ToolSafetyLevel = Literal[
     "safe_local_analysis",
     "advisory_explanation",
+    "draft_write_review_required",
     "export_only",
 ]
+CaseDraftAction = Literal["request", "approve", "cancel"]
 
 
 def _require_non_blank(value: str, field_name: str) -> str:
@@ -118,6 +121,20 @@ class ReportFollowupInput(BaseModel):
     @classmethod
     def question_must_not_be_empty(cls, value: str) -> str:
         return _require_non_blank(value, "question")
+
+
+class CaseDraftInput(BaseModel):
+    """Input for approval-gated local case draft capture."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    action: CaseDraftAction
+    user_text: str
+
+    @field_validator("user_text")
+    @classmethod
+    def user_text_must_not_be_empty(cls, value: str) -> str:
+        return _require_non_blank(value, "user_text")
 
 
 class IncidentJsonExportInput(BaseModel):

@@ -8,6 +8,7 @@ or execute real enforcement actions.
 from __future__ import annotations
 
 from collections.abc import Callable
+import re
 from typing import Any
 
 from pydantic import BaseModel
@@ -16,20 +17,27 @@ from modules.controller.agent import ControllerAgent
 from modules.controller.skill_catalog import (
     ANALYZE_AUTHENTICATION_LOG_SKILL,
     ANALYZE_PAYLOAD_SKILL,
+    DRAFT_CASE_CAPTURE_SKILL,
     EXPLAIN_ACTIVE_EVENT_SKILL,
     EXPLAIN_ACTIVE_INCIDENT_SKILL,
     KNOWLEDGE_QA_SKILL,
-    build_v2_4_registry,
+    build_v2_5_registry,
 )
 from modules.controller.skill_wrappers import (
     run_analyze_authentication_log_skill,
     run_analyze_payload_skill,
+    run_draft_case_capture_skill,
     run_explain_active_event_skill,
     run_explain_active_incident_skill,
     run_knowledge_qa_skill,
 )
 from modules.controller.tool_policy import is_tool_allowed_without_human_approval
-from modules.controller.types import ControllerOutput, RouterDecision, ToolExecutionResult
+from modules.controller.types import (
+    CaseDraftAction,
+    ControllerOutput,
+    RouterDecision,
+    ToolExecutionResult,
+)
 from modules.event_followup import answer_event_followup
 from modules.incident_followup import answer_incident_followup
 from modules.mode_handlers import get_agent_state
@@ -50,7 +58,7 @@ class AgentSkillOrchestrator:
     def __init__(self, agent: Any) -> None:
         self.agent = agent
         self.controller = ControllerAgent(
-            registry=build_v2_4_registry(),
+            registry=build_v2_5_registry(),
             handlers=self._build_handlers(agent),
             route_map={},
         )
@@ -60,9 +68,16 @@ class AgentSkillOrchestrator:
         if not text:
             return self._clarification("Input is blank.")
 
+        case_draft_action = _case_draft_action(text)
+        if case_draft_action is not None:
+            return self.controller.dispatch_tool(
+                DRAFT_CASE_CAPTURE_SKILL,
+                {"action": case_draft_action, "user_text": text},
+            )
+
         selected_skill = self._select_skill(text)
         if selected_skill is None:
-            return self._clarification("No deterministic v2.4 route matched the input.")
+            return self._clarification("No deterministic v2.5 route matched the input.")
 
         if not is_tool_allowed_without_human_approval(selected_skill):
             return self._blocked(selected_skill)
@@ -133,12 +148,16 @@ class AgentSkillOrchestrator:
         def knowledge_qa(input_data: BaseModel) -> ToolExecutionResult:
             return run_knowledge_qa_skill(input_data, agent)  # type: ignore[arg-type]
 
+        def draft_case_capture(input_data: BaseModel) -> ToolExecutionResult:
+            return run_draft_case_capture_skill(input_data, agent)  # type: ignore[arg-type]
+
         return {
             ANALYZE_PAYLOAD_SKILL: analyze_payload,
             ANALYZE_AUTHENTICATION_LOG_SKILL: analyze_auth_log,
             EXPLAIN_ACTIVE_EVENT_SKILL: explain_event,
             EXPLAIN_ACTIVE_INCIDENT_SKILL: explain_incident,
             KNOWLEDGE_QA_SKILL: knowledge_qa,
+            DRAFT_CASE_CAPTURE_SKILL: draft_case_capture,
         }
 
     @staticmethod
@@ -177,10 +196,16 @@ class AgentSkillOrchestrator:
         )
 
 
-def build_default_v2_4_orchestrator(agent: Any) -> AgentSkillOrchestrator:
-    """Build the default direct-input orchestrator for the CLI runtime."""
+def build_default_v2_5_orchestrator(agent: Any) -> AgentSkillOrchestrator:
+    """Build the default v2.5 direct-input orchestrator for the CLI runtime."""
 
     return AgentSkillOrchestrator(agent)
+
+
+def build_default_v2_4_orchestrator(agent: Any) -> AgentSkillOrchestrator:
+    """Backward-compatible builder name for tests and older imports."""
+
+    return build_default_v2_5_orchestrator(agent)
 
 
 def _is_active_incident_followup(text: str, state: dict[str, Any]) -> bool:
@@ -267,3 +292,73 @@ def _extract_log_path(text: str) -> str:
             return stripped[len(prefix) :].strip().strip('"')
 
     return stripped
+
+
+def _case_draft_action(text: str) -> CaseDraftAction | None:
+    normalized = " ".join(str(text or "").strip().casefold().split())
+    if not normalized:
+        return None
+
+    if any(command.fullmatch(normalized) for command in _CANCEL_DRAFT_PATTERNS):
+        return "cancel"
+    if any(command.fullmatch(normalized) for command in _APPROVE_DRAFT_PATTERNS):
+        return "approve"
+    if any(command.fullmatch(normalized) for command in _REQUEST_DRAFT_PATTERNS):
+        return "request"
+    return None
+
+
+_TITLE_SUFFIX = r"(?:\s+(?:title\s*[:=]|標題\s*[：:])\s*.+)?"
+_REQUEST_DRAFT_PATTERNS = tuple(
+    re.compile(pattern)
+    for pattern in (
+        rf"save this case as a draft{_TITLE_SUFFIX}",
+        rf"draft this incident case{_TITLE_SUFFIX}",
+        rf"draft this case{_TITLE_SUFFIX}",
+        rf"請幫我把這個案例儲存成草稿{_TITLE_SUFFIX}",
+        rf"請將這個案例儲存為草稿{_TITLE_SUFFIX}",
+        rf"儲存這個案例為草稿{_TITLE_SUFFIX}",
+        rf"儲存目前案例為草稿{_TITLE_SUFFIX}",
+        rf"建立這個案例草稿{_TITLE_SUFFIX}",
+        rf"撰寫這個案例草稿{_TITLE_SUFFIX}",
+        rf"把這個案例存成草稿{_TITLE_SUFFIX}",
+        rf"把這筆事件存成草稿{_TITLE_SUFFIX}",
+        rf"建立這筆事件的案例草稿{_TITLE_SUFFIX}",
+        rf"建立目前事件的案例草稿{_TITLE_SUFFIX}",
+    )
+)
+_APPROVE_DRAFT_PATTERNS = tuple(
+    re.compile(pattern)
+    for pattern in (
+        r"approve draft case",
+        r"approve case draft",
+        r"confirm draft case",
+        r"confirm case draft",
+        r"核准草稿案例",
+        r"核准案例草稿",
+        r"核可草稿案例",
+        r"核可案例草稿",
+        r"同意草稿案例",
+        r"同意案例草稿",
+        r"確認草稿案例",
+        r"確認案例草稿",
+        r"確認建立案例草稿",
+        r"批准建立草稿",
+        r"批准建立案例草稿",
+    )
+)
+_CANCEL_DRAFT_PATTERNS = tuple(
+    re.compile(pattern)
+    for pattern in (
+        r"cancel draft case",
+        r"cancel case draft",
+        r"discard draft case",
+        r"discard case draft",
+        r"取消草稿案例",
+        r"取消案例草稿",
+        r"放棄草稿案例",
+        r"放棄案例草稿",
+        r"取消建立草稿",
+        r"取消這個案例草稿",
+    )
+)

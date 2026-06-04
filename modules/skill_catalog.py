@@ -4,6 +4,7 @@ from modules.controller.skill_catalog import (
     EXPLAIN_ACTIVE_EVENT_SKILL,
     EXPLAIN_ACTIVE_INCIDENT_SKILL,
     INCIDENT_JSON_EXPORT,
+    DRAFT_CASE_CAPTURE_SKILL,
     KNOWLEDGE_QA_SKILL,
     LOG_FILE_INGEST,
     PAYLOAD_TRIAGE,
@@ -14,6 +15,8 @@ from modules.controller.skill_catalog import (
     build_v1_5_tool_specs,
     build_v2_4_registry,
     build_v2_4_tool_specs,
+    build_v2_5_registry,
+    build_v2_5_tool_specs,
 )
 
 __all__ = [
@@ -22,6 +25,7 @@ __all__ = [
     "EXPLAIN_ACTIVE_EVENT_SKILL",
     "EXPLAIN_ACTIVE_INCIDENT_SKILL",
     "INCIDENT_JSON_EXPORT",
+    "DRAFT_CASE_CAPTURE_SKILL",
     "KNOWLEDGE_QA_SKILL",
     "LOG_FILE_INGEST",
     "PAYLOAD_TRIAGE",
@@ -32,4 +36,6 @@ __all__ = [
     "build_v1_5_tool_specs",
     "build_v2_4_registry",
     "build_v2_4_tool_specs",
+    "build_v2_5_registry",
+    "build_v2_5_tool_specs",
 ]

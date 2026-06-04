@@ -125,7 +125,7 @@ def test_knowledge_capture_draft_requires_human_approval() -> None:
     assert policy.permission == "WRITE_DRAFT"
     assert policy.execution_mode == "HUMAN_APPROVAL_REQUIRED"
     assert policy.requires_human_approval is True
-    assert decision.allowed is True
+    assert decision.allowed is False
     assert is_tool_allowed_without_human_approval("knowledge_capture_draft") is False
 
 
@@ -214,6 +214,8 @@ def test_future_draft_case_capture_skill_requires_human_approval() -> None:
     assert decision.permission == "WRITE_DRAFT"
     assert decision.execution_mode == "HUMAN_APPROVAL_REQUIRED"
     assert decision.requires_human_approval is True
+    assert decision.allowed is False
+    assert "explicit human approval" in decision.reason
     assert is_tool_allowed_without_human_approval("DraftCaseCaptureSkill") is False
 
 

@@ -47,6 +47,7 @@ def get_agent_state(agent):
             "active_event_context": None,
             "active_incident_context": None,
             "active_context_kind": "",
+            "pending_case_draft_request": None,
         }
 
     return agent.cli_state
