@@ -6,7 +6,7 @@ This roadmap describes planned development after the v2.3 controlled retrieval a
 
 Current release baseline: tag `v2.2.0`.
 
-Current phase: v2.3 implementation complete; release gate pending.
+Current phase: v2.3 release gate passed; ready to tag.
 
 Completed:
 
@@ -36,13 +36,13 @@ Completed:
 - v2.3 Controlled Retrieval and Structured Follow-Up
 - pytest / ruff / mypy / GitHub Actions CI
 
-Last full quality gate (v2.2):
+Last full quality gate (v2.3):
 
-- `python -m pytest` -> `628 passed`
+- `python -m pytest` -> `670 passed in 8.23s`
 - `python -m ruff check .` -> passed
-- `python -m mypy app.py modules tests` -> passed, `99 source files`
+- `python -m mypy app.py modules tests` -> passed, `106 source files`
 - `git diff --check` -> passed
-- Gitleaks -> passed, no leaks found across 160 commits scanned
+- Gitleaks -> passed, no leaks found across 167 commits scanned using `gitleaks detect --source . --verbose --redact`
 
 Focused v2.2 validation already completed:
 
@@ -258,7 +258,7 @@ Deferred beyond v2.2:
 
 ## v2.3 - Controlled Retrieval and Structured Follow-Up
 
-Status: Implementation complete; release gate pending.
+Status: Release gate passed; ready to tag.
 
 Delivered:
 
@@ -293,7 +293,7 @@ All response decisions remain simulated unless explicitly redesigned in a future
 
 目前 release baseline：tag `v2.2.0`。
 
-目前里程碑：v2.3 實作已完成；release gate 尚待執行。
+目前里程碑：v2.3 release gate 已通過，準備 tag。
 
 已完成：
 
@@ -323,13 +323,13 @@ All response decisions remain simulated unless explicitly redesigned in a future
 - v2.3 Controlled Retrieval and Structured Follow-Up
 - pytest / ruff / mypy / GitHub Actions CI
 
-Last full quality gate (v2.2):
+Last full quality gate (v2.3):
 
-- `python -m pytest` -> `628 passed`
+- `python -m pytest` -> `670 passed in 8.23s`
 - `python -m ruff check .` -> passed
 - `python -m mypy app.py modules tests` -> passed，`99 source files`
 - `git diff --check` -> passed
-- Gitleaks -> passed，no leaks found，160 commits scanned
+- Gitleaks -> passed，no leaks found，167 commits scanned
 
 v2.2 focused validation:
 

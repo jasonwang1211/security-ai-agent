@@ -344,7 +344,7 @@ Deterministic detector / risk / decision remain final authority. Graph and curat
 
 ## v2.3 Controlled Retrieval and Structured Follow-Up
 
-v2.3 implementation complete; release gate pending.
+v2.3 release gate passed; ready to tag.
 
 Mode 3 runtime:
 
@@ -382,13 +382,13 @@ The project uses several testing layers:
 
 Last full quality gate:
 
-- `python -m pytest` -> `628 passed` for v2.2
+- `python -m pytest` -> `670 passed in 8.23s` for v2.3
 - `python -m ruff check .` -> passed
-- `python -m mypy app.py modules tests` -> passed, `99 source files`
+- `python -m mypy app.py modules tests` -> passed, `106 source files`
 - `git diff --check` -> passed
-- Gitleaks -> passed, no leaks found across 160 commits scanned
+- Gitleaks -> passed, no leaks found across 167 commits scanned using `gitleaks detect --source . --verbose --redact`
 
-The full v2.2 release gate used a fresh writable pytest basetemp directory for local Windows temp-directory safety.
+The full v2.3 release gate used a fresh writable pytest basetemp directory for local Windows temp-directory safety: `C:\Users\jason\Desktop\sentinel_pytest_runs\v2_3_gate_2ec879d166eb4e59868ef6f2a950cf4b`.
 
 Focused v2.2 validation already completed:
 

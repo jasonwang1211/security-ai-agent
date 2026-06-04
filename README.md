@@ -300,7 +300,7 @@ Boundaries:
 
 ### v2.3 Controlled Retrieval and Structured Follow-Up
 
-v2.3 implementation complete; release gate pending.
+v2.3 release gate passed; ready to tag.
 
 v2.3 documents the committed and manually verified runtime scope on the feature branch:
 
@@ -345,9 +345,11 @@ python -m ruff check .
 python -m mypy app.py modules tests
 ```
 
-Last full release-gate test result: `628 passed` for v2.2.
+Last full release-gate test result: `670 passed in 8.23s` for v2.3.
 
-v2.2 full release gate passed: `python -m pytest` -> `628 passed`, `python -m ruff check .` passed, `python -m mypy app.py modules tests` passed across 99 source files, `git diff --check` passed, and Gitleaks passed with no leaks found across 160 commits scanned. The local gate used a fresh writable pytest basetemp directory.
+v2.3 full release gate passed: `python -m pytest` -> `670 passed in 8.23s`, Ruff passed, Mypy passed across 106 source files, `git diff --check` passed, and Gitleaks (`gitleaks detect --source . --verbose --redact`) passed with no leaks found across 167 commits scanned. The local gate used a fresh writable pytest basetemp directory: `C:\Users\jason\Desktop\sentinel_pytest_runs\v2_3_gate_2ec879d166eb4e59868ef6f2a950cf4b`.
+
+Historical v2.2 full release gate remains recorded separately: `628 passed`, Ruff passed, Mypy passed across 99 source files, `git diff --check` passed, and Gitleaks found no leaks across 160 commits scanned.
 
 v2.2 focused validation remains recorded separately: Batch 2.2-A `67 passed`, Ruff passed, Mypy passed, and `git diff --check` passed; Batch 2.2-B `96 passed`, Ruff passed, Mypy passed, and `git diff --check` passed.
 
@@ -378,9 +380,9 @@ python app.py
 
 Current release baseline: tag `v2.2.0`.
 
-Current phase: v2.3 implementation complete; release gate pending.
+Current phase: v2.3 release gate passed; ready to tag.
 
-目前里程碑：v2.3 實作已完成；release gate 尚待執行。
+目前里程碑：v2.3 release gate 已通過，準備 tag。
 
 Completed:
 
@@ -485,7 +487,7 @@ See [docs/ROADMAP.md](docs/ROADMAP.md) for delivered items.
 - Scenario A authentication hybrid context keeps `Decision` simulated `MONITOR`; Command Injection hybrid context keeps `Decision` simulated `BLOCK`
 - Boundary: no automatic Graph RAG retrieval, vector-to-graph expansion, Knowledge Capture, LLM graph extraction, `RAGQA` replacement, CLI auto-route, Risk Level / Decision override, or real enforcement
 
-**v2.3 - Controlled Retrieval and Structured Follow-Up** (Implementation complete; release gate pending)
+**v2.3 - Controlled Retrieval and Structured Follow-Up** (Release gate passed; ready to tag)
 
 - Mode 3 protected controlled retrieval for reviewed knowledge targets before vector fallback
 - Mode 1 `ActiveEventContext` follow-up for the latest payload/event analysis
@@ -597,7 +599,7 @@ python -m ruff check .
 python -m mypy app.py modules tests
 ```
 
-最近一次完整 release gate 測試結果：v2.2 `628 passed`，Ruff、Mypy、`git diff --check` 與 Gitleaks 均通過。v2.2 已發布為 `v2.2.0`。
+最近一次完整 release gate 測試結果：v2.3 `670 passed in 8.23s`，Ruff、Mypy（106 source files）、`git diff --check` 與 Gitleaks（no leaks found；167 commits scanned）均通過。v2.3 release gate 已通過，準備 tag；目前 release baseline 仍為 `v2.2.0`，直到實際建立 tag。
 
 測試使用 dummy RAG 與 LLMAssist 物件，不會啟動完整 CLI，也不會初始化 RAGQA、Chroma、embeddings、Torch、Ollama、ChatOllama 或本地 LLM client。GitHub Actions CI 會執行同一組品質檢查。
 
@@ -605,7 +607,7 @@ python -m mypy app.py modules tests
 
 Current release baseline: tag `v2.2.0`.
 
-目前里程碑：v2.3 實作已完成；release gate 尚待執行。
+目前里程碑：v2.3 release gate 已通過，準備 tag。
 
 已完成：
 
@@ -623,7 +625,7 @@ Current release baseline: tag `v2.2.0`.
 - v2.0 知識圖譜基礎：新增圖譜型別契約、決定性圖譜建構器、唯讀查詢輔助函式、可序列化為 JSON 的匯出輔助函式；2A-3 決策為 KnowledgeDoc 圖譜種子延後到 metadata 盤點後再處理
 - v2.1 Graph-Backed Explanation MVP：新增 `modules/graph/explainers.py`，可針對 EV-ID、F-ID、rule ID 與 INC-ID 從明確圖譜節點與邊產生受保護、帶 citation 的解釋
 - v2.2 Curated RAG Graph Seed Foundation：已將 9 篇 reviewed Traditional Chinese report-explainer KB 文件提升到 live corpus，使 live report-explainer 從 11 篇擴充到 20 篇；新增最小 typed metadata、reviewed KnowledgeDoc graph seed helper，以及 protected hybrid graph/knowledge explanation assembly
-- v2.3 Controlled Retrieval and Structured Follow-Up：Mode 3 受保護 controlled retrieval、Mode 1 active payload-event follow-up，以及 Mode 2 current-incident GraphSnapshot authentication follow-up 已完成實作；release gate 尚待執行
+- v2.3 Controlled Retrieval and Structured Follow-Up：Mode 3 受保護 controlled retrieval、Mode 1 active payload-event follow-up，以及 Mode 2 current-incident GraphSnapshot authentication follow-up 已完成實作；release gate 已通過，準備 tag
 - 圖譜是證據與脈絡結構，不作為偵測權威或最終判定來源；graph lookup 不會改變 Risk Level / Decision、不會取代規則式偵測器或 `RAGQA`、不會呼叫 LLM、自動寫入知識或執行工具
 - 邊界：仍是 deterministic rule-based detection，不是 ML detection，也不是 LLM-generated rules；YAML metadata 不會覆蓋 `TriagePolicy`
 - expanded golden smoke tests、direct log pipeline tests、boundary model tests、`pytest`、`ruff`、寬鬆 `mypy` 與 GitHub Actions CI
