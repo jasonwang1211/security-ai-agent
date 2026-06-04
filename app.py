@@ -1,4 +1,5 @@
 from modules.agent import SecurityAgent
+from modules.controller.orchestrator import build_default_v2_4_orchestrator
 from modules.detector import RuleBasedDetector
 from modules.followup_handler import FollowupHandler
 from modules.llm_assist import LLMAssist
@@ -16,6 +17,13 @@ from modules.triage_policy import TriagePolicy
 
 EXIT_COMMANDS = {"exit", "quit", "離開"}
 MENU_EXIT_COMMANDS = EXIT_COMMANDS | {"0"}
+LEGACY_MENU_COMMANDS = {"menu", "legacy", "manual"}
+DIRECT_INPUT_COMMANDS = {"agent", "direct"}
+
+DIRECT_INPUT_PROMPT = (
+    "\nAgent input (payload, log path, follow-up, or knowledge question; "
+    "type 'menu' for legacy modes, 'exit' to quit): "
+)
 
 MENU_TEXT = """
 請選擇模式：
@@ -117,6 +125,7 @@ def main():
         triage_policy=triage_policy,
         llm_assist=llm_assist,
     )
+    orchestrator = build_default_v2_4_orchestrator(agent)
 
     if rag_qa.is_ready():
         print("\nSecurity AI 已啟動。")
@@ -148,13 +157,42 @@ def main():
         },
     }
 
+    direct_mode = True
     while True:
+        if direct_mode:
+            user_input = input(DIRECT_INPUT_PROMPT).strip()
+
+            if _is_exit_command(user_input):
+                print("再見。")
+                break
+
+            if user_input.lower() in LEGACY_MENU_COMMANDS:
+                direct_mode = False
+                continue
+
+            if not user_input:
+                continue
+
+            try:
+                output = run_with_progress(
+                    lambda: orchestrator.handle_input(user_input).response_text,
+                    "[Agent] Direct input",
+                )
+                print(f"\nAI: {output}\n")
+            except Exception as exc:
+                print(f"\n處理時發生錯誤: {exc}\n")
+            continue
+
         print(MENU_TEXT)
         choice = input("請輸入模式編號: ").strip()
 
         if _is_exit_command(choice):
             print("再見。")
             break
+
+        if choice.lower() in DIRECT_INPUT_COMMANDS:
+            direct_mode = True
+            continue
 
         if not choice:
             print("請輸入模式編號，或輸入 0 離開。")

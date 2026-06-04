@@ -191,6 +191,32 @@ def test_is_tool_allowed_without_human_approval_true_only_for_safe_read_only_too
     assert is_tool_allowed_without_human_approval("unknown_future_tool") is False
 
 
+def test_v2_4_initial_runtime_skills_are_read_only_direct_allowed() -> None:
+    for tool_name in [
+        "AnalyzePayloadSkill",
+        "AnalyzeAuthenticationLogSkill",
+        "ExplainActiveEventSkill",
+        "ExplainActiveIncidentSkill",
+        "KnowledgeQASkill",
+    ]:
+        decision = evaluate_tool_policy(tool_name)
+
+        assert decision.allowed is True
+        assert decision.permission == "READ_ONLY"
+        assert decision.execution_mode == "DIRECT_ALLOWED"
+        assert decision.requires_human_approval is False
+        assert is_tool_allowed_without_human_approval(tool_name) is True
+
+
+def test_future_draft_case_capture_skill_requires_human_approval() -> None:
+    decision = evaluate_tool_policy("DraftCaseCaptureSkill")
+
+    assert decision.permission == "WRITE_DRAFT"
+    assert decision.execution_mode == "HUMAN_APPROVAL_REQUIRED"
+    assert decision.requires_human_approval is True
+    assert is_tool_allowed_without_human_approval("DraftCaseCaptureSkill") is False
+
+
 def test_tool_policy_module_does_not_import_runtime_heavy_or_dispatch_modules() -> None:
     code = (
         "import sys; "

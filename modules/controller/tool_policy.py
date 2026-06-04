@@ -1,7 +1,9 @@
-"""Schema and decision helpers for controller tool policy boundaries.
+"""Schema and deterministic dispatch-gate helpers for tool policy boundaries.
 
-ToolPolicy is contract-only in this phase. It does not execute tools, enforce
-runtime permissions, or perform real firewall/WAF/SIEM/SOAR/cloud actions.
+In v2.4-A, read-only DIRECT_ALLOWED skills may be permitted by deterministic
+runtime policy. Future write-capable skills remain blocked without explicit
+human approval, and policy never grants real firewall/WAF/SIEM/SOAR/cloud
+enforcement authority.
 """
 
 from typing import Literal
@@ -72,7 +74,7 @@ class ToolPolicy(BaseModel):
 
 
 class ToolPolicyDecision(BaseModel):
-    """Policy evaluation result; decision data only, not enforcement."""
+    """Policy evaluation result used by dispatch gates; no tool execution."""
 
     tool_name: str
     allowed: bool
@@ -93,6 +95,49 @@ class ToolPolicyDecision(BaseModel):
 
 
 _KNOWN_TOOL_POLICIES: dict[str, ToolPolicy] = {
+    "AnalyzePayloadSkill": ToolPolicy(
+        tool_name="AnalyzePayloadSkill",
+        permission="READ_ONLY",
+        execution_mode="DIRECT_ALLOWED",
+        risk_level="LOW",
+        reason="Read-only payload/event analysis with in-memory active context only.",
+    ),
+    "AnalyzeAuthenticationLogSkill": ToolPolicy(
+        tool_name="AnalyzeAuthenticationLogSkill",
+        permission="READ_ONLY",
+        execution_mode="DIRECT_ALLOWED",
+        risk_level="LOW",
+        reason="Read-only authentication log analysis with in-memory active context only.",
+    ),
+    "ExplainActiveEventSkill": ToolPolicy(
+        tool_name="ExplainActiveEventSkill",
+        permission="READ_ONLY",
+        execution_mode="DIRECT_ALLOWED",
+        risk_level="LOW",
+        reason="Read-only explanation over the current active event context.",
+    ),
+    "ExplainActiveIncidentSkill": ToolPolicy(
+        tool_name="ExplainActiveIncidentSkill",
+        permission="READ_ONLY",
+        execution_mode="DIRECT_ALLOWED",
+        risk_level="LOW",
+        reason="Read-only explanation over the current active incident context.",
+    ),
+    "KnowledgeQASkill": ToolPolicy(
+        tool_name="KnowledgeQASkill",
+        permission="READ_ONLY",
+        execution_mode="DIRECT_ALLOWED",
+        risk_level="LOW",
+        reason="Read-only protected knowledge question answering.",
+    ),
+    "DraftCaseCaptureSkill": ToolPolicy(
+        tool_name="DraftCaseCaptureSkill",
+        permission="WRITE_DRAFT",
+        execution_mode="HUMAN_APPROVAL_REQUIRED",
+        risk_level="MEDIUM",
+        requires_human_approval=True,
+        reason="Future draft-only case capture must require human review.",
+    ),
     "vector_rag_search": ToolPolicy(
         tool_name="vector_rag_search",
         permission="READ_ONLY",
@@ -251,7 +296,7 @@ def default_policy_for_tool(tool_name: str) -> ToolPolicy:
 
 
 def evaluate_tool_policy(tool_name: str) -> ToolPolicyDecision:
-    """Evaluate policy data without executing or enforcing the tool."""
+    """Evaluate deterministic permission data without executing the tool."""
 
     policy = default_policy_for_tool(tool_name)
     allowed = (

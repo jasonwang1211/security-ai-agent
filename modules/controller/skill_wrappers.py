@@ -45,6 +45,9 @@ def _get_agent_state(agent: Any) -> dict[str, Any]:
             "last_answer": "",
             "last_points": [],
             "last_focus": "",
+            "active_event_context": None,
+            "active_incident_context": None,
+            "active_context_kind": "",
         }
     return agent.cli_state
 
@@ -164,3 +167,84 @@ def run_incident_json_export_skill(input_data: IncidentJsonExportInput) -> ToolE
         )
     except Exception as exc:
         return _error(exc, "incident_json_export")
+
+
+def run_analyze_payload_skill(
+    input_data: PayloadTriageInput,
+    agent: Any,
+) -> ToolExecutionResult:
+    """Run existing Mode 1 payload/event analysis for direct-input orchestration."""
+
+    try:
+        if agent is None:
+            return _clarification("AnalyzePayloadSkill requires an agent")
+
+        from modules.mode_handlers import run_payload_analysis
+
+        return _ok({"text": run_payload_analysis(agent, input_data.raw_text)})
+    except Exception as exc:
+        return _error(exc, "AnalyzePayloadSkill")
+
+
+def run_analyze_authentication_log_skill(
+    input_data: LogFileInput,
+    agent: Any,
+) -> ToolExecutionResult:
+    """Run existing Mode 2 log ingestion while retaining active incident context."""
+
+    try:
+        if agent is None:
+            return _clarification("AnalyzeAuthenticationLogSkill requires an agent")
+
+        from modules.mode_handlers import run_log_ingestion
+
+        return _ok({"text": run_log_ingestion(input_data.path, agent=agent)})
+    except Exception as exc:
+        return _error(exc, "AnalyzeAuthenticationLogSkill")
+
+
+def run_explain_active_event_skill(
+    input_data: ReportFollowupInput,
+    agent: Any,
+) -> ToolExecutionResult:
+    """Answer follow-up questions against the current active Mode 1 event."""
+
+    try:
+        if agent is None or not hasattr(agent, "handle_query"):
+            return _clarification("ExplainActiveEventSkill requires an agent with handle_query")
+
+        state = _get_agent_state(agent)
+        if state.get("active_context_kind") != "event" or state.get("active_event_context") is None:
+            return _clarification("ExplainActiveEventSkill requires an active payload/event context")
+
+        return _ok({"text": agent.handle_query(input_data.question, state)})
+    except Exception as exc:
+        return _error(exc, "ExplainActiveEventSkill")
+
+
+def run_explain_active_incident_skill(
+    input_data: ReportFollowupInput,
+    agent: Any,
+) -> ToolExecutionResult:
+    """Answer follow-up questions against the current active Mode 2 incident."""
+
+    try:
+        if agent is None or not hasattr(agent, "handle_query"):
+            return _clarification("ExplainActiveIncidentSkill requires an agent with handle_query")
+
+        state = _get_agent_state(agent)
+        if state.get("active_context_kind") != "incident" or state.get("active_incident_context") is None:
+            return _clarification("ExplainActiveIncidentSkill requires an active incident context")
+
+        return _ok({"text": agent.handle_query(input_data.question, state)})
+    except Exception as exc:
+        return _error(exc, "ExplainActiveIncidentSkill")
+
+
+def run_knowledge_qa_skill(
+    input_data: KnowledgeQuestionInput,
+    agent: Any,
+) -> ToolExecutionResult:
+    """Run existing protected Mode 3 knowledge Q&A for direct-input orchestration."""
+
+    return run_rag_security_qa_skill(input_data, agent)

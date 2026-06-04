@@ -18,6 +18,11 @@ LOG_FILE_INGEST = "log_file_ingest"
 RAG_SECURITY_QA = "rag_security_qa"
 REPORT_FOLLOWUP = "report_followup"
 INCIDENT_JSON_EXPORT = "incident_json_export"
+ANALYZE_PAYLOAD_SKILL = "AnalyzePayloadSkill"
+ANALYZE_AUTHENTICATION_LOG_SKILL = "AnalyzeAuthenticationLogSkill"
+EXPLAIN_ACTIVE_EVENT_SKILL = "ExplainActiveEventSkill"
+EXPLAIN_ACTIVE_INCIDENT_SKILL = "ExplainActiveIncidentSkill"
+KNOWLEDGE_QA_SKILL = "KnowledgeQASkill"
 
 
 def build_v1_5_tool_specs() -> list[ToolSpec]:
@@ -97,3 +102,71 @@ def build_v1_5_registry() -> ToolRegistry:
     """Build a ToolRegistry from the fixed v1.5 skill catalog."""
 
     return ToolRegistry(build_v1_5_tool_specs())
+
+
+def build_v2_4_tool_specs() -> list[ToolSpec]:
+    """Return the deterministic v2.4 direct-input skill catalog."""
+
+    return [
+        ToolSpec(
+            name=ANALYZE_PAYLOAD_SKILL,
+            description="Analyze a payload or event using existing Mode 1 behavior.",
+            input_model=PayloadTriageInput,
+            output_model=ToolExecutionResult,
+            safety_level="safe_local_analysis",
+            deterministic=True,
+            requires_llm=False,
+            requires_rag=False,
+            allowed_input_kinds=["payload_or_event"],
+        ),
+        ToolSpec(
+            name=ANALYZE_AUTHENTICATION_LOG_SKILL,
+            description="Analyze an authentication log file using existing Mode 2 behavior.",
+            input_model=LogFileInput,
+            output_model=ToolExecutionResult,
+            safety_level="safe_local_analysis",
+            deterministic=True,
+            requires_llm=False,
+            requires_rag=False,
+            allowed_input_kinds=["log_file_path"],
+        ),
+        ToolSpec(
+            name=EXPLAIN_ACTIVE_EVENT_SKILL,
+            description="Explain the retained active payload/event context.",
+            input_model=ReportFollowupInput,
+            output_model=ToolExecutionResult,
+            safety_level="advisory_explanation",
+            deterministic=True,
+            requires_llm=False,
+            requires_rag=False,
+            allowed_input_kinds=["report_followup"],
+        ),
+        ToolSpec(
+            name=EXPLAIN_ACTIVE_INCIDENT_SKILL,
+            description="Explain the retained active authentication incident context.",
+            input_model=ReportFollowupInput,
+            output_model=ToolExecutionResult,
+            safety_level="advisory_explanation",
+            deterministic=True,
+            requires_llm=False,
+            requires_rag=False,
+            allowed_input_kinds=["report_followup"],
+        ),
+        ToolSpec(
+            name=KNOWLEDGE_QA_SKILL,
+            description="Answer a security knowledge question using existing protected Mode 3 behavior.",
+            input_model=KnowledgeQuestionInput,
+            output_model=ToolExecutionResult,
+            safety_level="advisory_explanation",
+            deterministic=False,
+            requires_llm=True,
+            requires_rag=True,
+            allowed_input_kinds=["security_knowledge_question"],
+        ),
+    ]
+
+
+def build_v2_4_registry() -> ToolRegistry:
+    """Build a ToolRegistry for the v2.4 direct-input orchestration skills."""
+
+    return ToolRegistry(build_v2_4_tool_specs())

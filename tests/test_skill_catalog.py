@@ -3,7 +3,12 @@ from pydantic import ValidationError
 
 from modules.controller.registry import ToolRegistry
 from modules.controller.skill_catalog import (
+    ANALYZE_AUTHENTICATION_LOG_SKILL,
+    ANALYZE_PAYLOAD_SKILL,
+    EXPLAIN_ACTIVE_EVENT_SKILL,
+    EXPLAIN_ACTIVE_INCIDENT_SKILL,
     INCIDENT_JSON_EXPORT,
+    KNOWLEDGE_QA_SKILL,
     LOG_FILE_INGEST,
     PAYLOAD_TRIAGE,
     RAG_SECURITY_QA,
@@ -11,6 +16,8 @@ from modules.controller.skill_catalog import (
     REPORT_FOLLOWUP,
     build_v1_5_registry,
     build_v1_5_tool_specs,
+    build_v2_4_registry,
+    build_v2_4_tool_specs,
 )
 from modules.controller.types import IncidentJsonExportInput
 
@@ -28,6 +35,17 @@ DEFERRED_SKILL_NAMES = {
     "investigation_planner",
     "smart_router",
     "auto_route",
+}
+EXPECTED_V2_4_SKILL_NAMES = [
+    ANALYZE_PAYLOAD_SKILL,
+    ANALYZE_AUTHENTICATION_LOG_SKILL,
+    EXPLAIN_ACTIVE_EVENT_SKILL,
+    EXPLAIN_ACTIVE_INCIDENT_SKILL,
+    KNOWLEDGE_QA_SKILL,
+]
+DEFERRED_V2_4_SKILL_NAMES = {
+    "RetrieveSimilarCaseSkill",
+    "DraftCaseCaptureSkill",
 }
 
 
@@ -134,3 +152,27 @@ def test_incident_json_export_input_accepts_incident_dict() -> None:
 def test_incident_json_export_input_rejects_empty_input() -> None:
     with pytest.raises(ValidationError):
         IncidentJsonExportInput()
+
+
+def test_build_v2_4_tool_specs_returns_initial_five_runtime_skills() -> None:
+    assert [spec.name for spec in build_v2_4_tool_specs()] == EXPECTED_V2_4_SKILL_NAMES
+
+
+def test_build_v2_4_registry_uses_initial_direct_input_skill_set() -> None:
+    registry = build_v2_4_registry()
+
+    assert registry.list_names() == EXPECTED_V2_4_SKILL_NAMES
+
+
+def test_v2_4_registry_does_not_register_deferred_future_skills() -> None:
+    names = set(build_v2_4_registry().list_names())
+
+    assert names.isdisjoint(DEFERRED_V2_4_SKILL_NAMES)
+
+
+def test_v2_4_knowledge_skill_preserves_rag_and_llm_requirement_flags() -> None:
+    spec = {item.name: item for item in build_v2_4_tool_specs()}[KNOWLEDGE_QA_SKILL]
+
+    assert spec.requires_rag is True
+    assert spec.requires_llm is True
+    assert spec.deterministic is False

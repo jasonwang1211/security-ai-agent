@@ -1,5 +1,10 @@
 from modules.controller.skill_wrappers import (
+    run_analyze_authentication_log_skill,
+    run_analyze_payload_skill,
+    run_explain_active_event_skill,
+    run_explain_active_incident_skill,
     run_incident_json_export_skill,
+    run_knowledge_qa_skill,
     run_log_file_ingest_skill,
     run_payload_triage_skill,
     run_rag_security_qa_skill,
@@ -8,7 +13,12 @@ from modules.controller.skill_wrappers import (
 )
 
 __all__ = [
+    "run_analyze_authentication_log_skill",
+    "run_analyze_payload_skill",
+    "run_explain_active_event_skill",
+    "run_explain_active_incident_skill",
     "run_incident_json_export_skill",
+    "run_knowledge_qa_skill",
     "run_log_file_ingest_skill",
     "run_payload_triage_skill",
     "run_rag_security_qa_skill",

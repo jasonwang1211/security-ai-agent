@@ -1,5 +1,10 @@
 from modules.controller.skill_catalog import (
+    ANALYZE_AUTHENTICATION_LOG_SKILL,
+    ANALYZE_PAYLOAD_SKILL,
+    EXPLAIN_ACTIVE_EVENT_SKILL,
+    EXPLAIN_ACTIVE_INCIDENT_SKILL,
     INCIDENT_JSON_EXPORT,
+    KNOWLEDGE_QA_SKILL,
     LOG_FILE_INGEST,
     PAYLOAD_TRIAGE,
     RAG_SECURITY_QA,
@@ -7,10 +12,17 @@ from modules.controller.skill_catalog import (
     REPORT_FOLLOWUP,
     build_v1_5_registry,
     build_v1_5_tool_specs,
+    build_v2_4_registry,
+    build_v2_4_tool_specs,
 )
 
 __all__ = [
+    "ANALYZE_AUTHENTICATION_LOG_SKILL",
+    "ANALYZE_PAYLOAD_SKILL",
+    "EXPLAIN_ACTIVE_EVENT_SKILL",
+    "EXPLAIN_ACTIVE_INCIDENT_SKILL",
     "INCIDENT_JSON_EXPORT",
+    "KNOWLEDGE_QA_SKILL",
     "LOG_FILE_INGEST",
     "PAYLOAD_TRIAGE",
     "RAG_SECURITY_QA",
@@ -18,4 +30,6 @@ __all__ = [
     "REPORT_FOLLOWUP",
     "build_v1_5_registry",
     "build_v1_5_tool_specs",
+    "build_v2_4_registry",
+    "build_v2_4_tool_specs",
 ]

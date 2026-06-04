@@ -1,4 +1,5 @@
 import sys
+from typing import Any
 
 from modules.controller.types import (
     IncidentJsonExportInput,
@@ -10,7 +11,11 @@ from modules.controller.types import (
     ToolExecutionResult,
 )
 from modules.controller.skill_wrappers import (
+    run_analyze_payload_skill,
+    run_explain_active_event_skill,
+    run_explain_active_incident_skill,
     run_incident_json_export_skill,
+    run_knowledge_qa_skill,
     run_log_file_ingest_skill,
     run_payload_triage_skill,
     run_rag_security_qa_skill,
@@ -21,7 +26,15 @@ from modules.controller.skill_wrappers import (
 
 class FakeAgent:
     def __init__(self) -> None:
-        self.cli_state = {"last_answer": "existing report"}
+        self.cli_state: dict[str, Any] = {
+            "last_answer": "existing report",
+            "last_question": "",
+            "last_points": [],
+            "last_focus": "",
+            "active_event_context": None,
+            "active_incident_context": None,
+            "active_context_kind": "",
+        }
 
     def handle_query(self, query, state):
         state["last_question"] = query
@@ -191,3 +204,60 @@ def test_wrappers_return_tool_execution_result_on_exceptions() -> None:
     assert isinstance(result, ToolExecutionResult)
     assert result.status == "error"
     assert result.error_message == "boom"
+
+
+def test_analyze_payload_skill_uses_existing_mode1_wrapper() -> None:
+    result = run_analyze_payload_skill(PayloadTriageInput(raw_text="<script>"), FakeAgent())
+
+    assert result.status == "ok"
+    assert "answer: <script>" in result.output["text"]
+
+
+def test_explain_active_event_skill_requires_active_event_context() -> None:
+    result = run_explain_active_event_skill(
+        ReportFollowupInput(question="Why BLOCK?"),
+        FakeAgent(),
+    )
+
+    assert result.status == "clarification_required"
+
+
+def test_explain_active_event_skill_uses_existing_agent_followup_path() -> None:
+    agent = FakeAgent()
+    agent.cli_state["active_context_kind"] = "event"
+    agent.cli_state["active_event_context"] = object()
+
+    result = run_explain_active_event_skill(ReportFollowupInput(question="Why BLOCK?"), agent)
+
+    assert result.status == "ok"
+    assert result.output["text"] == "answer: Why BLOCK?"
+
+
+def test_explain_active_incident_skill_requires_active_incident_context() -> None:
+    result = run_explain_active_incident_skill(
+        ReportFollowupInput(question="EV-003 是什麼？"),
+        FakeAgent(),
+    )
+
+    assert result.status == "clarification_required"
+
+
+def test_explain_active_incident_skill_uses_existing_agent_followup_path() -> None:
+    agent = FakeAgent()
+    agent.cli_state["active_context_kind"] = "incident"
+    agent.cli_state["active_incident_context"] = object()
+
+    result = run_explain_active_incident_skill(
+        ReportFollowupInput(question="EV-003 是什麼？"),
+        agent,
+    )
+
+    assert result.status == "ok"
+    assert result.output["text"] == "answer: EV-003 是什麼？"
+
+
+def test_knowledge_qa_skill_uses_existing_protected_knowledge_path() -> None:
+    result = run_knowledge_qa_skill(KnowledgeQuestionInput(question="What is XSS?"), FakeAgent())
+
+    assert result.status == "ok"
+    assert result.output["text"] == "knowledge: What is XSS?"
