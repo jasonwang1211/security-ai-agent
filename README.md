@@ -321,7 +321,7 @@ Boundaries:
 
 ### v2.4 Deterministic Agent Skill Orchestration Runtime
 
-v2.4 implementation complete; release gate pending. The current released baseline remains tag `v2.3.0` until the v2.4 full release gate, tag, merge, and push are completed.
+v2.4 release gate passed; ready to tag. The current released baseline remains tag `v2.3.0` until the v2.4 tag, merge, and push are completed.
 
 Direct-input Agent runtime:
 
@@ -383,9 +383,11 @@ python -m ruff check .
 python -m mypy app.py modules tests
 ```
 
-Last full release-gate test result: `670 passed in 8.23s` for v2.3.
+Last full release-gate test result: `693 passed in 14.72s` for v2.4.
 
-v2.3 full release gate passed: `python -m pytest` -> `670 passed in 8.23s`, Ruff passed, Mypy passed across 106 source files, `git diff --check` passed, and Gitleaks (`gitleaks detect --source . --verbose --redact`) passed with no leaks found across 167 commits scanned. The local gate used a fresh writable pytest basetemp directory: `C:\Users\jason\Desktop\sentinel_pytest_runs\v2_3_gate_2ec879d166eb4e59868ef6f2a950cf4b`.
+v2.4 full release gate passed: `python -m pytest` -> `693 passed in 14.72s`, Ruff passed, Mypy passed across 108 source files, `git diff --check` passed, and Gitleaks (`gitleaks detect --source . --verbose --redact`) passed with no leaks found across 171 commits scanned. The local gate used a fresh writable pytest basetemp directory: `C:\Users\jason\Desktop\sentinel_pytest_runs\v2_4_gate_02389f227c3b468c9aca3b7b774e7190`.
+
+Historical v2.3 full release gate remains recorded separately: `670 passed in 8.23s`, Ruff passed, Mypy passed across 106 source files, `git diff --check` passed, and Gitleaks found no leaks across 167 commits scanned.
 
 Historical v2.2 full release gate remains recorded separately: `628 passed`, Ruff passed, Mypy passed across 99 source files, `git diff --check` passed, and Gitleaks found no leaks across 160 commits scanned.
 
@@ -418,10 +420,10 @@ python app.py
 
 Current release baseline: tag `v2.3.0`.
 
-Current phase: v2.4 implementation complete; release gate pending.
+Current phase: v2.4 release gate passed; ready to tag.
 
 目前 release baseline：tag `v2.3.0`。
-目前里程碑：v2.4 實作已完成；release gate 尚待執行。
+目前里程碑：v2.4 release gate 已通過；準備 tag。
 
 Completed:
 
@@ -639,7 +641,7 @@ python -m ruff check .
 python -m mypy app.py modules tests
 ```
 
-最近一次完整 release gate 測試結果仍為 v2.3：`670 passed in 8.23s`，Ruff、Mypy（106 source files）、`git diff --check` 與 Gitleaks（no leaks found；167 commits scanned）均通過。v2.4 full release gate 尚待執行；目前 release baseline 為 `v2.3.0`。
+最近一次完整 release gate 測試結果為 v2.4：`693 passed in 14.72s`，Ruff、Mypy（108 source files）、`git diff --check` 與 Gitleaks（no leaks found；171 commits scanned）均通過。v2.4 release gate 已通過；準備 tag；目前 release baseline 仍為 `v2.3.0`。
 
 測試使用 dummy RAG 與 LLMAssist 物件，不會啟動完整 CLI，也不會初始化 RAGQA、Chroma、embeddings、Torch、Ollama、ChatOllama 或本地 LLM client。GitHub Actions CI 會執行同一組品質檢查。
 
@@ -647,10 +649,10 @@ python -m mypy app.py modules tests
 
 Current release baseline: tag `v2.3.0`.
 
-Current phase: v2.4 implementation complete; release gate pending.
+Current phase: v2.4 release gate passed; ready to tag.
 
 目前 release baseline：tag `v2.3.0`。
-目前里程碑：v2.4 實作已完成；release gate 尚待執行。
+目前里程碑：v2.4 release gate 已通過；準備 tag。
 
 已完成：
 

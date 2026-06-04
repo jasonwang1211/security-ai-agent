@@ -6,7 +6,7 @@ This roadmap describes planned development after the v2.4 deterministic Agent Sk
 
 Current release baseline: tag `v2.3.0`.
 
-Current phase: v2.4 implementation complete; release gate pending.
+Current phase: v2.4 release gate passed; ready to tag.
 
 Completed:
 
@@ -37,13 +37,13 @@ Completed:
 - v2.4 Deterministic Agent Skill Orchestration Runtime
 - pytest / ruff / mypy / GitHub Actions CI
 
-Last full quality gate (v2.3):
+Last full quality gate (v2.4):
 
-- `python -m pytest` -> `670 passed in 8.23s`
+- `python -m pytest` -> `693 passed in 14.72s`
 - `python -m ruff check .` -> passed
-- `python -m mypy app.py modules tests` -> passed, `106 source files`
+- `python -m mypy app.py modules tests` -> passed, `108 source files`
 - `git diff --check` -> passed
-- Gitleaks -> passed, no leaks found across 167 commits scanned using `gitleaks detect --source . --verbose --redact`
+- Gitleaks -> passed, no leaks found across 171 commits scanned using `gitleaks detect --source . --verbose --redact`
 
 Focused v2.4-A deterministic validation already completed:
 
@@ -291,7 +291,7 @@ v2.3 includes graph-grounded follow-up for the current structured authentication
 
 ## v2.4 - Deterministic Agent Skill Orchestration Runtime
 
-Status: Implementation complete; release gate pending.
+Status: Release gate passed; ready to tag.
 
 Delivered:
 
@@ -329,7 +329,7 @@ All response decisions remain simulated unless explicitly redesigned in a future
 ## 目前基準
 
 目前 release baseline：tag `v2.3.0`。
-目前里程碑：v2.4 實作已完成；release gate 尚待執行。
+目前里程碑：v2.4 release gate 已通過；準備 tag。
 已完成：
 
 已完成：

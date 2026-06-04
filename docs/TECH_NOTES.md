@@ -373,7 +373,7 @@ v2.3 uses graph-grounded follow-up only for the current structured authenticatio
 
 ## v2.4 Deterministic Agent Skill Orchestration Runtime
 
-v2.4 implementation complete; release gate pending. The current released baseline remains tag `v2.3.0` until the v2.4 full release gate, tag, merge, and push are completed.
+v2.4 release gate passed; ready to tag. The current released baseline remains tag `v2.3.0` until the v2.4 tag, merge, and push are completed.
 
 Runtime ownership:
 
@@ -415,13 +415,15 @@ The project uses several testing layers:
 
 Last full quality gate:
 
-- `python -m pytest` -> `670 passed in 8.23s` for v2.3
+- `python -m pytest` -> `693 passed in 14.72s` for v2.4
 - `python -m ruff check .` -> passed
-- `python -m mypy app.py modules tests` -> passed, `106 source files`
+- `python -m mypy app.py modules tests` -> passed, `108 source files`
 - `git diff --check` -> passed
-- Gitleaks -> passed, no leaks found across 167 commits scanned using `gitleaks detect --source . --verbose --redact`
+- Gitleaks -> passed, no leaks found across 171 commits scanned using `gitleaks detect --source . --verbose --redact`
 
-The full v2.3 release gate used a fresh writable pytest basetemp directory for local Windows temp-directory safety: `C:\Users\jason\Desktop\sentinel_pytest_runs\v2_3_gate_2ec879d166eb4e59868ef6f2a950cf4b`.
+The full v2.4 release gate used a fresh writable pytest basetemp directory for local Windows temp-directory safety: `C:\Users\jason\Desktop\sentinel_pytest_runs\v2_4_gate_02389f227c3b468c9aca3b7b774e7190`.
+
+Historical v2.3 full release gate remains recorded separately: `670 passed in 8.23s`, Ruff passed, Mypy passed across 106 source files, `git diff --check` passed, and Gitleaks found no leaks across 167 commits scanned.
 
 Focused v2.2 validation already completed:
 

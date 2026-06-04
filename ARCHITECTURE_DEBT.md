@@ -1,8 +1,8 @@
 # Architecture Debt Engineering Journal
 
-Current milestone: v2.4 implementation complete; release gate pending
+Current milestone: v2.4 release gate passed; ready to tag
 Current baseline: tag `v2.3.0`
-Last full quality gate: v2.3 `670 passed in 8.23s`; Ruff, Mypy, diff-check, and Gitleaks passed
+Last full quality gate: v2.4 `693 passed in 14.72s`; Ruff, Mypy across 108 source files, diff-check, and Gitleaks passed across 171 commits scanned
 
 This document tracks structural debt cleanup as an engineering discipline: reducing module sprawl, consolidating thin wrappers, and preserving deterministic safety boundaries before adding more agentic behavior.
 
@@ -45,7 +45,7 @@ The project has reached a stable consolidated architecture with:
 | RAG helper ownership | flat `modules/rag_*.py` helpers | `modules/rag/` plus flat shims | Controlled helper package migration; `RAGQA` remains active runtime |
 | Controller/orchestration ownership | flat controller/tool/policy/workflow modules | `modules/controller/` plus flat shims | Controlled package migration; no runtime auto-execution added |
 | Graph foundation ownership | none | `modules/graph/` | In-memory graph contracts, deterministic builder, read-only lookup, JSON serialization, protected exact-reference explanation, and reviewed KnowledgeDoc seed candidates; no automatic Graph RAG or persistence |
-| Testing foundation | limited smoke coverage | golden + log pipeline + boundary + incident + detection-rule + controller + RAG v2 + v1.7 reliability + v1.8 protected helper tests + v1.9 contract tests + v2.0 graph focused tests + v2.1 graph explanation focused tests + v2.2 focused metadata/seed/hybrid tests + v2.4 deterministic skill orchestration tests | Last full quality gate: v2.3 `670 passed in 8.23s`, Ruff, Mypy, diff-check, and Gitleaks; focused v2.4-A validation: `110 passed in 1.64s`, Ruff, Mypy across 108 source files, diff-check, and mojibake scan |
+| Testing foundation | limited smoke coverage | golden + log pipeline + boundary + incident + detection-rule + controller + RAG v2 + v1.7 reliability + v1.8 protected helper tests + v1.9 contract tests + v2.0 graph focused tests + v2.1 graph explanation focused tests + v2.2 focused metadata/seed/hybrid tests + v2.4 deterministic skill orchestration tests | Last full quality gate: v2.4 `693 passed in 14.72s`, Ruff, Mypy across 108 source files, diff-check, and Gitleaks across 171 commits scanned; focused v2.4-A validation: `110 passed in 1.64s`, Ruff, Mypy across 108 source files, diff-check, and mojibake scan |
 
 ## v1.3 Phase Outcomes
 
@@ -303,11 +303,12 @@ Architecture note:
 v2.4 orchestrates existing v2.3 runtime capabilities. It does not replace detector, incident, graph, or protected RAG authority. It does not implement or release LLM-assisted skill selection, `RetrieveSimilarCaseSkill`, executable `DraftCaseCaptureSkill`, Similar-Case Graph RAG, historical-case retrieval, Knowledge Capture or event write-back, automatic live ingestion, real firewall/WAF/EDR/account enforcement, real monitoring deployment, or RAG/LLM override of deterministic `Risk Level` or `Decision`. Any future write-capable capture skill must require explicit approval and human review before live ingestion.
 ## Last Full Quality Gate
 
-- `python -m pytest` -> `670 passed in 8.23s` for v2.3
+- `python -m pytest` -> `693 passed in 14.72s` for v2.4
 - `python -m ruff check .` -> passed
-- `python -m mypy app.py modules tests` -> passed, `106 source files`
+- `python -m mypy app.py modules tests` -> passed, `108 source files`
 - `git diff --check` -> passed
-- Gitleaks -> passed, no leaks found across 167 commits scanned using `gitleaks detect --source . --verbose --redact`
+- Gitleaks -> passed, no leaks found across 171 commits scanned using `gitleaks detect --source . --verbose --redact`
+- Pytest writable basetemp: `C:\Users\jason\Desktop\sentinel_pytest_runs\v2_4_gate_02389f227c3b468c9aca3b7b774e7190`
 
 ## v2.2 Focused Validation
 
@@ -316,6 +317,7 @@ v2.4 orchestrates existing v2.3 runtime capabilities. It does not replace detect
 - Do not treat these overlapping focused-test counts as a combined suite total
 - v2.2 full release gate passed with `628 passed`, Ruff, Mypy, diff-check, and Gitleaks
 - v2.3 full release gate passed with `670 passed in 8.23s`, Ruff, Mypy across 106 source files, diff-check, and Gitleaks across 167 commits scanned
+- v2.4 full release gate passed with `693 passed in 14.72s`, Ruff, Mypy across 108 source files, diff-check, and Gitleaks across 171 commits scanned
 
 ## Remaining Engineering Notes
 
