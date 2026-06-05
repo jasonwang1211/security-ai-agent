@@ -13,6 +13,7 @@ from modules.llm_assist import LLMAssist
 from modules.rag_qa import RAGQA
 from modules.responder import Responder
 from modules.triage_policy import TriagePolicy
+from modules.ui.case_memory_view import build_case_memory_display, case_memory_table_rows
 from modules.ui.console_state import (
     SIMILAR_CASE_COMMAND,
     STATE_AGENT,
@@ -127,6 +128,69 @@ def render_text_block(text: str, empty_text: str) -> None:
         st.write(empty_text)
 
 
+def render_case_memory_panel() -> None:
+    display = build_case_memory_display()
+
+    first, second, third = st.columns(3)
+    first.metric("Approved Seeds", display.approved_seed_count)
+    second.metric("Approved For Retrieval", display.approved_for_retrieval_count)
+    third.metric("Source Directory", display.source_directory)
+
+    st.write("Boundary Notes:")
+    for note in display.boundary_notes:
+        st.write(f"- {note}")
+
+    rows = case_memory_table_rows(display.seeds)
+    if rows:
+        st.table(rows)
+    else:
+        st.write("No approved case seeds loaded.")
+        return
+
+    for seed in display.seeds:
+        with st.expander(f"{seed.case_id} - {seed.title}"):
+            st.write("Metadata")
+            st.json(
+                {
+                    "case_id": seed.case_id,
+                    "title": seed.title,
+                    "case_type": seed.case_type,
+                    "review_status": seed.review_status,
+                    "approved_for_retrieval": seed.approved_for_retrieval,
+                    "risk_level": seed.risk_level,
+                    "decision": seed.decision,
+                    "simulated_decision": seed.simulated_decision,
+                    "source_provenance": seed.source_provenance,
+                    "current_event_authority": seed.current_event_authority,
+                    "source_path": seed.source_path,
+                }
+            )
+            st.write("Matched Fields")
+            st.json(
+                {
+                    "attack_types": seed.attack_types,
+                    "rule_ids": seed.rule_ids,
+                    "finding_types": seed.finding_types,
+                    "evidence_types": seed.evidence_types,
+                }
+            )
+            st.write("Summary")
+            st.write(seed.summary)
+            st.write("Key Facts")
+            for item in seed.key_facts:
+                st.write(f"- {item}")
+            st.write("Investigation Notes")
+            for item in seed.investigation_notes:
+                st.write(f"- {item}")
+            st.write("Differences To Check")
+            for item in seed.differences_to_check:
+                st.write(f"- {item}")
+            st.write(f"Analyst Conclusion: {seed.analyst_conclusion}")
+            st.write(f"Outcome: {seed.outcome}")
+            st.write("Safety Boundary")
+            for note in display.boundary_notes:
+                st.write(f"- {note}")
+
 def render_route_policy_panel() -> None:
     display = build_route_policy_display(
         st.session_state.get(STATE_LAST_SELECTED_ACTION),
@@ -156,6 +220,7 @@ def render_report_sections() -> None:
             "Analysis Report",
             "Approved Similar Cases",
             "Graph Relations",
+            "Case Memory",
             "Safety Boundary",
             "Route / Policy",
             "Raw Output",
@@ -175,13 +240,16 @@ def render_report_sections() -> None:
         )
 
     with tabs[3]:
+        render_case_memory_panel()
+
+    with tabs[4]:
         safety_text = build_safety_boundary_text(combined_output) if combined_output else DEFAULT_SAFETY_BOUNDARY_TEXT
         render_text_block(safety_text, DEFAULT_SAFETY_BOUNDARY_TEXT)
 
-    with tabs[4]:
+    with tabs[5]:
         render_route_policy_panel()
 
-    with tabs[5]:
+    with tabs[6]:
         render_text_block(str(st.session_state.get(STATE_LAST_OUTPUT) or ""), "No output yet.")
 
 
