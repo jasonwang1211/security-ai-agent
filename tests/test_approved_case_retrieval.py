@@ -6,6 +6,7 @@ from modules.controller.approved_case_retrieval import (
     ApprovedCaseSeed,
     format_similar_case_output,
     load_approved_case_seeds,
+    build_case_relationship_explanation,
     retrieve_approved_similar_cases,
 )
 from modules.event_followup import ActiveEventContext
@@ -155,6 +156,60 @@ def test_output_includes_reasons_differences_and_boundaries() -> None:
     assert AUTH_COMPROMISE_BOUNDARY in output
     assert "do not override" in output
     assert "do not prove account compromise" in output
+
+
+def test_command_injection_output_includes_graph_grounded_relationship_lines() -> None:
+    result = retrieve_approved_similar_cases(_event_context(), load_approved_case_seeds())
+
+    output = format_similar_case_output(result)
+
+    assert "Graph-Grounded Relationship Explanation:" in output
+    assert "Current context shares attack type Command Injection with CASE-SEED-001." in output
+    assert "Current context shares rule ID CMD-001 with CASE-SEED-001." in output
+    assert "Current context shares evidence type shell_metacharacter_payload with CASE-SEED-001." in output
+    assert "Historical simulated BLOCK does not prove current command execution." in output
+    assert SIMILAR_CASE_BOUNDARY in output
+
+
+def test_auth_incident_output_includes_graph_grounded_relationship_lines() -> None:
+    result = retrieve_approved_similar_cases(_auth_context(), load_approved_case_seeds())
+
+    output = format_similar_case_output(result)
+
+    assert "Graph-Grounded Relationship Explanation:" in output
+    assert "Current incident shares attack type Possible Account Compromise with CASE-SEED-002." in output
+    assert "Current incident shares finding type possible_account_compromise with CASE-SEED-002." in output
+    assert "Current incident shares evidence type success_after_failures with CASE-SEED-002." in output
+    assert "Current incident shares simulated Decision MONITOR with CASE-SEED-002." in output
+    assert AUTH_COMPROMISE_BOUNDARY in output
+
+
+def test_relationship_explanation_is_omitted_when_no_approved_case_matches() -> None:
+    result = retrieve_approved_similar_cases(
+        _event_context(attack_types=("Unknown Attack",), rule_ids=("UNKNOWN-001",)),
+        load_approved_case_seeds(),
+    )
+
+    output = format_similar_case_output(result)
+
+    assert result.matches == ()
+    assert "No approved similar cases matched the current structured facts." in output
+    assert "Graph-Grounded Relationship Explanation:" not in output
+
+
+def test_relationship_explanation_helper_uses_structured_match_fields() -> None:
+    result = retrieve_approved_similar_cases(_event_context(), load_approved_case_seeds())
+
+    explanation = build_case_relationship_explanation(result.current, result.matches[0])
+
+    assert explanation.shared_relationships == (
+        "Current context shares attack type Command Injection with CASE-SEED-001.",
+        "Current context shares rule ID CMD-001 with CASE-SEED-001.",
+        "Current context shares evidence type shell_metacharacter_payload with CASE-SEED-001.",
+        "Current context shares simulated Decision BLOCK with CASE-SEED-001.",
+    )
+    assert "Historical simulated BLOCK does not prove current command execution." in explanation.difference_relationships
+    assert explanation.boundary == SIMILAR_CASE_BOUNDARY
 
 
 def test_approved_case_seed_model_rejects_non_advisory_seed() -> None:

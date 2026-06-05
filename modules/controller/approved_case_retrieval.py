@@ -136,6 +136,13 @@ class SimilarCaseMatch:
 
 
 @dataclass(frozen=True)
+class CaseRelationshipExplanation:
+    shared_relationships: tuple[str, ...]
+    difference_relationships: tuple[str, ...]
+    boundary: str
+
+
+@dataclass(frozen=True)
 class SimilarCaseResult:
     current: CurrentCaseFeatures
     matches: tuple[SimilarCaseMatch, ...]
@@ -257,6 +264,8 @@ def format_similar_case_output(result: SimilarCaseResult) -> str:
                 f"   Score: {match.score}",
                 f"   Similarity reasons: {_join_or_none(match.reasons)}",
                 f"   Key differences / missing evidence to check: {_join_or_none(match.differences)}",
+                "   Graph-Grounded Relationship Explanation:",
+                *_format_relationship_explanation(result.current, match),
                 f"   Analyst conclusion: {seed.analyst_conclusion}",
                 f"   Outcome note: {seed.outcome}",
                 f"   Source: {seed.source_provenance} ({seed.source_path})",
@@ -264,6 +273,42 @@ def format_similar_case_output(result: SimilarCaseResult) -> str:
         )
 
     return "\n".join(lines)
+
+
+def build_case_relationship_explanation(
+    current: CurrentCaseFeatures,
+    match: SimilarCaseMatch,
+) -> CaseRelationshipExplanation:
+    """Build deterministic graph-style relationship lines from structured fields only."""
+
+    seed = match.seed
+    label = "Current incident" if current.context_kind == "active_auth_incident" else "Current context"
+    shared: list[str] = []
+
+    for value in _intersection(current.attack_types, seed.attack_types):
+        shared.append(f"{label} shares attack type {value} with {seed.case_id}.")
+    for value in _intersection(current.rule_ids, seed.rule_ids):
+        shared.append(f"{label} shares rule ID {value} with {seed.case_id}.")
+    for value in _intersection(current.finding_types, seed.finding_types):
+        shared.append(f"{label} shares finding type {value} with {seed.case_id}.")
+    for value in _intersection(current.evidence_types, seed.evidence_types):
+        shared.append(f"{label} shares evidence type {value} with {seed.case_id}.")
+    if current.decision == seed.decision.upper():
+        shared.append(f"{label} shares simulated Decision {current.decision} with {seed.case_id}.")
+
+    return CaseRelationshipExplanation(
+        shared_relationships=tuple(shared),
+        difference_relationships=match.differences,
+        boundary=SIMILAR_CASE_BOUNDARY,
+    )
+
+
+def _format_relationship_explanation(current: CurrentCaseFeatures, match: SimilarCaseMatch) -> list[str]:
+    explanation = build_case_relationship_explanation(current, match)
+    lines = [f"      - {relationship}" for relationship in explanation.shared_relationships]
+    lines.extend(f"      - {relationship}" for relationship in explanation.difference_relationships)
+    lines.append(f"      - Boundary: {explanation.boundary}")
+    return lines
 
 
 def _score_seed(current: CurrentCaseFeatures, seed: ApprovedCaseSeed) -> SimilarCaseMatch:
