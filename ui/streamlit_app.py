@@ -34,6 +34,7 @@ from modules.ui.report_sections import (
     build_safety_boundary_text,
     parse_report_sections,
 )
+from modules.ui.route_policy_view import build_route_policy_display
 
 PAGE_TITLE = "Security AI Agent Console"
 TEXT_AREA_KEY = "sentinel_console_input"
@@ -126,6 +127,26 @@ def render_text_block(text: str, empty_text: str) -> None:
         st.write(empty_text)
 
 
+def render_route_policy_panel() -> None:
+    display = build_route_policy_display(
+        st.session_state.get(STATE_LAST_SELECTED_ACTION),
+        str(st.session_state.get(STATE_LAST_INPUT) or ""),
+    )
+
+    st.write(f"Latest Input: {st.session_state.get(STATE_LAST_INPUT) or 'None'}")
+    first, second, third = st.columns(3)
+    first.metric("Selected Skill", display.selected_skill)
+    second.metric("Permission", display.permission)
+    third.metric("Execution Mode", display.execution_mode)
+
+    st.write(f"Route Reason: {display.route_reason}")
+    st.write(f"Human Approval Required: {str(display.human_approval_required).lower()}")
+    st.write(f"Write Behavior: {display.write_behavior}")
+    st.write("Safety Notes:")
+    for note in display.safety_notes:
+        st.write(f"- {note}")
+
+
 def render_report_sections() -> None:
     combined_output = combined_display_output(st.session_state)
     sections = parse_report_sections(combined_output)
@@ -136,6 +157,7 @@ def render_report_sections() -> None:
             "Approved Similar Cases",
             "Graph Relations",
             "Safety Boundary",
+            "Route / Policy",
             "Raw Output",
         ]
     )
@@ -157,6 +179,9 @@ def render_report_sections() -> None:
         render_text_block(safety_text, DEFAULT_SAFETY_BOUNDARY_TEXT)
 
     with tabs[4]:
+        render_route_policy_panel()
+
+    with tabs[5]:
         render_text_block(str(st.session_state.get(STATE_LAST_OUTPUT) or ""), "No output yet.")
 
 
@@ -208,6 +233,7 @@ def main() -> None:
     render_last_action()
     render_active_context()
     render_report_sections()
+
 
 if __name__ == "__main__":
     main()
