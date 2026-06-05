@@ -11,6 +11,7 @@ from modules.controller.skill_catalog import (
     EXPLAIN_ACTIVE_EVENT_SKILL,
     EXPLAIN_ACTIVE_INCIDENT_SKILL,
     KNOWLEDGE_QA_SKILL,
+    RETRIEVE_APPROVED_SIMILAR_CASE_SKILL,
 )
 from modules.controller.types import (
     KnowledgeQuestionInput,
@@ -18,6 +19,7 @@ from modules.controller.types import (
     LogFileInput,
     PayloadTriageInput,
     ReportFollowupInput,
+    SimilarCaseInput,
     ToolExecutionResult,
 )
 
@@ -252,6 +254,69 @@ def test_general_security_question_with_active_context_still_routes_to_knowledge
     assert agent.cli_state["active_event_context"] is not None
     assert agent.cli_state["active_context_kind"] == "event"
     assert agent.cli_state["pending_case_draft_request"] is pending_request
+
+
+def test_explicit_similar_case_command_routes_to_read_only_skill(monkeypatch) -> None:
+    agent = FakeAgent()
+    agent.cli_state["active_context_kind"] = "event"
+    agent.cli_state["active_event_context"] = object()
+
+    def similar_handler(input_data: BaseModel, _agent) -> ToolExecutionResult:
+        assert isinstance(input_data, SimilarCaseInput)
+        assert input_data.command == "find similar cases"
+        return _ok("similar cases")
+
+    monkeypatch.setattr(
+        orchestrator_module,
+        "run_retrieve_approved_similar_case_skill",
+        similar_handler,
+    )
+
+    output = AgentSkillOrchestrator(agent).handle_input("find similar cases")
+
+    assert output.status == "ok"
+    assert output.selected_tool == RETRIEVE_APPROVED_SIMILAR_CASE_SKILL
+    assert output.response_text == "similar cases"
+
+
+def test_chinese_similar_case_command_routes_to_read_only_skill(monkeypatch) -> None:
+    agent = FakeAgent()
+    agent.cli_state["active_context_kind"] = "incident"
+    agent.cli_state["active_incident_context"] = object()
+
+    def similar_handler(input_data: BaseModel, _agent) -> ToolExecutionResult:
+        assert isinstance(input_data, SimilarCaseInput)
+        assert input_data.command == "找相似案例"
+        return _ok("similar cases")
+
+    monkeypatch.setattr(
+        orchestrator_module,
+        "run_retrieve_approved_similar_case_skill",
+        similar_handler,
+    )
+
+    output = AgentSkillOrchestrator(agent).handle_input("找相似案例")
+
+    assert output.status == "ok"
+    assert output.selected_tool == RETRIEVE_APPROVED_SIMILAR_CASE_SKILL
+
+
+def test_similar_case_routing_is_not_broad_substring_matching(monkeypatch) -> None:
+    agent = FakeAgent()
+
+    def similar_handler(_input_data: BaseModel, _agent) -> ToolExecutionResult:
+        raise AssertionError("similar case text must require exact command")
+
+    monkeypatch.setattr(
+        orchestrator_module,
+        "run_retrieve_approved_similar_case_skill",
+        similar_handler,
+    )
+
+    output = AgentSkillOrchestrator(agent).handle_input("please find similar cases later")
+
+    assert output.selected_tool is None
+    assert output.status == "clarification_required"
 
 
 def test_unknown_input_requests_clarification() -> None:

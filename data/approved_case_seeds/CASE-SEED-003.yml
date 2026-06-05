@@ -1,0 +1,32 @@
+schema_version: v2.5-approved-case1
+case_id: CASE-SEED-003
+title: SQL Injection Web Payload With Simulated BLOCK
+review_status: approved_for_similarity_demo
+approved_for_retrieval: true
+case_type: payload_event
+attack_types:
+  - SQL Injection
+rule_ids:
+  - SQLI-001
+finding_types: []
+evidence_types:
+  - sql_injection_payload
+risk_level: HIGH
+decision: BLOCK
+simulated_decision: true
+summary: A web input contained SQL Injection indicators mapped to the reviewed SQLI-001 detector rule.
+key_facts:
+  - The payload used SQL syntax patterns associated with injection attempts.
+  - The reviewed detector mapping was SQLI-001 for SQL Injection.
+  - The project decision was simulated BLOCK because the deterministic risk level was HIGH.
+investigation_notes:
+  - Review parameterized query coverage and database error logs.
+  - Check whether authentication bypass, data access, or SQL errors occurred.
+  - Preserve request and application logs before remediation.
+differences_to_check:
+  - Current event may be a different attack family such as Command Injection.
+  - Matching risk or decision alone is not enough to claim similarity.
+analyst_conclusion: Useful as a contrasting web payload case when rule IDs or attack types differ.
+outcome: Simulated BLOCK decision only; no real WAF, firewall, or database action was executed.
+source_provenance: manually_curated_seed
+current_event_authority: advisory_only_no_override

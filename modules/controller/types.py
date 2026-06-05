@@ -11,6 +11,7 @@ InputKind = Literal[
     "security_knowledge_question",
     "report_followup",
     "case_draft_request",
+    "similar_case_request",
     "unknown",
 ]
 RouterConfidence = Literal["LOW", "MEDIUM", "HIGH"]
@@ -135,6 +136,17 @@ class CaseDraftInput(BaseModel):
     @classmethod
     def user_text_must_not_be_empty(cls, value: str) -> str:
         return _require_non_blank(value, "user_text")
+
+
+class SimilarCaseInput(BaseModel):
+    """Input for read-only approved similar-case retrieval."""
+
+    command: str
+
+    @field_validator("command")
+    @classmethod
+    def command_must_not_be_empty(cls, value: str) -> str:
+        return _require_non_blank(value, "command")
 
 
 class IncidentJsonExportInput(BaseModel):

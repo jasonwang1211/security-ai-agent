@@ -1,8 +1,9 @@
 """Deterministic Agent Skill Orchestration for direct user input.
 
-The orchestrator is explicit routing glue over existing local capabilities. It
-does not use LLM route selection, run similar-case retrieval, write knowledge,
-or execute real enforcement actions.
+The orchestrator is explicit routing glue over existing local capabilities.
+It does not use LLM route selection, write knowledge, or execute real
+enforcement actions. Similar-case routing is limited to read-only approved
+seed retrieval.
 """
 
 from __future__ import annotations
@@ -21,6 +22,7 @@ from modules.controller.skill_catalog import (
     EXPLAIN_ACTIVE_EVENT_SKILL,
     EXPLAIN_ACTIVE_INCIDENT_SKILL,
     KNOWLEDGE_QA_SKILL,
+    RETRIEVE_APPROVED_SIMILAR_CASE_SKILL,
     build_v2_5_registry,
 )
 from modules.controller.skill_wrappers import (
@@ -30,6 +32,7 @@ from modules.controller.skill_wrappers import (
     run_explain_active_event_skill,
     run_explain_active_incident_skill,
     run_knowledge_qa_skill,
+    run_retrieve_approved_similar_case_skill,
 )
 from modules.controller.tool_policy import is_tool_allowed_without_human_approval
 from modules.controller.types import (
@@ -73,6 +76,11 @@ class AgentSkillOrchestrator:
             return self.controller.dispatch_tool(
                 DRAFT_CASE_CAPTURE_SKILL,
                 {"action": case_draft_action, "user_text": text},
+            )
+        if _is_similar_case_command(text):
+            return self.controller.dispatch_tool(
+                RETRIEVE_APPROVED_SIMILAR_CASE_SKILL,
+                {"command": text},
             )
 
         selected_skill = self._select_skill(text)
@@ -127,6 +135,8 @@ class AgentSkillOrchestrator:
             return {"path": _extract_log_path(text)}
         if skill_name == KNOWLEDGE_QA_SKILL:
             return {"question": text}
+        if skill_name == RETRIEVE_APPROVED_SIMILAR_CASE_SKILL:
+            return {"command": text}
         if skill_name in {EXPLAIN_ACTIVE_EVENT_SKILL, EXPLAIN_ACTIVE_INCIDENT_SKILL}:
             return {"question": text}
         return {"raw_text": text}
@@ -151,6 +161,9 @@ class AgentSkillOrchestrator:
         def draft_case_capture(input_data: BaseModel) -> ToolExecutionResult:
             return run_draft_case_capture_skill(input_data, agent)  # type: ignore[arg-type]
 
+        def retrieve_similar_cases(input_data: BaseModel) -> ToolExecutionResult:
+            return run_retrieve_approved_similar_case_skill(input_data, agent)  # type: ignore[arg-type]
+
         return {
             ANALYZE_PAYLOAD_SKILL: analyze_payload,
             ANALYZE_AUTHENTICATION_LOG_SKILL: analyze_auth_log,
@@ -158,6 +171,7 @@ class AgentSkillOrchestrator:
             EXPLAIN_ACTIVE_INCIDENT_SKILL: explain_incident,
             KNOWLEDGE_QA_SKILL: knowledge_qa,
             DRAFT_CASE_CAPTURE_SKILL: draft_case_capture,
+            RETRIEVE_APPROVED_SIMILAR_CASE_SKILL: retrieve_similar_cases,
         }
 
     @staticmethod
@@ -306,6 +320,19 @@ def _case_draft_action(text: str) -> CaseDraftAction | None:
     if any(command.fullmatch(normalized) for command in _REQUEST_DRAFT_PATTERNS):
         return "request"
     return None
+
+
+def _is_similar_case_command(text: str) -> bool:
+    normalized = " ".join(str(text or "").strip().casefold().split())
+    return normalized in _SIMILAR_CASE_COMMANDS
+
+
+_SIMILAR_CASE_COMMANDS = {
+    "find similar cases",
+    "retrieve similar cases",
+    "找相似案例",
+    "查詢相似案例",
+}
 
 
 _TITLE_SUFFIX = r"(?:\s+(?:title\s*[:=]|標題\s*[：:])\s*.+)?"

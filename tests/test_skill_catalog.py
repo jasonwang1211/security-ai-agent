@@ -14,6 +14,7 @@ from modules.controller.skill_catalog import (
     PAYLOAD_TRIAGE,
     RAG_SECURITY_QA,
     RAW_LOG_TRANSLATE,
+    RETRIEVE_APPROVED_SIMILAR_CASE_SKILL,
     REPORT_FOLLOWUP,
     build_v1_5_registry,
     build_v1_5_tool_specs,
@@ -53,6 +54,7 @@ DEFERRED_V2_4_SKILL_NAMES = {
 EXPECTED_V2_5_SKILL_NAMES = [
     *EXPECTED_V2_4_SKILL_NAMES,
     DRAFT_CASE_CAPTURE_SKILL,
+    RETRIEVE_APPROVED_SIMILAR_CASE_SKILL,
 ]
 
 
@@ -198,7 +200,12 @@ def test_build_v2_5_registry_adds_approval_gated_case_draft_skill() -> None:
     assert draft_spec.allowed_input_kinds == ["case_draft_request"]
 
 
-def test_v2_5_keeps_similar_case_retrieval_deferred() -> None:
-    names = set(build_v2_5_registry().list_names())
+def test_build_v2_5_registry_adds_read_only_similar_case_skill() -> None:
+    specs = {item.name: item for item in build_v2_5_tool_specs()}
 
-    assert "RetrieveSimilarCaseSkill" not in names
+    similar_spec = specs[RETRIEVE_APPROVED_SIMILAR_CASE_SKILL]
+    assert similar_spec.safety_level == "advisory_explanation"
+    assert similar_spec.requires_llm is False
+    assert similar_spec.requires_rag is False
+    assert similar_spec.deterministic is True
+    assert similar_spec.allowed_input_kinds == ["similar_case_request"]

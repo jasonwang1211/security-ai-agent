@@ -219,6 +219,16 @@ def test_future_draft_case_capture_skill_requires_human_approval() -> None:
     assert is_tool_allowed_without_human_approval("DraftCaseCaptureSkill") is False
 
 
+def test_retrieve_approved_similar_case_skill_is_read_only_direct_allowed() -> None:
+    decision = evaluate_tool_policy("RetrieveApprovedSimilarCaseSkill")
+
+    assert decision.permission == "READ_ONLY"
+    assert decision.execution_mode == "DIRECT_ALLOWED"
+    assert decision.requires_human_approval is False
+    assert decision.allowed is True
+    assert is_tool_allowed_without_human_approval("RetrieveApprovedSimilarCaseSkill") is True
+
+
 def test_tool_policy_module_does_not_import_runtime_heavy_or_dispatch_modules() -> None:
     code = (
         "import sys; "

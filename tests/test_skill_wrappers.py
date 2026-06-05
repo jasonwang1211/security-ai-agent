@@ -19,6 +19,7 @@ from modules.controller.types import (
     PayloadTriageInput,
     RawLogInput,
     ReportFollowupInput,
+    SimilarCaseInput,
     ToolExecutionResult,
 )
 from modules.controller.skill_wrappers import (
@@ -33,6 +34,7 @@ from modules.controller.skill_wrappers import (
     run_rag_security_qa_skill,
     run_raw_log_translate_skill,
     run_report_followup_skill,
+    run_retrieve_approved_similar_case_skill,
 )
 
 
@@ -274,6 +276,32 @@ def test_knowledge_qa_skill_uses_existing_protected_knowledge_path() -> None:
 
     assert result.status == "ok"
     assert result.output["text"] == "knowledge: What is XSS?"
+
+
+def test_retrieve_approved_similar_case_requires_active_context() -> None:
+    result = run_retrieve_approved_similar_case_skill(
+        SimilarCaseInput(command="find similar cases"),
+        FakeAgent(),
+    )
+
+    assert result.status == "clarification_required"
+    assert "requires an active" in str(result.error_message)
+
+
+def test_retrieve_approved_similar_case_uses_active_event_context() -> None:
+    agent = FakeAgent()
+    agent.cli_state["active_context_kind"] = "event"
+    agent.cli_state["active_event_context"] = _active_event_context()
+
+    result = run_retrieve_approved_similar_case_skill(
+        SimilarCaseInput(command="find similar cases"),
+        agent,
+    )
+
+    assert result.status == "ok"
+    assert result.output["current_context_kind"] == "active_event"
+    assert result.output["matches"][0]["case_id"] == "CASE-SEED-001"
+    assert "Historical approved cases are advisory references only" in result.output["text"]
 
 
 def _active_event_context(

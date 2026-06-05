@@ -138,6 +138,13 @@ _KNOWN_TOOL_POLICIES: dict[str, ToolPolicy] = {
         requires_human_approval=True,
         reason="Approval-gated case draft capture requires explicit human approval; request and cancel actions write nothing.",
     ),
+    "RetrieveApprovedSimilarCaseSkill": ToolPolicy(
+        tool_name="RetrieveApprovedSimilarCaseSkill",
+        permission="READ_ONLY",
+        execution_mode="DIRECT_ALLOWED",
+        risk_level="LOW",
+        reason="Read-only retrieval over manually curated approved case seeds.",
+    ),
     "vector_rag_search": ToolPolicy(
         tool_name="vector_rag_search",
         permission="READ_ONLY",
