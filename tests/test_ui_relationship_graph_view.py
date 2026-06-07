@@ -166,6 +166,14 @@ def test_dot_output_contains_expected_graph_syntax_and_labels() -> None:
 
     assert "digraph RelationshipGraph" in display.dot
     assert "rankdir=LR" in display.dot
+    assert "splines=true" in display.dot
+    assert "nodesep=0.55" in display.dot
+    assert "ranksep=1.0" in display.dot
+    assert 'bgcolor="#ffffff"' in display.dot
+    assert 'graph [fontname="Arial", bgcolor="#ffffff", fontcolor="#0f172a"' in display.dot
+    assert 'node [fontname="Arial", fontcolor="#0f172a"' in display.dot
+    assert 'edge [fontname="Arial", color="#475569", fontcolor="#0f172a"' in display.dot
+    assert 'fontcolor="#0f172a";' in display.dot
     assert 'label="Current Event"' in display.dot
     assert 'label="CASE-SEED-001"' in display.dot
 
@@ -191,6 +199,102 @@ def test_graph_notes_include_advisory_no_override_and_no_enforcement_boundaries(
     assert "advisory" in notes
     assert "does not override" in notes
     assert "no real enforcement" in notes
+
+
+def test_graph_display_includes_presentation_legend_entries() -> None:
+    display = build_relationship_graph_display(
+        active_context_summary=_event_summary(),
+        approved_similar_cases_text="1. CASE-SEED-001 - Command Injection Payload",
+        graph_relationship_text="",
+    )
+
+    legend = " ".join(display.legend)
+    assert "藍色方塊" in legend
+    assert "Blue box" in legend
+    assert "Current event / incident" in legend
+    assert "核准相似案例" in legend
+    assert "Green box" in legend
+    assert "Approved similar case" in legend
+    assert "Risk level" in legend
+    assert "Simulated decision" in legend
+
+
+def test_command_injection_graph_summary_uses_readable_relationship_text() -> None:
+    similar_cases_text = "\n".join(
+        [
+            "[Approved Similar Cases]",
+            "1. CASE-SEED-001 - Command Injection Payload",
+            (
+                "   Similarity reasons: matched attack_types: Command Injection, "
+                "matched rule_ids: CMD-001, matched evidence_types: "
+                "shell_metacharacter_payload, supporting decision match: BLOCK"
+            ),
+        ]
+    )
+
+    display = build_relationship_graph_display(
+        active_context_summary=_event_summary(),
+        approved_similar_cases_text=similar_cases_text,
+        graph_relationship_text="",
+    )
+
+    summary = "\n".join(display.summary)
+    assert "目前事件與 CASE-SEED-001 相似" in summary
+    assert "Current Event is similar to CASE-SEED-001." in summary
+    assert "兩者共享攻擊類型" in summary
+    assert "Both share attack type: Command Injection." in summary
+    assert "Both are associated with rule ID: CMD-001." in summary
+    assert "Both share evidence type: shell metachar payload." in summary
+    assert "Both share simulated decision: BLOCK." in summary
+
+
+def test_auth_incident_graph_summary_uses_readable_relationship_text() -> None:
+    similar_cases_text = "\n".join(
+        [
+            "[Approved Similar Cases]",
+            "1. CASE-SEED-002 - Authentication Success After Failures",
+            (
+                "   Similarity reasons: matched attack_types: Possible Account Compromise, "
+                "matched finding_types: possible_account_compromise, matched evidence_types: "
+                "auth_failure_sequence, success_after_failures, supporting decision match: MONITOR"
+            ),
+        ]
+    )
+
+    display = build_relationship_graph_display(
+        active_context_summary=_auth_summary(),
+        approved_similar_cases_text=similar_cases_text,
+        graph_relationship_text="",
+    )
+
+    summary = "\n".join(display.summary)
+    assert "目前事件脈絡與 CASE-SEED-002 相似" in summary
+    assert "Current Incident is similar to CASE-SEED-002." in summary
+    assert "Both share attack type: Possible Account Compromise." in summary
+    assert "Both share finding type: possible account compromise." in summary
+    assert "兩者共享證據類型" in summary
+    assert "Both share evidence type: success after failures." in summary
+    assert "Both share simulated decision: MONITOR." in summary
+
+
+def test_dot_uses_readable_node_and_edge_display_labels() -> None:
+    display = build_relationship_graph_display(
+        active_context_summary=_event_summary(),
+        approved_similar_cases_text=(
+            "1. CASE-SEED-001 - Command Injection Payload\n"
+            "Similarity reasons: matched evidence_types: shell_metacharacter_payload"
+        ),
+        graph_relationship_text="",
+    )
+
+    assert 'label="shell metachar payload"' in display.dot
+    assert 'label="攻擊"' in display.dot
+    assert 'label="規則"' in display.dot
+    assert 'label="證據"' in display.dot
+    assert 'label="風險"' in display.dot
+    assert 'label="決策"' in display.dot
+    assert 'label="相似"' in display.dot
+    assert 'label="共享證據"' in display.dot
 
 
 def test_relationship_graph_helper_does_not_import_streamlit() -> None:

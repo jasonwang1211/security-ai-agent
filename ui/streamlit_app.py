@@ -496,15 +496,26 @@ def render_relationship_graph_panel(sections: Any) -> None:
             st.warning("Visual graph renderer unavailable; DOT source shown instead.")
             st.caption(f"Renderer detail: {exc}")
             st.code(display.dot, language="dot")
-
-        with st.expander("DOT Source", expanded=False):
-            st.code(display.dot, language="dot")
     else:
         st.info(display.empty_message)
+
+    st.markdown("##### Graph Legend")
+    for item in display.legend:
+        st.write(f"- {item}")
+
+    st.markdown("##### Key Relationship Summary")
+    if display.summary:
+        for item in display.summary:
+            st.write(f"- {item}")
+    else:
+        st.write("No approved similar-case relationship summary yet.")
 
     st.write("Graph Notes:")
     for note in display.notes:
         st.write(f"- {note}")
+
+    with st.expander("DOT Source", expanded=False):
+        render_text_block(display.dot, "No DOT source yet.")
 
     with st.expander("Text Relationship Explanation", expanded=False):
         render_text_block(

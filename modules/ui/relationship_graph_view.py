@@ -12,10 +12,18 @@ EMPTY_RELATIONSHIP_GRAPH_MESSAGE = (
 )
 
 RELATIONSHIP_GRAPH_NOTES = (
-    "Graph is derived from current active context and approved similar-case output.",
-    "Graph is advisory only.",
-    "Graph does not override Risk Level or Decision.",
-    "No real enforcement is executed.",
+    "圖形由目前脈絡與核准相似案例輸出產生。 | Graph is derived from current active context and approved similar-case output.",
+    "圖形僅供參考。 | Graph is advisory only.",
+    "圖形不會覆蓋 Risk Level 或 Decision。 | Graph does not override Risk Level or Decision.",
+    "未執行任何真實防護動作。 | No real enforcement is executed.",
+)
+
+RELATIONSHIP_GRAPH_LEGEND = (
+    "藍色方塊 = 目前事件 / 事件脈絡 | Blue box = Current event / incident",
+    "綠色方塊 = 核准相似案例 | Green box = Approved similar case",
+    "橢圓 = 共享欄位 / 實體 | Ellipse = Shared field / entity",
+    "紅色菱形 = 風險等級 | Red diamond = Risk level",
+    "黃色菱形 = 模擬決策 | Yellow diamond = Simulated decision",
 )
 
 CURRENT_CONTEXT_KIND = "current_context"
@@ -40,6 +48,25 @@ SHARES_RULE = "shares_rule"
 SHARES_EVIDENCE = "shares_evidence"
 SHARES_FINDING = "shares_finding"
 SHARES_DECISION = "shares_decision"
+
+_EDGE_DISPLAY_LABELS = {
+    HAS_ATTACK_TYPE: "攻擊",
+    MATCHED_RULE: "規則",
+    HAS_EVIDENCE: "證據",
+    HAS_FINDING: "發現",
+    HAS_RISK: "風險",
+    HAS_DECISION: "決策",
+    SIMILAR_TO: "相似",
+    SHARES_ATTACK_TYPE: "共享攻擊",
+    SHARES_RULE: "共享規則",
+    SHARES_EVIDENCE: "共享證據",
+    SHARES_FINDING: "共享發現",
+    SHARES_DECISION: "共享決策",
+}
+
+_DISPLAY_LABEL_REPLACEMENTS = {
+    "shell_metacharacter_payload": "shell metachar payload",
+}
 
 _CASE_ID_RE = re.compile(r"\bCASE-SEED-\d+\b")
 _CASE_BLOCK_RE = re.compile(
@@ -104,6 +131,8 @@ class RelationshipGraphDisplay:
     dot: str
     empty_message: str
     notes: tuple[str, ...]
+    legend: tuple[str, ...]
+    summary: tuple[str, ...]
 
     @property
     def has_graph(self) -> bool:
@@ -126,6 +155,8 @@ def build_relationship_graph_display(
             dot="",
             empty_message=EMPTY_RELATIONSHIP_GRAPH_MESSAGE,
             notes=RELATIONSHIP_GRAPH_NOTES,
+            legend=RELATIONSHIP_GRAPH_LEGEND,
+            summary=(),
         )
 
     current_label = _current_context_label(active_context_summary)
@@ -146,6 +177,8 @@ def build_relationship_graph_display(
         dot=_build_dot(nodes, edges) if edges else "",
         empty_message=EMPTY_RELATIONSHIP_GRAPH_MESSAGE,
         notes=RELATIONSHIP_GRAPH_NOTES,
+        legend=RELATIONSHIP_GRAPH_LEGEND,
+        summary=_build_summary(nodes, edges),
     )
 
 
@@ -284,41 +317,140 @@ def _build_dot(
     nodes: tuple[RelationshipGraphNode, ...],
     edges: tuple[RelationshipGraphEdge, ...],
 ) -> str:
+    node_lines = [_format_node(node) for node in nodes]
+    node_line_by_id = {node.node_id: line for node, line in zip(nodes, node_lines)}
+    current_node_ids = tuple(
+        node.node_id
+        for node in nodes
+        if node.kind in {CURRENT_CONTEXT_KIND, RISK_LEVEL_KIND, DECISION_KIND}
+    )
+    shared_node_ids = tuple(
+        node.node_id
+        for node in nodes
+        if node.kind in {ATTACK_TYPE_KIND, RULE_ID_KIND, EVIDENCE_TYPE_KIND, FINDING_TYPE_KIND}
+    )
+    case_node_ids = tuple(node.node_id for node in nodes if node.kind == SIMILAR_CASE_KIND)
+    clustered_node_ids = set(current_node_ids + shared_node_ids + case_node_ids)
+
     lines = [
         "digraph RelationshipGraph {",
         "  rankdir=LR;",
-        '  graph [fontname="Arial"];',
-        '  node [fontname="Arial", style="rounded,filled", color="#64748b"];',
-        '  edge [fontname="Arial", color="#64748b"];',
+        "  splines=true;",
+        "  concentrate=false;",
+        "  nodesep=0.55;",
+        "  ranksep=1.0;",
+        '  graph [fontname="Arial", bgcolor="#ffffff", fontcolor="#0f172a", pad="0.25"];',
+        '  node [fontname="Arial", fontcolor="#0f172a", style="rounded,filled", color="#64748b", penwidth=1.4];',
+        '  edge [fontname="Arial", color="#475569", fontcolor="#0f172a", arrowsize=0.75, fontsize=11];',
         "",
     ]
-    for node in nodes:
-        style = _node_style(node.kind)
-        lines.append(
-            f'  "{_dot_escape(node.node_id)}" '
-            f'[label="{_dot_escape(node.label)}", shape={style["shape"]}, '
-            f'fillcolor="{style["fillcolor"]}"];'
+    lines.extend(_format_cluster("cluster_current", "Current Context", current_node_ids, node_line_by_id))
+    lines.extend(
+        _format_cluster(
+            "cluster_shared",
+            "Shared Relationship Fields",
+            shared_node_ids,
+            node_line_by_id,
         )
+    )
+    lines.extend(
+        _format_cluster(
+            "cluster_cases",
+            "Approved Similar Cases",
+            case_node_ids,
+            node_line_by_id,
+        )
+    )
+    for node in nodes:
+        if node.node_id not in clustered_node_ids:
+            lines.append(node_line_by_id[node.node_id])
     if nodes and edges:
         lines.append("")
     for edge in edges:
         lines.append(
             f'  "{_dot_escape(edge.source)}" -> "{_dot_escape(edge.target)}" '
-            f'[label="{_dot_escape(edge.label)}"];'
+            f'[label="{_dot_escape(_edge_display_label(edge.label))}"];'
         )
     lines.append("}")
     return "\n".join(lines)
 
 
+def _format_cluster(
+    cluster_id: str,
+    label: str,
+    node_ids: tuple[str, ...],
+    node_line_by_id: dict[str, str],
+) -> list[str]:
+    if not node_ids:
+        return []
+    lines = [
+        f"  subgraph {cluster_id} {{",
+        f'    label="{_dot_escape(label)}";',
+        '    color="#cbd5e1";',
+        '    fontcolor="#0f172a";',
+        '    fontsize="14";',
+        '    style="rounded,dashed";',
+        "",
+    ]
+    for node_id in node_ids:
+        lines.append(f"  {node_line_by_id[node_id]}")
+    lines.extend(["  }", ""])
+    return lines
+
+
+def _format_node(node: RelationshipGraphNode) -> str:
+    style = _node_style(node.kind)
+    return (
+        f'  "{_dot_escape(node.node_id)}" '
+        f'[label="{_dot_escape(_display_label(node.label))}", shape={style["shape"]}, '
+        f'fillcolor="{style["fillcolor"]}", color="{style["color"]}"];'
+    )
+
+
 def _node_style(kind: str) -> dict[str, str]:
     styles = {
-        CURRENT_CONTEXT_KIND: {"shape": "box", "fillcolor": "#dbeafe"},
-        SIMILAR_CASE_KIND: {"shape": "box", "fillcolor": "#dcfce7"},
-        RISK_LEVEL_KIND: {"shape": "diamond", "fillcolor": "#fee2e2"},
-        DECISION_KIND: {"shape": "diamond", "fillcolor": "#fef3c7"},
-        BOUNDARY_KIND: {"shape": "note", "fillcolor": "#f8fafc"},
+        CURRENT_CONTEXT_KIND: {"shape": "box", "fillcolor": "#bfdbfe", "color": "#2563eb"},
+        SIMILAR_CASE_KIND: {"shape": "box", "fillcolor": "#bbf7d0", "color": "#16a34a"},
+        RISK_LEVEL_KIND: {"shape": "diamond", "fillcolor": "#fecaca", "color": "#dc2626"},
+        DECISION_KIND: {"shape": "diamond", "fillcolor": "#fde68a", "color": "#d97706"},
+        BOUNDARY_KIND: {"shape": "note", "fillcolor": "#f8fafc", "color": "#64748b"},
     }
-    return styles.get(kind, {"shape": "ellipse", "fillcolor": "#f8fafc"})
+    return styles.get(kind, {"shape": "ellipse", "fillcolor": "#f8fafc", "color": "#64748b"})
+
+
+def _build_summary(
+    nodes: tuple[RelationshipGraphNode, ...],
+    edges: tuple[RelationshipGraphEdge, ...],
+) -> tuple[str, ...]:
+    node_by_id = {node.node_id: node for node in nodes}
+    current = node_by_id.get("current")
+    if current is None:
+        return ()
+
+    lines: list[str] = []
+    for edge in edges:
+        if edge.source == "current" and edge.label == SIMILAR_TO:
+            case = node_by_id.get(edge.target)
+            if case is not None:
+                lines.append(
+                    f"{_zh_current_label(current.label)}與 {case.label} 相似。 | "
+                    f"{current.label} is similar to {case.label}."
+                )
+
+    shared_templates = {
+        SHARES_ATTACK_TYPE: "兩者共享攻擊類型：{value}。 | Both share attack type: {value}.",
+        SHARES_RULE: "兩者關聯規則 ID：{value}。 | Both are associated with rule ID: {value}.",
+        SHARES_EVIDENCE: "兩者共享證據類型：{value}。 | Both share evidence type: {value}.",
+        SHARES_FINDING: "兩者共享發現類型：{value}。 | Both share finding type: {value}.",
+        SHARES_DECISION: "兩者共享模擬決策：{value}。 | Both share simulated decision: {value}.",
+    }
+    for edge in edges:
+        template = shared_templates.get(edge.label)
+        target = node_by_id.get(edge.target)
+        if template is not None and target is not None:
+            lines.append(template.format(value=_display_label(target.label)))
+
+    return tuple(dict.fromkeys(lines))
 
 
 def _current_context_label(summary: ActiveContextSummary) -> str:
@@ -327,6 +459,14 @@ def _current_context_label(summary: ActiveContextSummary) -> str:
     if summary.kind == "event":
         return "Current Event"
     return summary.title or "Current Context"
+
+
+def _zh_current_label(label: str) -> str:
+    if label == "Current Incident":
+        return "目前事件脈絡"
+    if label == "Current Event":
+        return "目前事件"
+    return "目前脈絡"
 
 
 def _detail_values(details: tuple[str, ...], label: str) -> tuple[str, ...]:
@@ -361,6 +501,18 @@ def _safe_node_id(value: str) -> str:
 
 def _clean_value(value: str) -> str:
     return " ".join(str(value or "").strip().rstrip(".").split())
+
+
+def _display_label(value: str) -> str:
+    cleaned = _clean_value(value)
+    replacement = _DISPLAY_LABEL_REPLACEMENTS.get(cleaned)
+    if replacement is not None:
+        return replacement
+    return cleaned.replace("_", " ")
+
+
+def _edge_display_label(value: str) -> str:
+    return _EDGE_DISPLAY_LABELS.get(value, value.replace("_", " "))
 
 
 def _dot_escape(value: str) -> str:
