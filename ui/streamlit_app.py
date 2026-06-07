@@ -1,12 +1,17 @@
 ﻿from __future__ import annotations
 
+from datetime import datetime
+from time import perf_counter
 from typing import Any
 
 import streamlit as st
 
 from modules.agent import SecurityAgent
 from modules.controller.orchestrator import build_default_v2_5_orchestrator
-from modules.controller.skill_catalog import RETRIEVE_APPROVED_SIMILAR_CASE_SKILL
+from modules.controller.skill_catalog import (
+    DRAFT_CASE_CAPTURE_SKILL,
+    RETRIEVE_APPROVED_SIMILAR_CASE_SKILL,
+)
 from modules.detector import RuleBasedDetector
 from modules.followup_handler import FollowupHandler
 from modules.llm_assist import LLMAssist
@@ -40,6 +45,13 @@ from modules.ui.report_sections import (
     DEFAULT_SAFETY_BOUNDARY_TEXT,
     build_safety_boundary_text,
     parse_report_sections,
+)
+from modules.ui.performance_view import (
+    OUTPUT_KIND_ANALYSIS,
+    OUTPUT_KIND_DRAFT,
+    OUTPUT_KIND_SIMILAR_CASE,
+    build_runtime_timing_display,
+    record_runtime_timing,
 )
 from modules.ui.route_policy_view import build_route_policy_display
 
@@ -80,11 +92,60 @@ def get_runtime() -> tuple[SecurityAgent, Any]:
     return agent, orchestrator
 
 
+def _current_timestamp() -> str:
+    return datetime.now().astimezone().isoformat(timespec="seconds")
+
+
+def _output_kind_for_tool(selected_tool: str | None, fallback: str) -> str:
+    if selected_tool == RETRIEVE_APPROVED_SIMILAR_CASE_SKILL:
+        return OUTPUT_KIND_SIMILAR_CASE
+    if selected_tool == DRAFT_CASE_CAPTURE_SKILL:
+        return OUTPUT_KIND_DRAFT
+    return fallback
+
+
+def _run_orchestrator_with_timing(action_label: str, command: str, output_kind: str) -> Any:
+    _, orchestrator = get_runtime()
+    started_at = _current_timestamp()
+    start_counter = perf_counter()
+    output = orchestrator.handle_input(command)
+    elapsed_seconds = perf_counter() - start_counter
+    ended_at = _current_timestamp()
+    record_runtime_timing(
+        st.session_state,
+        action_label=action_label,
+        selected_skill=output.selected_tool,
+        input_text=command,
+        status=output.status,
+        output_kind=_output_kind_for_tool(output.selected_tool, output_kind),
+        started_at=started_at,
+        ended_at=ended_at,
+        elapsed_seconds=elapsed_seconds,
+    )
+    return output
+
+
+def _record_blank_run_timing() -> None:
+    started_at = _current_timestamp()
+    start_counter = perf_counter()
+    elapsed_seconds = perf_counter() - start_counter
+    ended_at = _current_timestamp()
+    record_runtime_timing(
+        st.session_state,
+        action_label="Run input",
+        selected_skill="clarification_required",
+        input_text="",
+        status="clarification_required",
+        output_kind=OUTPUT_KIND_ANALYSIS,
+        started_at=started_at,
+        ended_at=ended_at,
+        elapsed_seconds=elapsed_seconds,
+    )
+
 def run_direct_input(user_input: str) -> None:
     """Pass user text into the existing direct-input orchestrator."""
 
-    _, orchestrator = get_runtime()
-    output = orchestrator.handle_input(user_input)
+    output = _run_orchestrator_with_timing("Run input", user_input, OUTPUT_KIND_ANALYSIS)
     record_output(
         st.session_state,
         user_input=user_input,
@@ -100,8 +161,11 @@ def run_direct_input(user_input: str) -> None:
 def run_similar_case_lookup() -> None:
     """Issue the existing exact similar-case command against session context."""
 
-    _, orchestrator = get_runtime()
-    output = orchestrator.handle_input(SIMILAR_CASE_COMMAND)
+    output = _run_orchestrator_with_timing(
+        "Find Similar Cases",
+        SIMILAR_CASE_COMMAND,
+        OUTPUT_KIND_SIMILAR_CASE,
+    )
     record_output(
         st.session_state,
         user_input=SIMILAR_CASE_COMMAND,
@@ -111,11 +175,10 @@ def run_similar_case_lookup() -> None:
     record_similar_case_output(st.session_state, output.response_text)
 
 
-def run_case_draft_command(command: str) -> None:
+def run_case_draft_command(command: str, action_label: str) -> None:
     """Issue an existing exact case-draft command through the orchestrator."""
 
-    _, orchestrator = get_runtime()
-    output = orchestrator.handle_input(command)
+    output = _run_orchestrator_with_timing(action_label, command, OUTPUT_KIND_DRAFT)
     record_output(
         st.session_state,
         user_input=command,
@@ -216,13 +279,13 @@ def render_case_draft_panel() -> None:
     request_col, approve_col, cancel_col = st.columns(3)
     with request_col:
         if st.button("Request Draft", use_container_width=True):
-            run_case_draft_command(CASE_DRAFT_REQUEST_COMMAND)
+            run_case_draft_command(CASE_DRAFT_REQUEST_COMMAND, "Request Draft")
     with approve_col:
         if st.button("Approve Draft", use_container_width=True):
-            run_case_draft_command(CASE_DRAFT_APPROVE_COMMAND)
+            run_case_draft_command(CASE_DRAFT_APPROVE_COMMAND, "Approve Draft")
     with cancel_col:
         if st.button("Cancel Draft", use_container_width=True):
-            run_case_draft_command(CASE_DRAFT_CANCEL_COMMAND)
+            run_case_draft_command(CASE_DRAFT_CANCEL_COMMAND, "Cancel Draft")
 
     display = build_case_draft_display(
         str(st.session_state.get(STATE_LAST_OUTPUT) or ""),
@@ -245,6 +308,31 @@ def render_case_draft_panel() -> None:
     for note in display.safety_notes:
         st.write(f"- {note}")
 
+
+def render_performance_panel() -> None:
+    display = build_runtime_timing_display(st.session_state)
+
+    first, second, third = st.columns(3)
+    first.metric("Latest Action", display.action_label)
+    second.metric("Selected Skill", display.selected_skill)
+    third.metric("Elapsed", display.elapsed_display)
+
+    status_col, kind_col, timestamp_col = st.columns(3)
+    status_col.metric("Status", display.status or "N/A")
+    kind_col.metric("Output Kind", display.output_kind)
+    timestamp_col.metric("Timestamp", display.timestamp or "N/A")
+
+    st.write(f"Started At: {display.started_at or 'N/A'}")
+    st.write(f"Ended At: {display.ended_at or 'N/A'}")
+    if display.input_text:
+        st.write("Latest Input")
+        st.code(display.input_text, language="text")
+    else:
+        st.write("No input command recorded.")
+
+    st.write("Notes:")
+    for note in display.notes:
+        st.write(f"- {note}")
 
 def render_route_policy_panel() -> None:
     display = build_route_policy_display(
@@ -277,6 +365,7 @@ def render_report_sections() -> None:
             "Graph Relations",
             "Case Memory",
             "Case Draft",
+            "Performance",
             "Safety Boundary",
             "Route / Policy",
             "Raw Output",
@@ -302,6 +391,9 @@ def render_report_sections() -> None:
         render_case_draft_panel()
 
     with tabs[5]:
+        render_performance_panel()
+
+    with tabs[6]:
         safety_text = (
             build_safety_boundary_text(combined_output)
             if combined_output
@@ -309,10 +401,10 @@ def render_report_sections() -> None:
         )
         render_text_block(safety_text, DEFAULT_SAFETY_BOUNDARY_TEXT)
 
-    with tabs[6]:
+    with tabs[7]:
         render_route_policy_panel()
 
-    with tabs[7]:
+    with tabs[8]:
         render_text_block(str(st.session_state.get(STATE_LAST_OUTPUT) or ""), "No output yet.")
 
 
@@ -339,6 +431,7 @@ def render_controls() -> None:
         else:
             st.session_state[STATE_LAST_OUTPUT] = "Input is blank."
             st.session_state[STATE_LAST_SELECTED_ACTION] = "clarification_required"
+            _record_blank_run_timing()
 
     if similar_clicked:
         run_similar_case_lookup()
