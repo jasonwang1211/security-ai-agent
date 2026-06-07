@@ -13,6 +13,12 @@ from modules.llm_assist import LLMAssist
 from modules.rag_qa import RAGQA
 from modules.responder import Responder
 from modules.triage_policy import TriagePolicy
+from modules.ui.case_draft_view import (
+    CASE_DRAFT_APPROVE_COMMAND,
+    CASE_DRAFT_CANCEL_COMMAND,
+    CASE_DRAFT_REQUEST_COMMAND,
+    build_case_draft_display,
+)
 from modules.ui.case_memory_view import build_case_memory_display, case_memory_table_rows
 from modules.ui.console_state import (
     SIMILAR_CASE_COMMAND,
@@ -105,6 +111,20 @@ def run_similar_case_lookup() -> None:
     record_similar_case_output(st.session_state, output.response_text)
 
 
+def run_case_draft_command(command: str) -> None:
+    """Issue an existing exact case-draft command through the orchestrator."""
+
+    _, orchestrator = get_runtime()
+    output = orchestrator.handle_input(command)
+    record_output(
+        st.session_state,
+        user_input=command,
+        response_text=output.response_text,
+        selected_action=output.selected_tool,
+    )
+    record_analysis_output(st.session_state, output.response_text)
+
+
 def render_active_context() -> None:
     summary = summarize_active_context(st.session_state.get(STATE_CLI_STATE))
     with st.container(border=True):
@@ -191,6 +211,41 @@ def render_case_memory_panel() -> None:
             for note in display.boundary_notes:
                 st.write(f"- {note}")
 
+
+def render_case_draft_panel() -> None:
+    request_col, approve_col, cancel_col = st.columns(3)
+    with request_col:
+        if st.button("Request Draft", use_container_width=True):
+            run_case_draft_command(CASE_DRAFT_REQUEST_COMMAND)
+    with approve_col:
+        if st.button("Approve Draft", use_container_width=True):
+            run_case_draft_command(CASE_DRAFT_APPROVE_COMMAND)
+    with cancel_col:
+        if st.button("Cancel Draft", use_container_width=True):
+            run_case_draft_command(CASE_DRAFT_CANCEL_COMMAND)
+
+    display = build_case_draft_display(
+        str(st.session_state.get(STATE_LAST_OUTPUT) or ""),
+        st.session_state.get(STATE_CLI_STATE),
+    )
+
+    first, second, third = st.columns(3)
+    first.metric("Status", display.status)
+    second.metric("Pending Approval", "yes" if display.has_pending_request else "no")
+    third.metric("Active Context", "yes" if display.has_active_context else "no")
+
+    st.write(display.message)
+    if display.draft_path:
+        st.write("Draft Path")
+        st.code(display.draft_path, language="text")
+    else:
+        st.write("No draft file path.")
+
+    st.write("Safety Boundary:")
+    for note in display.safety_notes:
+        st.write(f"- {note}")
+
+
 def render_route_policy_panel() -> None:
     display = build_route_policy_display(
         st.session_state.get(STATE_LAST_SELECTED_ACTION),
@@ -221,6 +276,7 @@ def render_report_sections() -> None:
             "Approved Similar Cases",
             "Graph Relations",
             "Case Memory",
+            "Case Draft",
             "Safety Boundary",
             "Route / Policy",
             "Raw Output",
@@ -243,13 +299,20 @@ def render_report_sections() -> None:
         render_case_memory_panel()
 
     with tabs[4]:
-        safety_text = build_safety_boundary_text(combined_output) if combined_output else DEFAULT_SAFETY_BOUNDARY_TEXT
-        render_text_block(safety_text, DEFAULT_SAFETY_BOUNDARY_TEXT)
+        render_case_draft_panel()
 
     with tabs[5]:
-        render_route_policy_panel()
+        safety_text = (
+            build_safety_boundary_text(combined_output)
+            if combined_output
+            else DEFAULT_SAFETY_BOUNDARY_TEXT
+        )
+        render_text_block(safety_text, DEFAULT_SAFETY_BOUNDARY_TEXT)
 
     with tabs[6]:
+        render_route_policy_panel()
+
+    with tabs[7]:
         render_text_block(str(st.session_state.get(STATE_LAST_OUTPUT) or ""), "No output yet.")
 
 
