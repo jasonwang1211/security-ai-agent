@@ -1,4 +1,4 @@
-﻿from __future__ import annotations
+from __future__ import annotations
 
 from datetime import datetime
 from time import perf_counter
@@ -55,6 +55,7 @@ from modules.ui.report_sections import (
     build_safety_boundary_text,
     parse_report_sections,
 )
+from modules.ui.report_export_view import build_markdown_report_export
 from modules.ui.performance_view import (
     OUTPUT_KIND_ANALYSIS,
     OUTPUT_KIND_DRAFT,
@@ -386,6 +387,49 @@ def render_performance_panel() -> None:
     for note in display.notes:
         st.write(f"- {note}")
 
+def build_current_markdown_export(sections: Any, combined_output: str) -> Any:
+    safety_text = (
+        build_safety_boundary_text(combined_output)
+        if combined_output
+        else DEFAULT_SAFETY_BOUNDARY_TEXT
+    )
+    return build_markdown_report_export(
+        active_context_summary=summarize_active_context(st.session_state.get(STATE_CLI_STATE)),
+        report_sections=sections,
+        case_memory_display=build_case_memory_display(),
+        case_draft_display=build_case_draft_display(
+            str(st.session_state.get(STATE_LAST_OUTPUT) or ""),
+            st.session_state.get(STATE_CLI_STATE),
+        ),
+        runtime_timing_display=build_runtime_timing_display(st.session_state),
+        route_policy_display=build_route_policy_display(
+            st.session_state.get(STATE_LAST_SELECTED_ACTION),
+            str(st.session_state.get(STATE_LAST_INPUT) or ""),
+        ),
+        raw_output=str(st.session_state.get(STATE_LAST_OUTPUT) or ""),
+        generated_at=_current_timestamp(),
+        safety_boundary_text=safety_text,
+    )
+
+
+def render_export_report_panel(sections: Any, combined_output: str) -> None:
+    export = build_current_markdown_export(sections, combined_output)
+
+    st.write("Safety Notes:")
+    for note in export.safety_notes:
+        st.write(f"- {note}")
+
+    st.download_button(
+        "Download Markdown Report",
+        data=export.markdown,
+        file_name=export.filename,
+        mime="text/markdown",
+        use_container_width=True,
+    )
+
+    st.write("Markdown Preview")
+    st.code(export.markdown, language="markdown")
+
 def render_route_policy_panel() -> None:
     display = build_route_policy_display(
         st.session_state.get(STATE_LAST_SELECTED_ACTION),
@@ -418,6 +462,7 @@ def render_report_sections() -> None:
             "Case Memory",
             "Case Draft",
             "Performance",
+            "Export Report",
             "Safety Boundary",
             "Route / Policy",
             "Raw Output",
@@ -446,6 +491,9 @@ def render_report_sections() -> None:
         render_performance_panel()
 
     with tabs[6]:
+        render_export_report_panel(sections, combined_output)
+
+    with tabs[7]:
         safety_text = (
             build_safety_boundary_text(combined_output)
             if combined_output
@@ -453,10 +501,10 @@ def render_report_sections() -> None:
         )
         render_text_block(safety_text, DEFAULT_SAFETY_BOUNDARY_TEXT)
 
-    with tabs[7]:
+    with tabs[8]:
         render_route_policy_panel()
 
-    with tabs[8]:
+    with tabs[9]:
         render_text_block(str(st.session_state.get(STATE_LAST_OUTPUT) or ""), "No output yet.")
 
 
@@ -525,4 +573,3 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
-
