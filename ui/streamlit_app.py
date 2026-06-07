@@ -50,6 +50,20 @@ from modules.ui.console_state import (
     record_similar_case_output,
     summarize_active_context,
 )
+from modules.ui.layout_sections import (
+    ANALYSIS_REPORT_PANEL,
+    APPROVED_SIMILAR_CASES_PANEL,
+    CASE_DRAFT_PANEL,
+    CASE_MEMORY_PANEL,
+    EXPORT_REPORT_PANEL,
+    GRAPH_RELATIONS_PANEL,
+    PERFORMANCE_PANEL,
+    RAW_OUTPUT_PANEL,
+    ROUTE_POLICY_PANEL,
+    SAFETY_BOUNDARY_PANEL,
+    SYSTEM_DEBUG_GROUP,
+    workspace_group_names,
+)
 from modules.ui.report_sections import (
     DEFAULT_SAFETY_BOUNDARY_TEXT,
     build_safety_boundary_text,
@@ -240,20 +254,54 @@ def run_case_draft_command(command: str, action_label: str) -> None:
     )
     record_analysis_output(st.session_state, output.response_text)
 
+
+def _detail_value(details: tuple[str, ...], label: str) -> str:
+    prefix = f"{label}:"
+    for detail in details:
+        if detail.startswith(prefix):
+            return detail.removeprefix(prefix).strip() or "N/A"
+    return "N/A"
+
+
+def render_header() -> None:
+    st.title(PAGE_TITLE)
+    st.markdown(
+        "AI-assisted security triage demo with deterministic detection, approved "
+        "similar-case retrieval, and approval-gated case draft workflow."
+    )
+    st.caption(
+        "BLOCK / MONITOR / ALLOW are simulated project decisions. "
+        "No real enforcement is executed."
+    )
+
+
 def render_active_context() -> None:
     summary = summarize_active_context(st.session_state.get(STATE_CLI_STATE))
     with st.container(border=True):
         st.subheader("Active Context")
         if not summary.has_context:
-            st.write("No active context")
+            st.info("No active context yet. Run an input or load a log to begin.")
             return
 
-        first, second, third = st.columns(3)
-        first.metric("Kind", summary.title)
-        second.metric("Risk Level", summary.risk_level or "N/A")
-        third.metric("Decision", summary.decision or "N/A")
-        for detail in summary.details:
-            st.write(detail)
+        attack_or_incident = _detail_value(summary.details, "Attack Type")
+        rule_or_evidence = (
+            _detail_value(summary.details, "Rule IDs")
+            if summary.kind == "event"
+            else _detail_value(summary.details, "Evidence IDs")
+        )
+
+        context_col, risk_col, decision_col, attack_col, evidence_col = st.columns(
+            [1.1, 1, 1, 1.4, 1.6]
+        )
+        context_col.metric("Context", summary.title)
+        risk_col.metric("Risk Level", summary.risk_level or "N/A")
+        decision_col.metric("Decision", summary.decision or "N/A")
+        attack_col.metric("Attack / Incident", attack_or_incident)
+        evidence_col.metric("Rules / Evidence", rule_or_evidence)
+
+        with st.expander("Context details", expanded=False):
+            for detail in summary.details:
+                st.write(detail)
 
 
 def render_text_block(text: str, empty_text: str) -> None:
@@ -450,91 +498,116 @@ def render_route_policy_panel() -> None:
         st.write(f"- {note}")
 
 
+def render_panel_heading(title: str, caption: str = "") -> None:
+    st.markdown(f"#### {title}")
+    if caption:
+        st.caption(caption)
+
+
 def render_report_sections() -> None:
     combined_output = combined_display_output(st.session_state)
     sections = parse_report_sections(combined_output)
-
-    tabs = st.tabs(
-        [
-            "Analysis Report",
-            "Approved Similar Cases",
-            "Graph Relations",
-            "Case Memory",
-            "Case Draft",
-            "Performance",
-            "Export Report",
-            "Safety Boundary",
-            "Route / Policy",
-            "Raw Output",
-        ]
+    safety_text = (
+        build_safety_boundary_text(combined_output)
+        if combined_output
+        else DEFAULT_SAFETY_BOUNDARY_TEXT
     )
 
-    with tabs[0]:
-        render_text_block(sections.analysis_report, "No analysis report yet.")
+    analysis_tab, case_intelligence_tab, draft_export_tab, system_debug_tab = st.tabs(
+        list(workspace_group_names())
+    )
 
-    with tabs[1]:
-        render_text_block(sections.approved_similar_cases, "No approved similar cases yet.")
+    with analysis_tab:
+        st.caption("Primary triage output, safety boundary, and raw output appendix.")
+        with st.container(border=True):
+            render_panel_heading(ANALYSIS_REPORT_PANEL)
+            render_text_block(sections.analysis_report, "No analysis report yet.")
 
-    with tabs[2]:
-        render_text_block(
-            sections.graph_relationship_explanation,
-            "No graph-grounded relationship explanation yet.",
+        with st.container(border=True):
+            render_panel_heading(
+                SAFETY_BOUNDARY_PANEL,
+                "Simulation and authority boundaries remain visible for every run.",
+            )
+            render_text_block(safety_text, DEFAULT_SAFETY_BOUNDARY_TEXT)
+
+        with st.expander(RAW_OUTPUT_PANEL, expanded=False):
+            render_text_block(str(st.session_state.get(STATE_LAST_OUTPUT) or ""), "No output yet.")
+
+    with case_intelligence_tab:
+        st.caption(
+            "Approved case references and relationship explanations are advisory only."
         )
+        with st.container(border=True):
+            render_panel_heading(APPROVED_SIMILAR_CASES_PANEL)
+            render_text_block(sections.approved_similar_cases, "No approved similar cases yet.")
 
-    with tabs[3]:
-        render_case_memory_panel()
+        with st.container(border=True):
+            render_panel_heading(
+                GRAPH_RELATIONS_PANEL,
+                (
+                    "Graph Relations are text-based relationship explanations in this "
+                    "version. Visual node-link graph is planned for a later milestone."
+                ),
+            )
+            render_text_block(
+                sections.graph_relationship_explanation,
+                "No graph-grounded relationship explanation yet.",
+            )
 
-    with tabs[4]:
-        render_case_draft_panel()
+        with st.container(border=True):
+            render_panel_heading(CASE_MEMORY_PANEL)
+            render_case_memory_panel()
 
-    with tabs[5]:
-        render_performance_panel()
+    with draft_export_tab:
+        st.caption("Draft capture remains approval-gated; export remains in-memory.")
+        with st.container(border=True):
+            render_panel_heading(CASE_DRAFT_PANEL)
+            render_case_draft_panel()
 
-    with tabs[6]:
-        render_export_report_panel(sections, combined_output)
+        with st.container(border=True):
+            render_panel_heading(EXPORT_REPORT_PANEL)
+            render_export_report_panel(sections, combined_output)
 
-    with tabs[7]:
-        safety_text = (
-            build_safety_boundary_text(combined_output)
-            if combined_output
-            else DEFAULT_SAFETY_BOUNDARY_TEXT
-        )
-        render_text_block(safety_text, DEFAULT_SAFETY_BOUNDARY_TEXT)
+    with system_debug_tab:
+        st.caption(f"{SYSTEM_DEBUG_GROUP} contains diagnostic/debug information.")
+        with st.container(border=True):
+            render_panel_heading(PERFORMANCE_PANEL)
+            render_performance_panel()
 
-    with tabs[8]:
-        render_route_policy_panel()
-
-    with tabs[9]:
-        render_text_block(str(st.session_state.get(STATE_LAST_OUTPUT) or ""), "No output yet.")
+        with st.container(border=True):
+            render_panel_heading(ROUTE_POLICY_PANEL)
+            render_route_policy_panel()
 
 
 def render_controls() -> None:
-    selected_mode = normalize_analysis_mode(
-        st.radio(
-            "Analysis Mode",
-            ANALYSIS_MODE_OPTIONS,
-            index=ANALYSIS_MODE_OPTIONS.index(DEFAULT_ANALYSIS_MODE),
-            key=STATE_ANALYSIS_MODE,
-            horizontal=True,
+    with st.container(border=True):
+        st.subheader("Input / Control Panel")
+        selected_mode = normalize_analysis_mode(
+            st.radio(
+                "Analysis Mode",
+                ANALYSIS_MODE_OPTIONS,
+                index=ANALYSIS_MODE_OPTIONS.index(DEFAULT_ANALYSIS_MODE),
+                key=STATE_ANALYSIS_MODE,
+                horizontal=True,
+            )
         )
-    )
-    for note in analysis_mode_notes(selected_mode):
-        st.caption(note)
+        for note in analysis_mode_notes(selected_mode):
+            st.caption(note)
 
-    user_input = st.text_area(
-        "Input",
-        key=TEXT_AREA_KEY,
-        height=150,
-        placeholder="test; rm -rf /tmp/test",
-    )
+        user_input = st.text_area(
+            "Input",
+            key=TEXT_AREA_KEY,
+            height=150,
+            placeholder="test; rm -rf /tmp/test",
+        )
 
-    run_col, similar_col, clear_col = st.columns([1, 1, 1])
-    with run_col:
-        run_clicked = st.button("Run input", type="primary", use_container_width=True)
-    with similar_col:
-        similar_clicked = st.button("Find Similar Cases", use_container_width=True)
-    with clear_col:
-        clear_clicked = st.button("Clear Context", use_container_width=True)
+        run_col, similar_col, clear_col = st.columns([1, 1, 1])
+        with run_col:
+            run_clicked = st.button("Run input", type="primary", use_container_width=True)
+        with similar_col:
+            similar_clicked = st.button("Find Similar Cases", use_container_width=True)
+        with clear_col:
+            clear_clicked = st.button("Clear Context", use_container_width=True)
 
     if run_clicked:
         text = str(user_input or "").strip()
@@ -564,7 +637,8 @@ def main() -> None:
     st.set_page_config(page_title=PAGE_TITLE, layout="wide")
     get_runtime()
 
-    st.title(PAGE_TITLE)
+    render_header()
+    st.divider()
     render_controls()
     render_last_action()
     render_active_context()
