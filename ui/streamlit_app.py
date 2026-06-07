@@ -7,6 +7,7 @@ from typing import Any
 import streamlit as st
 
 from modules.agent import SecurityAgent
+from modules.controller.fast_analysis import run_fast_payload_analysis
 from modules.controller.orchestrator import build_default_v2_5_orchestrator
 from modules.controller.skill_catalog import (
     DRAFT_CASE_CAPTURE_SKILL,
@@ -25,6 +26,14 @@ from modules.ui.case_draft_view import (
     build_case_draft_display,
 )
 from modules.ui.case_memory_view import build_case_memory_display, case_memory_table_rows
+from modules.ui.analysis_mode import (
+    ANALYSIS_MODE_OPTIONS,
+    DEFAULT_ANALYSIS_MODE,
+    STATE_ANALYSIS_MODE,
+    analysis_mode_notes,
+    normalize_analysis_mode,
+    should_use_fast_payload_analysis,
+)
 from modules.ui.console_state import (
     SIMILAR_CASE_COMMAND,
     STATE_AGENT,
@@ -104,7 +113,12 @@ def _output_kind_for_tool(selected_tool: str | None, fallback: str) -> str:
     return fallback
 
 
-def _run_orchestrator_with_timing(action_label: str, command: str, output_kind: str) -> Any:
+def _run_orchestrator_with_timing(
+    action_label: str,
+    command: str,
+    output_kind: str,
+    analysis_mode: str = "",
+) -> Any:
     _, orchestrator = get_runtime()
     started_at = _current_timestamp()
     start_counter = perf_counter()
@@ -121,11 +135,38 @@ def _run_orchestrator_with_timing(action_label: str, command: str, output_kind: 
         started_at=started_at,
         ended_at=ended_at,
         elapsed_seconds=elapsed_seconds,
+        analysis_mode=analysis_mode,
     )
     return output
 
 
-def _record_blank_run_timing() -> None:
+def _run_fast_payload_analysis_with_timing(
+    action_label: str,
+    user_input: str,
+    analysis_mode: str,
+) -> Any:
+    agent, _ = get_runtime()
+    started_at = _current_timestamp()
+    start_counter = perf_counter()
+    output = run_fast_payload_analysis(agent, user_input)
+    elapsed_seconds = perf_counter() - start_counter
+    ended_at = _current_timestamp()
+    record_runtime_timing(
+        st.session_state,
+        action_label=action_label,
+        selected_skill=output.selected_tool,
+        input_text=user_input,
+        status=output.status,
+        output_kind=OUTPUT_KIND_ANALYSIS,
+        started_at=started_at,
+        ended_at=ended_at,
+        elapsed_seconds=elapsed_seconds,
+        analysis_mode=analysis_mode,
+    )
+    return output
+
+
+def _record_blank_run_timing(analysis_mode: str = "") -> None:
     started_at = _current_timestamp()
     start_counter = perf_counter()
     elapsed_seconds = perf_counter() - start_counter
@@ -140,12 +181,23 @@ def _record_blank_run_timing() -> None:
         started_at=started_at,
         ended_at=ended_at,
         elapsed_seconds=elapsed_seconds,
+        analysis_mode=analysis_mode,
     )
 
-def run_direct_input(user_input: str) -> None:
-    """Pass user text into the existing direct-input orchestrator."""
 
-    output = _run_orchestrator_with_timing("Run input", user_input, OUTPUT_KIND_ANALYSIS)
+def run_direct_input(user_input: str, analysis_mode: str = DEFAULT_ANALYSIS_MODE) -> None:
+    """Pass user text into the existing direct-input orchestrator or fast path."""
+
+    mode = normalize_analysis_mode(analysis_mode)
+    if should_use_fast_payload_analysis(user_input, mode):
+        output = _run_fast_payload_analysis_with_timing("Run input", user_input, mode)
+    else:
+        output = _run_orchestrator_with_timing(
+            "Run input",
+            user_input,
+            OUTPUT_KIND_ANALYSIS,
+            analysis_mode=mode,
+        )
     record_output(
         st.session_state,
         user_input=user_input,
@@ -186,7 +238,6 @@ def run_case_draft_command(command: str, action_label: str) -> None:
         selected_action=output.selected_tool,
     )
     record_analysis_output(st.session_state, output.response_text)
-
 
 def render_active_context() -> None:
     summary = summarize_active_context(st.session_state.get(STATE_CLI_STATE))
@@ -316,6 +367,7 @@ def render_performance_panel() -> None:
     first.metric("Latest Action", display.action_label)
     second.metric("Selected Skill", display.selected_skill)
     third.metric("Elapsed", display.elapsed_display)
+    st.metric("Analysis Mode", display.analysis_mode)
 
     status_col, kind_col, timestamp_col = st.columns(3)
     status_col.metric("Status", display.status or "N/A")
@@ -409,6 +461,18 @@ def render_report_sections() -> None:
 
 
 def render_controls() -> None:
+    selected_mode = normalize_analysis_mode(
+        st.radio(
+            "Analysis Mode",
+            ANALYSIS_MODE_OPTIONS,
+            index=ANALYSIS_MODE_OPTIONS.index(DEFAULT_ANALYSIS_MODE),
+            key=STATE_ANALYSIS_MODE,
+            horizontal=True,
+        )
+    )
+    for note in analysis_mode_notes(selected_mode):
+        st.caption(note)
+
     user_input = st.text_area(
         "Input",
         key=TEXT_AREA_KEY,
@@ -427,11 +491,11 @@ def render_controls() -> None:
     if run_clicked:
         text = str(user_input or "").strip()
         if text:
-            run_direct_input(text)
+            run_direct_input(text, selected_mode)
         else:
             st.session_state[STATE_LAST_OUTPUT] = "Input is blank."
             st.session_state[STATE_LAST_SELECTED_ACTION] = "clarification_required"
-            _record_blank_run_timing()
+            _record_blank_run_timing(selected_mode)
 
     if similar_clicked:
         run_similar_case_lookup()

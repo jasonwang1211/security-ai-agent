@@ -6,6 +6,8 @@ from collections.abc import Mapping, MutableMapping
 from dataclasses import dataclass
 from typing import Any
 
+from modules.ui.analysis_mode import FAST_DETERMINISTIC_MODE, FULL_AI_ASSISTED_MODE
+
 ANALYZE_AUTHENTICATION_LOG_SKILL = "AnalyzeAuthenticationLogSkill"
 ANALYZE_PAYLOAD_SKILL = "AnalyzePayloadSkill"
 DRAFT_CASE_CAPTURE_SKILL = "DraftCaseCaptureSkill"
@@ -24,10 +26,12 @@ STATE_TIMING_OUTPUT_KIND = "sentinel_timing_output_kind"
 STATE_TIMING_STARTED_AT = "sentinel_timing_started_at"
 STATE_TIMING_ENDED_AT = "sentinel_timing_ended_at"
 STATE_TIMING_ELAPSED_SECONDS = "sentinel_timing_elapsed_seconds"
+STATE_TIMING_ANALYSIS_MODE = "sentinel_timing_analysis_mode"
 
 NO_ACTION_LABEL = "No action yet"
 NO_SELECTED_SKILL = "None"
 NO_ACTION_STATUS = "no action yet"
+NO_ANALYSIS_MODE = "N/A"
 
 
 @dataclass(frozen=True)
@@ -44,6 +48,7 @@ class RuntimeTimingDisplay:
     started_at: str
     ended_at: str
     timestamp: str
+    analysis_mode: str
     notes: tuple[str, ...]
 
 
@@ -58,6 +63,7 @@ def record_runtime_timing(
     started_at: str,
     ended_at: str,
     elapsed_seconds: float,
+    analysis_mode: str = "",
 ) -> None:
     """Store the latest action timing in a dict-like session mapping."""
 
@@ -69,6 +75,7 @@ def record_runtime_timing(
     session_state[STATE_TIMING_STARTED_AT] = str(started_at or "")
     session_state[STATE_TIMING_ENDED_AT] = str(ended_at or "")
     session_state[STATE_TIMING_ELAPSED_SECONDS] = _safe_elapsed(elapsed_seconds)
+    session_state[STATE_TIMING_ANALYSIS_MODE] = str(analysis_mode or "")
 
 
 def build_runtime_timing_display(
@@ -90,13 +97,15 @@ def build_runtime_timing_display(
             started_at="",
             ended_at="",
             timestamp="",
-            notes=_notes_for(OUTPUT_KIND_NONE, ""),
+            analysis_mode=NO_ANALYSIS_MODE,
+            notes=_notes_for(OUTPUT_KIND_NONE, "", ""),
         )
 
     selected_skill = str(state.get(STATE_TIMING_SELECTED_SKILL) or NO_SELECTED_SKILL)
     output_kind = str(state.get(STATE_TIMING_OUTPUT_KIND) or OUTPUT_KIND_NONE)
     elapsed_seconds = _safe_elapsed(state.get(STATE_TIMING_ELAPSED_SECONDS))
     ended_at = str(state.get(STATE_TIMING_ENDED_AT) or "")
+    analysis_mode = str(state.get(STATE_TIMING_ANALYSIS_MODE) or "")
     return RuntimeTimingDisplay(
         action_label=action_label,
         selected_skill=selected_skill,
@@ -108,7 +117,8 @@ def build_runtime_timing_display(
         started_at=str(state.get(STATE_TIMING_STARTED_AT) or ""),
         ended_at=ended_at,
         timestamp=ended_at,
-        notes=_notes_for(output_kind, selected_skill),
+        analysis_mode=analysis_mode or NO_ANALYSIS_MODE,
+        notes=_notes_for(output_kind, selected_skill, analysis_mode),
     )
 
 
@@ -118,7 +128,7 @@ def format_elapsed_seconds(elapsed_seconds: float) -> str:
     return f"{_safe_elapsed(elapsed_seconds):.3f}s"
 
 
-def _notes_for(output_kind: str, selected_skill: str) -> tuple[str, ...]:
+def _notes_for(output_kind: str, selected_skill: str, analysis_mode: str) -> tuple[str, ...]:
     notes: list[str] = []
     if output_kind == OUTPUT_KIND_SIMILAR_CASE or selected_skill == RETRIEVE_APPROVED_SIMILAR_CASE_SKILL:
         notes.append("Similar-case retrieval is deterministic and read-only.")
@@ -129,12 +139,20 @@ def _notes_for(output_kind: str, selected_skill: str) -> tuple[str, ...]:
         ANALYZE_PAYLOAD_SKILL,
     }:
         notes.append("Analysis timing preserves deterministic risk and decision semantics.")
+        if analysis_mode == FAST_DETERMINISTIC_MODE:
+            notes.append(
+                "Fast deterministic mode used rule-based detection and skipped optional AI/RAG explanation layers."
+            )
+        elif analysis_mode == FULL_AI_ASSISTED_MODE:
+            notes.append(
+                "Full AI-assisted mode used the existing orchestrator / SecurityAgent path; optional AI/RAG layers may run."
+            )
 
     notes.extend(
         [
             "Long analysis time is likely from optional AI/RAG explanation layers, not rule matching.",
             "Timing is for the local demo environment only.",
-            "Fast UI Mode is deferred in this pass; timing is observability-only to preserve output semantics.",
+            "Fast mode is for demo responsiveness, not production benchmarking.",
         ]
     )
     return tuple(dict.fromkeys(notes))
