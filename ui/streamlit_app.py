@@ -70,6 +70,7 @@ from modules.ui.report_sections import (
     parse_report_sections,
 )
 from modules.ui.report_export_view import build_markdown_report_export
+from modules.ui.relationship_graph_view import build_relationship_graph_display
 from modules.ui.performance_view import (
     OUTPUT_KIND_ANALYSIS,
     OUTPUT_KIND_DRAFT,
@@ -435,6 +436,7 @@ def render_performance_panel() -> None:
     for note in display.notes:
         st.write(f"- {note}")
 
+
 def build_current_markdown_export(sections: Any, combined_output: str) -> Any:
     safety_text = (
         build_safety_boundary_text(combined_output)
@@ -477,6 +479,39 @@ def render_export_report_panel(sections: Any, combined_output: str) -> None:
 
     st.write("Markdown Preview")
     st.code(export.markdown, language="markdown")
+
+
+def render_relationship_graph_panel(sections: Any) -> None:
+    display = build_relationship_graph_display(
+        active_context_summary=summarize_active_context(st.session_state.get(STATE_CLI_STATE)),
+        approved_similar_cases_text=sections.approved_similar_cases,
+        graph_relationship_text=sections.graph_relationship_explanation,
+    )
+
+    st.markdown("##### Visual Relationship Graph")
+    if display.has_graph:
+        try:
+            st.graphviz_chart(display.dot)
+        except Exception as exc:
+            st.warning("Visual graph renderer unavailable; DOT source shown instead.")
+            st.caption(f"Renderer detail: {exc}")
+            st.code(display.dot, language="dot")
+
+        with st.expander("DOT Source", expanded=False):
+            st.code(display.dot, language="dot")
+    else:
+        st.info(display.empty_message)
+
+    st.write("Graph Notes:")
+    for note in display.notes:
+        st.write(f"- {note}")
+
+    with st.expander("Text Relationship Explanation", expanded=False):
+        render_text_block(
+            sections.graph_relationship_explanation,
+            "No graph-grounded relationship explanation yet.",
+        )
+
 
 def render_route_policy_panel() -> None:
     display = build_route_policy_display(
@@ -542,17 +577,8 @@ def render_report_sections() -> None:
             render_text_block(sections.approved_similar_cases, "No approved similar cases yet.")
 
         with st.container(border=True):
-            render_panel_heading(
-                GRAPH_RELATIONS_PANEL,
-                (
-                    "Graph Relations are text-based relationship explanations in this "
-                    "version. Visual node-link graph is planned for a later milestone."
-                ),
-            )
-            render_text_block(
-                sections.graph_relationship_explanation,
-                "No graph-grounded relationship explanation yet.",
-            )
+            render_panel_heading(GRAPH_RELATIONS_PANEL)
+            render_relationship_graph_panel(sections)
 
         with st.container(border=True):
             render_panel_heading(CASE_MEMORY_PANEL)
