@@ -154,22 +154,6 @@ _TRANSLATIONS: dict[str, dict[str, str]] = {
         "en": "Mixed auth log with success after repeated failures.",
         "bilingual": "登入失敗後成功的日誌 / Auth log with success after failures.",
     },
-    "scenario_benign_title": {
-        "zh-TW": "良性輸入（無攻擊）示範",
-        "en": "Benign / No-Attack Demo",
-        "bilingual": "良性輸入（無攻擊）示範 / Benign / No-Attack Demo",
-    },
-    "scenario_benign_desc": {
-        "zh-TW": "示範良性輸入；可能不會建立 active incident，並可能要求澄清，不保證產生 LOW/ALLOW 結果。",
-        "en": (
-            "Demonstrates benign input; may not create an active incident context "
-            "and may request clarification, with no guaranteed LOW/ALLOW verdict."
-        ),
-        "bilingual": (
-            "良性輸入，可能不建立 active incident / Benign input; may not create an active "
-            "incident context and may request clarification."
-        ),
-    },
     "analysis_mode": {
         "zh-TW": "分析模式",
         "en": "Analysis Mode",

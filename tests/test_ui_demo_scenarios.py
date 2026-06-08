@@ -18,15 +18,14 @@ def _by_id(scenario_id: str) -> DemoScenario:
     return scenario
 
 
-def test_list_demo_scenarios_returns_exactly_four_required_scenarios() -> None:
+def test_list_demo_scenarios_returns_exactly_three_required_scenarios() -> None:
     scenarios = list_demo_scenarios()
 
-    assert len(scenarios) == 4
+    assert len(scenarios) == 3
     assert {scenario.scenario_id for scenario in scenarios} == {
         "command_injection",
         "sql_injection",
         "authentication_incident",
-        "benign_input",
     }
 
 
@@ -48,28 +47,17 @@ def test_authentication_scenario_input() -> None:
     assert _by_id("authentication_incident").input_text == "demo_logs\\scenario_a_mixed_auth.log"
 
 
-def test_benign_scenario_input() -> None:
-    assert _by_id("benign_input").input_text == "hello world"
-
-
-def test_benign_scenario_uses_no_attack_hints_not_low_allow() -> None:
-    benign = _by_id("benign_input")
-
-    assert benign.expected_attack == "No attack detected"
-    assert benign.expected_risk == "N/A"
-    assert benign.expected_decision == "No simulated decision"
-    # the launcher must not promise a LOW/ALLOW verdict the backend may not produce.
-    assert benign.expected_risk != "LOW"
-    assert benign.expected_decision != "ALLOW"
-    assert benign.suggested_next_action == "none"
-    assert benign.expected_case_id is None
+def test_benign_scenario_is_not_listed() -> None:
+    # The benign / no-attack demo was removed from the launcher; users can still
+    # type "hello world" manually. It must not reappear as a scenario.
+    assert find_demo_scenario("benign_input") is None
+    assert "benign_input" not in {s.scenario_id for s in list_demo_scenarios()}
 
 
 def test_expected_case_ids() -> None:
     assert _by_id("command_injection").expected_case_id == "CASE-SEED-001"
     assert _by_id("authentication_incident").expected_case_id == "CASE-SEED-002"
     assert _by_id("sql_injection").expected_case_id == "CASE-SEED-003"
-    assert _by_id("benign_input").expected_case_id is None
 
 
 def test_find_demo_scenario_returns_scenario_by_id() -> None:

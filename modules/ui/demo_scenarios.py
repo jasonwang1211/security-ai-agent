@@ -67,20 +67,6 @@ _DEMO_SCENARIOS: tuple[DemoScenario, ...] = (
         suggested_next_action=SUGGESTED_NEXT_FIND_SIMILAR,
         expected_case_id="CASE-SEED-002",
     ),
-    DemoScenario(
-        scenario_id="benign_input",
-        title_key="scenario_benign_title",
-        description_key="scenario_benign_desc",
-        input_text="hello world",
-        # Hints describe a no-attack / no-action outcome. The backend may return
-        # clarification_required or no active context for this input; the launcher
-        # therefore does not promise a LOW/ALLOW verdict.
-        expected_attack="No attack detected",
-        expected_risk="N/A",
-        expected_decision="No simulated decision",
-        suggested_next_action=SUGGESTED_NEXT_NONE,
-        expected_case_id=None,
-    ),
 )
 
 
