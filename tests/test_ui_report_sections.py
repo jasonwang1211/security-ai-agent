@@ -217,6 +217,85 @@ def test_localized_report_combined_with_similar_and_graph_sections() -> None:
     assert "shares rule ID CMD-001" in sections.graph_relationship_explanation
 
 
+def _zh_auth_log_output() -> str:
+    return "\n\n".join(
+        [
+            "\n".join(
+                [
+                    "[登入日誌匯入摘要]",
+                    "",
+                    "檔案：demo_logs\\scenario_a_mixed_auth.log",
+                    "總行數：33",
+                    "偵測到的事件類型：",
+                    "- auth_success：18",
+                    "- auth_failure：15",
+                ]
+            ),
+            "\n".join(
+                [
+                    "[結構化驗證事件]",
+                    "事件 ID：INC-20260501-001",
+                    "風險等級：HIGH",
+                    "決策：MONITOR（模擬決策；未執行真實監控部署...）",
+                    "Finding ID：F-001",
+                ]
+            ),
+        ]
+    )
+
+
+def _bilingual_auth_log_output() -> str:
+    return "\n\n".join(
+        [
+            "[登入日誌匯入摘要 / Log Ingestion Summary]\n檔案 / File：demo_logs\\x.log",
+            "[結構化驗證事件 / Structured Authentication Incident]\n風險等級 / Risk Level：HIGH",
+        ]
+    )
+
+
+def test_zh_tw_log_and_auth_titles_parse_into_sections() -> None:
+    sections = parse_report_sections(_zh_auth_log_output())
+
+    assert "[登入日誌匯入摘要]" in sections.log_ingestion_summary
+    assert "[結構化驗證事件]" in sections.structured_authentication_incident
+    assert "[登入日誌匯入摘要]" in sections.analysis_report
+    assert "[結構化驗證事件]" in sections.analysis_report
+    # the log-ingestion section stops before the structured-incident block.
+    assert "[結構化驗證事件]" not in sections.log_ingestion_summary
+    # dynamic values stay attached to their sections.
+    assert "INC-20260501-001" in sections.structured_authentication_incident
+    assert "F-001" in sections.structured_authentication_incident
+
+
+def test_bilingual_log_and_auth_titles_parse_into_sections() -> None:
+    sections = parse_report_sections(_bilingual_auth_log_output())
+
+    assert "[登入日誌匯入摘要 / Log Ingestion Summary]" in sections.log_ingestion_summary
+    assert (
+        "[結構化驗證事件 / Structured Authentication Incident]"
+        in sections.structured_authentication_incident
+    )
+    assert "[登入日誌匯入摘要 / Log Ingestion Summary]" in sections.analysis_report
+    assert (
+        "[結構化驗證事件 / Structured Authentication Incident]" in sections.analysis_report
+    )
+
+
+def test_english_log_and_auth_titles_still_parse() -> None:
+    text = "\n\n".join(
+        [
+            "[Log Ingestion Summary]\nFile: demo_logs/x.log\nTotal Lines: 33",
+            "[Structured Authentication Incident]\nRisk Level: HIGH\nDecision: MONITOR",
+        ]
+    )
+
+    sections = parse_report_sections(text)
+
+    assert "[Log Ingestion Summary]" in sections.log_ingestion_summary
+    assert "[Structured Authentication Incident]" in sections.structured_authentication_incident
+    assert "Risk Level: HIGH" in sections.analysis_report
+
+
 def test_empty_text_still_returns_empty_sections() -> None:
     sections = parse_report_sections("plain text without known report headings")
 

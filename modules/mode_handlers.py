@@ -3,6 +3,11 @@ import threading
 import time
 from collections import Counter
 
+from modules.controller.report_language import (
+    label_separator,
+    normalize_report_language,
+    report_text,
+)
 from modules.evidence_correlator import correlate_auth_sequence
 from modules.incident_followup import (
     ActiveAuthIncidentContext,
@@ -125,13 +130,15 @@ def count_event_types(normalized_events):
     )
 
 
-def _format_event_type_counts(normalized_events):
+def _format_event_type_counts(normalized_events, language="en"):
     counts = count_event_types(normalized_events)
+    heading = report_text("detected_event_types_heading", language)
     if not counts:
-        return [DETECTED_EVENT_TYPES_TITLE, "- None"]
+        return [heading, f"- {report_text('none_value', language)}"]
 
-    lines = [DETECTED_EVENT_TYPES_TITLE]
-    lines.extend(f"- {event_type}: {count}" for event_type, count in counts.items())
+    sep = label_separator(language)
+    lines = [heading]
+    lines.extend(f"- {event_type}{sep}{count}" for event_type, count in counts.items())
     return lines
 
 
@@ -139,20 +146,22 @@ def _is_brute_force_finding(event):
     return isinstance(event, dict) and event.get("event_type") == BRUTE_FORCE_EVENT_TYPE
 
 
-def _format_aggregated_findings(aggregated_events):
+def _format_aggregated_findings(aggregated_events, language="en"):
     findings = [event for event in aggregated_events if _is_brute_force_finding(event)]
     if not findings:
         return []
 
-    lines = [AGGREGATED_FINDINGS_TITLE]
+    sep = label_separator(language)
+    lines = [report_text("aggregated_findings_heading", language)]
     for finding in findings:
         lines.extend(
             [
-                f"- Event Type: {finding.get('event_type')}",
-                f"  Source IP: {finding.get('source_ip')}",
-                f"  Target: {finding.get('target')}",
-                f"  Failed Count: {finding.get('failed_count')}",
-                f"  Evidence: {', '.join(finding.get('evidence') or [])}",
+                f"- {report_text('finding_event_type_label', language)}{sep}{finding.get('event_type')}",
+                f"  {report_text('finding_source_ip_label', language)}{sep}{finding.get('source_ip')}",
+                f"  {report_text('finding_target_label', language)}{sep}{finding.get('target')}",
+                f"  {report_text('finding_failed_count_label', language)}{sep}{finding.get('failed_count')}",
+                f"  {report_text('finding_evidence_label', language)}{sep}"
+                f"{', '.join(finding.get('evidence') or [])}",
             ]
         )
     return lines
@@ -166,7 +175,7 @@ def _is_web_request_with_payload(event):
     )
 
 
-def _format_preserved_payloads(normalized_events):
+def _format_preserved_payloads(normalized_events, language="en"):
     payloads = [
         event.get("payload")
         for event in normalized_events
@@ -175,7 +184,7 @@ def _format_preserved_payloads(normalized_events):
     if not payloads:
         return []
 
-    lines = [PRESERVED_PAYLOADS_TITLE]
+    lines = [report_text("preserved_payloads_heading", language)]
     lines.extend(f"{index}. {payload}" for index, payload in enumerate(payloads, start=1))
     return lines
 
@@ -185,6 +194,22 @@ def _extend_optional_section(lines, section):
         lines.extend(["", *section])
 
 
+def _agent_stage_lines(language="en"):
+    return [
+        report_text("current_stage_heading", language),
+        report_text("agent_stage_line_1", language),
+        report_text("agent_stage_line_2", language),
+        report_text("agent_stage_line_3", language),
+    ]
+
+
+def _current_stage_lines(language="en"):
+    return [
+        report_text("current_stage_heading", language),
+        report_text("log_only_stage_line", language),
+    ]
+
+
 def _format_summary(
     log_path,
     lines,
@@ -192,22 +217,24 @@ def _format_summary(
     normalized_events,
     aggregated_events,
     stage_lines=None,
+    language="en",
 ):
+    sep = label_separator(language)
     summary = [
-        SUMMARY_TITLE,
+        report_text("log_ingestion_title", language),
         "",
-        f"File: {log_path}",
-        f"Total Lines: {len(lines)}",
-        f"Parsed Logs: {len(parsed_logs)}",
-        f"Normalized Events: {len(normalized_events)}",
-        f"Aggregated Events: {len(aggregated_events)}",
+        f"{report_text('file_label', language)}{sep}{log_path}",
+        f"{report_text('total_lines_label', language)}{sep}{len(lines)}",
+        f"{report_text('parsed_logs_label', language)}{sep}{len(parsed_logs)}",
+        f"{report_text('normalized_events_label', language)}{sep}{len(normalized_events)}",
+        f"{report_text('aggregated_events_label', language)}{sep}{len(aggregated_events)}",
         "",
     ]
-    summary.extend(_format_event_type_counts(normalized_events))
+    summary.extend(_format_event_type_counts(normalized_events, language))
 
-    _extend_optional_section(summary, _format_aggregated_findings(aggregated_events))
-    _extend_optional_section(summary, _format_preserved_payloads(normalized_events))
-    summary.extend(["", *(stage_lines or CURRENT_STAGE_LINES)])
+    _extend_optional_section(summary, _format_aggregated_findings(aggregated_events, language))
+    _extend_optional_section(summary, _format_preserved_payloads(normalized_events, language))
+    summary.extend(["", *(stage_lines or _current_stage_lines(language))])
     return "\n".join(summary)
 
 
@@ -274,8 +301,14 @@ def run_log_ingestion(
     include_json: bool = False,
     include_summary: bool = True,
     agent=None,
+    language: str | None = None,
 ) -> str:
     # Thin wrapper around the existing log ingestion demo pipeline.
+    # Only the fixed report headings/labels follow language; parsing,
+    # correlation, risk, and decision are unchanged and deterministic.
+    effective_language = normalize_report_language(
+        language if language is not None else getattr(agent, "report_language", None)
+    )
     error, result = _read_and_process_log(log_path)
     if error:
         return error
@@ -283,6 +316,11 @@ def run_log_ingestion(
     lines, parsed_logs, normalized_events, aggregated_events = result
     output_parts = []
     if include_summary:
+        stage_lines = (
+            _agent_stage_lines(effective_language)
+            if agent is not None
+            else _current_stage_lines(effective_language)
+        )
         output_parts.append(
             _format_summary(
                 log_path,
@@ -290,7 +328,8 @@ def run_log_ingestion(
                 parsed_logs,
                 normalized_events,
                 aggregated_events,
-                AGENT_STAGE_LINES if agent is not None else CURRENT_STAGE_LINES,
+                stage_lines,
+                effective_language,
             )
         )
 
@@ -300,7 +339,7 @@ def run_log_ingestion(
     output = "\n\n".join(output_parts)
     context = _store_active_auth_incident_context(agent, normalized_events, output)
     if context is not None:
-        output_parts.append(format_active_auth_incident_summary(context))
+        output_parts.append(format_active_auth_incident_summary(context, effective_language))
         output = "\n\n".join(output_parts)
     return output
 

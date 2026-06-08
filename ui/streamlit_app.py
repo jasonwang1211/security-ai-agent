@@ -215,7 +215,10 @@ def _run_orchestrator_with_timing(
     output_kind: str,
     analysis_mode: str = "",
 ) -> Any:
-    _, orchestrator = get_runtime()
+    agent, orchestrator = get_runtime()
+    # Display-only language hint for deterministic log/auth report rendering;
+    # does not affect routing, detection, risk, or decision.
+    agent.report_language = current_language()
     started_at = _current_timestamp()
     start_counter = perf_counter()
     output = orchestrator.handle_input(command)

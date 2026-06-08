@@ -254,4 +254,141 @@ _TEXT: dict[str, dict[str, str]] = {
         "bilingual": "No matched signature evidence was available.",
     },
     "none_value": {"en": "None", "zh-TW": "無", "bilingual": "None"},
+    # --- Auth-log ingestion / structured authentication incident report ----
+    "log_ingestion_title": {
+        "en": "[Log Ingestion Summary]",
+        "zh-TW": "[登入日誌匯入摘要]",
+        "bilingual": "[登入日誌匯入摘要 / Log Ingestion Summary]",
+    },
+    "auth_incident_title": {
+        "en": "[Structured Authentication Incident]",
+        "zh-TW": "[結構化驗證事件]",
+        "bilingual": "[結構化驗證事件 / Structured Authentication Incident]",
+    },
+    "file_label": {"en": "File", "zh-TW": "檔案", "bilingual": "檔案 / File"},
+    "total_lines_label": {
+        "en": "Total Lines",
+        "zh-TW": "總行數",
+        "bilingual": "總行數 / Total Lines",
+    },
+    "parsed_logs_label": {
+        "en": "Parsed Logs",
+        "zh-TW": "解析日誌數",
+        "bilingual": "解析日誌數 / Parsed Logs",
+    },
+    "normalized_events_label": {
+        "en": "Normalized Events",
+        "zh-TW": "正規化事件數",
+        "bilingual": "正規化事件數 / Normalized Events",
+    },
+    "aggregated_events_label": {
+        "en": "Aggregated Events",
+        "zh-TW": "聚合事件數",
+        "bilingual": "聚合事件數 / Aggregated Events",
+    },
+    "detected_event_types_heading": {
+        "en": "Detected Event Types:",
+        "zh-TW": "偵測到的事件類型：",
+        "bilingual": "偵測到的事件類型 / Detected Event Types：",
+    },
+    "current_stage_heading": {
+        "en": "Current Stage:",
+        "zh-TW": "目前階段：",
+        "bilingual": "目前階段 / Current Stage：",
+    },
+    "agent_stage_line_1": {
+        "en": "Log ingestion and deterministic authentication-incident correlation completed.",
+        "zh-TW": "日誌匯入與確定性驗證事件關聯已完成。",
+        "bilingual": "Log ingestion and deterministic authentication-incident correlation completed.",
+    },
+    "agent_stage_line_2": {
+        "en": "Structured incident follow-up is available when an incident is detected.",
+        "zh-TW": "偵測到事件時，可使用結構化事件追蹤。",
+        "bilingual": "Structured incident follow-up is available when an incident is detected.",
+    },
+    "agent_stage_line_3": {
+        "en": "Optional SecurityAgent analysis of aggregated events has not been run unless requested below.",
+        "zh-TW": "除非下方明確要求，否則尚未執行 SecurityAgent 對聚合事件的選用分析。",
+        "bilingual": (
+            "Optional SecurityAgent analysis of aggregated events has not been run unless requested below."
+        ),
+    },
+    "log_only_stage_line": {
+        "en": "Log ingestion only. Events are not sent into SecurityAgent yet.",
+        "zh-TW": "僅執行日誌匯入；事件尚未送入 SecurityAgent。",
+        "bilingual": "Log ingestion only. Events are not sent into SecurityAgent yet.",
+    },
+    "aggregated_findings_heading": {
+        "en": "Aggregated Findings:",
+        "zh-TW": "聚合發現：",
+        "bilingual": "聚合發現 / Aggregated Findings：",
+    },
+    "finding_event_type_label": {
+        "en": "Event Type",
+        "zh-TW": "事件類型",
+        "bilingual": "事件類型 / Event Type",
+    },
+    "finding_source_ip_label": {
+        "en": "Source IP",
+        "zh-TW": "來源 IP",
+        "bilingual": "來源 IP / Source IP",
+    },
+    "finding_target_label": {"en": "Target", "zh-TW": "目標", "bilingual": "目標 / Target"},
+    "finding_failed_count_label": {
+        "en": "Failed Count",
+        "zh-TW": "失敗次數",
+        "bilingual": "失敗次數 / Failed Count",
+    },
+    "finding_evidence_label": {
+        "en": "Evidence",
+        "zh-TW": "證據",
+        "bilingual": "證據 / Evidence",
+    },
+    "preserved_payloads_heading": {
+        "en": "Preserved Payloads:",
+        "zh-TW": "保留的 Payload：",
+        "bilingual": "保留的 Payload / Preserved Payloads：",
+    },
+    "incident_id_label": {
+        "en": "Incident ID",
+        "zh-TW": "事件 ID",
+        "bilingual": "事件 ID / Incident ID",
+    },
+    "evidence_ids_label": {
+        "en": "Evidence IDs",
+        "zh-TW": "證據 ID",
+        "bilingual": "證據 ID / Evidence IDs",
+    },
+    "finding_ids_label": {
+        "en": "Finding IDs",
+        "zh-TW": "Finding ID",
+        "bilingual": "Finding ID / Finding IDs",
+    },
+    "auth_decision_note": {
+        "en": (
+            "(simulated decision; no real monitoring deployment, blocking, password "
+            "reset, account disablement, or enforcement was executed.)"
+        ),
+        "zh-TW": "（模擬決策；未執行真實監控部署、封鎖、密碼重設、帳號停用或強制動作。）",
+        "bilingual": (
+            "(simulated decision; no real monitoring deployment, blocking, password "
+            "reset, account disablement, or enforcement was executed.)"
+        ),
+    },
+    "auth_failure_then_success_note": {
+        "en": (
+            "Failure-then-success authentication is suspicious, but it does not "
+            "prove account takeover or intrusion by itself."
+        ),
+        "zh-TW": "登入失敗後成功的驗證模式具可疑性，但不能單獨證明帳號接管或入侵。",
+        "bilingual": (
+            "Failure-then-success authentication is suspicious, but it does not "
+            "prove account takeover or intrusion by itself."
+        ),
+    },
+    "auth_suggested_followup_label": {
+        "en": "Suggested follow-up questions:",
+        "zh-TW": "建議追問：",
+        "bilingual": "建議追問 / Suggested follow-up questions:",
+    },
 }

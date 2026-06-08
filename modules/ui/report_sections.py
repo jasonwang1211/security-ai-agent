@@ -22,7 +22,23 @@ SECURITY_TRIAGE_REPORT_TITLES = (
     SECURITY_TRIAGE_REPORT_ZH,
 )
 LOG_INGESTION_SUMMARY = "[Log Ingestion Summary]"
+# Language-aware deterministic log-ingestion titles (English unchanged).
+LOG_INGESTION_SUMMARY_ZH = "[登入日誌匯入摘要]"
+LOG_INGESTION_SUMMARY_BILINGUAL = "[登入日誌匯入摘要 / Log Ingestion Summary]"
+LOG_INGESTION_SUMMARY_TITLES = (
+    LOG_INGESTION_SUMMARY_BILINGUAL,
+    LOG_INGESTION_SUMMARY,
+    LOG_INGESTION_SUMMARY_ZH,
+)
 STRUCTURED_AUTHENTICATION_INCIDENT = "[Structured Authentication Incident]"
+# Language-aware deterministic structured-incident titles (English unchanged).
+STRUCTURED_AUTHENTICATION_INCIDENT_ZH = "[結構化驗證事件]"
+STRUCTURED_AUTHENTICATION_INCIDENT_BILINGUAL = "[結構化驗證事件 / Structured Authentication Incident]"
+STRUCTURED_AUTHENTICATION_INCIDENT_TITLES = (
+    STRUCTURED_AUTHENTICATION_INCIDENT_BILINGUAL,
+    STRUCTURED_AUTHENTICATION_INCIDENT,
+    STRUCTURED_AUTHENTICATION_INCIDENT_ZH,
+)
 APPROVED_SIMILAR_CASES = "[Approved Similar Cases]"
 GRAPH_RELATIONSHIP_TITLE = "Graph-Grounded Relationship Explanation:"
 SIMULATION_NOTICE_TITLE = "5. Simulation Notice"
@@ -32,7 +48,11 @@ KNOWN_TOP_LEVEL_MARKERS = (
     SECURITY_TRIAGE_REPORT_BILINGUAL,
     SECURITY_TRIAGE_REPORT_ZH,
     LOG_INGESTION_SUMMARY,
+    LOG_INGESTION_SUMMARY_BILINGUAL,
+    LOG_INGESTION_SUMMARY_ZH,
     STRUCTURED_AUTHENTICATION_INCIDENT,
+    STRUCTURED_AUTHENTICATION_INCIDENT_BILINGUAL,
+    STRUCTURED_AUTHENTICATION_INCIDENT_ZH,
     APPROVED_SIMILAR_CASES,
 )
 
@@ -103,11 +123,25 @@ def extract_security_triage_report(text: str) -> str:
 
 
 def extract_log_ingestion_summary(text: str) -> str:
-    return extract_top_level_section(text, LOG_INGESTION_SUMMARY)
+    """Extract the log ingestion summary for any supported language title."""
+
+    return _extract_first_matching_section(text, LOG_INGESTION_SUMMARY_TITLES)
 
 
 def extract_structured_authentication_incident(text: str) -> str:
-    return extract_top_level_section(text, STRUCTURED_AUTHENTICATION_INCIDENT)
+    """Extract the structured authentication incident for any language title."""
+
+    return _extract_first_matching_section(text, STRUCTURED_AUTHENTICATION_INCIDENT_TITLES)
+
+
+def _extract_first_matching_section(text: str, titles: tuple[str, ...]) -> str:
+    """Extract a top-level section for the first present title (most-specific first)."""
+
+    lines = _lines(text)
+    for title in titles:
+        if _find_line_containing(lines, title) is not None:
+            return extract_top_level_section(text, title)
+    return ""
 
 
 def extract_approved_similar_cases(text: str) -> str:
