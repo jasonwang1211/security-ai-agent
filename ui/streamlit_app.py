@@ -43,6 +43,7 @@ from modules.ui.analysis_mode import (
 )
 from modules.ui.demo_scenarios import (
     SUGGESTED_NEXT_FIND_SIMILAR,
+    DemoScenario,
     list_demo_scenarios,
 )
 from modules.ui.console_state import (
@@ -414,23 +415,35 @@ def render_status_bar() -> None:
     st.caption(ui_text("simulated_boundary_caption"))
 
 
-def _kv_html(label: str, value: str, *, code: bool = False) -> str:
-    value_class = "sentinel-kv-value sentinel-code" if code else "sentinel-kv-value"
+def _stat_html(label: str, value: str, *, code: bool = False) -> str:
+    value_class = "sentinel-stat-value sentinel-code" if code else "sentinel-stat-value"
     return (
-        '<span class="sentinel-kv">'
-        f'<span class="sentinel-kv-label">{html.escape(label)}</span>'
-        f'<span class="{value_class}">{html.escape(value)}</span>'
-        "</span>"
+        '<div class="sentinel-stat">'
+        f'<div class="sentinel-stat-label">{html.escape(label)}</div>'
+        f'<div class="{value_class}">{html.escape(value)}</div>'
+        "</div>"
+    )
+
+
+def render_section_title(text: str) -> None:
+    """Render a compact neon section title (denser than st.subheader)."""
+
+    st.markdown(
+        f'<div class="sentinel-section-title">{html.escape(text)}</div>',
+        unsafe_allow_html=True,
     )
 
 
 def render_active_context() -> None:
     summary = summarize_active_context(st.session_state.get(STATE_CLI_STATE))
-    st.subheader(ui_text("active_context"))
+    render_section_title(ui_text("active_context"))
 
     if not summary.has_context:
         st.markdown(
-            f'<div class="sentinel-empty-card">{html.escape(ui_text("no_active_context"))}</div>',
+            '<div class="sentinel-empty-card">'
+            '<span class="sentinel-empty-icon">\U0001f4e1</span>'
+            f'{html.escape(ui_text("no_active_context"))}'
+            "</div>",
             unsafe_allow_html=True,
         )
         return
@@ -468,11 +481,11 @@ def render_active_context() -> None:
         f'<div class="{card_class}">'
         f'<div class="sentinel-hero-title">{html.escape(hero_title)}</div>'
         f'<div class="sentinel-hero-sub">{sub_line}</div>'
-        f'<div class="sentinel-status-row">{badges_html}</div>'
-        '<div class="sentinel-status-row">'
-        f'{_kv_html(ui_text("context"), summary.title)}'
-        f'{_kv_html(ui_text("attack_incident"), attack_or_incident)}'
-        f'{_kv_html(rule_or_evidence_label, rule_or_evidence, code=True)}'
+        f'<div class="sentinel-hero-badges">{badges_html}</div>'
+        '<div class="sentinel-stat-grid">'
+        f'{_stat_html(ui_text("context"), summary.title)}'
+        f'{_stat_html(ui_text("attack_incident"), attack_or_incident)}'
+        f'{_stat_html(rule_or_evidence_label, rule_or_evidence, code=True)}'
         "</div>"
         "</div>"
     )
@@ -820,39 +833,54 @@ def _scenario_suggested_label(suggested_next_action: str, language: str) -> str:
     return t("suggested_next_none", language)
 
 
+def _demo_card_body_html(scenario: DemoScenario, language: str) -> str:
+    """Build one compact SOC playbook card body (metadata pills + preview)."""
+
+    pills = [f'<span class="sentinel-pill-outline">{html.escape(scenario.expected_attack)}</span>']
+    if scenario.expected_risk:
+        pills.append(
+            badge_html(scenario.expected_risk, severity_color(scenario.expected_risk), title=t("risk_level", language))
+        )
+    if scenario.expected_decision:
+        pills.append(
+            badge_html(scenario.expected_decision, decision_color(scenario.expected_decision), title=t("decision", language))
+        )
+    if scenario.expected_case_id:
+        pills.append(
+            f'<span class="sentinel-pill-outline sentinel-pill-case">{html.escape(scenario.expected_case_id)}</span>'
+        )
+    suggested = _scenario_suggested_label(scenario.suggested_next_action, language)
+    return (
+        '<div class="sentinel-demo-body">'
+        f'<div class="sentinel-demo-title">{html.escape(t(scenario.title_key, language))}</div>'
+        f'<div class="sentinel-demo-desc">{html.escape(t(scenario.description_key, language))}</div>'
+        '<div class="sentinel-meta-row">'
+        f'<span class="sentinel-meta-label">{html.escape(t("expected", language))}</span>'
+        f'{"".join(pills)}'
+        "</div>"
+        f'<div class="sentinel-meta-label">{html.escape(t("input_preview", language))}</div>'
+        f'<code class="sentinel-code">{html.escape(scenario.input_text)}</code>'
+        '<div class="sentinel-muted">'
+        f'{html.escape(t("suggested_next", language))}: {html.escape(suggested)}'
+        "</div>"
+        "</div>"
+    )
+
+
 def render_demo_scenario_launcher(language: str) -> None:
-    """Render compact demo scenario cards that load input into the textarea.
+    """Render compact SOC playbook demo cards that load input into the textarea.
 
     Loading a scenario only writes the scenario input into the existing input
     session state and records a status note. It does not run analysis, clear
     active context, or change any backend behavior.
     """
 
-    st.markdown(f"##### {t('demo_scenario_launcher', language)}")
+    render_panel_heading(t("demo_scenario_launcher", language))
     scenarios = list_demo_scenarios()
     columns = st.columns(len(scenarios))
     for column, scenario in zip(columns, scenarios, strict=True):
         with column, st.container(border=True):
-            st.markdown(f"**{t(scenario.title_key, language)}**")
-            st.caption(t(scenario.description_key, language))
-            st.caption(f"{t('input_preview', language)}:")
-            st.code(scenario.input_text, language="text")
-            expected = " · ".join(
-                part
-                for part in (
-                    scenario.expected_attack,
-                    scenario.expected_risk,
-                    scenario.expected_decision,
-                )
-                if part
-            )
-            st.caption(f"{t('expected', language)}: {expected}")
-            if scenario.expected_case_id:
-                st.caption(scenario.expected_case_id)
-            st.caption(
-                f"{t('suggested_next', language)}: "
-                f"{_scenario_suggested_label(scenario.suggested_next_action, language)}"
-            )
+            st.markdown(_demo_card_body_html(scenario, language), unsafe_allow_html=True)
             if st.button(
                 t("load_scenario", language),
                 key=f"load_scenario_{scenario.scenario_id}",
@@ -869,26 +897,29 @@ def render_demo_scenario_launcher(language: str) -> None:
 def render_controls() -> None:
     with st.container(border=True):
         language = current_language()
-        st.subheader(t("control_panel", language))
-        language = normalize_language(
-            st.selectbox(
-                t("language_selector", language),
-                LANGUAGE_OPTIONS,
-                index=LANGUAGE_OPTIONS.index(language),
-                key=STATE_LANGUAGE,
-                format_func=language_display_name,
+        render_section_title(t("control_panel", language))
+        lang_col, mode_col = st.columns([1, 1.35])
+        with lang_col:
+            language = normalize_language(
+                st.selectbox(
+                    t("language_selector", language),
+                    LANGUAGE_OPTIONS,
+                    index=LANGUAGE_OPTIONS.index(language),
+                    key=STATE_LANGUAGE,
+                    format_func=language_display_name,
+                )
             )
-        )
-        selected_mode = normalize_analysis_mode(
-            st.radio(
-                t("analysis_mode", language),
-                ANALYSIS_MODE_OPTIONS,
-                index=ANALYSIS_MODE_OPTIONS.index(DEFAULT_ANALYSIS_MODE),
-                key=STATE_ANALYSIS_MODE,
-                horizontal=True,
-                format_func=lambda mode: translated_analysis_mode_label(str(mode), language),
+        with mode_col:
+            selected_mode = normalize_analysis_mode(
+                st.radio(
+                    t("analysis_mode", language),
+                    ANALYSIS_MODE_OPTIONS,
+                    index=ANALYSIS_MODE_OPTIONS.index(DEFAULT_ANALYSIS_MODE),
+                    key=STATE_ANALYSIS_MODE,
+                    horizontal=True,
+                    format_func=lambda mode: translated_analysis_mode_label(str(mode), language),
+                )
             )
-        )
         for note in translated_analysis_mode_notes(selected_mode, language):
             st.caption(note)
 

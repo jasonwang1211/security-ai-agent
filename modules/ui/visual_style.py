@@ -199,7 +199,7 @@ def apply_console_css() -> str:
   font-size: 1.02rem;
   font-weight: 700;
   letter-spacing: 0.3px;
-  margin: 0 0 8px 0;
+  margin: 2px 0 6px 0;
   padding-left: 11px;
   border-left: 3px solid var(--sentinel-cyan);
   color: #e6edf6;
@@ -241,21 +241,33 @@ def apply_console_css() -> str:
   color: var(--sentinel-text-muted);
   font-size: 0.85rem;
 }
-.sentinel-kv {
-  display: inline-flex;
-  flex-direction: column;
-  gap: 2px;
-  margin-right: 22px;
+.sentinel-stat-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 10px;
+  margin-top: 12px;
 }
-.sentinel-kv-label {
+.sentinel-stat {
+  background: rgba(10, 16, 26, 0.55);
+  border: 1px solid var(--sentinel-border);
+  border-radius: 10px;
+  padding: 9px 12px;
+}
+.sentinel-stat-label {
   color: var(--sentinel-text-muted);
-  font-size: 0.72rem;
+  font-size: 0.68rem;
   text-transform: uppercase;
-  letter-spacing: 0.4px;
+  letter-spacing: 0.5px;
 }
-.sentinel-kv-value {
+.sentinel-stat-value {
   font-weight: 600;
   font-size: 0.95rem;
+  margin-top: 3px;
+  color: #e8eef7;
+  word-break: break-word;
+}
+.sentinel-stat-value.sentinel-code {
+  margin-top: 5px;
 }
 .sentinel-severity-left-high { border-left: 4px solid var(--sentinel-high); }
 .sentinel-severity-left-medium { border-left: 4px solid var(--sentinel-medium); }
@@ -271,11 +283,12 @@ def apply_console_css() -> str:
 .sentinel-empty-card {
   border: 1px dashed var(--sentinel-border-strong);
   border-radius: 14px;
-  padding: 22px;
+  padding: 14px 18px;
   color: var(--sentinel-text-muted);
   text-align: center;
   background: rgba(20, 27, 38, 0.40);
 }
+.sentinel-empty-icon { font-size: 1.05rem; margin-right: 6px; opacity: 0.85; }
 /* Workspace group tabs: neon-cyan active accent. */
 .stTabs [data-baseweb="tab-list"] { gap: 6px; }
 .stTabs [data-baseweb="tab"] { border-radius: 8px 8px 0 0; }
@@ -299,6 +312,89 @@ def apply_console_css() -> str:
 [data-testid="stCode"], .stCode {
   border-radius: 8px;
   box-shadow: inset 0 0 26px rgba(34, 211, 238, 0.045);
+}
+/* Denser vertical rhythm inside glass cards (less form-like spacing). */
+[data-testid="stVerticalBlockBorderWrapper"] [data-testid="stVerticalBlock"] { gap: 0.6rem; }
+/* Compact neon section titles (replace default subheaders). */
+.sentinel-section-title {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  font-size: 1.18rem;
+  font-weight: 700;
+  letter-spacing: 0.3px;
+  color: #eef3fa;
+  margin: 2px 0 10px 0;
+}
+.sentinel-section-title::before {
+  content: "";
+  width: 4px;
+  height: 1.05em;
+  border-radius: 2px;
+  background: linear-gradient(180deg, var(--sentinel-cyan), var(--sentinel-deterministic));
+  box-shadow: 0 0 10px rgba(34, 211, 238, 0.45);
+}
+/* SOC playbook demo cards. */
+.sentinel-demo-body { display: flex; flex-direction: column; gap: 7px; }
+.sentinel-demo-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 700;
+  font-size: 0.98rem;
+  color: #e8eef7;
+}
+.sentinel-demo-title::before {
+  content: "";
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  background: var(--sentinel-cyan);
+  box-shadow: 0 0 8px var(--sentinel-cyan);
+}
+.sentinel-demo-desc {
+  color: var(--sentinel-text-muted);
+  font-size: 0.8rem;
+  line-height: 1.35;
+}
+.sentinel-meta-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+}
+.sentinel-meta-label {
+  color: var(--sentinel-text-muted);
+  font-size: 0.68rem;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+}
+.sentinel-pill-outline {
+  display: inline-block;
+  padding: 1px 9px;
+  border-radius: 999px;
+  font-weight: 600;
+  font-size: 0.74rem;
+  line-height: 1.6;
+  border: 1px solid var(--sentinel-border-strong);
+  color: #cfe9f2;
+  background: rgba(34, 211, 238, 0.08);
+}
+.sentinel-pill-case {
+  border-color: rgba(139, 92, 246, 0.5);
+  color: #d9ccff;
+  background: rgba(139, 92, 246, 0.12);
+}
+/* Active-context hero: more obvious risk/decision badges. */
+.sentinel-hero-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 4px 0 2px 0;
+}
+.sentinel-hero-badges .sentinel-pill {
+  font-size: 0.92rem;
+  padding: 3px 14px;
 }
 """.strip()
 
