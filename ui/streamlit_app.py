@@ -41,6 +41,10 @@ from modules.ui.analysis_mode import (
     normalize_analysis_mode,
     should_use_fast_payload_analysis,
 )
+from modules.ui.demo_scenarios import (
+    SUGGESTED_NEXT_FIND_SIMILAR,
+    list_demo_scenarios,
+)
 from modules.ui.console_state import (
     SIMILAR_CASE_COMMAND,
     STATE_AGENT,
@@ -106,6 +110,7 @@ from modules.ui.visual_style import (
 
 PAGE_TITLE = "Security AI Agent Console"
 TEXT_AREA_KEY = "sentinel_console_input"
+STATE_SCENARIO_NOTE = "sentinel_scenario_note"
 
 _LABEL_KEYS = {
     "Analysis": "analysis_group",
@@ -797,6 +802,58 @@ def render_report_sections() -> None:
             render_route_policy_panel()
 
 
+def _scenario_suggested_label(suggested_next_action: str, language: str) -> str:
+    if suggested_next_action == SUGGESTED_NEXT_FIND_SIMILAR:
+        return t("find_similar_cases", language)
+    return t("suggested_next_none", language)
+
+
+def render_demo_scenario_launcher(language: str) -> None:
+    """Render compact demo scenario cards that load input into the textarea.
+
+    Loading a scenario only writes the scenario input into the existing input
+    session state and records a status note. It does not run analysis, clear
+    active context, or change any backend behavior.
+    """
+
+    st.markdown(f"##### {t('demo_scenario_launcher', language)}")
+    scenarios = list_demo_scenarios()
+    columns = st.columns(len(scenarios))
+    for column, scenario in zip(columns, scenarios, strict=True):
+        with column, st.container(border=True):
+            st.markdown(f"**{t(scenario.title_key, language)}**")
+            st.caption(t(scenario.description_key, language))
+            st.caption(f"{t('input_preview', language)}:")
+            st.code(scenario.input_text, language="text")
+            expected = " · ".join(
+                part
+                for part in (
+                    scenario.expected_attack,
+                    scenario.expected_risk,
+                    scenario.expected_decision,
+                )
+                if part
+            )
+            st.caption(f"{t('expected', language)}: {expected}")
+            if scenario.expected_case_id:
+                st.caption(scenario.expected_case_id)
+            st.caption(
+                f"{t('suggested_next', language)}: "
+                f"{_scenario_suggested_label(scenario.suggested_next_action, language)}"
+            )
+            if st.button(
+                t("load_scenario", language),
+                key=f"load_scenario_{scenario.scenario_id}",
+                use_container_width=True,
+            ):
+                st.session_state[TEXT_AREA_KEY] = scenario.input_text
+                st.session_state[STATE_SCENARIO_NOTE] = t(scenario.title_key, language)
+
+    note = st.session_state.get(STATE_SCENARIO_NOTE)
+    if note:
+        st.caption(f"{t('loaded_scenario', language)}: {note}")
+
+
 def render_controls() -> None:
     with st.container(border=True):
         language = current_language()
@@ -822,6 +879,8 @@ def render_controls() -> None:
         )
         for note in translated_analysis_mode_notes(selected_mode, language):
             st.caption(note)
+
+        render_demo_scenario_launcher(language)
 
         user_input = st.text_area(
             t("input", language),

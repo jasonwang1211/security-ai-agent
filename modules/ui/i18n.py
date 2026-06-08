@@ -89,6 +89,87 @@ _TRANSLATIONS: dict[str, dict[str, str]] = {
         "en": "Input / Control Panel",
         "bilingual": "輸入 / 控制面板 / Input / Control Panel",
     },
+    "demo_scenario_launcher": {
+        "zh-TW": "示範情境啟動器",
+        "en": "Demo Scenario Launcher",
+        "bilingual": "示範情境啟動器 / Demo Scenario Launcher",
+    },
+    "load_scenario": {
+        "zh-TW": "載入情境",
+        "en": "Load Scenario",
+        "bilingual": "載入情境 / Load Scenario",
+    },
+    "input_preview": {
+        "zh-TW": "輸入預覽",
+        "en": "Input Preview",
+        "bilingual": "輸入預覽 / Input Preview",
+    },
+    "expected": {
+        "zh-TW": "預期",
+        "en": "Expected",
+        "bilingual": "預期 / Expected",
+    },
+    "suggested_next": {
+        "zh-TW": "建議下一步",
+        "en": "Suggested Next",
+        "bilingual": "建議下一步 / Suggested Next",
+    },
+    "suggested_next_none": {
+        "zh-TW": "無",
+        "en": "None",
+        "bilingual": "無 / None",
+    },
+    "loaded_scenario": {
+        "zh-TW": "已載入情境",
+        "en": "Loaded scenario",
+        "bilingual": "已載入情境 / Loaded scenario",
+    },
+    "scenario_command_injection_title": {
+        "zh-TW": "命令注入示範",
+        "en": "Command Injection Demo",
+        "bilingual": "命令注入示範 / Command Injection Demo",
+    },
+    "scenario_command_injection_desc": {
+        "zh-TW": "含 shell 串接符號的可疑命令輸入。",
+        "en": "Suspicious command input with shell chaining metacharacters.",
+        "bilingual": "含 shell 串接符號的可疑命令 / Suspicious command with shell chaining.",
+    },
+    "scenario_sql_injection_title": {
+        "zh-TW": "SQL 注入示範",
+        "en": "SQL Injection Demo",
+        "bilingual": "SQL 注入示範 / SQL Injection Demo",
+    },
+    "scenario_sql_injection_desc": {
+        "zh-TW": "查詢字串中的恆真條件 SQL 注入樣態。",
+        "en": "Tautology-style SQL injection in a query string.",
+        "bilingual": "恆真條件 SQL 注入 / Tautology-style SQL injection.",
+    },
+    "scenario_auth_incident_title": {
+        "zh-TW": "身分驗證事件示範",
+        "en": "Authentication Incident Demo",
+        "bilingual": "身分驗證事件示範 / Authentication Incident Demo",
+    },
+    "scenario_auth_incident_desc": {
+        "zh-TW": "登入失敗後成功的混合驗證日誌檔。",
+        "en": "Mixed auth log with success after repeated failures.",
+        "bilingual": "登入失敗後成功的日誌 / Auth log with success after failures.",
+    },
+    "scenario_benign_title": {
+        "zh-TW": "良性輸入（無攻擊）示範",
+        "en": "Benign / No-Attack Demo",
+        "bilingual": "良性輸入（無攻擊）示範 / Benign / No-Attack Demo",
+    },
+    "scenario_benign_desc": {
+        "zh-TW": "示範良性輸入；可能不會建立 active incident，並可能要求澄清，不保證產生 LOW/ALLOW 結果。",
+        "en": (
+            "Demonstrates benign input; may not create an active incident context "
+            "and may request clarification, with no guaranteed LOW/ALLOW verdict."
+        ),
+        "bilingual": (
+            "良性輸入，可能不建立 active incident / Benign input; may not create an active "
+            "incident context and may request clarification."
+        ),
+    },
     "analysis_mode": {
         "zh-TW": "分析模式",
         "en": "Analysis Mode",
