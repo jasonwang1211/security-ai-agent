@@ -26,7 +26,7 @@ Run the Streamlit SOC console:
 python -m streamlit run ui/streamlit_app.py --server.fileWatcherType none
 ```
 
-Presentation and demo materials:
+Presentation and demo materials (index: [docs/DEMO_INDEX.md](docs/DEMO_INDEX.md)):
 
 - [Standalone cyber showcase page](docs/demo_showcase.html) — open directly in a browser (presentation only; not the backend).
 - [5-minute presentation guide](docs/demo_presentation_guide.md)
@@ -571,6 +571,23 @@ For the full plan, see [docs/ROADMAP.md](docs/ROADMAP.md).
 
 - [Demo & Evaluation Report](REPORT.md)
 - [Demo Outputs](demo_outputs.md)
+
+### 展示 / Showcase
+
+啟動 Streamlit SOC 主控台：
+
+```powershell
+python -m streamlit run ui/streamlit_app.py --server.fileWatcherType none
+```
+
+展示與簡報資料（總覽：[docs/DEMO_INDEX.md](docs/DEMO_INDEX.md)）：
+
+- [純前端視覺展示頁](docs/demo_showcase.html)（直接用瀏覽器開啟；僅供展示，非後端系統）
+- [五分鐘簡報指南](docs/demo_presentation_guide.md)
+- [五分鐘口語逐字稿](docs/demo_script_5min.md)
+- [上台前最終檢查表](docs/final_demo_smoke_checklist.md)
+
+`BLOCK` / `MONITOR` / `ALLOW` 為模擬決策；偵測為規則式（rule-based）；RAG、相似案例與關係圖僅為分析師參考脈絡；草稿在被信任或提升前需人工審查。
 
 ### 問題背景
 
