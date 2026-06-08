@@ -279,6 +279,11 @@ _TRANSLATIONS: dict[str, dict[str, str]] = {
         "en": "DOT Source",
         "bilingual": "DOT 原始碼 / DOT Source",
     },
+    "fallback_dot_graphviz": {
+        "zh-TW": "備援 DOT / Graphviz 圖",
+        "en": "Fallback DOT / Graphviz",
+        "bilingual": "備援 DOT / Graphviz / Fallback DOT / Graphviz",
+    },
     "text_relationship_explanation": {
         "zh-TW": "文字關係說明",
         "en": "Text Relationship Explanation",

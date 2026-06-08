@@ -6,6 +6,7 @@ from time import perf_counter
 from typing import Any
 
 import streamlit as st
+import streamlit.components.v1 as components
 
 from modules.agent import SecurityAgent
 from modules.controller.fast_analysis import run_fast_payload_analysis
@@ -83,7 +84,9 @@ from modules.ui.report_sections import (
     parse_report_sections,
 )
 from modules.ui.report_export_view import build_markdown_report_export
-from modules.ui.relationship_graph_view import build_relationship_graph_display
+from modules.ui.interactive_relationship_graph_view import (
+    build_interactive_relationship_graph_display,
+)
 from modules.ui.performance_view import (
     OUTPUT_KIND_ANALYSIS,
     OUTPUT_KIND_DRAFT,
@@ -650,7 +653,7 @@ def render_export_report_panel(sections: Any, combined_output: str) -> None:
 
 def render_relationship_graph_panel(sections: Any) -> None:
     language = current_language()
-    display = build_relationship_graph_display(
+    display = build_interactive_relationship_graph_display(
         active_context_summary=summarize_active_context(st.session_state.get(STATE_CLI_STATE)),
         approved_similar_cases_text=sections.approved_similar_cases,
         graph_relationship_text=sections.graph_relationship_explanation,
@@ -660,11 +663,11 @@ def render_relationship_graph_panel(sections: Any) -> None:
     st.markdown(f"##### {ui_text('visual_relationship_graph')}")
     if display.has_graph:
         try:
-            st.graphviz_chart(display.dot)
-        except Exception as exc:
-            st.warning("Visual graph renderer unavailable; DOT source shown instead.")
+            components.html(display.html, height=620, scrolling=True)
+        except Exception as exc:  # pragma: no cover - defensive UI fallback
+            st.warning("Interactive graph renderer unavailable; DOT source shown instead.")
             st.caption(f"Renderer detail: {exc}")
-            st.code(display.dot, language="dot")
+            render_text_block(display.fallback_dot, ui_text("no_dot_source"))
     else:
         st.info(display.empty_message)
 
@@ -683,8 +686,18 @@ def render_relationship_graph_panel(sections: Any) -> None:
     for note in display.notes:
         st.write(f"- {note}")
 
+    with st.expander(ui_text("fallback_dot_graphviz"), expanded=False):
+        if display.fallback_dot.strip():
+            try:
+                st.graphviz_chart(display.fallback_dot)
+            except Exception as exc:  # pragma: no cover - defensive UI fallback
+                st.warning("Visual graph renderer unavailable; DOT source shown instead.")
+                st.caption(f"Renderer detail: {exc}")
+        else:
+            st.write(ui_text("no_dot_source"))
+
     with st.expander(ui_text("dot_source"), expanded=False):
-        render_text_block(display.dot, ui_text("no_dot_source"))
+        render_text_block(display.fallback_dot, ui_text("no_dot_source"))
 
     with st.expander(ui_text("text_relationship_explanation"), expanded=False):
         render_text_block(

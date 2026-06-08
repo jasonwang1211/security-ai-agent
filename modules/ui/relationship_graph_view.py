@@ -637,5 +637,25 @@ def _edge_display_label(value: str, language: str) -> str:
     return _EDGE_DISPLAY_LABELS.get(value, value.replace("_", " "))
 
 
+def node_display_label(value: str) -> str:
+    """Public accessor for the readable node display label used by the graph.
+
+    Shared with the interactive relationship graph view so node text stays
+    consistent with the DOT/Graphviz output. Behavior is unchanged.
+    """
+
+    return _display_label(value)
+
+
+def edge_display_label(value: str, language: str = DEFAULT_LANGUAGE) -> str:
+    """Public, language-aware accessor for an edge display label.
+
+    Shared with the interactive relationship graph view so edge text stays
+    consistent with the DOT/Graphviz output. Behavior is unchanged.
+    """
+
+    return _edge_display_label(value, normalize_language(language))
+
+
 def _dot_escape(value: str) -> str:
     return str(value).replace("\\", "\\\\").replace('"', '\\"')
