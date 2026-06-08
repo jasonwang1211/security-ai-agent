@@ -81,3 +81,60 @@ def test_route_policy_helper_does_not_import_streamlit() -> None:
 
     assert "streamlit" not in source
     assert "streamlit" not in sys.modules
+
+
+# --- v2.6-S language-aware route/policy safety notes ------------------------
+
+
+def test_english_safety_notes_remain_existing_wording() -> None:
+    display = build_route_policy_display(ANALYZE_PAYLOAD_SKILL, "test; rm -rf /tmp/test", "en")
+
+    assert any("simulated decisions" in note for note in display.safety_notes)
+    assert any(
+        "No firewall, WAF, EDR, account, password reset, or monitoring deployment was executed."
+        == note
+        for note in display.safety_notes
+    )
+
+
+def test_default_language_safety_notes_match_explicit_english() -> None:
+    default = build_route_policy_display(DRAFT_CASE_CAPTURE_SKILL, "save this case as a draft")
+    english = build_route_policy_display(DRAFT_CASE_CAPTURE_SKILL, "save this case as a draft", "en")
+
+    assert default.safety_notes == english.safety_notes
+
+
+def test_zh_tw_safety_notes_are_chinese() -> None:
+    display = build_route_policy_display(
+        RETRIEVE_APPROVED_SIMILAR_CASE_SKILL, "find similar cases", "zh-TW"
+    )
+    joined = "\n".join(display.safety_notes)
+
+    assert "歷史核准案例僅供參考。" in joined
+    assert "相似案例不會覆蓋目前的 Risk Level 或 Decision。" in joined
+    assert "未執行任何防火牆、WAF、EDR、帳號、密碼重設或監控部署。" in joined
+    assert "advisory references only" not in joined
+    # route_reason is a dynamic backend value and remains unchanged.
+    assert display.route_reason == 'exact command matched "find similar cases"'
+
+
+def test_bilingual_safety_notes_are_compact() -> None:
+    display = build_route_policy_display(DRAFT_CASE_CAPTURE_SKILL, "save this case as a draft", "bilingual")
+    joined = "\n".join(display.safety_notes)
+
+    assert "草稿擷取只會在明確核准後寫入隔離的 workbench 草稿。 / " in joined
+    assert "Draft capture writes only an isolated workbench draft after explicit approval." in joined
+
+
+def test_unsupported_route_policy_language_falls_back_to_english() -> None:
+    fr = build_route_policy_display(ANALYZE_PAYLOAD_SKILL, "test; rm -rf /tmp/test", "fr")
+    english = build_route_policy_display(ANALYZE_PAYLOAD_SKILL, "test; rm -rf /tmp/test", "en")
+
+    assert fr.safety_notes == english.safety_notes
+
+
+def test_zh_tw_keeps_tool_policy_reason_untranslated() -> None:
+    # The deterministic ToolPolicy reason is a backend value and is not translated.
+    display = build_route_policy_display("FutureUnknownSkill", "run future thing", "zh-TW")
+
+    assert any("Unknown tools default to FORBIDDEN" in note for note in display.safety_notes)

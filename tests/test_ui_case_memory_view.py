@@ -7,6 +7,7 @@ from modules.ui.case_memory_view import (
     APPROVED_REVIEW_STATUS,
     CASE_MEMORY_BOUNDARY_NOTES,
     build_case_memory_display,
+    case_memory_boundary_notes,
     case_memory_table_rows,
 )
 
@@ -120,3 +121,36 @@ def test_case_memory_helper_does_not_import_streamlit() -> None:
 
     assert "streamlit" not in source
     assert "streamlit" not in sys.modules
+
+
+# --- v2.6-S language-aware case-memory boundary notes -----------------------
+
+
+def test_case_memory_boundary_notes_default_is_english() -> None:
+    assert case_memory_boundary_notes() == CASE_MEMORY_BOUNDARY_NOTES
+    assert case_memory_boundary_notes("en") == CASE_MEMORY_BOUNDARY_NOTES
+    assert build_case_memory_display().boundary_notes == CASE_MEMORY_BOUNDARY_NOTES
+
+
+def test_case_memory_boundary_notes_zh_tw_are_chinese() -> None:
+    zh = case_memory_boundary_notes("zh-TW")
+    joined = "\n".join(zh)
+
+    assert "核准種子是人工整理的展示案例。" in joined
+    assert "它們不是由 workbench/case_drafts 產生的草稿。" in joined
+    assert "它們不會被自動匯入即時知識庫。" in joined
+    assert "advisory references only" not in joined
+    # the display builder threads language into the boundary notes.
+    assert build_case_memory_display(language="zh-TW").boundary_notes == zh
+
+
+def test_case_memory_boundary_notes_bilingual_is_compact() -> None:
+    bilingual = case_memory_boundary_notes("bilingual")
+
+    assert any(" / Approved seeds are manually curated demo cases." in note for note in bilingual)
+    assert any(note.startswith("核准種子是人工整理的展示案例。 / ") for note in bilingual)
+
+
+def test_unsupported_case_memory_language_falls_back_to_english() -> None:
+    assert case_memory_boundary_notes("fr") == CASE_MEMORY_BOUNDARY_NOTES
+    assert build_case_memory_display(language="fr").boundary_notes == CASE_MEMORY_BOUNDARY_NOTES

@@ -13,6 +13,7 @@ from typing import Any, Literal
 import yaml
 from pydantic import BaseModel, Field, field_validator, model_validator
 
+from modules.controller.report_language import label_separator, normalize_report_language
 from modules.event_followup import ActiveEventContext
 from modules.incident_followup import ActiveAuthIncidentContext
 
@@ -28,6 +29,107 @@ AUTH_COMPROMISE_BOUNDARY = (
     "Repeated login failures followed by success are suspicious but do not prove "
     "account compromise by themselves."
 )
+
+# --- Language-aware fixed labels / advisory prose (presentation text only) ---
+# English wording is byte-identical to the prior output; the default language is
+# English so non-UI callers and existing tests keep the exact prior wording.
+# Dynamic / domain values (case IDs, attack types, rule IDs, evidence types,
+# risk/decision values, scores, source paths, payload text) are inserted by the
+# caller and are never translated here. This does not change similarity scoring
+# or matching -- only how the already-computed result is rendered.
+_SIMILAR_CASE_TITLE = {
+    "en": "[Approved Similar Cases]",
+    "zh-TW": "[核准相似案例]",
+    "bilingual": "[核准相似案例 / Approved Similar Cases]",
+}
+_GRAPH_EXPLANATION_HEADING = {
+    "en": "Graph-Grounded Relationship Explanation:",
+    "zh-TW": "圖形關係說明：",
+    "bilingual": "圖形關係說明 / Graph-Grounded Relationship Explanation：",
+}
+_NO_MATCHES_LINE = {
+    "en": "No approved similar cases matched the current structured facts.",
+    "zh-TW": "沒有核准相似案例符合目前的結構化事實。",
+    "bilingual": (
+        "沒有核准相似案例符合目前的結構化事實。 / "
+        "No approved similar cases matched the current structured facts."
+    ),
+}
+_SIMILAR_CASE_BOUNDARY_BY_LANGUAGE = {
+    "en": SIMILAR_CASE_BOUNDARY,
+    "zh-TW": (
+        "歷史核准案例僅供參考，不會覆蓋目前事件的確定性 Risk Level 或 Decision，"
+        "也不代表目前事件已成功執行或已造成入侵。"
+    ),
+    "bilingual": (
+        "歷史核准案例僅供參考，不會覆蓋目前事件的確定性 Risk Level 或 Decision，"
+        "也不代表目前事件已成功執行或已造成入侵。 / " + SIMILAR_CASE_BOUNDARY
+    ),
+}
+_AUTH_COMPROMISE_BOUNDARY_BY_LANGUAGE = {
+    "en": AUTH_COMPROMISE_BOUNDARY,
+    "zh-TW": "連續登入失敗後成功登入雖然可疑，但本身並不能證明帳號已遭入侵。",
+    "bilingual": (
+        "連續登入失敗後成功登入雖然可疑，但本身並不能證明帳號已遭入侵。 / "
+        + AUTH_COMPROMISE_BOUNDARY
+    ),
+}
+# Field labels (text only, no separator). Bilingual is composed as "<zh> / <en>".
+_SIMILAR_CASE_LABELS: dict[str, dict[str, str]] = {
+    "context_kind": {"en": "Current context kind", "zh-TW": "目前脈絡類型"},
+    "current_risk": {"en": "Current Risk Level", "zh-TW": "目前風險等級"},
+    "current_decision": {"en": "Current Decision", "zh-TW": "目前決策"},
+    "score": {"en": "Score", "zh-TW": "分數"},
+    "similarity_reasons": {"en": "Similarity reasons", "zh-TW": "相似原因"},
+    "key_differences": {
+        "en": "Key differences / missing evidence to check",
+        "zh-TW": "需檢查的差異 / 缺少證據",
+    },
+    "analyst_conclusion": {"en": "Analyst conclusion", "zh-TW": "分析師結論"},
+    "outcome_note": {"en": "Outcome note", "zh-TW": "結果說明"},
+    "source": {"en": "Source", "zh-TW": "來源"},
+    "boundary": {"en": "Boundary", "zh-TW": "邊界"},
+}
+# Relationship sentence pieces: English verb phrase + Chinese verb phrase per kind.
+_RELATIONSHIP_PHRASES: dict[str, dict[str, str]] = {
+    "attack_type": {"en": "shares attack type", "zh-TW": "共享攻擊類型"},
+    "rule_id": {"en": "shares rule ID", "zh-TW": "共享規則 ID"},
+    "finding_type": {"en": "shares finding type", "zh-TW": "共享發現類型"},
+    "evidence_type": {"en": "shares evidence type", "zh-TW": "共享證據類型"},
+    "decision": {"en": "shares simulated Decision", "zh-TW": "共享模擬決策"},
+}
+
+
+def _localized_choice(mapping: dict[str, str], language: str | None) -> str:
+    lang = normalize_report_language(language)
+    return mapping.get(lang) or mapping["en"]
+
+
+def _similar_case_label(key: str, language: str | None) -> str:
+    entry = _SIMILAR_CASE_LABELS[key]
+    lang = normalize_report_language(language)
+    english = entry["en"]
+    if lang == "en":
+        return english
+    chinese = entry["zh-TW"]
+    return chinese if lang == "zh-TW" else f"{chinese} / {english}"
+
+
+def _relationship_sentence(
+    kind: str,
+    is_incident: bool,
+    value: str,
+    case_id: str,
+    language: str | None,
+) -> str:
+    phrases = _RELATIONSHIP_PHRASES[kind]
+    english = f"{'Current incident' if is_incident else 'Current context'} {phrases['en']} {value} with {case_id}."
+    lang = normalize_report_language(language)
+    if lang == "en":
+        return english
+    chinese = f"{'目前事件' if is_incident else '目前脈絡'}與 {case_id} {phrases['zh-TW']}：{value}。"
+    return chinese if lang == "zh-TW" else f"{chinese} / {english}"
+
 
 CaseType = Literal["payload_event", "auth_incident"]
 
@@ -238,21 +340,32 @@ def features_from_context(
     )
 
 
-def format_similar_case_output(result: SimilarCaseResult) -> str:
-    """Render a deterministic analyst-facing similar-case summary."""
+def format_similar_case_output(
+    result: SimilarCaseResult,
+    language: str | None = None,
+) -> str:
+    """Render a deterministic analyst-facing similar-case summary.
 
+    ``language`` localizes only fixed labels and fixed advisory/boundary prose.
+    The default (English) keeps the prior wording for non-UI callers and tests.
+    Dynamic values (case IDs, attack types, rule IDs, scores, paths) are never
+    translated, and similarity scoring/matching is unaffected.
+    """
+
+    lang = normalize_report_language(language)
+    sep = label_separator(lang)
     lines = [
-        "[Approved Similar Cases]",
-        f"Current context kind: {result.current.context_kind}",
-        f"Current Risk Level: {result.current.risk_level}",
-        f"Current Decision: {result.current.decision}",
-        SIMILAR_CASE_BOUNDARY,
+        _localized_choice(_SIMILAR_CASE_TITLE, lang),
+        f"{_similar_case_label('context_kind', lang)}{sep}{result.current.context_kind}",
+        f"{_similar_case_label('current_risk', lang)}{sep}{result.current.risk_level}",
+        f"{_similar_case_label('current_decision', lang)}{sep}{result.current.decision}",
+        _localized_choice(_SIMILAR_CASE_BOUNDARY_BY_LANGUAGE, lang),
     ]
     if result.current.context_kind == "active_auth_incident":
-        lines.append(AUTH_COMPROMISE_BOUNDARY)
+        lines.append(_localized_choice(_AUTH_COMPROMISE_BOUNDARY_BY_LANGUAGE, lang))
 
     if not result.matches:
-        lines.append("No approved similar cases matched the current structured facts.")
+        lines.append(_localized_choice(_NO_MATCHES_LINE, lang))
         return "\n".join(lines)
 
     for index, match in enumerate(result.matches, start=1):
@@ -261,14 +374,14 @@ def format_similar_case_output(result: SimilarCaseResult) -> str:
             [
                 "",
                 f"{index}. {seed.case_id} - {seed.title}",
-                f"   Score: {match.score}",
-                f"   Similarity reasons: {_join_or_none(match.reasons)}",
-                f"   Key differences / missing evidence to check: {_join_or_none(match.differences)}",
-                "   Graph-Grounded Relationship Explanation:",
-                *_format_relationship_explanation(result.current, match),
-                f"   Analyst conclusion: {seed.analyst_conclusion}",
-                f"   Outcome note: {seed.outcome}",
-                f"   Source: {seed.source_provenance} ({seed.source_path})",
+                f"   {_similar_case_label('score', lang)}{sep}{match.score}",
+                f"   {_similar_case_label('similarity_reasons', lang)}{sep}{_join_or_none(match.reasons)}",
+                f"   {_similar_case_label('key_differences', lang)}{sep}{_join_or_none(match.differences)}",
+                f"   {_localized_choice(_GRAPH_EXPLANATION_HEADING, lang)}",
+                *_format_relationship_explanation(result.current, match, lang),
+                f"   {_similar_case_label('analyst_conclusion', lang)}{sep}{seed.analyst_conclusion}",
+                f"   {_similar_case_label('outcome_note', lang)}{sep}{seed.outcome}",
+                f"   {_similar_case_label('source', lang)}{sep}{seed.source_provenance} ({seed.source_path})",
             ]
         )
 
@@ -278,36 +391,48 @@ def format_similar_case_output(result: SimilarCaseResult) -> str:
 def build_case_relationship_explanation(
     current: CurrentCaseFeatures,
     match: SimilarCaseMatch,
+    language: str | None = None,
 ) -> CaseRelationshipExplanation:
-    """Build deterministic graph-style relationship lines from structured fields only."""
+    """Build deterministic graph-style relationship lines from structured fields only.
 
+    ``language`` localizes only the fixed sentence templates and boundary text;
+    dynamic values are unchanged and structured-field selection is identical.
+    """
+
+    lang = normalize_report_language(language)
     seed = match.seed
-    label = "Current incident" if current.context_kind == "active_auth_incident" else "Current context"
+    is_incident = current.context_kind == "active_auth_incident"
     shared: list[str] = []
 
     for value in _intersection(current.attack_types, seed.attack_types):
-        shared.append(f"{label} shares attack type {value} with {seed.case_id}.")
+        shared.append(_relationship_sentence("attack_type", is_incident, value, seed.case_id, lang))
     for value in _intersection(current.rule_ids, seed.rule_ids):
-        shared.append(f"{label} shares rule ID {value} with {seed.case_id}.")
+        shared.append(_relationship_sentence("rule_id", is_incident, value, seed.case_id, lang))
     for value in _intersection(current.finding_types, seed.finding_types):
-        shared.append(f"{label} shares finding type {value} with {seed.case_id}.")
+        shared.append(_relationship_sentence("finding_type", is_incident, value, seed.case_id, lang))
     for value in _intersection(current.evidence_types, seed.evidence_types):
-        shared.append(f"{label} shares evidence type {value} with {seed.case_id}.")
+        shared.append(_relationship_sentence("evidence_type", is_incident, value, seed.case_id, lang))
     if current.decision == seed.decision.upper():
-        shared.append(f"{label} shares simulated Decision {current.decision} with {seed.case_id}.")
+        shared.append(_relationship_sentence("decision", is_incident, current.decision, seed.case_id, lang))
 
     return CaseRelationshipExplanation(
         shared_relationships=tuple(shared),
         difference_relationships=match.differences,
-        boundary=SIMILAR_CASE_BOUNDARY,
+        boundary=_localized_choice(_SIMILAR_CASE_BOUNDARY_BY_LANGUAGE, lang),
     )
 
 
-def _format_relationship_explanation(current: CurrentCaseFeatures, match: SimilarCaseMatch) -> list[str]:
-    explanation = build_case_relationship_explanation(current, match)
+def _format_relationship_explanation(
+    current: CurrentCaseFeatures,
+    match: SimilarCaseMatch,
+    language: str | None = None,
+) -> list[str]:
+    lang = normalize_report_language(language)
+    sep = label_separator(lang)
+    explanation = build_case_relationship_explanation(current, match, lang)
     lines = [f"      - {relationship}" for relationship in explanation.shared_relationships]
     lines.extend(f"      - {relationship}" for relationship in explanation.difference_relationships)
-    lines.append(f"      - Boundary: {explanation.boundary}")
+    lines.append(f"      - {_similar_case_label('boundary', lang)}{sep}{explanation.boundary}")
     return lines
 
 

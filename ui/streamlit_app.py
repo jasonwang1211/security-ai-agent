@@ -491,7 +491,7 @@ def render_text_block(text: str, empty_text: str) -> None:
 
 
 def render_case_memory_panel() -> None:
-    display = build_case_memory_display()
+    display = build_case_memory_display(language=current_language())
 
     first, second, third = st.columns(3)
     first.metric(ui_text("approved_seeds"), display.approved_seed_count)
@@ -626,7 +626,7 @@ def build_current_markdown_export(sections: Any, combined_output: str) -> Any:
     return build_markdown_report_export(
         active_context_summary=summarize_active_context(st.session_state.get(STATE_CLI_STATE)),
         report_sections=sections,
-        case_memory_display=build_case_memory_display(),
+        case_memory_display=build_case_memory_display(language=language),
         case_draft_display=build_case_draft_display(
             str(st.session_state.get(STATE_LAST_OUTPUT) or ""),
             st.session_state.get(STATE_CLI_STATE),
@@ -636,6 +636,7 @@ def build_current_markdown_export(sections: Any, combined_output: str) -> Any:
         route_policy_display=build_route_policy_display(
             st.session_state.get(STATE_LAST_SELECTED_ACTION),
             str(st.session_state.get(STATE_LAST_INPUT) or ""),
+            language=language,
         ),
         raw_output=str(st.session_state.get(STATE_LAST_OUTPUT) or ""),
         generated_at=_current_timestamp(),
@@ -722,6 +723,7 @@ def render_route_policy_panel() -> None:
     display = build_route_policy_display(
         st.session_state.get(STATE_LAST_SELECTED_ACTION),
         str(st.session_state.get(STATE_LAST_INPUT) or ""),
+        language=current_language(),
     )
 
     st.write(f"{ui_text('latest_input')}: {st.session_state.get(STATE_LAST_INPUT) or 'None'}")

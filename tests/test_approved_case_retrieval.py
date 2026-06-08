@@ -12,6 +12,7 @@ from modules.controller.approved_case_retrieval import (
 from modules.event_followup import ActiveEventContext
 from modules.incident_followup import build_active_auth_incident_context
 from modules.types import EvidenceBundle, EvidenceItem, Finding, Incident
+from modules.ui.report_sections import parse_report_sections
 
 
 def _event_context(
@@ -237,3 +238,111 @@ def test_approved_case_retrieval_has_no_heavy_runtime_dependencies() -> None:
         "modules.rag",
     ]
     assert all(item not in source for item in forbidden)
+
+
+# --- v2.6-S language-aware similar-case output ------------------------------
+
+
+def _command_injection_output(language: str | None = None) -> str:
+    result = retrieve_approved_similar_cases(_event_context(), load_approved_case_seeds())
+    return format_similar_case_output(result, language)
+
+
+def test_english_similar_case_output_remains_existing_wording() -> None:
+    output = _command_injection_output("en")
+
+    assert "[Approved Similar Cases]" in output
+    assert "Current Risk Level: HIGH" in output
+    assert "Current Decision: BLOCK" in output
+    assert "Similarity reasons:" in output
+    assert "Graph-Grounded Relationship Explanation:" in output
+    assert "CASE-SEED-001" in output
+
+
+def test_default_language_similar_case_output_matches_explicit_english() -> None:
+    result = retrieve_approved_similar_cases(_event_context(), load_approved_case_seeds())
+
+    assert format_similar_case_output(result) == format_similar_case_output(result, "en")
+
+
+def test_zh_tw_similar_case_output_uses_chinese_labels_and_keeps_dynamic_values() -> None:
+    output = _command_injection_output("zh-TW")
+
+    assert "[核准相似案例]" in output
+    assert "目前風險等級：HIGH" in output
+    assert "目前決策：BLOCK" in output
+    assert "相似原因：" in output
+    assert "圖形關係說明：" in output
+    assert "目前脈絡與 CASE-SEED-001 共享攻擊類型：Command Injection。" in output
+    assert "目前脈絡與 CASE-SEED-001 共享規則 ID：CMD-001。" in output
+    assert "目前脈絡與 CASE-SEED-001 共享證據類型：shell_metacharacter_payload。" in output
+    # dynamic / domain values are never translated.
+    for token in ("CASE-SEED-001", "Command Injection", "CMD-001", "shell_metacharacter_payload"):
+        assert token in output
+    # English fixed labels must not leak in zh-TW mode.
+    assert "Current Risk Level:" not in output
+    assert "Graph-Grounded Relationship Explanation:" not in output
+    # the deterministic reason content stays English (produced by scoring).
+    assert "matched attack_types: Command Injection" in output
+
+
+def test_bilingual_similar_case_output_uses_compact_bilingual_labels() -> None:
+    output = _command_injection_output("bilingual")
+
+    assert "[核准相似案例 / Approved Similar Cases]" in output
+    assert "目前風險等級 / Current Risk Level：HIGH" in output
+    assert "相似原因 / Similarity reasons：" in output
+    assert "圖形關係說明 / Graph-Grounded Relationship Explanation：" in output
+    # bilingual keeps both halves of relationship sentences; dynamic values intact.
+    assert "Current context shares attack type Command Injection with CASE-SEED-001." in output
+    assert "目前脈絡與 CASE-SEED-001 共享攻擊類型：Command Injection。" in output
+
+
+def test_unsupported_similar_case_language_falls_back_to_english() -> None:
+    output = _command_injection_output("fr")
+
+    assert "[Approved Similar Cases]" in output
+    assert "[核准相似案例]" not in output
+
+
+def test_similar_case_scoring_and_matching_unchanged_across_languages() -> None:
+    seeds = load_approved_case_seeds()
+    base = retrieve_approved_similar_cases(_event_context(), seeds)
+
+    # language is a render-only argument; ranking, scores, and reasons are
+    # computed before formatting and never depend on it.
+    for language in ("en", "zh-TW", "bilingual", "fr"):
+        format_similar_case_output(base, language)
+    assert [match.seed.case_id for match in base.matches] == ["CASE-SEED-001"]
+    assert base.matches[0].score == retrieve_approved_similar_cases(
+        _event_context(), seeds
+    ).matches[0].score
+    assert "matched attack_types: Command Injection" in base.matches[0].reasons
+
+
+def test_zh_tw_relationship_helper_keeps_seed_differences_and_localizes_boundary() -> None:
+    result = retrieve_approved_similar_cases(_event_context(), load_approved_case_seeds())
+
+    explanation = build_case_relationship_explanation(result.current, result.matches[0], "zh-TW")
+
+    assert explanation.shared_relationships[0].startswith("目前脈絡與 CASE-SEED-001 共享攻擊類型")
+    # seed-derived differences are dynamic content and stay unchanged (English).
+    assert "Historical simulated BLOCK does not prove current command execution." in (
+        explanation.difference_relationships
+    )
+    assert explanation.boundary.startswith("歷史核准案例僅供參考")
+
+
+def test_zh_tw_real_output_parses_into_localized_report_sections() -> None:
+    # End-to-end guard: the real localized renderer output must still split into
+    # the approved-similar-case and graph-relationship sections by the parser.
+    output = _command_injection_output("zh-TW")
+
+    sections = parse_report_sections(output)
+
+    assert sections.approved_similar_cases.startswith("[核准相似案例]")
+    assert "CASE-SEED-001" in sections.approved_similar_cases
+    assert sections.graph_relationship_explanation.startswith("圖形關係說明：")
+    assert "共享攻擊類型：Command Injection" in sections.graph_relationship_explanation
+    # localized analyst-conclusion field closes the graph block.
+    assert "分析師結論" not in sections.graph_relationship_explanation

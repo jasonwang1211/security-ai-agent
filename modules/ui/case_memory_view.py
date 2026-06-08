@@ -19,6 +19,43 @@ CASE_MEMORY_BOUNDARY_NOTES: tuple[str, ...] = (
     "They are not automatically ingested into live knowledge.",
 )
 
+DEFAULT_CASE_MEMORY_LANGUAGE = "en"
+_SUPPORTED_CASE_MEMORY_LANGUAGES = ("en", "zh-TW", "bilingual")
+
+# Language-aware fixed boundary notes. English is byte-identical to the tuple
+# above; bilingual is compact "<zh> / <en>". Only this fixed advisory text is
+# localized -- seed data, paths, and matched values are never translated.
+_CASE_MEMORY_BOUNDARY_NOTES_BY_LANGUAGE: dict[str, tuple[str, ...]] = {
+    "en": CASE_MEMORY_BOUNDARY_NOTES,
+    "zh-TW": (
+        "核准種子是人工整理的展示案例。",
+        "它們僅作為參考。",
+        "它們不會覆蓋目前事件的 Risk Level 或 Decision。",
+        "它們不是由 workbench/case_drafts 產生的草稿。",
+        "它們不會被自動匯入即時知識庫。",
+    ),
+    "bilingual": (
+        "核准種子是人工整理的展示案例。 / Approved seeds are manually curated demo cases.",
+        "它們僅作為參考。 / They are advisory references only.",
+        "它們不會覆蓋目前事件的 Risk Level 或 Decision。 / "
+        "They do not override the current event's Risk Level or Decision.",
+        "它們不是由 workbench/case_drafts 產生的草稿。 / "
+        "They are not generated drafts from workbench/case_drafts.",
+        "它們不會被自動匯入即時知識庫。 / They are not automatically ingested into live knowledge.",
+    ),
+}
+
+
+def case_memory_boundary_notes(
+    language: str = DEFAULT_CASE_MEMORY_LANGUAGE,
+) -> tuple[str, ...]:
+    """Return the language-aware case-memory boundary notes (English default)."""
+
+    text = str(language or "").strip()
+    if text not in _SUPPORTED_CASE_MEMORY_LANGUAGES:
+        return CASE_MEMORY_BOUNDARY_NOTES
+    return _CASE_MEMORY_BOUNDARY_NOTES_BY_LANGUAGE[text]
+
 
 @dataclass(frozen=True)
 class CaseMemorySeedDisplay:
@@ -66,12 +103,20 @@ class CaseMemoryCorpusDisplay:
 
 def build_case_memory_display(
     seed_directory: str | Path = APPROVED_CASE_SEED_DIR,
+    language: str = DEFAULT_CASE_MEMORY_LANGUAGE,
 ) -> CaseMemoryCorpusDisplay:
-    """Load approved seed files into a read-only UI display model."""
+    """Load approved seed files into a read-only UI display model.
 
+    ``language`` localizes only the fixed boundary notes; seed values are
+    unchanged. The default ("en") preserves existing output for non-UI callers.
+    """
+
+    notes = case_memory_boundary_notes(language)
     directory = Path(seed_directory)
     if not directory.exists() or not directory.is_dir():
-        return CaseMemoryCorpusDisplay(source_directory=directory.as_posix(), seeds=())
+        return CaseMemoryCorpusDisplay(
+            source_directory=directory.as_posix(), seeds=(), boundary_notes=notes
+        )
 
     seeds = tuple(
         seed
@@ -79,7 +124,9 @@ def build_case_memory_display(
         for seed in [_load_seed_display(path)]
         if seed is not None
     )
-    return CaseMemoryCorpusDisplay(source_directory=directory.as_posix(), seeds=seeds)
+    return CaseMemoryCorpusDisplay(
+        source_directory=directory.as_posix(), seeds=seeds, boundary_notes=notes
+    )
 
 
 def case_memory_table_rows(

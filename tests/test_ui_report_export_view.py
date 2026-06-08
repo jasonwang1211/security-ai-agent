@@ -298,3 +298,34 @@ def test_unsupported_export_language_falls_back_to_english() -> None:
     assert "## Report Metadata" in markdown
     assert "## 報告中繼資料" not in markdown
     assert export_safety_notes("fr") == EXPORT_SAFETY_NOTES
+
+
+def test_export_includes_localized_similar_case_and_graph_sections() -> None:
+    # v2.6-S: when the parsed sections carry localized similar-case / graph text,
+    # the export embeds that text verbatim under the (localized) wrapper headings.
+    localized_sections = ParsedReportSections(
+        approved_similar_cases="\n".join(
+            [
+                "[核准相似案例]",
+                "目前風險等級：HIGH",
+                "1. CASE-SEED-001 - Command Injection Payload",
+                "   相似原因：matched attack_types: Command Injection",
+            ]
+        ),
+        graph_relationship_explanation="\n".join(
+            [
+                "圖形關係說明：",
+                "      - 目前脈絡與 CASE-SEED-001 共享攻擊類型：Command Injection。",
+            ]
+        ),
+    )
+
+    markdown = _export(sections=localized_sections, language="zh-TW").markdown
+
+    assert "## 核准相似案例" in markdown
+    assert "## 圖形關係說明" in markdown
+    assert "[核准相似案例]" in markdown
+    assert "目前脈絡與 CASE-SEED-001 共享攻擊類型：Command Injection。" in markdown
+    # dynamic values are preserved unchanged inside the localized wrapper.
+    assert "CASE-SEED-001" in markdown
+    assert "matched attack_types: Command Injection" in markdown

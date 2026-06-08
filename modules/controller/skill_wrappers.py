@@ -365,9 +365,12 @@ def run_retrieve_approved_similar_case_skill(
 
         seeds = load_approved_case_seeds()
         result = retrieve_approved_similar_cases(context, seeds)
+        # Display-only language hint (set by the UI); does not affect retrieval,
+        # similarity scoring, matching, or any backend behavior.
+        report_language = getattr(agent, "report_language", None)
         return _ok(
             {
-                "text": format_similar_case_output(result),
+                "text": format_similar_case_output(result, report_language),
                 "current_context_kind": result.current.context_kind,
                 "matches": [
                     {

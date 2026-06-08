@@ -218,3 +218,71 @@ def test_report_language_helper_has_no_streamlit_import() -> None:
 
     assert "streamlit" not in text.lower()
 
+
+# --- v2.6-S correction: language-aware simulated decision note --------------
+
+_ZH_SIMULATED_DECISION_NOTE = "已模擬封鎖這次可疑請求，未實際修改任何系統或防火牆設定。"
+_EN_SIMULATED_DECISION_NOTE = (
+    "Simulated BLOCK for this suspicious request; no system or firewall "
+    "configuration was actually changed."
+)
+
+
+def test_english_fast_report_has_no_chinese_simulated_decision_note() -> None:
+    report = run_fast_payload_analysis(FastModeAgent(), COMMAND_PAYLOAD, language="en").response_text
+
+    assert _ZH_SIMULATED_DECISION_NOTE not in report
+
+
+def test_english_fast_report_contains_english_simulated_decision_note() -> None:
+    report = run_fast_payload_analysis(FastModeAgent(), COMMAND_PAYLOAD, language="en").response_text
+
+    assert f"Simulated Decision Note: {_EN_SIMULATED_DECISION_NOTE}" in report
+    # the dynamic decision token is preserved.
+    assert "Simulated BLOCK" in report
+
+
+def test_zh_tw_fast_report_keeps_chinese_simulated_decision_note() -> None:
+    report = run_fast_payload_analysis(
+        FastModeAgent(), COMMAND_PAYLOAD, language="zh-TW"
+    ).response_text
+
+    assert f"模擬決策說明：{_ZH_SIMULATED_DECISION_NOTE}" in report
+    assert _EN_SIMULATED_DECISION_NOTE not in report
+
+
+def test_bilingual_fast_report_contains_both_simulated_decision_notes() -> None:
+    report = run_fast_payload_analysis(
+        FastModeAgent(), COMMAND_PAYLOAD, language="bilingual"
+    ).response_text
+
+    expected = (
+        f"模擬決策說明 / Simulated Decision Note：{_ZH_SIMULATED_DECISION_NOTE} / "
+        f"{_EN_SIMULATED_DECISION_NOTE}"
+    )
+    assert expected in report
+
+
+def test_simulated_decision_note_fix_keeps_active_context_decision_unchanged() -> None:
+    english = run_fast_payload_analysis(FastModeAgent(), COMMAND_PAYLOAD, language="en")
+    chinese = run_fast_payload_analysis(FastModeAgent(), COMMAND_PAYLOAD, language="zh-TW")
+
+    for result in (english, chinese):
+        assert result.active_context.risk_level == "HIGH"
+        assert result.active_context.decision == "BLOCK"
+        # the canonical defense summary (stored/decision side) is unchanged.
+        assert result.active_context.attack_types == ("Command Injection",)
+
+
+def test_similar_case_retrieval_still_works_after_english_fast_analysis() -> None:
+    agent = FastModeAgent()
+    run_fast_payload_analysis(agent, COMMAND_PAYLOAD, language="en")
+
+    similar = run_retrieve_approved_similar_case_skill(
+        SimilarCaseInput(command="find similar cases"),
+        agent,
+    )
+
+    assert similar.status == "ok"
+    assert similar.output["matches"][0]["case_id"] == "CASE-SEED-001"
+

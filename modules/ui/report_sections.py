@@ -40,7 +40,32 @@ STRUCTURED_AUTHENTICATION_INCIDENT_TITLES = (
     STRUCTURED_AUTHENTICATION_INCIDENT_ZH,
 )
 APPROVED_SIMILAR_CASES = "[Approved Similar Cases]"
+# Language-aware approved-similar-case titles (English unchanged).
+APPROVED_SIMILAR_CASES_ZH = "[核准相似案例]"
+APPROVED_SIMILAR_CASES_BILINGUAL = "[核准相似案例 / Approved Similar Cases]"
+APPROVED_SIMILAR_CASES_TITLES = (
+    APPROVED_SIMILAR_CASES_BILINGUAL,
+    APPROVED_SIMILAR_CASES,
+    APPROVED_SIMILAR_CASES_ZH,
+)
 GRAPH_RELATIONSHIP_TITLE = "Graph-Grounded Relationship Explanation:"
+# Language-aware graph-grounded relationship titles (English unchanged).
+GRAPH_RELATIONSHIP_TITLE_ZH = "圖形關係說明："
+GRAPH_RELATIONSHIP_TITLE_BILINGUAL = "圖形關係說明 / Graph-Grounded Relationship Explanation："
+GRAPH_RELATIONSHIP_TITLES = (
+    GRAPH_RELATIONSHIP_TITLE_BILINGUAL,
+    GRAPH_RELATIONSHIP_TITLE,
+    GRAPH_RELATIONSHIP_TITLE_ZH,
+)
+# Localized field-label prefixes that close a graph-relationship block. The
+# zh-TW label text (no colon) also prefixes the bilingual "<zh> / <en>" form.
+_LOCALIZED_GRAPH_BLOCK_BOUNDARIES = (
+    "分析師結論",
+    "結果說明",
+    "來源",
+    "相似原因",
+    "需檢查的差異",
+)
 SIMULATION_NOTICE_TITLE = "5. Simulation Notice"
 
 KNOWN_TOP_LEVEL_MARKERS = (
@@ -54,6 +79,8 @@ KNOWN_TOP_LEVEL_MARKERS = (
     STRUCTURED_AUTHENTICATION_INCIDENT_BILINGUAL,
     STRUCTURED_AUTHENTICATION_INCIDENT_ZH,
     APPROVED_SIMILAR_CASES,
+    APPROVED_SIMILAR_CASES_BILINGUAL,
+    APPROVED_SIMILAR_CASES_ZH,
 )
 
 DEFAULT_SAFETY_BOUNDARY_TEXT = "\n".join(
@@ -189,7 +216,9 @@ def _extract_first_matching_section(text: str, titles: tuple[str, ...]) -> str:
 
 
 def extract_approved_similar_cases(text: str) -> str:
-    return extract_top_level_section(text, APPROVED_SIMILAR_CASES)
+    """Extract the approved similar-case section for any supported language title."""
+
+    return _extract_first_matching_section(text, APPROVED_SIMILAR_CASES_TITLES)
 
 
 def extract_top_level_section(text: str, marker: str) -> str:
@@ -214,9 +243,10 @@ def extract_graph_relationship_explanation(text: str) -> str:
     lines = _lines(text)
     blocks: list[str] = []
     for index, line in enumerate(lines):
-        if GRAPH_RELATIONSHIP_TITLE.casefold() not in line.casefold():
+        matched_title = _first_title_in_line(line, GRAPH_RELATIONSHIP_TITLES)
+        if matched_title is None:
             continue
-        block = [_line_from_marker(line, GRAPH_RELATIONSHIP_TITLE)]
+        block = [_line_from_marker(line, matched_title)]
         for following in lines[index + 1 :]:
             stripped = following.strip()
             if not stripped:
@@ -289,6 +319,14 @@ def _find_line_containing(lines: list[str], marker: str) -> int | None:
     return None
 
 
+def _first_title_in_line(line: str, titles: tuple[str, ...]) -> str | None:
+    lowered = line.casefold()
+    for title in titles:
+        if title.casefold() in lowered:
+            return title
+    return None
+
+
 def _line_from_marker(line: str, marker: str) -> str:
     lowered = line.casefold()
     marker_lowered = marker.casefold()
@@ -323,6 +361,7 @@ def _is_graph_block_boundary(stripped_line: str) -> bool:
             "Source:",
             "Similarity reasons:",
             "Key differences / missing evidence to check:",
+            *_LOCALIZED_GRAPH_BLOCK_BOUNDARIES,
         )
     )
 

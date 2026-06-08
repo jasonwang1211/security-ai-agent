@@ -32,6 +32,28 @@ SIMULATION_BOUNDARY = (
     "action was executed."
 )
 
+# English variants of the deterministic simulated-decision note, keyed by the
+# simulated action token. The zh-TW note keeps the canonical Chinese summary
+# produced by the defense simulator; bilingual joins both. The dynamic decision
+# token (BLOCK / MONITOR / ALLOW) is preserved verbatim in every language.
+_SIMULATED_DECISION_NOTE_EN: dict[str, str] = {
+    "BLOCK": (
+        "Simulated BLOCK for this suspicious request; no system or firewall "
+        "configuration was actually changed."
+    ),
+    "MONITOR": (
+        "Simulated MONITOR for this event; it was queued for monitoring and "
+        "alerting, but no monitoring rule was actually deployed."
+    ),
+    "ALLOW": (
+        "Simulated ALLOW for this traffic; it was permitted but flagged as a "
+        "low-risk event for follow-up observation."
+    ),
+}
+_SIMULATED_DECISION_NOTE_EN_FALLBACK = (
+    "Simulated response completed; no real system action was performed."
+)
+
 
 @dataclass(frozen=True)
 class FastPayloadAnalysisResult:
@@ -187,12 +209,32 @@ def build_fast_deterministic_report(
                 "",
                 labeled_line(
                     "simulated_decision_note_label",
-                    str(defense_result.get("summary")),
+                    _simulated_decision_note(defense_result, lang),
                     lang,
                 ),
             ]
         )
     return "\n".join(lines).strip()
+
+
+def _simulated_decision_note(defense_result: dict[str, Any], language: str) -> str:
+    """Return the language-aware simulated-decision note value.
+
+    The canonical Chinese note from the deterministic defense simulator is the
+    zh-TW value; English/bilingual variants are derived from the simulated
+    action token only. This is display text only -- it does not change
+    ``defense_result``, decision values, risk/decision logic, or active context.
+    """
+
+    summary = str(defense_result.get("summary") or "")
+    lang = normalize_report_language(language)
+    if lang == "zh-TW":
+        return summary
+    action = str(defense_result.get("action") or "").upper()
+    english = _SIMULATED_DECISION_NOTE_EN.get(action, _SIMULATED_DECISION_NOTE_EN_FALLBACK)
+    if lang == "en":
+        return english
+    return f"{summary} / {english}"
 
 
 def _update_state(agent: Any, state: dict[str, Any], user_input: str, report: str) -> None:

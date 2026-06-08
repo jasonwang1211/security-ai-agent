@@ -359,3 +359,95 @@ def test_build_safety_boundary_text_appends_localized_default() -> None:
 
     assert "未執行任何真實防火牆" in zh_boundary
     assert DEFAULT_SAFETY_BOUNDARY_TEXT not in zh_boundary
+
+
+# --- v2.6-S localized approved-similar-case + graph relationship parsing ----
+
+
+def _zh_similar_case_text() -> str:
+    return "\n".join(
+        [
+            "[核准相似案例]",
+            "目前脈絡類型：active_event",
+            "目前風險等級：HIGH",
+            "目前決策：BLOCK",
+            "歷史核准案例僅供參考，不會覆蓋目前事件的確定性 Risk Level 或 Decision。",
+            "",
+            "1. CASE-SEED-001 - Command Injection Payload",
+            "   分數：95",
+            "   相似原因：matched attack_types: Command Injection",
+            "   需檢查的差異 / 缺少證據：None",
+            "   圖形關係說明：",
+            "      - 目前脈絡與 CASE-SEED-001 共享攻擊類型：Command Injection。",
+            "      - 目前脈絡與 CASE-SEED-001 共享規則 ID：CMD-001。",
+            "      - 邊界：歷史核准案例僅供參考。",
+            "   分析師結論：歷史模擬 BLOCK 不代表目前已執行。",
+            "   結果說明：模擬結果。",
+            "   來源：manually_curated_seed (data/approved_case_seeds/CASE-SEED-001.yml)",
+        ]
+    )
+
+
+def test_zh_tw_approved_similar_cases_title_parses_into_section() -> None:
+    sections = parse_report_sections(_zh_similar_case_text())
+
+    assert sections.approved_similar_cases.startswith("[核准相似案例]")
+    assert "CASE-SEED-001" in sections.approved_similar_cases
+    assert "matched attack_types: Command Injection" in sections.approved_similar_cases
+
+
+def test_zh_tw_graph_relationship_title_and_block_parse() -> None:
+    sections = parse_report_sections(_zh_similar_case_text())
+
+    graph = sections.graph_relationship_explanation
+    assert graph.startswith("圖形關係說明：")
+    assert "目前脈絡與 CASE-SEED-001 共享攻擊類型：Command Injection。" in graph
+    assert "CMD-001" in graph
+    assert "邊界：" in graph
+    # the graph block stops before the localized analyst-conclusion field.
+    assert "分析師結論" not in graph
+    assert "來源" not in graph
+    assert has_graph_relationship_explanation(_zh_similar_case_text())
+
+
+def test_bilingual_approved_similar_cases_and_graph_titles_parse() -> None:
+    text = "\n".join(
+        [
+            "[核准相似案例 / Approved Similar Cases]",
+            "目前風險等級 / Current Risk Level：HIGH",
+            "",
+            "1. CASE-SEED-001 - Command Injection Payload",
+            "   圖形關係說明 / Graph-Grounded Relationship Explanation：",
+            "      - 目前脈絡與 CASE-SEED-001 共享攻擊類型：Command Injection。 / "
+            "Current context shares attack type Command Injection with CASE-SEED-001.",
+            "   分析師結論 / Analyst conclusion：歷史模擬 BLOCK。",
+        ]
+    )
+
+    sections = parse_report_sections(text)
+
+    assert sections.approved_similar_cases.startswith("[核准相似案例 / Approved Similar Cases]")
+    graph = sections.graph_relationship_explanation
+    assert graph.startswith("圖形關係說明 / Graph-Grounded Relationship Explanation：")
+    assert "Current context shares attack type Command Injection with CASE-SEED-001." in graph
+    assert "分析師結論" not in graph
+
+
+def test_english_similar_case_and_graph_titles_still_parse() -> None:
+    text = "\n".join(
+        [
+            "[Approved Similar Cases]",
+            "Current Risk Level: HIGH",
+            "1. CASE-SEED-001 - Command Injection Payload",
+            "   Graph-Grounded Relationship Explanation:",
+            "      - Current context shares rule ID CMD-001 with CASE-SEED-001.",
+            "   Analyst conclusion: Historical BLOCK was simulated.",
+        ]
+    )
+
+    sections = parse_report_sections(text)
+
+    assert sections.approved_similar_cases.startswith("[Approved Similar Cases]")
+    assert sections.graph_relationship_explanation.startswith(GRAPH_RELATIONSHIP_TITLE)
+    assert "shares rule ID CMD-001" in sections.graph_relationship_explanation
+    assert "Analyst conclusion" not in sections.graph_relationship_explanation
