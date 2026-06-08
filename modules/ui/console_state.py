@@ -117,6 +117,30 @@ def record_similar_case_output(
     session_state[STATE_SIMILAR_CASE_OUTPUT] = response_text
 
 
+def record_draft_action_output(
+    session_state: MutableMapping[str, Any],
+    *,
+    command: str,
+    response_text: str,
+    selected_action: str | None,
+) -> None:
+    """Record a draft-action result without clearing preserved report sections.
+
+    Draft actions (request / approve / cancel) must update the latest command,
+    latest output, and latest selected action so the Case Draft panel and Raw
+    Output reflect the newest draft command. They must NOT overwrite or clear
+    the preserved analysis report or similar-case output, which the Export
+    Report and report-section views still need to display.
+    """
+
+    record_output(
+        session_state,
+        user_input=command,
+        response_text=response_text,
+        selected_action=selected_action,
+    )
+
+
 def clear_active_context(session_state: MutableMapping[str, Any]) -> None:
     """Clear retained active context and displayed output without touching files."""
 

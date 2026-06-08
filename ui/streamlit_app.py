@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import html
 from datetime import datetime
 from time import perf_counter
 from typing import Any
@@ -51,6 +52,7 @@ from modules.ui.console_state import (
     clear_active_context,
     combined_display_output,
     record_analysis_output,
+    record_draft_action_output,
     record_output,
     record_similar_case_output,
     summarize_active_context,
@@ -90,6 +92,14 @@ from modules.ui.performance_view import (
     record_runtime_timing,
 )
 from modules.ui.route_policy_view import build_route_policy_display
+from modules.ui.visual_style import (
+    DETERMINISTIC_COLOR,
+    apply_console_css,
+    badge_html,
+    decision_color,
+    severity_color,
+    severity_left_class,
+)
 
 PAGE_TITLE = "Security AI Agent Console"
 TEXT_AREA_KEY = "sentinel_console_input"
@@ -306,16 +316,20 @@ def run_similar_case_lookup() -> None:
 
 
 def run_case_draft_command(command: str, action_label: str) -> None:
-    """Issue an existing exact case-draft command through the orchestrator."""
+    """Issue an existing exact case-draft command through the orchestrator.
+
+    Draft actions update the Case Draft panel, latest action, and raw output,
+    but must preserve the analysis report and similar-case output that the
+    Export Report still relies on.
+    """
 
     output = _run_orchestrator_with_timing(action_label, command, OUTPUT_KIND_DRAFT)
-    record_output(
+    record_draft_action_output(
         st.session_state,
-        user_input=command,
+        command=command,
         response_text=output.response_text,
         selected_action=output.selected_tool,
     )
-    record_analysis_output(st.session_state, output.response_text)
 
 
 def _detail_value(details: tuple[str, ...], label: str) -> str:
@@ -326,39 +340,136 @@ def _detail_value(details: tuple[str, ...], label: str) -> str:
     return "N/A"
 
 
-def render_header() -> None:
-    st.title(ui_text("header_title"))
-    st.markdown(ui_text("header_subtitle"))
+def inject_console_css() -> None:
+    """Inject the console CSS block once near app startup."""
+
+    st.markdown(f"<style>{apply_console_css()}</style>", unsafe_allow_html=True)
+
+
+def _status_chip(text: str) -> str:
+    return f'<span class="sentinel-chip">\U0001f7e2 {text}</span>'
+
+
+def render_status_bar() -> None:
+    """Render a SOC-style status bar from existing session data only."""
+
+    summary = summarize_active_context(st.session_state.get(STATE_CLI_STATE))
+    mode = normalize_analysis_mode(st.session_state.get(STATE_ANALYSIS_MODE))
+    mode_badge = badge_html(
+        translated_analysis_mode_label(mode),
+        DETERMINISTIC_COLOR,
+        title=ui_text("console_mode_label"),
+    )
+
+    if summary.has_context:
+        active_parts = [badge_html(summary.title, DETERMINISTIC_COLOR)]
+        if summary.risk_level:
+            active_parts.append(
+                badge_html(summary.risk_level, severity_color(summary.risk_level), title=ui_text("risk_level"))
+            )
+        if summary.decision:
+            active_parts.append(
+                badge_html(summary.decision, decision_color(summary.decision), title=ui_text("decision"))
+            )
+    else:
+        active_parts = [badge_html(ui_text("no_active_short"), severity_color(None))]
+    active_html = " ".join(active_parts)
+
+    health_chips = (
+        f"{_status_chip(ui_text('status_detector_ok'))}"
+        f"{_status_chip(ui_text('status_similar_case_ready'))}"
+        f"{_status_chip(ui_text('status_draft_gated'))}"
+    )
+
+    status_html = (
+        '<div class="sentinel-status-bar">'
+        '<div class="sentinel-status-row">'
+        f'<span class="sentinel-status-title">\U0001f6e1 {ui_text("header_title")}</span>'
+        f"{health_chips}"
+        "</div>"
+        '<div class="sentinel-status-row">'
+        f'<span class="sentinel-muted">{ui_text("console_mode_label")}</span>{mode_badge}'
+        f'<span class="sentinel-muted">{ui_text("console_active_label")}</span>{active_html}'
+        "</div>"
+        "</div>"
+    )
+    st.markdown(status_html, unsafe_allow_html=True)
+
+    timing = build_runtime_timing_display(st.session_state)
+    st.caption(
+        f"{ui_text('console_latest_label')}: {timing.action_label}"
+        f"  ·  {ui_text('elapsed')} {timing.elapsed_display}"
+    )
     st.caption(ui_text("simulated_boundary_caption"))
+
+
+def _kv_html(label: str, value: str, *, code: bool = False) -> str:
+    value_class = "sentinel-kv-value sentinel-code" if code else "sentinel-kv-value"
+    return (
+        '<span class="sentinel-kv">'
+        f'<span class="sentinel-kv-label">{html.escape(label)}</span>'
+        f'<span class="{value_class}">{html.escape(value)}</span>'
+        "</span>"
+    )
 
 
 def render_active_context() -> None:
     summary = summarize_active_context(st.session_state.get(STATE_CLI_STATE))
-    with st.container(border=True):
-        st.subheader(ui_text("active_context"))
-        if not summary.has_context:
-            st.info(ui_text("no_active_context"))
-            return
+    st.subheader(ui_text("active_context"))
 
-        attack_or_incident = _detail_value(summary.details, "Attack Type")
-        rule_or_evidence = (
-            _detail_value(summary.details, "Rule IDs")
-            if summary.kind == "event"
-            else _detail_value(summary.details, "Evidence IDs")
+    if not summary.has_context:
+        st.markdown(
+            f'<div class="sentinel-empty-card">{html.escape(ui_text("no_active_context"))}</div>',
+            unsafe_allow_html=True,
         )
+        return
 
-        context_col, risk_col, decision_col, attack_col, evidence_col = st.columns(
-            [1.1, 1, 1, 1.4, 1.6]
+    attack_or_incident = _detail_value(summary.details, "Attack Type")
+    rule_or_evidence_label = ui_text("rules_evidence")
+    rule_or_evidence = (
+        _detail_value(summary.details, "Rule IDs")
+        if summary.kind == "event"
+        else _detail_value(summary.details, "Evidence IDs")
+    )
+    hero_title = (
+        attack_or_incident
+        if attack_or_incident not in ("", "N/A", "None")
+        else summary.title
+    )
+
+    badges: list[str] = []
+    if summary.risk_level:
+        badges.append(
+            badge_html(summary.risk_level, severity_color(summary.risk_level), title=ui_text("risk_level"))
         )
-        context_col.metric(ui_text("context"), summary.title)
-        risk_col.metric(ui_text("risk_level"), summary.risk_level or "N/A")
-        decision_col.metric(ui_text("decision"), summary.decision or "N/A")
-        attack_col.metric(ui_text("attack_incident"), attack_or_incident)
-        evidence_col.metric(ui_text("rules_evidence"), rule_or_evidence)
+    if summary.decision:
+        badges.append(
+            badge_html(summary.decision, decision_color(summary.decision), title=ui_text("decision"))
+        )
+    badges_html = " ".join(badges)
 
-        with st.expander(ui_text("context_details"), expanded=False):
-            for detail in summary.details:
-                st.write(detail)
+    card_class = f"sentinel-hero-card {severity_left_class(summary.risk_level)}".strip()
+    sub_line = html.escape(summary.title)
+    if summary.decision:
+        sub_line = f"{sub_line}  ·  {html.escape(ui_text('simulated_decision'))}"
+
+    hero_html = (
+        f'<div class="{card_class}">'
+        f'<div class="sentinel-hero-title">{html.escape(hero_title)}</div>'
+        f'<div class="sentinel-hero-sub">{sub_line}</div>'
+        f'<div class="sentinel-status-row">{badges_html}</div>'
+        '<div class="sentinel-status-row">'
+        f'{_kv_html(ui_text("context"), summary.title)}'
+        f'{_kv_html(ui_text("attack_incident"), attack_or_incident)}'
+        f'{_kv_html(rule_or_evidence_label, rule_or_evidence, code=True)}'
+        "</div>"
+        "</div>"
+    )
+    st.markdown(hero_html, unsafe_allow_html=True)
+
+    with st.expander(ui_text("context_details"), expanded=False):
+        for detail in summary.details:
+            st.write(detail)
 
 
 def render_text_block(text: str, empty_text: str) -> None:
@@ -706,7 +817,7 @@ def render_controls() -> None:
             placeholder="test; rm -rf /tmp/test",
         )
 
-        run_col, similar_col, clear_col = st.columns([1, 1, 1])
+        run_col, similar_col, clear_col = st.columns([1.4, 1, 1])
         with run_col:
             run_clicked = st.button(t("run_input", language), type="primary", use_container_width=True)
         with similar_col:
@@ -740,9 +851,10 @@ def render_last_action() -> None:
 
 def main() -> None:
     st.set_page_config(page_title=PAGE_TITLE, layout="wide")
+    inject_console_css()
     get_runtime()
 
-    render_header()
+    render_status_bar()
     st.divider()
     render_controls()
     render_last_action()

@@ -49,6 +49,41 @@ _TRANSLATIONS: dict[str, dict[str, str]] = {
         "en": "BLOCK / MONITOR / ALLOW are simulated project decisions. No real enforcement is executed.",
         "bilingual": "BLOCK / MONITOR / ALLOW 是模擬決策 / simulated project decisions. No real enforcement is executed.",
     },
+    "status_detector_ok": {
+        "zh-TW": "偵測器正常",
+        "en": "Detector OK",
+        "bilingual": "偵測器正常 / Detector OK",
+    },
+    "status_similar_case_ready": {
+        "zh-TW": "相似案例就緒",
+        "en": "Similar Case ready",
+        "bilingual": "相似案例就緒 / Similar Case ready",
+    },
+    "status_draft_gated": {
+        "zh-TW": "草稿需核准",
+        "en": "Draft approval-gated",
+        "bilingual": "草稿需核准 / Draft approval-gated",
+    },
+    "console_mode_label": {
+        "zh-TW": "模式",
+        "en": "Mode",
+        "bilingual": "模式 / Mode",
+    },
+    "console_active_label": {
+        "zh-TW": "目前脈絡",
+        "en": "Active",
+        "bilingual": "目前脈絡 / Active",
+    },
+    "console_latest_label": {
+        "zh-TW": "最近",
+        "en": "Latest",
+        "bilingual": "最近 / Latest",
+    },
+    "no_active_short": {
+        "zh-TW": "無",
+        "en": "None",
+        "bilingual": "無 / None",
+    },
     "control_panel": {
         "zh-TW": "輸入 / 控制面板",
         "en": "Input / Control Panel",
