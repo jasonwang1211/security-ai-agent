@@ -29,6 +29,11 @@ from modules.ui.case_memory_view import build_case_memory_display, case_memory_t
 from modules.ui.analysis_mode import (
     ANALYSIS_MODE_OPTIONS,
     DEFAULT_ANALYSIS_MODE,
+    FAST_DETERMINISTIC_MODE,
+    FAST_MODE_NOTE,
+    FULL_AI_ASSISTED_MODE,
+    FULL_MODE_NOTE,
+    SHARED_MODE_BOUNDARY_NOTE,
     STATE_ANALYSIS_MODE,
     analysis_mode_notes,
     normalize_analysis_mode,
@@ -50,6 +55,13 @@ from modules.ui.console_state import (
     record_similar_case_output,
     summarize_active_context,
 )
+from modules.ui.i18n import (
+    LANGUAGE_OPTIONS,
+    STATE_LANGUAGE,
+    language_display_name,
+    normalize_language,
+    t,
+)
 from modules.ui.layout_sections import (
     ANALYSIS_REPORT_PANEL,
     APPROVED_SIMILAR_CASES_PANEL,
@@ -61,7 +73,6 @@ from modules.ui.layout_sections import (
     RAW_OUTPUT_PANEL,
     ROUTE_POLICY_PANEL,
     SAFETY_BOUNDARY_PANEL,
-    SYSTEM_DEBUG_GROUP,
     workspace_group_names,
 )
 from modules.ui.report_sections import (
@@ -82,6 +93,34 @@ from modules.ui.route_policy_view import build_route_policy_display
 
 PAGE_TITLE = "Security AI Agent Console"
 TEXT_AREA_KEY = "sentinel_console_input"
+
+_LABEL_KEYS = {
+    "Analysis": "analysis_group",
+    "Case Intelligence": "case_intelligence_group",
+    "Draft / Export": "draft_export_group",
+    "System / Debug": "system_debug_group",
+    ANALYSIS_REPORT_PANEL: "analysis_report",
+    SAFETY_BOUNDARY_PANEL: "safety_boundary",
+    RAW_OUTPUT_PANEL: "raw_output",
+    APPROVED_SIMILAR_CASES_PANEL: "approved_similar_cases",
+    GRAPH_RELATIONS_PANEL: "graph_relations",
+    CASE_MEMORY_PANEL: "case_memory",
+    CASE_DRAFT_PANEL: "case_draft",
+    EXPORT_REPORT_PANEL: "export_report",
+    PERFORMANCE_PANEL: "performance",
+    ROUTE_POLICY_PANEL: "route_policy",
+}
+
+_ANALYSIS_MODE_LABEL_KEYS = {
+    FAST_DETERMINISTIC_MODE: "fast_deterministic_mode",
+    FULL_AI_ASSISTED_MODE: "full_ai_assisted_mode",
+}
+
+_ANALYSIS_MODE_NOTE_KEYS = {
+    FAST_MODE_NOTE: "fast_mode_note",
+    FULL_MODE_NOTE: "full_mode_note",
+    SHARED_MODE_BOUNDARY_NOTE: "shared_mode_boundary_note",
+}
 
 
 def build_agent() -> SecurityAgent:
@@ -115,6 +154,29 @@ def get_runtime() -> tuple[SecurityAgent, Any]:
     orchestrator = st.session_state[STATE_ORCHESTRATOR]
     bind_runtime(st.session_state, agent=agent, orchestrator=orchestrator)
     return agent, orchestrator
+
+
+def current_language() -> str:
+    return normalize_language(st.session_state.get(STATE_LANGUAGE))
+
+
+def ui_text(key: str) -> str:
+    return t(key, current_language())
+
+
+def translated_label(label: str, language: str | None = None) -> str:
+    selected_language = normalize_language(language or current_language())
+    key = _LABEL_KEYS.get(label)
+    return t(key, selected_language) if key else label
+
+
+def translated_analysis_mode_label(mode: str, language: str | None = None) -> str:
+    selected_language = normalize_language(language or current_language())
+    return t(_ANALYSIS_MODE_LABEL_KEYS.get(mode, mode), selected_language)
+
+
+def translated_analysis_mode_notes(mode: str, language: str) -> tuple[str, ...]:
+    return tuple(t(_ANALYSIS_MODE_NOTE_KEYS.get(note, note), language) for note in analysis_mode_notes(mode))
 
 
 def _current_timestamp() -> str:
@@ -265,23 +327,17 @@ def _detail_value(details: tuple[str, ...], label: str) -> str:
 
 
 def render_header() -> None:
-    st.title(PAGE_TITLE)
-    st.markdown(
-        "AI-assisted security triage demo with deterministic detection, approved "
-        "similar-case retrieval, and approval-gated case draft workflow."
-    )
-    st.caption(
-        "BLOCK / MONITOR / ALLOW are simulated project decisions. "
-        "No real enforcement is executed."
-    )
+    st.title(ui_text("header_title"))
+    st.markdown(ui_text("header_subtitle"))
+    st.caption(ui_text("simulated_boundary_caption"))
 
 
 def render_active_context() -> None:
     summary = summarize_active_context(st.session_state.get(STATE_CLI_STATE))
     with st.container(border=True):
-        st.subheader("Active Context")
+        st.subheader(ui_text("active_context"))
         if not summary.has_context:
-            st.info("No active context yet. Run an input or load a log to begin.")
+            st.info(ui_text("no_active_context"))
             return
 
         attack_or_incident = _detail_value(summary.details, "Attack Type")
@@ -294,13 +350,13 @@ def render_active_context() -> None:
         context_col, risk_col, decision_col, attack_col, evidence_col = st.columns(
             [1.1, 1, 1, 1.4, 1.6]
         )
-        context_col.metric("Context", summary.title)
-        risk_col.metric("Risk Level", summary.risk_level or "N/A")
-        decision_col.metric("Decision", summary.decision or "N/A")
-        attack_col.metric("Attack / Incident", attack_or_incident)
-        evidence_col.metric("Rules / Evidence", rule_or_evidence)
+        context_col.metric(ui_text("context"), summary.title)
+        risk_col.metric(ui_text("risk_level"), summary.risk_level or "N/A")
+        decision_col.metric(ui_text("decision"), summary.decision or "N/A")
+        attack_col.metric(ui_text("attack_incident"), attack_or_incident)
+        evidence_col.metric(ui_text("rules_evidence"), rule_or_evidence)
 
-        with st.expander("Context details", expanded=False):
+        with st.expander(ui_text("context_details"), expanded=False):
             for detail in summary.details:
                 st.write(detail)
 
@@ -316,11 +372,11 @@ def render_case_memory_panel() -> None:
     display = build_case_memory_display()
 
     first, second, third = st.columns(3)
-    first.metric("Approved Seeds", display.approved_seed_count)
-    second.metric("Approved For Retrieval", display.approved_for_retrieval_count)
-    third.metric("Source Directory", display.source_directory)
+    first.metric(ui_text("approved_seeds"), display.approved_seed_count)
+    second.metric(ui_text("approved_for_retrieval"), display.approved_for_retrieval_count)
+    third.metric(ui_text("source_directory"), display.source_directory)
 
-    st.write("Boundary Notes:")
+    st.write(f"{ui_text('boundary_notes')}:")
     for note in display.boundary_notes:
         st.write(f"- {note}")
 
@@ -328,12 +384,12 @@ def render_case_memory_panel() -> None:
     if rows:
         st.table(rows)
     else:
-        st.write("No approved case seeds loaded.")
+        st.write(ui_text("no_approved_case_seeds"))
         return
 
     for seed in display.seeds:
         with st.expander(f"{seed.case_id} - {seed.title}"):
-            st.write("Metadata")
+            st.write(ui_text("metadata"))
             st.json(
                 {
                     "case_id": seed.case_id,
@@ -349,7 +405,7 @@ def render_case_memory_panel() -> None:
                     "source_path": seed.source_path,
                 }
             )
-            st.write("Matched Fields")
+            st.write(ui_text("matched_fields"))
             st.json(
                 {
                     "attack_types": seed.attack_types,
@@ -358,20 +414,20 @@ def render_case_memory_panel() -> None:
                     "evidence_types": seed.evidence_types,
                 }
             )
-            st.write("Summary")
+            st.write(ui_text("summary"))
             st.write(seed.summary)
-            st.write("Key Facts")
+            st.write(ui_text("key_facts"))
             for item in seed.key_facts:
                 st.write(f"- {item}")
-            st.write("Investigation Notes")
+            st.write(ui_text("investigation_notes"))
             for item in seed.investigation_notes:
                 st.write(f"- {item}")
-            st.write("Differences To Check")
+            st.write(ui_text("differences_to_check"))
             for item in seed.differences_to_check:
                 st.write(f"- {item}")
-            st.write(f"Analyst Conclusion: {seed.analyst_conclusion}")
-            st.write(f"Outcome: {seed.outcome}")
-            st.write("Safety Boundary")
+            st.write(f"{ui_text('analyst_conclusion')}: {seed.analyst_conclusion}")
+            st.write(f"{ui_text('outcome')}: {seed.outcome}")
+            st.write(ui_text("safety_boundary"))
             for note in display.boundary_notes:
                 st.write(f"- {note}")
 
@@ -379,13 +435,13 @@ def render_case_memory_panel() -> None:
 def render_case_draft_panel() -> None:
     request_col, approve_col, cancel_col = st.columns(3)
     with request_col:
-        if st.button("Request Draft", use_container_width=True):
+        if st.button(ui_text("request_draft"), use_container_width=True):
             run_case_draft_command(CASE_DRAFT_REQUEST_COMMAND, "Request Draft")
     with approve_col:
-        if st.button("Approve Draft", use_container_width=True):
+        if st.button(ui_text("approve_draft"), use_container_width=True):
             run_case_draft_command(CASE_DRAFT_APPROVE_COMMAND, "Approve Draft")
     with cancel_col:
-        if st.button("Cancel Draft", use_container_width=True):
+        if st.button(ui_text("cancel_draft"), use_container_width=True):
             run_case_draft_command(CASE_DRAFT_CANCEL_COMMAND, "Cancel Draft")
 
     display = build_case_draft_display(
@@ -394,18 +450,18 @@ def render_case_draft_panel() -> None:
     )
 
     first, second, third = st.columns(3)
-    first.metric("Status", display.status)
-    second.metric("Pending Approval", "yes" if display.has_pending_request else "no")
-    third.metric("Active Context", "yes" if display.has_active_context else "no")
+    first.metric(ui_text("status"), display.status)
+    second.metric(ui_text("pending_approval"), "yes" if display.has_pending_request else "no")
+    third.metric(ui_text("active_context"), "yes" if display.has_active_context else "no")
 
     st.write(display.message)
     if display.draft_path:
-        st.write("Draft Path")
+        st.write(ui_text("draft_path"))
         st.code(display.draft_path, language="text")
     else:
-        st.write("No draft file path.")
+        st.write(ui_text("no_draft_file_path"))
 
-    st.write("Safety Boundary:")
+    st.write(f"{ui_text('safety_boundary')}:")
     for note in display.safety_notes:
         st.write(f"- {note}")
 
@@ -414,25 +470,25 @@ def render_performance_panel() -> None:
     display = build_runtime_timing_display(st.session_state)
 
     first, second, third = st.columns(3)
-    first.metric("Latest Action", display.action_label)
-    second.metric("Selected Skill", display.selected_skill)
-    third.metric("Elapsed", display.elapsed_display)
-    st.metric("Analysis Mode", display.analysis_mode)
+    first.metric(ui_text("latest_action"), display.action_label)
+    second.metric(ui_text("selected_skill"), display.selected_skill)
+    third.metric(ui_text("elapsed"), display.elapsed_display)
+    st.metric(ui_text("analysis_mode"), translated_analysis_mode_label(display.analysis_mode))
 
     status_col, kind_col, timestamp_col = st.columns(3)
-    status_col.metric("Status", display.status or "N/A")
-    kind_col.metric("Output Kind", display.output_kind)
-    timestamp_col.metric("Timestamp", display.timestamp or "N/A")
+    status_col.metric(ui_text("status"), display.status or "N/A")
+    kind_col.metric(ui_text("output_kind"), display.output_kind)
+    timestamp_col.metric(ui_text("timestamp"), display.timestamp or "N/A")
 
-    st.write(f"Started At: {display.started_at or 'N/A'}")
-    st.write(f"Ended At: {display.ended_at or 'N/A'}")
+    st.write(f"{ui_text('started_at')}: {display.started_at or 'N/A'}")
+    st.write(f"{ui_text('ended_at')}: {display.ended_at or 'N/A'}")
     if display.input_text:
-        st.write("Latest Input")
+        st.write(ui_text("latest_input"))
         st.code(display.input_text, language="text")
     else:
-        st.write("No input command recorded.")
+        st.write(ui_text("no_input_recorded"))
 
-    st.write("Notes:")
+    st.write(f"{ui_text('notes')}:")
     for note in display.notes:
         st.write(f"- {note}")
 
@@ -465,30 +521,32 @@ def build_current_markdown_export(sections: Any, combined_output: str) -> Any:
 def render_export_report_panel(sections: Any, combined_output: str) -> None:
     export = build_current_markdown_export(sections, combined_output)
 
-    st.write("Safety Notes:")
+    st.write(f"{ui_text('safety_notes')}:")
     for note in export.safety_notes:
         st.write(f"- {note}")
 
     st.download_button(
-        "Download Markdown Report",
+        ui_text("download_markdown_report"),
         data=export.markdown,
         file_name=export.filename,
         mime="text/markdown",
         use_container_width=True,
     )
 
-    st.write("Markdown Preview")
+    st.write(ui_text("markdown_preview"))
     st.code(export.markdown, language="markdown")
 
 
 def render_relationship_graph_panel(sections: Any) -> None:
+    language = current_language()
     display = build_relationship_graph_display(
         active_context_summary=summarize_active_context(st.session_state.get(STATE_CLI_STATE)),
         approved_similar_cases_text=sections.approved_similar_cases,
         graph_relationship_text=sections.graph_relationship_explanation,
+        language=language,
     )
 
-    st.markdown("##### Visual Relationship Graph")
+    st.markdown(f"##### {ui_text('visual_relationship_graph')}")
     if display.has_graph:
         try:
             st.graphviz_chart(display.dot)
@@ -499,28 +557,28 @@ def render_relationship_graph_panel(sections: Any) -> None:
     else:
         st.info(display.empty_message)
 
-    st.markdown("##### Graph Legend")
+    st.markdown(f"##### {ui_text('graph_legend')}")
     for item in display.legend:
         st.write(f"- {item}")
 
-    st.markdown("##### Key Relationship Summary")
+    st.markdown(f"##### {ui_text('key_relationship_summary')}")
     if display.summary:
         for item in display.summary:
             st.write(f"- {item}")
     else:
-        st.write("No approved similar-case relationship summary yet.")
+        st.write(ui_text("no_relationship_summary"))
 
-    st.write("Graph Notes:")
+    st.write(f"{ui_text('graph_notes')}:")
     for note in display.notes:
         st.write(f"- {note}")
 
-    with st.expander("DOT Source", expanded=False):
-        render_text_block(display.dot, "No DOT source yet.")
+    with st.expander(ui_text("dot_source"), expanded=False):
+        render_text_block(display.dot, ui_text("no_dot_source"))
 
-    with st.expander("Text Relationship Explanation", expanded=False):
+    with st.expander(ui_text("text_relationship_explanation"), expanded=False):
         render_text_block(
             sections.graph_relationship_explanation,
-            "No graph-grounded relationship explanation yet.",
+            ui_text("no_graph_relationship"),
         )
 
 
@@ -530,16 +588,16 @@ def render_route_policy_panel() -> None:
         str(st.session_state.get(STATE_LAST_INPUT) or ""),
     )
 
-    st.write(f"Latest Input: {st.session_state.get(STATE_LAST_INPUT) or 'None'}")
+    st.write(f"{ui_text('latest_input')}: {st.session_state.get(STATE_LAST_INPUT) or 'None'}")
     first, second, third = st.columns(3)
-    first.metric("Selected Skill", display.selected_skill)
-    second.metric("Permission", display.permission)
-    third.metric("Execution Mode", display.execution_mode)
+    first.metric(ui_text("selected_skill"), display.selected_skill)
+    second.metric(ui_text("permission"), display.permission)
+    third.metric(ui_text("execution_mode"), display.execution_mode)
 
-    st.write(f"Route Reason: {display.route_reason}")
-    st.write(f"Human Approval Required: {str(display.human_approval_required).lower()}")
-    st.write(f"Write Behavior: {display.write_behavior}")
-    st.write("Safety Notes:")
+    st.write(f"{ui_text('route_reason')}: {display.route_reason}")
+    st.write(f"{ui_text('human_approval_required')}: {str(display.human_approval_required).lower()}")
+    st.write(f"{ui_text('write_behavior')}: {display.write_behavior}")
+    st.write(f"{ui_text('safety_notes')}:")
     for note in display.safety_notes:
         st.write(f"- {note}")
 
@@ -559,80 +617,90 @@ def render_report_sections() -> None:
         else DEFAULT_SAFETY_BOUNDARY_TEXT
     )
 
+    language = current_language()
     analysis_tab, case_intelligence_tab, draft_export_tab, system_debug_tab = st.tabs(
-        list(workspace_group_names())
+        [translated_label(name, language) for name in workspace_group_names()]
     )
 
     with analysis_tab:
-        st.caption("Primary triage output, safety boundary, and raw output appendix.")
+        st.caption(t("analysis_group_caption", language))
         with st.container(border=True):
-            render_panel_heading(ANALYSIS_REPORT_PANEL)
-            render_text_block(sections.analysis_report, "No analysis report yet.")
+            render_panel_heading(translated_label(ANALYSIS_REPORT_PANEL, language))
+            render_text_block(sections.analysis_report, t("no_analysis_report", language))
 
         with st.container(border=True):
             render_panel_heading(
-                SAFETY_BOUNDARY_PANEL,
-                "Simulation and authority boundaries remain visible for every run.",
+                translated_label(SAFETY_BOUNDARY_PANEL, language),
+                t("safety_boundary_caption", language),
             )
             render_text_block(safety_text, DEFAULT_SAFETY_BOUNDARY_TEXT)
 
-        with st.expander(RAW_OUTPUT_PANEL, expanded=False):
-            render_text_block(str(st.session_state.get(STATE_LAST_OUTPUT) or ""), "No output yet.")
+        with st.expander(translated_label(RAW_OUTPUT_PANEL, language), expanded=False):
+            render_text_block(str(st.session_state.get(STATE_LAST_OUTPUT) or ""), t("no_output", language))
 
     with case_intelligence_tab:
-        st.caption(
-            "Approved case references and relationship explanations are advisory only."
-        )
+        st.caption(t("case_intelligence_caption", language))
         with st.container(border=True):
-            render_panel_heading(APPROVED_SIMILAR_CASES_PANEL)
-            render_text_block(sections.approved_similar_cases, "No approved similar cases yet.")
+            render_panel_heading(translated_label(APPROVED_SIMILAR_CASES_PANEL, language))
+            render_text_block(sections.approved_similar_cases, t("no_approved_similar_cases", language))
 
         with st.container(border=True):
-            render_panel_heading(GRAPH_RELATIONS_PANEL)
+            render_panel_heading(translated_label(GRAPH_RELATIONS_PANEL, language))
             render_relationship_graph_panel(sections)
 
         with st.container(border=True):
-            render_panel_heading(CASE_MEMORY_PANEL)
+            render_panel_heading(translated_label(CASE_MEMORY_PANEL, language))
             render_case_memory_panel()
 
     with draft_export_tab:
-        st.caption("Draft capture remains approval-gated; export remains in-memory.")
+        st.caption(t("draft_export_caption", language))
         with st.container(border=True):
-            render_panel_heading(CASE_DRAFT_PANEL)
+            render_panel_heading(translated_label(CASE_DRAFT_PANEL, language))
             render_case_draft_panel()
 
         with st.container(border=True):
-            render_panel_heading(EXPORT_REPORT_PANEL)
+            render_panel_heading(translated_label(EXPORT_REPORT_PANEL, language))
             render_export_report_panel(sections, combined_output)
 
     with system_debug_tab:
-        st.caption(f"{SYSTEM_DEBUG_GROUP} contains diagnostic/debug information.")
+        st.caption(t("system_debug_caption", language))
         with st.container(border=True):
-            render_panel_heading(PERFORMANCE_PANEL)
+            render_panel_heading(translated_label(PERFORMANCE_PANEL, language))
             render_performance_panel()
 
         with st.container(border=True):
-            render_panel_heading(ROUTE_POLICY_PANEL)
+            render_panel_heading(translated_label(ROUTE_POLICY_PANEL, language))
             render_route_policy_panel()
 
 
 def render_controls() -> None:
     with st.container(border=True):
-        st.subheader("Input / Control Panel")
+        language = current_language()
+        st.subheader(t("control_panel", language))
+        language = normalize_language(
+            st.selectbox(
+                t("language_selector", language),
+                LANGUAGE_OPTIONS,
+                index=LANGUAGE_OPTIONS.index(language),
+                key=STATE_LANGUAGE,
+                format_func=language_display_name,
+            )
+        )
         selected_mode = normalize_analysis_mode(
             st.radio(
-                "Analysis Mode",
+                t("analysis_mode", language),
                 ANALYSIS_MODE_OPTIONS,
                 index=ANALYSIS_MODE_OPTIONS.index(DEFAULT_ANALYSIS_MODE),
                 key=STATE_ANALYSIS_MODE,
                 horizontal=True,
+                format_func=lambda mode: translated_analysis_mode_label(str(mode), language),
             )
         )
-        for note in analysis_mode_notes(selected_mode):
+        for note in translated_analysis_mode_notes(selected_mode, language):
             st.caption(note)
 
         user_input = st.text_area(
-            "Input",
+            t("input", language),
             key=TEXT_AREA_KEY,
             height=150,
             placeholder="test; rm -rf /tmp/test",
@@ -640,11 +708,11 @@ def render_controls() -> None:
 
         run_col, similar_col, clear_col = st.columns([1, 1, 1])
         with run_col:
-            run_clicked = st.button("Run input", type="primary", use_container_width=True)
+            run_clicked = st.button(t("run_input", language), type="primary", use_container_width=True)
         with similar_col:
-            similar_clicked = st.button("Find Similar Cases", use_container_width=True)
+            similar_clicked = st.button(t("find_similar_cases", language), use_container_width=True)
         with clear_col:
-            clear_clicked = st.button("Clear Context", use_container_width=True)
+            clear_clicked = st.button(t("clear_context", language), use_container_width=True)
 
     if run_clicked:
         text = str(user_input or "").strip()
@@ -666,8 +734,8 @@ def render_last_action() -> None:
     selected = st.session_state.get(STATE_LAST_SELECTED_ACTION) or "None"
     last_input = st.session_state.get(STATE_LAST_INPUT) or "None"
     col1, col2 = st.columns(2)
-    col1.caption(f"Last action: {selected}")
-    col2.caption(f"Last input: {last_input}")
+    col1.caption(f"{ui_text('latest_action')}: {selected}")
+    col2.caption(f"{ui_text('latest_input')}: {last_input}")
 
 
 def main() -> None:

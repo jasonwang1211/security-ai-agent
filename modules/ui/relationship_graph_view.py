@@ -6,6 +6,7 @@ from dataclasses import dataclass
 import re
 
 from modules.ui.console_state import ActiveContextSummary
+from modules.ui.i18n import DEFAULT_LANGUAGE, normalize_language
 
 EMPTY_RELATIONSHIP_GRAPH_MESSAGE = (
     "No relationship graph is available yet. Run an analysis and retrieve similar cases first."
@@ -62,6 +63,39 @@ _EDGE_DISPLAY_LABELS = {
     SHARES_EVIDENCE: "共享證據",
     SHARES_FINDING: "共享發現",
     SHARES_DECISION: "共享決策",
+}
+
+_EDGE_DISPLAY_LABELS_EN = {
+    HAS_ATTACK_TYPE: "attack",
+    MATCHED_RULE: "rule",
+    HAS_EVIDENCE: "evidence",
+    HAS_FINDING: "finding",
+    HAS_RISK: "risk",
+    HAS_DECISION: "decision",
+    SIMILAR_TO: "similar",
+    SHARES_ATTACK_TYPE: "shares attack",
+    SHARES_RULE: "shares rule",
+    SHARES_EVIDENCE: "shares evidence",
+    SHARES_FINDING: "shares finding",
+    SHARES_DECISION: "shares decision",
+}
+
+_CLUSTER_LABELS = {
+    "zh-TW": {
+        "current": "目前脈絡",
+        "shared": "共享關係欄位",
+        "cases": "核准相似案例",
+    },
+    "en": {
+        "current": "Current Context",
+        "shared": "Shared Relationship Fields",
+        "cases": "Approved Similar Cases",
+    },
+    "bilingual": {
+        "current": "目前脈絡 / Current Context",
+        "shared": "共享關係欄位 / Shared Relationship Fields",
+        "cases": "核准相似案例 / Approved Similar Cases",
+    },
 }
 
 _DISPLAY_LABEL_REPLACEMENTS = {
@@ -144,18 +178,20 @@ def build_relationship_graph_display(
     active_context_summary: ActiveContextSummary,
     approved_similar_cases_text: str,
     graph_relationship_text: str,
+    language: str = DEFAULT_LANGUAGE,
 ) -> RelationshipGraphDisplay:
     """Build a deterministic DOT graph from already available UI display text."""
 
+    selected_language = normalize_language(language)
     builder = _RelationshipGraphBuilder()
     if not active_context_summary.has_context:
         return RelationshipGraphDisplay(
             nodes=(),
             edges=(),
             dot="",
-            empty_message=EMPTY_RELATIONSHIP_GRAPH_MESSAGE,
-            notes=RELATIONSHIP_GRAPH_NOTES,
-            legend=RELATIONSHIP_GRAPH_LEGEND,
+            empty_message=_empty_message(selected_language),
+            notes=_graph_notes(selected_language),
+            legend=_graph_legend(selected_language),
             summary=(),
         )
 
@@ -174,11 +210,11 @@ def build_relationship_graph_display(
     return RelationshipGraphDisplay(
         nodes=nodes,
         edges=edges,
-        dot=_build_dot(nodes, edges) if edges else "",
-        empty_message=EMPTY_RELATIONSHIP_GRAPH_MESSAGE,
-        notes=RELATIONSHIP_GRAPH_NOTES,
-        legend=RELATIONSHIP_GRAPH_LEGEND,
-        summary=_build_summary(nodes, edges),
+        dot=_build_dot(nodes, edges, selected_language) if edges else "",
+        empty_message=_empty_message(selected_language),
+        notes=_graph_notes(selected_language),
+        legend=_graph_legend(selected_language),
+        summary=_build_summary_i18n(nodes, edges, selected_language),
     )
 
 
@@ -316,6 +352,7 @@ def _add_shared_feature(
 def _build_dot(
     nodes: tuple[RelationshipGraphNode, ...],
     edges: tuple[RelationshipGraphEdge, ...],
+    language: str,
 ) -> str:
     node_lines = [_format_node(node) for node in nodes]
     node_line_by_id = {node.node_id: line for node, line in zip(nodes, node_lines)}
@@ -344,11 +381,18 @@ def _build_dot(
         '  edge [fontname="Arial", color="#475569", fontcolor="#0f172a", arrowsize=0.75, fontsize=11];',
         "",
     ]
-    lines.extend(_format_cluster("cluster_current", "Current Context", current_node_ids, node_line_by_id))
+    lines.extend(
+        _format_cluster(
+            "cluster_current",
+            _cluster_label("current", language),
+            current_node_ids,
+            node_line_by_id,
+        )
+    )
     lines.extend(
         _format_cluster(
             "cluster_shared",
-            "Shared Relationship Fields",
+            _cluster_label("shared", language),
             shared_node_ids,
             node_line_by_id,
         )
@@ -356,7 +400,7 @@ def _build_dot(
     lines.extend(
         _format_cluster(
             "cluster_cases",
-            "Approved Similar Cases",
+            _cluster_label("cases", language),
             case_node_ids,
             node_line_by_id,
         )
@@ -369,7 +413,7 @@ def _build_dot(
     for edge in edges:
         lines.append(
             f'  "{_dot_escape(edge.source)}" -> "{_dot_escape(edge.target)}" '
-            f'[label="{_dot_escape(_edge_display_label(edge.label))}"];'
+            f'[label="{_dot_escape(_edge_display_label(edge.label, language))}"];'
         )
     lines.append("}")
     return "\n".join(lines)
@@ -418,9 +462,10 @@ def _node_style(kind: str) -> dict[str, str]:
     return styles.get(kind, {"shape": "ellipse", "fillcolor": "#f8fafc", "color": "#64748b"})
 
 
-def _build_summary(
+def _build_summary_i18n(
     nodes: tuple[RelationshipGraphNode, ...],
     edges: tuple[RelationshipGraphEdge, ...],
+    language: str,
 ) -> tuple[str, ...]:
     node_by_id = {node.node_id: node for node in nodes}
     current = node_by_id.get("current")
@@ -432,17 +477,34 @@ def _build_summary(
         if edge.source == "current" and edge.label == SIMILAR_TO:
             case = node_by_id.get(edge.target)
             if case is not None:
-                lines.append(
-                    f"{_zh_current_label(current.label)}與 {case.label} 相似。 | "
-                    f"{current.label} is similar to {case.label}."
-                )
+                lines.append(_similar_summary(current.label, case.label, language))
 
     shared_templates = {
-        SHARES_ATTACK_TYPE: "兩者共享攻擊類型：{value}。 | Both share attack type: {value}.",
-        SHARES_RULE: "兩者關聯規則 ID：{value}。 | Both are associated with rule ID: {value}.",
-        SHARES_EVIDENCE: "兩者共享證據類型：{value}。 | Both share evidence type: {value}.",
-        SHARES_FINDING: "兩者共享發現類型：{value}。 | Both share finding type: {value}.",
-        SHARES_DECISION: "兩者共享模擬決策：{value}。 | Both share simulated decision: {value}.",
+        SHARES_ATTACK_TYPE: _summary_template(
+            language,
+            zh="兩者共享攻擊類型：{value}。",
+            en="Both share attack type: {value}.",
+        ),
+        SHARES_RULE: _summary_template(
+            language,
+            zh="兩者關聯規則 ID：{value}。",
+            en="Both are associated with rule ID: {value}.",
+        ),
+        SHARES_EVIDENCE: _summary_template(
+            language,
+            zh="兩者共享證據類型：{value}。",
+            en="Both share evidence type: {value}.",
+        ),
+        SHARES_FINDING: _summary_template(
+            language,
+            zh="兩者共享發現類型：{value}。",
+            en="Both share finding type: {value}.",
+        ),
+        SHARES_DECISION: _summary_template(
+            language,
+            zh="兩者共享模擬決策：{value}。",
+            en="Both share simulated decision: {value}.",
+        ),
     }
     for edge in edges:
         template = shared_templates.get(edge.label)
@@ -467,7 +529,6 @@ def _zh_current_label(label: str) -> str:
     if label == "Current Event":
         return "目前事件"
     return "目前脈絡"
-
 
 def _detail_values(details: tuple[str, ...], label: str) -> tuple[str, ...]:
     prefix = f"{label}:"
@@ -511,7 +572,68 @@ def _display_label(value: str) -> str:
     return cleaned.replace("_", " ")
 
 
-def _edge_display_label(value: str) -> str:
+def _empty_message(language: str) -> str:
+    if language == "en":
+        return EMPTY_RELATIONSHIP_GRAPH_MESSAGE
+    if language == "bilingual":
+        return "尚無關係圖。 | No relationship graph is available yet. Run an analysis and retrieve similar cases first."
+    return "尚無關係圖。請先執行分析並檢索相似案例。"
+
+
+def _graph_notes(language: str) -> tuple[str, ...]:
+    if language == "en":
+        return (
+            "Graph is derived from current active context and approved similar-case output.",
+            "Graph is advisory only.",
+            "Graph does not override Risk Level or Decision.",
+            "No real enforcement is executed.",
+        )
+    if language == "bilingual":
+        return RELATIONSHIP_GRAPH_NOTES
+    return tuple(note.split("|", 1)[0].strip() for note in RELATIONSHIP_GRAPH_NOTES)
+
+
+def _graph_legend(language: str) -> tuple[str, ...]:
+    if language == "en":
+        return (
+            "Blue box = Current event / incident",
+            "Green box = Approved similar case",
+            "Ellipse = Shared field / entity",
+            "Red diamond = Risk level",
+            "Yellow diamond = Simulated decision",
+        )
+    if language == "bilingual":
+        return RELATIONSHIP_GRAPH_LEGEND
+    return tuple(item.split("|", 1)[0].strip() for item in RELATIONSHIP_GRAPH_LEGEND)
+
+
+def _cluster_label(kind: str, language: str) -> str:
+    return _CLUSTER_LABELS.get(language, _CLUSTER_LABELS[DEFAULT_LANGUAGE]).get(
+        kind,
+        _CLUSTER_LABELS[DEFAULT_LANGUAGE][kind],
+    )
+
+
+def _similar_summary(current_label: str, case_label: str, language: str) -> str:
+    zh = f"{_zh_current_label(current_label)}與 {case_label} 相似。"
+    en = f"{current_label} is similar to {case_label}."
+    if language == "en":
+        return en
+    if language == "bilingual":
+        return f"{zh} | {en}"
+    return zh
+
+def _summary_template(language: str, *, zh: str, en: str) -> str:
+    if language == "en":
+        return en
+    if language == "bilingual":
+        return f"{zh} | {en}"
+    return zh
+
+
+def _edge_display_label(value: str, language: str) -> str:
+    if language == "en":
+        return _EDGE_DISPLAY_LABELS_EN.get(value, value.replace("_", " "))
     return _EDGE_DISPLAY_LABELS.get(value, value.replace("_", " "))
 
 

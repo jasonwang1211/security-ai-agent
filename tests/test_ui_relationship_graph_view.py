@@ -71,7 +71,21 @@ def test_no_active_context_returns_empty_graph_with_safe_message() -> None:
     assert display.nodes == ()
     assert display.edges == ()
     assert display.dot == ""
-    assert display.empty_message == EMPTY_RELATIONSHIP_GRAPH_MESSAGE
+    assert display.empty_message
+
+    english_display = build_relationship_graph_display(
+        active_context_summary=ActiveContextSummary(
+            kind="",
+            title="No active context",
+            risk_level="",
+            decision="",
+            details=(),
+        ),
+        approved_similar_cases_text="",
+        graph_relationship_text="",
+        language="en",
+    )
+    assert english_display.empty_message == EMPTY_RELATIONSHIP_GRAPH_MESSAGE
 
 
 def test_command_injection_context_creates_current_feature_nodes_and_edges() -> None:
@@ -193,6 +207,7 @@ def test_graph_notes_include_advisory_no_override_and_no_enforcement_boundaries(
         active_context_summary=_event_summary(),
         approved_similar_cases_text="",
         graph_relationship_text="",
+        language="en",
     )
 
     notes = " ".join(display.notes).casefold()
@@ -206,6 +221,7 @@ def test_graph_display_includes_presentation_legend_entries() -> None:
         active_context_summary=_event_summary(),
         approved_similar_cases_text="1. CASE-SEED-001 - Command Injection Payload",
         graph_relationship_text="",
+        language="bilingual",
     )
 
     legend = " ".join(display.legend)
@@ -236,6 +252,7 @@ def test_command_injection_graph_summary_uses_readable_relationship_text() -> No
         active_context_summary=_event_summary(),
         approved_similar_cases_text=similar_cases_text,
         graph_relationship_text="",
+        language="bilingual",
     )
 
     summary = "\n".join(display.summary)
@@ -265,6 +282,7 @@ def test_auth_incident_graph_summary_uses_readable_relationship_text() -> None:
         active_context_summary=_auth_summary(),
         approved_similar_cases_text=similar_cases_text,
         graph_relationship_text="",
+        language="bilingual",
     )
 
     summary = "\n".join(display.summary)
@@ -295,6 +313,168 @@ def test_dot_uses_readable_node_and_edge_display_labels() -> None:
     assert 'label="決策"' in display.dot
     assert 'label="相似"' in display.dot
     assert 'label="共享證據"' in display.dot
+
+
+def test_english_dot_uses_english_edge_and_cluster_labels_only() -> None:
+    display = build_relationship_graph_display(
+        active_context_summary=_event_summary(),
+        approved_similar_cases_text=(
+            "1. CASE-SEED-001 - Command Injection Payload\n"
+            "Similarity reasons: matched attack_types: Command Injection, "
+            "matched rule_ids: CMD-001, matched evidence_types: shell_metacharacter_payload"
+        ),
+        graph_relationship_text="",
+        language="en",
+    )
+
+    assert 'label="attack"' in display.dot
+    assert 'label="rule"' in display.dot
+    assert 'label="evidence"' in display.dot
+    assert 'label="risk"' in display.dot
+    assert 'label="decision"' in display.dot
+    assert 'label="similar"' in display.dot
+    assert 'label="Current Context"' in display.dot
+    assert 'label="Shared Relationship Fields"' in display.dot
+    assert 'label="Approved Similar Cases"' in display.dot
+    for chinese_label in (
+        "攻擊",
+        "規則",
+        "證據",
+        "風險",
+        "決策",
+        "相似",
+        "目前脈絡",
+        "共享關係欄位",
+        "核准相似案例",
+    ):
+        assert chinese_label not in display.dot
+
+
+def test_graph_legend_respects_selected_language() -> None:
+    zh_display = build_relationship_graph_display(
+        active_context_summary=_event_summary(),
+        approved_similar_cases_text="1. CASE-SEED-001 - Command Injection Payload",
+        graph_relationship_text="",
+        language="zh-TW",
+    )
+    en_display = build_relationship_graph_display(
+        active_context_summary=_event_summary(),
+        approved_similar_cases_text="1. CASE-SEED-001 - Command Injection Payload",
+        graph_relationship_text="",
+        language="en",
+    )
+    bilingual_display = build_relationship_graph_display(
+        active_context_summary=_event_summary(),
+        approved_similar_cases_text="1. CASE-SEED-001 - Command Injection Payload",
+        graph_relationship_text="",
+        language="bilingual",
+    )
+
+    zh_legend = " ".join(zh_display.legend)
+    en_legend = " ".join(en_display.legend)
+    bilingual_legend = " ".join(bilingual_display.legend)
+    assert "藍色方塊" in zh_legend
+    assert "Blue box" not in zh_legend
+    assert "Blue box = Current event / incident" in en_legend
+    assert "藍色方塊" not in en_legend
+    assert "藍色方塊" in bilingual_legend
+    assert "Blue box" in bilingual_legend
+
+
+def test_graph_summary_respects_selected_language() -> None:
+    similar_cases_text = "\n".join(
+        [
+            "[Approved Similar Cases]",
+            "1. CASE-SEED-001 - Command Injection Payload",
+            (
+                "   Similarity reasons: matched attack_types: Command Injection, "
+                "matched rule_ids: CMD-001, matched evidence_types: "
+                "shell_metacharacter_payload, supporting decision match: BLOCK"
+            ),
+        ]
+    )
+
+    zh_display = build_relationship_graph_display(
+        active_context_summary=_event_summary(),
+        approved_similar_cases_text=similar_cases_text,
+        graph_relationship_text="",
+        language="zh-TW",
+    )
+    en_display = build_relationship_graph_display(
+        active_context_summary=_event_summary(),
+        approved_similar_cases_text=similar_cases_text,
+        graph_relationship_text="",
+        language="en",
+    )
+    bilingual_display = build_relationship_graph_display(
+        active_context_summary=_event_summary(),
+        approved_similar_cases_text=similar_cases_text,
+        graph_relationship_text="",
+        language="bilingual",
+    )
+
+    zh_summary = "\n".join(zh_display.summary)
+    en_summary = "\n".join(en_display.summary)
+    bilingual_summary = "\n".join(bilingual_display.summary)
+    assert "目前事件與 CASE-SEED-001 相似" in zh_summary
+    assert "Both share attack type" not in zh_summary
+    assert "Current Event is similar to CASE-SEED-001." in en_summary
+    assert "Both share attack type: Command Injection." in en_summary
+    assert "目前事件與 CASE-SEED-001 相似" not in en_summary
+    assert "目前事件與 CASE-SEED-001 相似" in bilingual_summary
+    assert "Current Event is similar to CASE-SEED-001." in bilingual_summary
+
+
+def test_graph_notes_respect_selected_language() -> None:
+    zh_display = build_relationship_graph_display(
+        active_context_summary=_event_summary(),
+        approved_similar_cases_text="",
+        graph_relationship_text="",
+        language="zh-TW",
+    )
+    en_display = build_relationship_graph_display(
+        active_context_summary=_event_summary(),
+        approved_similar_cases_text="",
+        graph_relationship_text="",
+        language="en",
+    )
+
+    assert "Graph is advisory only." not in " ".join(zh_display.notes)
+    assert "Graph is advisory only." in " ".join(en_display.notes)
+
+
+def test_unknown_graph_language_falls_back_to_default() -> None:
+    default_display = build_relationship_graph_display(
+        active_context_summary=_event_summary(),
+        approved_similar_cases_text="",
+        graph_relationship_text="",
+    )
+    unknown_display = build_relationship_graph_display(
+        active_context_summary=_event_summary(),
+        approved_similar_cases_text="",
+        graph_relationship_text="",
+        language="unknown",
+    )
+
+    assert unknown_display.dot == default_display.dot
+    assert unknown_display.legend == default_display.legend
+
+
+def test_relationship_graph_source_excludes_known_stale_mojibake_markers() -> None:
+    source = Path("modules/ui/relationship_graph_view.py").read_text(encoding="utf-8")
+
+    stale_markers = (
+        "????",
+        "??\x80",
+        "???",
+        "???",
+        "??",
+        "??",
+        "??",
+    )
+    for marker in stale_markers:
+        assert marker not in source
+    assert not any("\ue000" <= char <= "\uf8ff" for char in source)
 
 
 def test_relationship_graph_helper_does_not_import_streamlit() -> None:
