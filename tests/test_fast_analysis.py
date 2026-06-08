@@ -117,3 +117,104 @@ def test_fast_analysis_helper_has_no_rag_or_llm_runtime_imports() -> None:
     assert "modules.rag_qa" not in text
     assert "llm_assist" not in text
 
+
+# --- v2.6-P language-aware Fast deterministic report ------------------------
+
+
+def test_english_fast_report_matches_existing_behavior() -> None:
+    report = run_fast_payload_analysis(FastModeAgent(), COMMAND_PAYLOAD, language="en").response_text
+
+    assert "[Security Triage Report]" in report
+    assert "Fast Deterministic Mode" in report
+    assert "Risk Level: HIGH" in report
+    assert "Decision: BLOCK" in report
+    assert "Attack Type: Command Injection" in report
+    assert "CMD-001" in report
+
+
+def test_zh_tw_fast_report_uses_chinese_labels_and_keeps_dynamic_values() -> None:
+    report = run_fast_payload_analysis(
+        FastModeAgent(), COMMAND_PAYLOAD, language="zh-TW"
+    ).response_text
+
+    assert "[資安分流報告]" in report
+    assert "快速確定性模式" in report
+    assert "風險等級：HIGH" in report
+    assert "決策：BLOCK" in report
+    assert "攻擊類型：Command Injection" in report
+    # dynamic values are not translated.
+    assert "CMD-001" in report
+    assert "HIGH" in report
+    assert "BLOCK" in report
+    # english report title bracket should not appear in zh-TW mode.
+    assert "[Security Triage Report]" not in report
+
+
+def test_bilingual_fast_report_uses_compact_bilingual_labels() -> None:
+    report = run_fast_payload_analysis(
+        FastModeAgent(), COMMAND_PAYLOAD, language="bilingual"
+    ).response_text
+
+    assert "[資安分流報告 / Security Triage Report]" in report
+    assert "模式 / Mode" in report
+    assert "風險等級 / Risk Level" in report
+    assert "決策 / Decision" in report
+    # dynamic values remain unchanged.
+    assert "Command Injection" in report
+    assert "HIGH" in report
+    assert "BLOCK" in report
+    assert "CMD-001" in report
+
+
+def test_unsupported_language_falls_back_to_english() -> None:
+    fallback = run_fast_payload_analysis(
+        FastModeAgent(), COMMAND_PAYLOAD, language="fr"
+    ).response_text
+    english = run_fast_payload_analysis(
+        FastModeAgent(), COMMAND_PAYLOAD, language="en"
+    ).response_text
+
+    assert fallback == english
+    assert "[Security Triage Report]" in fallback
+
+
+def test_default_language_preserves_english_report() -> None:
+    default = run_fast_payload_analysis(FastModeAgent(), COMMAND_PAYLOAD).response_text
+    english = run_fast_payload_analysis(
+        FastModeAgent(), COMMAND_PAYLOAD, language="en"
+    ).response_text
+
+    assert default == english
+
+
+def test_active_context_unchanged_across_languages() -> None:
+    english = run_fast_payload_analysis(FastModeAgent(), COMMAND_PAYLOAD, language="en")
+    chinese = run_fast_payload_analysis(FastModeAgent(), COMMAND_PAYLOAD, language="zh-TW")
+
+    for context in (english.active_context, chinese.active_context):
+        assert context.attack_types == ("Command Injection",)
+        assert context.rule_ids == ("CMD-001",)
+        assert context.risk_level == "HIGH"
+        assert context.decision == "BLOCK"
+
+
+def test_zh_tw_similar_case_lookup_still_works_after_fast_analysis() -> None:
+    agent = FastModeAgent()
+    run_fast_payload_analysis(agent, COMMAND_PAYLOAD, language="zh-TW")
+
+    similar = run_retrieve_approved_similar_case_skill(
+        SimilarCaseInput(command="find similar cases"),
+        agent,
+    )
+
+    assert similar.status == "ok"
+    assert similar.output["matches"][0]["case_id"] == "CASE-SEED-001"
+
+
+def test_report_language_helper_has_no_streamlit_import() -> None:
+    text = __import__("pathlib").Path(
+        "modules/controller/report_language.py"
+    ).read_text(encoding="utf-8")
+
+    assert "streamlit" not in text.lower()
+

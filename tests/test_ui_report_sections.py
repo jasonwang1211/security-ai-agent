@@ -130,6 +130,102 @@ def test_record_analysis_output_clears_stale_similar_case_output() -> None:
     assert "CASE-SEED-001" not in combined_display_output(session_state)
 
 
+# --- v2.6-P localized fast-report title parsing -----------------------------
+
+
+def _zh_fast_report() -> str:
+    return "\n".join(
+        [
+            "AI: [資安分流報告]",
+            "模式：快速確定性模式",
+            "",
+            "0. 快速判定",
+            "判定：此事件可能為 Command Injection。",
+            "風險等級：HIGH",
+            "決策：BLOCK",
+            "",
+            "1. 摘要",
+            "攻擊類型：Command Injection",
+            "規則 ID：CMD-001",
+        ]
+    )
+
+
+def _bilingual_fast_report() -> str:
+    return "\n".join(
+        [
+            "AI: [資安分流報告 / Security Triage Report]",
+            "模式 / Mode：快速確定性模式 / Fast Deterministic Mode",
+            "",
+            "0. 快速判定 / Quick Verdict",
+            "風險等級 / Risk Level：HIGH",
+            "決策 / Decision：BLOCK",
+        ]
+    )
+
+
+def test_english_triage_marker_still_parses() -> None:
+    text = "AI: [Security Triage Report]\nRisk Level: HIGH\nDecision: BLOCK"
+
+    sections = parse_report_sections(text)
+
+    assert sections.security_triage_report.startswith(SECURITY_TRIAGE_REPORT)
+    assert "[Security Triage Report]" in sections.analysis_report
+    assert "Risk Level: HIGH" in sections.analysis_report
+
+
+def test_zh_tw_triage_marker_parses_into_analysis_report() -> None:
+    sections = parse_report_sections(_zh_fast_report())
+
+    assert "[資安分流報告]" in sections.analysis_report
+    assert "風險等級：HIGH" in sections.analysis_report
+    assert "攻擊類型：Command Injection" in sections.analysis_report
+    assert "CMD-001" in sections.analysis_report
+
+
+def test_bilingual_triage_marker_parses_into_analysis_report() -> None:
+    sections = parse_report_sections(_bilingual_fast_report())
+
+    assert "[資安分流報告 / Security Triage Report]" in sections.analysis_report
+    assert "風險等級 / Risk Level：HIGH" in sections.analysis_report
+
+
+def test_localized_report_combined_with_similar_and_graph_sections() -> None:
+    text = "\n\n".join(
+        [
+            _zh_fast_report(),
+            "\n".join(
+                [
+                    "[Approved Similar Cases]",
+                    "Current context kind: active_event",
+                    "1. CASE-SEED-001 - Command Injection Payload",
+                    "   Graph-Grounded Relationship Explanation:",
+                    "      - Current context shares rule ID CMD-001 with CASE-SEED-001.",
+                ]
+            ),
+        ]
+    )
+
+    sections = parse_report_sections(text)
+
+    # localized triage parses but stops before the similar-case block.
+    assert "[資安分流報告]" in sections.analysis_report
+    assert "CASE-SEED-001" not in sections.analysis_report
+    # other sections remain intact.
+    assert sections.approved_similar_cases.startswith(APPROVED_SIMILAR_CASES)
+    assert "CASE-SEED-001" in sections.approved_similar_cases
+    assert "shares rule ID CMD-001" in sections.graph_relationship_explanation
+
+
+def test_empty_text_still_returns_empty_sections() -> None:
+    sections = parse_report_sections("plain text without known report headings")
+
+    assert sections.security_triage_report == ""
+    assert sections.analysis_report == ""
+    assert sections.approved_similar_cases == ""
+    assert sections.graph_relationship_explanation == ""
+
+
 def test_report_section_helpers_do_not_import_streamlit() -> None:
     source = Path("modules/ui/report_sections.py").read_text(encoding="utf-8")
 

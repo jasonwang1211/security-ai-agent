@@ -10,6 +10,17 @@ from dataclasses import dataclass
 import re
 
 SECURITY_TRIAGE_REPORT = "[Security Triage Report]"
+# Language-aware deterministic report titles (Fast mode). English wording is
+# unchanged; these alternates let the parser recognize localized fast reports.
+SECURITY_TRIAGE_REPORT_ZH = "[資安分流報告]"
+SECURITY_TRIAGE_REPORT_BILINGUAL = "[資安分流報告 / Security Triage Report]"
+# Ordered most-specific first so per-line matching never truncates a longer
+# title (the three bracketed titles do not overlap, but order is kept safe).
+SECURITY_TRIAGE_REPORT_TITLES = (
+    SECURITY_TRIAGE_REPORT_BILINGUAL,
+    SECURITY_TRIAGE_REPORT,
+    SECURITY_TRIAGE_REPORT_ZH,
+)
 LOG_INGESTION_SUMMARY = "[Log Ingestion Summary]"
 STRUCTURED_AUTHENTICATION_INCIDENT = "[Structured Authentication Incident]"
 APPROVED_SIMILAR_CASES = "[Approved Similar Cases]"
@@ -18,6 +29,8 @@ SIMULATION_NOTICE_TITLE = "5. Simulation Notice"
 
 KNOWN_TOP_LEVEL_MARKERS = (
     SECURITY_TRIAGE_REPORT,
+    SECURITY_TRIAGE_REPORT_BILINGUAL,
+    SECURITY_TRIAGE_REPORT_ZH,
     LOG_INGESTION_SUMMARY,
     STRUCTURED_AUTHENTICATION_INCIDENT,
     APPROVED_SIMILAR_CASES,
@@ -80,7 +93,13 @@ def parse_report_sections(text: str) -> ParsedReportSections:
 
 
 def extract_security_triage_report(text: str) -> str:
-    return extract_top_level_section(text, SECURITY_TRIAGE_REPORT)
+    """Extract the deterministic triage report for any supported language title."""
+
+    lines = _lines(text)
+    for title in SECURITY_TRIAGE_REPORT_TITLES:
+        if _find_line_containing(lines, title) is not None:
+            return extract_top_level_section(text, title)
+    return ""
 
 
 def extract_log_ingestion_summary(text: str) -> str:

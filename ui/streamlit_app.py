@@ -244,7 +244,7 @@ def _run_fast_payload_analysis_with_timing(
     agent, _ = get_runtime()
     started_at = _current_timestamp()
     start_counter = perf_counter()
-    output = run_fast_payload_analysis(agent, user_input)
+    output = run_fast_payload_analysis(agent, user_input, language=current_language())
     elapsed_seconds = perf_counter() - start_counter
     ended_at = _current_timestamp()
     record_runtime_timing(
