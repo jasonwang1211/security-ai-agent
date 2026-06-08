@@ -18,6 +18,23 @@ For detailed evaluation notes and CLI excerpts, see:
 - [Demo & Evaluation Report](REPORT.md)
 - [Demo Outputs](demo_outputs.md)
 
+### Demo / Showcase
+
+Run the Streamlit SOC console:
+
+```powershell
+python -m streamlit run ui/streamlit_app.py --server.fileWatcherType none
+```
+
+Presentation and demo materials:
+
+- [Standalone cyber showcase page](docs/demo_showcase.html) — open directly in a browser (presentation only; not the backend).
+- [5-minute presentation guide](docs/demo_presentation_guide.md)
+- [5-minute spoken script](docs/demo_script_5min.md)
+- [Final demo smoke checklist](docs/final_demo_smoke_checklist.md)
+
+`BLOCK` / `MONITOR` / `ALLOW` are simulated decisions; detection is rule-based; RAG, similar cases, and the graph are advisory analyst context; human review is required before trusting or promoting case drafts.
+
 ### The Problem
 
 SOC-style triage has two common failure modes:
