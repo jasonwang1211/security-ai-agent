@@ -741,7 +741,10 @@ def render_route_policy_panel() -> None:
 
 
 def render_panel_heading(title: str, caption: str = "") -> None:
-    st.markdown(f"#### {title}")
+    st.markdown(
+        f'<div class="sentinel-panel-heading">{html.escape(title)}</div>',
+        unsafe_allow_html=True,
+    )
     if caption:
         st.caption(caption)
 
@@ -931,7 +934,7 @@ def render_last_action() -> None:
 
 
 def main() -> None:
-    st.set_page_config(page_title=PAGE_TITLE, layout="wide")
+    st.set_page_config(page_title=PAGE_TITLE, page_icon="\U0001f6e1", layout="wide")
     inject_console_css()
     get_runtime()
 

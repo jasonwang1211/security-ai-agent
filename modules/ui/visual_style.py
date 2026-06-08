@@ -100,17 +100,48 @@ def apply_console_css() -> str:
   --sentinel-info: #6B7280;
   --sentinel-deterministic: #3B82F6;
   --sentinel-advisory: #8B5CF6;
-  --sentinel-surface: #11161d;
-  --sentinel-surface-alt: #161d26;
-  --sentinel-border: #243042;
+  --sentinel-cyan: #22D3EE;
+  --sentinel-bg: #060912;
+  --sentinel-surface: rgba(20, 27, 38, 0.72);
+  --sentinel-surface-alt: rgba(27, 35, 50, 0.82);
+  --sentinel-border: rgba(86, 116, 156, 0.28);
+  --sentinel-border-strong: rgba(34, 211, 238, 0.40);
   --sentinel-text-muted: #9aa7b8;
+  --sentinel-shadow: 0 10px 30px rgba(2, 6, 14, 0.55);
+  --sentinel-glow-cyan: 0 0 0 1px rgba(34, 211, 238, 0.20), 0 10px 30px rgba(2, 6, 14, 0.55);
 }
-.sentinel-status-bar {
+/* Deep navy command-center backdrop with subtle cyan/purple corner glows. */
+.stApp {
+  background:
+    radial-gradient(1100px 560px at 14% -8%, rgba(34, 211, 238, 0.07), transparent 60%),
+    radial-gradient(1000px 700px at 100% 0%, rgba(139, 92, 246, 0.08), transparent 55%),
+    linear-gradient(160deg, #0a1120 0%, #060912 58%, #04070e 100%);
+  background-attachment: fixed;
+}
+[data-testid="stHeader"] { background: transparent; }
+/* Bordered containers become glass "section cards" with hover glow. */
+[data-testid="stVerticalBlockBorderWrapper"] {
   background: var(--sentinel-surface);
   border: 1px solid var(--sentinel-border);
-  border-radius: 10px;
-  padding: 12px 16px;
+  border-radius: 14px;
+  box-shadow: var(--sentinel-shadow);
+  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
+  transition: border-color 160ms ease, box-shadow 160ms ease;
+}
+[data-testid="stVerticalBlockBorderWrapper"]:hover {
+  border-color: var(--sentinel-border-strong);
+  box-shadow: var(--sentinel-glow-cyan);
+}
+.sentinel-status-bar {
+  background: linear-gradient(180deg, rgba(22, 30, 44, 0.86), rgba(13, 19, 29, 0.86));
+  border: 1px solid var(--sentinel-border);
+  border-radius: 14px;
+  padding: 14px 18px;
   margin-bottom: 8px;
+  box-shadow: var(--sentinel-shadow);
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
 }
 .sentinel-status-row {
   display: flex;
@@ -126,30 +157,52 @@ def apply_console_css() -> str:
 }
 .sentinel-status-title {
   font-weight: 700;
-  font-size: 1.05rem;
-  letter-spacing: 0.2px;
+  font-size: 1.08rem;
+  letter-spacing: 0.3px;
+  color: #e8eef7;
+  text-shadow: 0 0 18px rgba(34, 211, 238, 0.25);
 }
 .sentinel-card {
   background: var(--sentinel-surface);
   border: 1px solid var(--sentinel-border);
-  border-radius: 10px;
+  border-radius: 12px;
   padding: 14px 16px;
+  box-shadow: var(--sentinel-shadow);
 }
 .sentinel-hero-card {
-  background: var(--sentinel-surface-alt);
+  background: linear-gradient(180deg, rgba(27, 35, 50, 0.90), rgba(18, 24, 36, 0.90));
   border: 1px solid var(--sentinel-border);
-  border-radius: 12px;
-  padding: 16px 18px;
+  border-radius: 16px;
+  padding: 18px 20px;
+  box-shadow: var(--sentinel-shadow);
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
+  transition: border-color 160ms ease, box-shadow 160ms ease;
+}
+.sentinel-hero-card:hover {
+  border-color: var(--sentinel-border-strong);
+  box-shadow: var(--sentinel-glow-cyan);
 }
 .sentinel-hero-title {
-  font-size: 1.4rem;
+  font-size: 1.45rem;
   font-weight: 700;
   margin: 0 0 4px 0;
+  color: #eef3fa;
 }
 .sentinel-hero-sub {
   color: var(--sentinel-text-muted);
   font-size: 0.85rem;
   margin-bottom: 10px;
+}
+/* Reusable neon-accent heading for section cards. */
+.sentinel-panel-heading {
+  font-size: 1.02rem;
+  font-weight: 700;
+  letter-spacing: 0.3px;
+  margin: 0 0 8px 0;
+  padding-left: 11px;
+  border-left: 3px solid var(--sentinel-cyan);
+  color: #e6edf6;
 }
 .sentinel-pill {
   display: inline-block;
@@ -159,23 +212,25 @@ def apply_console_css() -> str:
   font-weight: 600;
   font-size: 0.8rem;
   line-height: 1.5;
+  box-shadow: 0 1px 10px rgba(2, 6, 14, 0.35);
 }
 .sentinel-chip {
   display: inline-flex;
   align-items: center;
   gap: 6px;
   padding: 3px 10px;
-  border-radius: 8px;
-  border: 1px solid var(--sentinel-border);
-  background: var(--sentinel-surface-alt);
-  color: var(--sentinel-text-muted);
+  border-radius: 999px;
+  border: 1px solid rgba(16, 185, 129, 0.35);
+  background: rgba(16, 185, 129, 0.10);
+  color: #cfe9dd;
   font-size: 0.8rem;
+  box-shadow: inset 0 0 12px rgba(16, 185, 129, 0.08);
 }
 .sentinel-code {
   font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-  background: #0d1117;
+  background: #0a0f17;
   border: 1px solid var(--sentinel-border);
-  border-radius: 6px;
+  border-radius: 8px;
   padding: 6px 10px;
   display: block;
   white-space: pre-wrap;
@@ -214,11 +269,36 @@ def apply_console_css() -> str:
   padding-left: 10px;
 }
 .sentinel-empty-card {
-  border: 1px dashed var(--sentinel-border);
-  border-radius: 12px;
-  padding: 18px;
+  border: 1px dashed var(--sentinel-border-strong);
+  border-radius: 14px;
+  padding: 22px;
   color: var(--sentinel-text-muted);
   text-align: center;
+  background: rgba(20, 27, 38, 0.40);
+}
+/* Workspace group tabs: neon-cyan active accent. */
+.stTabs [data-baseweb="tab-list"] { gap: 6px; }
+.stTabs [data-baseweb="tab"] { border-radius: 8px 8px 0 0; }
+.stTabs [aria-selected="true"] { color: var(--sentinel-cyan) !important; }
+/* Buttons: subtle cyan hover glow (primary accent comes from the theme). */
+.stButton > button {
+  border-radius: 10px;
+  transition: border-color 160ms ease, box-shadow 160ms ease, transform 120ms ease;
+}
+.stButton > button:hover {
+  border-color: var(--sentinel-cyan);
+  box-shadow: 0 0 0 1px rgba(34, 211, 238, 0.25), 0 6px 18px rgba(34, 211, 238, 0.10);
+}
+.stButton > button:active { transform: translateY(1px); }
+/* Inputs: cyan focus ring to match the command-center accent. */
+.stTextArea textarea:focus,
+.stTextInput input:focus {
+  box-shadow: 0 0 0 1px rgba(34, 211, 238, 0.45);
+}
+/* Code blocks: faint cyan inner glow. */
+[data-testid="stCode"], .stCode {
+  border-radius: 8px;
+  box-shadow: inset 0 0 26px rgba(34, 211, 238, 0.045);
 }
 """.strip()
 

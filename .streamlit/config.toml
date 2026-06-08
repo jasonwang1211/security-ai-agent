@@ -1,0 +1,11 @@
+# Streamlit theme for the Security AI Agent SOC console.
+# UI-only: pins a dark cyber base so the console renders consistently and the
+# injected sentinel-* CSS stays readable regardless of the viewer's local
+# Streamlit theme preference. This changes no backend behavior.
+[theme]
+base = "dark"
+primaryColor = "#22D3EE"
+backgroundColor = "#070B14"
+secondaryBackgroundColor = "#121A2A"
+textColor = "#E6EDF6"
+font = "sans serif"

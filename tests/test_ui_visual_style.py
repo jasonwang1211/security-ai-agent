@@ -103,6 +103,28 @@ def test_apply_console_css_contains_required_class_names() -> None:
         assert class_name in css
 
 
+def test_apply_console_css_includes_v2_6t_cyber_classes() -> None:
+    css = apply_console_css()
+
+    for class_name in (
+        ".stApp",
+        ".sentinel-panel-heading",
+        ".sentinel-chip",
+        ".sentinel-empty-card",
+        "--sentinel-cyan",
+    ):
+        assert class_name in css
+
+
+def test_apply_console_css_avoids_keyframe_animations() -> None:
+    # Subtle hover transitions are allowed; full keyframe animations are not,
+    # to avoid restarting effects on every Streamlit rerun.
+    css = apply_console_css()
+
+    assert "@keyframes" not in css
+    assert "animation:" not in css
+
+
 def test_apply_console_css_returns_only_style_text() -> None:
     css = apply_console_css()
 
