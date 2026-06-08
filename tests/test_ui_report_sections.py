@@ -13,6 +13,7 @@ from modules.ui.report_sections import (
     GRAPH_RELATIONSHIP_TITLE,
     SECURITY_TRIAGE_REPORT,
     build_safety_boundary_text,
+    default_safety_boundary_text,
     extract_approved_similar_cases,
     extract_safety_boundary,
     has_graph_relationship_explanation,
@@ -310,3 +311,51 @@ def test_report_section_helpers_do_not_import_streamlit() -> None:
 
     assert "streamlit" not in source
     assert "streamlit" not in sys.modules
+
+
+# --- v2.6-R language-aware safety boundary copy ------------------------------
+
+
+def test_default_safety_boundary_text_default_is_english() -> None:
+    assert default_safety_boundary_text() == DEFAULT_SAFETY_BOUNDARY_TEXT
+    assert default_safety_boundary_text("en") == DEFAULT_SAFETY_BOUNDARY_TEXT
+
+
+def test_default_safety_boundary_text_zh_tw_is_chinese() -> None:
+    zh = default_safety_boundary_text("zh-TW")
+
+    assert "BLOCK / MONITOR / ALLOW 是模擬決策。" in zh
+    assert "歷史核准案例僅供參考" in zh
+    assert "未執行任何真實防火牆" in zh
+    assert "are simulated decisions." not in zh
+
+
+def test_default_safety_boundary_text_bilingual_is_compact() -> None:
+    bilingual = default_safety_boundary_text("bilingual")
+
+    assert "BLOCK / MONITOR / ALLOW 是模擬決策。 / BLOCK / MONITOR / ALLOW are simulated decisions." in bilingual
+
+
+def test_unsupported_safety_boundary_language_falls_back_to_english() -> None:
+    assert default_safety_boundary_text("fr") == DEFAULT_SAFETY_BOUNDARY_TEXT
+
+
+def test_build_safety_boundary_text_default_preserves_english_output() -> None:
+    text = "\n".join(
+        [
+            "[Security Triage Report]",
+            "5. Simulation Notice",
+            "BLOCK / MONITOR / ALLOW are simulated decisions.",
+        ]
+    )
+
+    assert DEFAULT_SAFETY_BOUNDARY_TEXT in build_safety_boundary_text(text)
+
+
+def test_build_safety_boundary_text_appends_localized_default() -> None:
+    text = "[Security Triage Report]\n風險等級：HIGH"
+
+    zh_boundary = build_safety_boundary_text(text, "zh-TW")
+
+    assert "未執行任何真實防火牆" in zh_boundary
+    assert DEFAULT_SAFETY_BOUNDARY_TEXT not in zh_boundary

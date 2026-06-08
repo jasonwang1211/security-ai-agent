@@ -83,8 +83,8 @@ from modules.ui.layout_sections import (
     workspace_group_names,
 )
 from modules.ui.report_sections import (
-    DEFAULT_SAFETY_BOUNDARY_TEXT,
     build_safety_boundary_text,
+    default_safety_boundary_text,
     parse_report_sections,
 )
 from modules.ui.report_export_view import build_markdown_report_export
@@ -569,6 +569,7 @@ def render_case_draft_panel() -> None:
     display = build_case_draft_display(
         str(st.session_state.get(STATE_LAST_OUTPUT) or ""),
         st.session_state.get(STATE_CLI_STATE),
+        language=current_language(),
     )
 
     first, second, third = st.columns(3)
@@ -616,10 +617,11 @@ def render_performance_panel() -> None:
 
 
 def build_current_markdown_export(sections: Any, combined_output: str) -> Any:
+    language = current_language()
     safety_text = (
-        build_safety_boundary_text(combined_output)
+        build_safety_boundary_text(combined_output, language)
         if combined_output
-        else DEFAULT_SAFETY_BOUNDARY_TEXT
+        else default_safety_boundary_text(language)
     )
     return build_markdown_report_export(
         active_context_summary=summarize_active_context(st.session_state.get(STATE_CLI_STATE)),
@@ -628,6 +630,7 @@ def build_current_markdown_export(sections: Any, combined_output: str) -> Any:
         case_draft_display=build_case_draft_display(
             str(st.session_state.get(STATE_LAST_OUTPUT) or ""),
             st.session_state.get(STATE_CLI_STATE),
+            language=language,
         ),
         runtime_timing_display=build_runtime_timing_display(st.session_state),
         route_policy_display=build_route_policy_display(
@@ -637,6 +640,7 @@ def build_current_markdown_export(sections: Any, combined_output: str) -> Any:
         raw_output=str(st.session_state.get(STATE_LAST_OUTPUT) or ""),
         generated_at=_current_timestamp(),
         safety_boundary_text=safety_text,
+        language=language,
     )
 
 
@@ -741,15 +745,15 @@ def render_panel_heading(title: str, caption: str = "") -> None:
 
 
 def render_report_sections() -> None:
+    language = current_language()
     combined_output = combined_display_output(st.session_state)
     sections = parse_report_sections(combined_output)
     safety_text = (
-        build_safety_boundary_text(combined_output)
+        build_safety_boundary_text(combined_output, language)
         if combined_output
-        else DEFAULT_SAFETY_BOUNDARY_TEXT
+        else default_safety_boundary_text(language)
     )
 
-    language = current_language()
     analysis_tab, case_intelligence_tab, draft_export_tab, system_debug_tab = st.tabs(
         [translated_label(name, language) for name in workspace_group_names()]
     )
@@ -765,7 +769,7 @@ def render_report_sections() -> None:
                 translated_label(SAFETY_BOUNDARY_PANEL, language),
                 t("safety_boundary_caption", language),
             )
-            render_text_block(safety_text, DEFAULT_SAFETY_BOUNDARY_TEXT)
+            render_text_block(safety_text, default_safety_boundary_text(language))
 
         with st.expander(translated_label(RAW_OUTPUT_PANEL, language), expanded=False):
             render_text_block(str(st.session_state.get(STATE_LAST_OUTPUT) or ""), t("no_output", language))

@@ -11,6 +11,7 @@ from modules.ui.case_draft_view import (
     STATUS_NO_PENDING_REQUEST,
     STATUS_PENDING_APPROVAL,
     build_case_draft_display,
+    case_draft_safety_notes,
 )
 
 
@@ -124,3 +125,51 @@ def test_case_draft_view_helper_does_not_import_streamlit() -> None:
 
     assert "streamlit" not in source
     assert "streamlit" not in sys.modules
+
+
+# --- v2.6-R language-aware case-draft safety boundary ------------------------
+
+
+def test_case_draft_safety_notes_default_is_english() -> None:
+    assert case_draft_safety_notes() == CASE_DRAFT_SAFETY_NOTES
+    assert case_draft_safety_notes("en") == CASE_DRAFT_SAFETY_NOTES
+
+
+def test_case_draft_safety_notes_zh_tw_uses_chinese_bullets() -> None:
+    zh = case_draft_safety_notes("zh-TW")
+
+    joined = "\n".join(zh)
+    assert "草稿檔案不是即時知識。" in joined
+    assert "草稿檔案不會被匯入知識庫。" in joined
+    assert "`safety_reviewed` 預設為 false。" in joined
+    assert "未執行任何真實防火牆" in joined
+    # English wording must not leak in zh-TW bullets.
+    assert "Draft files are not live knowledge." not in joined
+
+
+def test_case_draft_safety_notes_bilingual_is_compact() -> None:
+    bilingual = case_draft_safety_notes("bilingual")
+
+    assert any(" / Draft files are not live knowledge." in note for note in bilingual)
+    assert any(note.startswith("草稿檔案不是即時知識。 / ") for note in bilingual)
+
+
+def test_unsupported_case_draft_language_falls_back_to_english() -> None:
+    assert case_draft_safety_notes("fr") == CASE_DRAFT_SAFETY_NOTES
+
+
+def test_language_only_localizes_safety_notes_not_status_or_message() -> None:
+    en = build_case_draft_display("", _active_event_state(pending={"fingerprint": "abc"}))
+    zh = build_case_draft_display(
+        "", _active_event_state(pending={"fingerprint": "abc"}), language="zh-TW"
+    )
+
+    # draft status / message / path behavior is unchanged across languages.
+    assert zh.status == en.status == STATUS_PENDING_APPROVAL
+    assert zh.message == en.message
+    assert zh.draft_path == en.draft_path
+    assert zh.has_pending_request == en.has_pending_request
+    assert zh.has_active_context == en.has_active_context
+    # only the fixed safety bullets are localized.
+    assert zh.safety_notes == case_draft_safety_notes("zh-TW")
+    assert zh.safety_notes != en.safety_notes

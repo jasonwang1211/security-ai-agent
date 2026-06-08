@@ -10,6 +10,7 @@ from modules.ui.report_export_view import (
     MISSING_GRAPH_RELATIONSHIP,
     MISSING_SIMILAR_CASES,
     build_markdown_report_export,
+    export_safety_notes,
 )
 from modules.ui.report_sections import ParsedReportSections
 from modules.ui.route_policy_view import RoutePolicyDisplay
@@ -79,7 +80,13 @@ def _route_policy() -> RoutePolicyDisplay:
     )
 
 
-def _export(sections: ParsedReportSections | None = None):
+_SAFETY_BOUNDARY_TEXT = (
+    "No real firewall, WAF, EDR, account, password reset, monitoring deployment, "
+    "or enforcement action was executed."
+)
+
+
+def _export(sections: ParsedReportSections | None = None, language: str = "en"):
     return build_markdown_report_export(
         active_context_summary=_active_context(),
         report_sections=sections or _sections(),
@@ -89,7 +96,24 @@ def _export(sections: ParsedReportSections | None = None):
         route_policy_display=_route_policy(),
         raw_output="AI: raw console output",
         generated_at=GENERATED_AT,
-        safety_boundary_text="No real firewall, WAF, EDR, account, password reset, monitoring deployment, or enforcement action was executed.",
+        safety_boundary_text=_SAFETY_BOUNDARY_TEXT,
+        language=language,
+    )
+
+
+def _export_builder_default():
+    """Build with no explicit language to exercise the builder's own default."""
+
+    return build_markdown_report_export(
+        active_context_summary=_active_context(),
+        report_sections=_sections(),
+        case_memory_display=build_case_memory_display(),
+        case_draft_display=_case_draft(),
+        runtime_timing_display=_timing(),
+        route_policy_display=_route_policy(),
+        raw_output="AI: raw console output",
+        generated_at=GENERATED_AT,
+        safety_boundary_text=_SAFETY_BOUNDARY_TEXT,
     )
 
 
@@ -208,3 +232,69 @@ def test_report_export_helper_does_not_import_streamlit() -> None:
 
     assert "import streamlit" not in source.casefold()
     assert "streamlit" not in sys.modules
+
+
+# --- v2.6-R language-aware export wrapper ------------------------------------
+
+
+def test_english_export_preserves_wrapper_headings_and_warning() -> None:
+    markdown = _export(language="en").markdown
+
+    assert "## Report Metadata" in markdown
+    assert "## Human Review Warning" in markdown
+    assert "This report is generated for human review." in markdown
+    assert "safety_reviewed: false" in markdown
+
+
+def test_default_language_export_matches_explicit_english() -> None:
+    assert _export_builder_default().markdown == _export(language="en").markdown
+    assert _export_builder_default().safety_notes == EXPORT_SAFETY_NOTES
+
+
+def test_zh_tw_export_uses_chinese_wrapper_and_keeps_dynamic_values() -> None:
+    export = _export(language="zh-TW")
+    markdown = export.markdown
+
+    assert "## 報告中繼資料" in markdown
+    assert "## 人工審查警告" in markdown
+    assert "此報告產生供人工審查使用" in markdown
+    # machine field tokens stay identical across languages.
+    assert "safety_reviewed: false" in markdown
+    assert "export_status: generated_for_human_review" in markdown
+    # dynamic backend-derived content is not translated.
+    assert "Risk Level: HIGH" in markdown
+    assert "CASE-SEED-001" in markdown
+    assert "Current context shares rule ID CMD-001 with CASE-SEED-001." in markdown
+    # English wrapper headings must not leak in zh-TW.
+    assert "## Report Metadata" not in markdown
+    assert "## Human Review Warning" not in markdown
+    # panel-facing safety notes are localized too.
+    assert export.safety_notes == export_safety_notes("zh-TW")
+    assert any("此報告產生供人工審查使用" in note for note in export.safety_notes)
+
+
+def test_bilingual_export_uses_compact_bilingual_headings() -> None:
+    markdown = _export(language="bilingual").markdown
+
+    assert "## 報告中繼資料 / Report Metadata" in markdown
+    assert "## 人工審查警告 / Human Review Warning" in markdown
+    # dynamic values unchanged.
+    assert "Risk Level: HIGH" in markdown
+    assert "CASE-SEED-001" in markdown
+
+
+def test_export_safety_notes_are_language_aware() -> None:
+    assert export_safety_notes("en") == EXPORT_SAFETY_NOTES
+    zh = export_safety_notes("zh-TW")
+    assert "此報告產生供人工審查使用。" in zh
+    assert "safety_reviewed: false" in zh  # field token preserved
+    bilingual = export_safety_notes("bilingual")
+    assert any(" / This report is generated for human review." in note for note in bilingual)
+
+
+def test_unsupported_export_language_falls_back_to_english() -> None:
+    markdown = _export(language="fr").markdown
+
+    assert "## Report Metadata" in markdown
+    assert "## 報告中繼資料" not in markdown
+    assert export_safety_notes("fr") == EXPORT_SAFETY_NOTES

@@ -71,6 +71,50 @@ DEFAULT_SAFETY_BOUNDARY_TEXT = "\n".join(
     ]
 )
 
+# Language-aware fixed safety-boundary copy for the Safety Boundary panel.
+# English is byte-identical to DEFAULT_SAFETY_BOUNDARY_TEXT; the default stays
+# English so existing callers and tests are unchanged. This is fixed wrapper
+# text only -- the report parser / extraction logic below is not affected.
+_DEFAULT_REPORT_LANGUAGE = "en"
+_SUPPORTED_REPORT_LANGUAGES = ("en", "zh-TW", "bilingual")
+_DEFAULT_SAFETY_BOUNDARY_BY_LANGUAGE = {
+    "en": DEFAULT_SAFETY_BOUNDARY_TEXT,
+    "zh-TW": "\n".join(
+        [
+            "BLOCK / MONITOR / ALLOW 是模擬決策。",
+            (
+                "歷史核准案例僅供參考，不會覆蓋目前事件的確定性 Risk Level 或 Decision，"
+                "也不代表目前事件已成功執行或已造成入侵。"
+            ),
+            "未執行任何真實防火牆、WAF、EDR、帳號、密碼重設、監控部署或強制動作。",
+        ]
+    ),
+    "bilingual": "\n".join(
+        [
+            "BLOCK / MONITOR / ALLOW 是模擬決策。 / BLOCK / MONITOR / ALLOW are simulated decisions.",
+            (
+                "歷史核准案例僅供參考，不會覆蓋目前的 Risk Level 或 Decision。 / "
+                "Historical approved cases are advisory references only and do not override "
+                "the current Risk Level or Decision."
+            ),
+            (
+                "未執行任何真實防火牆、WAF、EDR、帳號、密碼重設、監控部署或強制動作。 / "
+                "No real firewall, WAF, EDR, account, password reset, monitoring deployment, "
+                "or enforcement action was executed."
+            ),
+        ]
+    ),
+}
+
+
+def default_safety_boundary_text(language: str = _DEFAULT_REPORT_LANGUAGE) -> str:
+    """Return the language-aware fixed safety-boundary copy (English default)."""
+
+    text = str(language or "").strip()
+    if text not in _SUPPORTED_REPORT_LANGUAGES:
+        return DEFAULT_SAFETY_BOUNDARY_TEXT
+    return _DEFAULT_SAFETY_BOUNDARY_BY_LANGUAGE[text]
+
 _NUMBERED_SECTION_RE = re.compile(r"^\d+\.\s+")
 _CASE_HEADING_RE = re.compile(r"^\d+\.\s+CASE-")
 
@@ -214,10 +258,15 @@ def extract_simulation_notice(text: str) -> str:
     return _strip_block(block)
 
 
-def build_safety_boundary_text(text: str) -> str:
-    """Return parsed safety text plus the UI's always-visible safety boundary."""
+def build_safety_boundary_text(text: str, language: str = _DEFAULT_REPORT_LANGUAGE) -> str:
+    """Return parsed safety text plus the UI's always-visible safety boundary.
 
-    return _join_blocks([extract_safety_boundary(text), DEFAULT_SAFETY_BOUNDARY_TEXT])
+    ``language`` localizes only the fixed always-visible boundary copy; the
+    parsed safety text extracted from existing output is left unchanged. The
+    default ("en") preserves prior output for existing callers and tests.
+    """
+
+    return _join_blocks([extract_safety_boundary(text), default_safety_boundary_text(language)])
 
 
 def has_graph_relationship_explanation(text: str) -> bool:
