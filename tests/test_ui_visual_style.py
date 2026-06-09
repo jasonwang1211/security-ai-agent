@@ -157,6 +157,17 @@ def test_apply_console_css_includes_v2_6aa_route_variant_classes() -> None:
         assert class_name in css
 
 
+def test_apply_console_css_includes_v2_6ab_mode_banner_classes() -> None:
+    css = apply_console_css()
+
+    for class_name in (
+        ".sentinel-mode-banner",
+        ".sentinel-mode-banner.fast",
+        ".sentinel-mode-banner.full",
+    ):
+        assert class_name in css
+
+
 def test_apply_console_css_avoids_keyframe_animations() -> None:
     # Subtle hover transitions are allowed; full keyframe animations are not,
     # to avoid restarting effects on every Streamlit rerun.

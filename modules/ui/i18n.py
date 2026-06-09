@@ -204,6 +204,31 @@ _TRANSLATIONS: dict[str, dict[str, str]] = {
         "en": "Risk Level and Decision remain deterministic; no real enforcement is executed.",
         "bilingual": "Risk Level 與 Decision 仍為確定性結果 / remain deterministic; no real enforcement is executed.",
     },
+    "full_mode_warmup_note": {
+        "zh-TW": "完整 AI 輔助模式會執行 AI/RAG 說明層；首次執行可能需要 30～60 秒載入模型。",
+        "en": "Full AI-assisted mode runs the AI/RAG explanation layer. First run may take 30–60 seconds while models warm up.",
+        "bilingual": "完整 AI 輔助會執行 AI/RAG 說明層 / runs the AI/RAG explanation layer; first run may take 30–60s while models warm up.",
+    },
+    "mode_banner_full": {
+        "zh-TW": "完整 AI 輔助：已執行 AI/RAG 說明層",
+        "en": "Full AI-assisted: AI/RAG explanation layer executed",
+        "bilingual": "完整 AI 輔助：已執行 AI/RAG 說明層 / Full AI-assisted: AI/RAG explanation layer executed",
+    },
+    "mode_banner_fast": {
+        "zh-TW": "快速確定性：規則式偵測與確定性決策",
+        "en": "Fast deterministic: rule-based detection and deterministic decision",
+        "bilingual": "快速確定性：規則式偵測與確定性決策 / Fast deterministic: rule-based detection and deterministic decision",
+    },
+    "mode_banner_advisory": {
+        "zh-TW": "AI/RAG 說明僅供參考，不會覆蓋 Risk Level 或 Decision",
+        "en": "AI/RAG explanation is advisory and does not override Risk Level or Decision",
+        "bilingual": "AI/RAG 說明僅供參考 / advisory; does not override Risk Level or Decision",
+    },
+    "ai_rag_assisted_badge": {
+        "zh-TW": "AI/RAG 輔助",
+        "en": "AI/RAG assisted",
+        "bilingual": "AI/RAG 輔助 / AI/RAG assisted",
+    },
     "active_context": {
         "zh-TW": "目前脈絡",
         "en": "Active Context",

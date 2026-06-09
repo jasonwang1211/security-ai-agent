@@ -124,6 +124,7 @@ from modules.ui.performance_view import (
 )
 from modules.ui.route_policy_view import build_route_policy_display
 from modules.ui.visual_style import (
+    ADVISORY_COLOR,
     DETERMINISTIC_COLOR,
     apply_console_css,
     badge_html,
@@ -135,6 +136,10 @@ from modules.ui.visual_style import (
 PAGE_TITLE = "Security AI Agent Console"
 TEXT_AREA_KEY = "sentinel_console_input"
 STATE_SCENARIO_NOTE = "sentinel_scenario_note"
+# UI-only: remembers the analysis mode that produced the current active context
+# so the hero / report banner can show Fast vs Full even after later actions
+# (Find Similar / AI Analyst) overwrite the shared runtime-timing display.
+STATE_ANALYSIS_RUN_MODE = "sentinel_analysis_run_mode"
 
 _LABEL_KEYS = {
     "Analysis": "analysis_group",
@@ -327,6 +332,8 @@ def run_direct_input(user_input: str, analysis_mode: str = DEFAULT_ANALYSIS_MODE
     """Pass user text into the existing direct-input orchestrator or fast path."""
 
     mode = normalize_analysis_mode(analysis_mode)
+    # Remember the mode that produced this analysis (display-only).
+    st.session_state[STATE_ANALYSIS_RUN_MODE] = mode
     if should_use_fast_payload_analysis(user_input, mode):
         output = _run_fast_payload_analysis_with_timing("Run input", user_input, mode)
     else:
@@ -516,6 +523,30 @@ def render_section_title(text: str) -> None:
     )
 
 
+def _current_analysis_run_mode() -> str:
+    """Return the analysis mode (Fast / Full) that produced the current context."""
+
+    return normalize_analysis_mode(st.session_state.get(STATE_ANALYSIS_RUN_MODE))
+
+
+def _render_analysis_mode_banner(language: str) -> None:
+    """Render a Fast vs Full AI-assisted banner above the Analysis Report."""
+
+    run_mode = _current_analysis_run_mode()
+    is_full = run_mode == FULL_AI_ASSISTED_MODE
+    variant = "full" if is_full else "fast"
+    icon = "\U0001f9e0" if is_full else "⚡"
+    text = t("mode_banner_full" if is_full else "mode_banner_fast", language)
+    advisory = f" · {html.escape(t('mode_banner_advisory', language))}" if is_full else ""
+    st.markdown(
+        f'<div class="sentinel-mode-banner {variant}">'
+        f'<span class="sentinel-mode-banner-icon">{icon}</span>'
+        f"<span>{html.escape(text)}{advisory}</span>"
+        "</div>",
+        unsafe_allow_html=True,
+    )
+
+
 def render_active_context() -> None:
     summary = summarize_active_context(st.session_state.get(STATE_CLI_STATE))
     render_section_title(ui_text("active_context"))
@@ -543,6 +574,18 @@ def render_active_context() -> None:
         else summary.title
     )
 
+    run_mode = _current_analysis_run_mode()
+    is_full = run_mode == FULL_AI_ASSISTED_MODE
+    mode_badges = [
+        badge_html(
+            translated_analysis_mode_label(run_mode),
+            ADVISORY_COLOR if is_full else DETERMINISTIC_COLOR,
+            title=ui_text("console_mode_label"),
+        )
+    ]
+    if is_full:
+        mode_badges.append(badge_html(ui_text("ai_rag_assisted_badge"), ADVISORY_COLOR))
+
     badges: list[str] = []
     if summary.risk_level:
         badges.append(
@@ -552,7 +595,7 @@ def render_active_context() -> None:
         badges.append(
             badge_html(summary.decision, decision_color(summary.decision), title=ui_text("decision"))
         )
-    badges_html = " ".join(badges)
+    badges_html = " ".join(mode_badges + badges)
 
     card_class = f"sentinel-hero-card {severity_left_class(summary.risk_level)}".strip()
     sub_line = html.escape(summary.title)
@@ -991,6 +1034,8 @@ def render_report_sections() -> None:
 
     with analysis_tab:
         st.caption(t("analysis_group_caption", language))
+        if sections.analysis_report.strip():
+            _render_analysis_mode_banner(language)
         with st.container(border=True):
             render_panel_heading(translated_label(ANALYSIS_REPORT_PANEL, language))
             render_text_block(sections.analysis_report, t("no_analysis_report", language))
@@ -1145,6 +1190,8 @@ def render_controls() -> None:
             )
         for note in translated_analysis_mode_notes(selected_mode, language):
             st.caption(note)
+        if selected_mode == FULL_AI_ASSISTED_MODE:
+            st.caption(t("full_mode_warmup_note", language))
 
         render_demo_scenario_launcher(language)
 
@@ -1177,6 +1224,7 @@ def render_controls() -> None:
 
     if clear_clicked:
         clear_active_context(st.session_state)
+        st.session_state.pop(STATE_ANALYSIS_RUN_MODE, None)
 
 
 def render_last_action() -> None:

@@ -479,6 +479,32 @@ def apply_console_css() -> str:
   background: rgba(139, 92, 246, 0.16);
   border-color: rgba(139, 92, 246, 0.45);
 }
+/* Analysis-mode banner above the report: fast = cyan, full AI-assisted = purple. */
+.sentinel-mode-banner {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border-radius: 10px;
+  padding: 8px 14px;
+  margin: 2px 0 10px 0;
+  font-size: 0.86rem;
+  font-weight: 600;
+  border: 1px solid var(--sentinel-border);
+  overflow-wrap: anywhere;
+}
+.sentinel-mode-banner-icon { font-size: 1rem; }
+.sentinel-mode-banner.fast {
+  color: #cfeefb;
+  background: rgba(34, 211, 238, 0.10);
+  border-color: rgba(34, 211, 238, 0.40);
+  border-left: 3px solid var(--sentinel-cyan);
+}
+.sentinel-mode-banner.full {
+  color: #ddd2ff;
+  background: rgba(139, 92, 246, 0.12);
+  border-color: rgba(139, 92, 246, 0.40);
+  border-left: 3px solid var(--sentinel-advisory);
+}
 """.strip()
 
 
