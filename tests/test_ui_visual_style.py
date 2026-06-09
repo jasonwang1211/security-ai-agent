@@ -132,6 +132,31 @@ def test_apply_console_css_includes_v2_6u_dashboard_density_classes() -> None:
         assert class_name in css
 
 
+def test_apply_console_css_includes_v2_6z_ai_response_classes() -> None:
+    css = apply_console_css()
+
+    for class_name in (
+        ".sentinel-ai-card",
+        ".sentinel-ai-meta",
+        ".sentinel-ai-chip",
+        ".sentinel-ai-body",
+        ".sentinel-ai-empty",
+    ):
+        assert class_name in css
+
+
+def test_apply_console_css_includes_v2_6aa_route_variant_classes() -> None:
+    css = apply_console_css()
+
+    for class_name in (
+        ".sentinel-ai-card.sentinel-ai-followup",
+        ".sentinel-ai-card.sentinel-ai-knowledge",
+        ".sentinel-ai-badge.followup",
+        ".sentinel-ai-badge.knowledge",
+    ):
+        assert class_name in css
+
+
 def test_apply_console_css_avoids_keyframe_animations() -> None:
     # Subtle hover transitions are allowed; full keyframe animations are not,
     # to avoid restarting effects on every Streamlit rerun.

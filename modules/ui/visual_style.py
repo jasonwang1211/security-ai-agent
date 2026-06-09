@@ -396,6 +396,89 @@ def apply_console_css() -> str:
   font-size: 0.92rem;
   padding: 3px 14px;
 }
+/* AI Analyst readable response card (prose; wraps; no horizontal scroll). */
+.sentinel-ai-card {
+  background: var(--sentinel-surface);
+  border: 1px solid var(--sentinel-border);
+  border-left: 3px solid var(--sentinel-advisory);
+  border-radius: 12px;
+  padding: 12px 16px;
+  margin-top: 6px;
+}
+.sentinel-ai-badge {
+  display: inline-block;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+  color: #ddd2ff;
+  background: rgba(139, 92, 246, 0.16);
+  border: 1px solid rgba(139, 92, 246, 0.45);
+  border-radius: 999px;
+  padding: 2px 10px;
+  margin-bottom: 8px;
+}
+.sentinel-ai-q {
+  color: var(--sentinel-text-muted);
+  font-size: 0.85rem;
+  margin-bottom: 8px;
+  overflow-wrap: anywhere;
+}
+.sentinel-ai-body {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  line-height: 1.65;
+  font-size: 0.95rem;
+  color: #e6edf6;
+}
+.sentinel-ai-boundary {
+  margin-top: 10px;
+  padding-top: 8px;
+  border-top: 1px solid var(--sentinel-border);
+  color: var(--sentinel-text-muted);
+  font-size: 0.78rem;
+  overflow-wrap: anywhere;
+}
+.sentinel-ai-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+  margin-bottom: 8px;
+}
+.sentinel-ai-chip {
+  display: inline-block;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--sentinel-text-muted);
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--sentinel-border);
+  border-radius: 999px;
+  padding: 2px 10px;
+  overflow-wrap: anywhere;
+}
+.sentinel-ai-chip.advisory {
+  color: #f3d39b;
+  border-color: rgba(245, 166, 35, 0.40);
+  background: rgba(245, 166, 35, 0.10);
+}
+/* Friendly RAG empty-result card (amber accent, not a failure look). */
+.sentinel-ai-empty {
+  border-left-color: var(--sentinel-medium);
+}
+/* Route color-coding: deterministic follow-up = cyan, RAG knowledge = purple. */
+.sentinel-ai-card.sentinel-ai-followup { border-left-color: var(--sentinel-cyan); }
+.sentinel-ai-card.sentinel-ai-knowledge { border-left-color: var(--sentinel-advisory); }
+.sentinel-ai-badge.followup {
+  color: #bdeefb;
+  background: rgba(34, 211, 238, 0.14);
+  border-color: rgba(34, 211, 238, 0.50);
+}
+.sentinel-ai-badge.knowledge {
+  color: #ddd2ff;
+  background: rgba(139, 92, 246, 0.16);
+  border-color: rgba(139, 92, 246, 0.45);
+}
 """.strip()
 
 

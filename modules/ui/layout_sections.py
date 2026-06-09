@@ -7,6 +7,7 @@ from dataclasses import dataclass
 ANALYSIS_GROUP = "Analysis"
 CASE_INTELLIGENCE_GROUP = "Case Intelligence"
 DRAFT_EXPORT_GROUP = "Draft / Export"
+AI_ANALYST_GROUP = "AI Analyst"
 SYSTEM_DEBUG_GROUP = "System / Debug"
 
 ANALYSIS_REPORT_PANEL = "Analysis Report"
@@ -17,6 +18,8 @@ GRAPH_RELATIONS_PANEL = "Graph Relations"
 CASE_MEMORY_PANEL = "Case Memory"
 CASE_DRAFT_PANEL = "Case Draft"
 EXPORT_REPORT_PANEL = "Export Report"
+FOLLOWUP_ASSISTANT_PANEL = "Follow-up Assistant"
+KNOWLEDGE_QA_PANEL = "Knowledge Q&A"
 PERFORMANCE_PANEL = "Performance"
 ROUTE_POLICY_PANEL = "Route / Policy"
 
@@ -63,6 +66,14 @@ WORKSPACE_GROUPS = (
         panels=(
             WorkspacePanel(CASE_DRAFT_PANEL),
             WorkspacePanel(EXPORT_REPORT_PANEL),
+        ),
+    ),
+    WorkspaceGroup(
+        name=AI_ANALYST_GROUP,
+        caption="Advisory AI / RAG follow-up and knowledge Q&A; never overrides Risk Level or Decision.",
+        panels=(
+            WorkspacePanel(FOLLOWUP_ASSISTANT_PANEL),
+            WorkspacePanel(KNOWLEDGE_QA_PANEL),
         ),
     ),
     WorkspaceGroup(

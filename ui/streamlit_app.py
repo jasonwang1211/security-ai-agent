@@ -50,6 +50,12 @@ from modules.ui.console_state import (
     SIMILAR_CASE_COMMAND,
     STATE_AGENT,
     STATE_CLI_STATE,
+    STATE_FOLLOWUP_OUTPUT,
+    STATE_FOLLOWUP_QUESTION,
+    STATE_FOLLOWUP_SKILL,
+    STATE_KNOWLEDGE_OUTPUT,
+    STATE_KNOWLEDGE_QUESTION,
+    STATE_KNOWLEDGE_SKILL,
     STATE_LAST_INPUT,
     STATE_LAST_OUTPUT,
     STATE_LAST_SELECTED_ACTION,
@@ -59,9 +65,24 @@ from modules.ui.console_state import (
     combined_display_output,
     record_analysis_output,
     record_draft_action_output,
+    record_followup_output,
+    record_knowledge_output,
     record_output,
     record_similar_case_output,
     summarize_active_context,
+)
+from modules.ui.ai_analyst import (
+    AI_BADGE_FOLLOWUP_KEY,
+    AI_BADGE_KNOWLEDGE_KEY,
+    FOLLOWUP_VARIANT,
+    KNOWLEDGE_VARIANT,
+    ai_route_badge_key,
+    ai_route_variant,
+    build_ai_response_card_html,
+    build_rag_empty_card_html,
+    followup_questions_for_kind,
+    is_insufficient_knowledge_response,
+    knowledge_questions,
 )
 from modules.ui.i18n import (
     LANGUAGE_OPTIONS,
@@ -76,7 +97,9 @@ from modules.ui.layout_sections import (
     CASE_DRAFT_PANEL,
     CASE_MEMORY_PANEL,
     EXPORT_REPORT_PANEL,
+    FOLLOWUP_ASSISTANT_PANEL,
     GRAPH_RELATIONS_PANEL,
+    KNOWLEDGE_QA_PANEL,
     PERFORMANCE_PANEL,
     RAW_OUTPUT_PANEL,
     ROUTE_POLICY_PANEL,
@@ -117,6 +140,7 @@ _LABEL_KEYS = {
     "Analysis": "analysis_group",
     "Case Intelligence": "case_intelligence_group",
     "Draft / Export": "draft_export_group",
+    "AI Analyst": "ai_analyst_group",
     "System / Debug": "system_debug_group",
     ANALYSIS_REPORT_PANEL: "analysis_report",
     SAFETY_BOUNDARY_PANEL: "safety_boundary",
@@ -126,9 +150,14 @@ _LABEL_KEYS = {
     CASE_MEMORY_PANEL: "case_memory",
     CASE_DRAFT_PANEL: "case_draft",
     EXPORT_REPORT_PANEL: "export_report",
+    FOLLOWUP_ASSISTANT_PANEL: "followup_assistant",
+    KNOWLEDGE_QA_PANEL: "knowledge_qa",
     PERFORMANCE_PANEL: "performance",
     ROUTE_POLICY_PANEL: "route_policy",
 }
+
+OUTPUT_KIND_AI_FOLLOWUP = "ai_followup"
+OUTPUT_KIND_KNOWLEDGE_QA = "knowledge_qa"
 
 _ANALYSIS_MODE_LABEL_KEYS = {
     FAST_DETERMINISTIC_MODE: "fast_deterministic_mode",
@@ -215,6 +244,8 @@ def _run_orchestrator_with_timing(
     command: str,
     output_kind: str,
     analysis_mode: str = "",
+    *,
+    force_knowledge: bool = False,
 ) -> Any:
     agent, orchestrator = get_runtime()
     # Display-only language hint for deterministic log/auth report rendering;
@@ -222,7 +253,14 @@ def _run_orchestrator_with_timing(
     agent.report_language = current_language()
     started_at = _current_timestamp()
     start_counter = perf_counter()
-    output = orchestrator.handle_input(command)
+    # Knowledge Q&A forces the existing KnowledgeQASkill path so a general RAG
+    # question is not absorbed by active-context follow-up routing. Retrieval
+    # behavior and ToolPolicy are unchanged.
+    output = (
+        orchestrator.force_knowledge_qa(command)
+        if force_knowledge
+        else orchestrator.handle_input(command)
+    )
     elapsed_seconds = perf_counter() - start_counter
     ended_at = _current_timestamp()
     record_runtime_timing(
@@ -339,6 +377,50 @@ def run_case_draft_command(command: str, action_label: str) -> None:
     record_draft_action_output(
         st.session_state,
         command=command,
+        response_text=output.response_text,
+        selected_action=output.selected_tool,
+    )
+
+
+def run_followup_question(question: str) -> None:
+    """Send an AI follow-up question through the existing orchestrator path.
+
+    Reuses the deterministic active-context follow-up / RAG routing. It is
+    advisory only: it does not re-run detection, change the active context, or
+    alter Risk Level / Decision, and it preserves the analysis report and
+    similar-case output the report sections and Export Report rely on.
+    """
+
+    text = str(question or "").strip()
+    if not text:
+        return
+    output = _run_orchestrator_with_timing("AI Analyst", text, OUTPUT_KIND_AI_FOLLOWUP)
+    record_followup_output(
+        st.session_state,
+        question=text,
+        response_text=output.response_text,
+        selected_action=output.selected_tool,
+    )
+
+
+def run_knowledge_question(question: str) -> None:
+    """Send a general security knowledge question through the existing RAG path.
+
+    Forces the KnowledgeQASkill path (not active-context follow-up routing) so
+    the answer comes from the knowledge / RAG layer even when an active event or
+    incident exists. Advisory only; preserves the analysis report and
+    similar-case output.
+    """
+
+    text = str(question or "").strip()
+    if not text:
+        return
+    output = _run_orchestrator_with_timing(
+        "AI Analyst", text, OUTPUT_KIND_KNOWLEDGE_QA, force_knowledge=True
+    )
+    record_knowledge_output(
+        st.session_state,
+        question=text,
         response_text=output.response_text,
         selected_action=output.selected_tool,
     )
@@ -762,6 +844,133 @@ def render_panel_heading(title: str, caption: str = "") -> None:
         st.caption(caption)
 
 
+def _render_ai_advisory_note(language: str) -> None:
+    st.markdown(
+        '<div class="sentinel-advisory" '
+        'style="padding:8px 12px;border-radius:10px;background:rgba(139,92,246,0.08);">'
+        f'{html.escape(t("ai_safety_note", language))}</div>',
+        unsafe_allow_html=True,
+    )
+
+
+def _ai_route_badge_label(selected_skill: str, language: str) -> str:
+    """Resolve a route badge label, falling back to the raw skill name."""
+
+    key = ai_route_badge_key(selected_skill)
+    if key is None:
+        return selected_skill or t("ai_response_heading", language)
+    return t(key, language)
+
+
+def _render_ai_panel_intro(badge_key: str, caption_key: str, language: str, variant: str) -> None:
+    """Render a route badge chip and explanatory caption for an AI sub-panel."""
+
+    badge_class = "sentinel-ai-badge"
+    if variant in (FOLLOWUP_VARIANT, KNOWLEDGE_VARIANT):
+        badge_class += f" {variant}"
+    st.markdown(
+        f'<span class="{badge_class}">{html.escape(t(badge_key, language))}</span>',
+        unsafe_allow_html=True,
+    )
+    st.caption(t(caption_key, language))
+
+
+def _render_ai_response_card(
+    question: str, response: str, selected_skill: str, language: str, default_variant: str
+) -> None:
+    st.markdown(f"**{t('ai_response_heading', language)}**")
+    if not response.strip():
+        st.caption(t("ai_no_response", language))
+        return
+    route_label = _ai_route_badge_label(selected_skill, language)
+    advisory_label = t("ai_advisory_only", language)
+    variant = ai_route_variant(selected_skill) or default_variant
+    if is_insufficient_knowledge_response(response):
+        card_html = build_rag_empty_card_html(
+            question=question,
+            guidance_text=t("ai_knowledge_empty", language),
+            route_label=route_label,
+            skill_name=selected_skill,
+            advisory_label=advisory_label,
+            variant=variant,
+        )
+    else:
+        card_html = build_ai_response_card_html(
+            question=question,
+            response_text=response,
+            route_label=route_label,
+            skill_name=selected_skill,
+            advisory_label=advisory_label,
+            boundary_text=t("ai_advisory_boundary", language),
+            variant=variant,
+        )
+    st.markdown(card_html, unsafe_allow_html=True)
+
+
+def render_followup_assistant_panel(language: str) -> None:
+    """Advisory AI follow-up over the current active context.
+
+    Reuses the deterministic active-context follow-up / RAG backend path. It is
+    advisory only and preserves the analysis report, similar cases, graph, case
+    draft, and export state.
+    """
+
+    _render_ai_advisory_note(language)
+    _render_ai_panel_intro(AI_BADGE_FOLLOWUP_KEY, "ai_followup_panel_caption", language, FOLLOWUP_VARIANT)
+    summary = summarize_active_context(st.session_state.get(STATE_CLI_STATE))
+    if not summary.has_context:
+        st.markdown(
+            '<div class="sentinel-empty-card">'
+            '<span class="sentinel-empty-icon">\U0001f9e0</span>'
+            f'{html.escape(t("ai_analyst_empty", language))}</div>',
+            unsafe_allow_html=True,
+        )
+        return
+
+    st.caption(f"{t('ai_suggested_questions', language)}:")
+    columns = st.columns(2)
+    for index, question in enumerate(followup_questions_for_kind(summary.kind, language)):
+        with columns[index % 2]:
+            if st.button(question, key=f"sentinel_ai_followup_q_{index}", use_container_width=True):
+                run_followup_question(question)
+
+    free_text = st.text_input(t("ask_ai_analyst", language), key="sentinel_ai_followup_input")
+    if st.button(t("ai_submit_question", language), key="sentinel_ai_followup_submit"):
+        run_followup_question(free_text)
+
+    _render_ai_response_card(
+        str(st.session_state.get(STATE_FOLLOWUP_QUESTION) or ""),
+        str(st.session_state.get(STATE_FOLLOWUP_OUTPUT) or ""),
+        str(st.session_state.get(STATE_FOLLOWUP_SKILL) or ""),
+        language,
+        FOLLOWUP_VARIANT,
+    )
+
+
+def render_knowledge_qa_panel(language: str) -> None:
+    """Advisory general security knowledge Q&A over the existing RAG path."""
+
+    _render_ai_panel_intro(AI_BADGE_KNOWLEDGE_KEY, "knowledge_qa_caption", language, KNOWLEDGE_VARIANT)
+    columns = st.columns(2)
+    for index, question in enumerate(knowledge_questions(language)):
+        with columns[index % 2]:
+            if st.button(question, key=f"sentinel_ai_kb_q_{index}", use_container_width=True):
+                run_knowledge_question(question)
+
+    free_text = st.text_input(t("knowledge_qa_input", language), key="sentinel_ai_kb_input")
+    if st.button(t("ai_submit_question", language), key="sentinel_ai_kb_submit"):
+        run_knowledge_question(free_text)
+
+    if str(st.session_state.get(STATE_KNOWLEDGE_OUTPUT) or "").strip():
+        _render_ai_response_card(
+            str(st.session_state.get(STATE_KNOWLEDGE_QUESTION) or ""),
+            str(st.session_state.get(STATE_KNOWLEDGE_OUTPUT) or ""),
+            str(st.session_state.get(STATE_KNOWLEDGE_SKILL) or ""),
+            language,
+            KNOWLEDGE_VARIANT,
+        )
+
+
 def render_report_sections() -> None:
     language = current_language()
     combined_output = combined_display_output(st.session_state)
@@ -772,9 +981,13 @@ def render_report_sections() -> None:
         else default_safety_boundary_text(language)
     )
 
-    analysis_tab, case_intelligence_tab, draft_export_tab, system_debug_tab = st.tabs(
-        [translated_label(name, language) for name in workspace_group_names()]
-    )
+    (
+        analysis_tab,
+        case_intelligence_tab,
+        draft_export_tab,
+        ai_analyst_tab,
+        system_debug_tab,
+    ) = st.tabs([translated_label(name, language) for name in workspace_group_names()])
 
     with analysis_tab:
         st.caption(t("analysis_group_caption", language))
@@ -815,6 +1028,16 @@ def render_report_sections() -> None:
         with st.container(border=True):
             render_panel_heading(translated_label(EXPORT_REPORT_PANEL, language))
             render_export_report_panel(sections, combined_output)
+
+    with ai_analyst_tab:
+        st.caption(t("ai_analyst_caption", language))
+        with st.container(border=True):
+            render_panel_heading(translated_label(FOLLOWUP_ASSISTANT_PANEL, language))
+            render_followup_assistant_panel(language)
+
+        with st.container(border=True):
+            render_panel_heading(translated_label(KNOWLEDGE_QA_PANEL, language))
+            render_knowledge_qa_panel(language)
 
     with system_debug_tab:
         st.caption(t("system_debug_caption", language))

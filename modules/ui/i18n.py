@@ -599,6 +599,101 @@ _TRANSLATIONS: dict[str, dict[str, str]] = {
         "en": "Simulation and authority boundaries remain visible for every run.",
         "bilingual": "模擬與權限邊界固定顯示 / Simulation and authority boundaries remain visible for every run.",
     },
+    "ai_analyst_group": {
+        "zh-TW": "AI 分析助理",
+        "en": "AI Analyst",
+        "bilingual": "AI 分析助理 / AI Analyst",
+    },
+    "followup_assistant": {
+        "zh-TW": "追問助理",
+        "en": "Follow-up Assistant",
+        "bilingual": "追問助理 / Follow-up Assistant",
+    },
+    "knowledge_qa": {
+        "zh-TW": "知識問答",
+        "en": "Knowledge Q&A",
+        "bilingual": "知識問答 / Knowledge Q&A",
+    },
+    "ai_analyst_caption": {
+        "zh-TW": "AI / RAG 提供解釋與分析師情境，不會覆蓋確定性的 Risk Level 或 Decision。",
+        "en": "AI / RAG provides explanation and analyst context; it never overrides the deterministic Risk Level or Decision.",
+        "bilingual": "AI / RAG 提供解釋與情境 / provides explanation and context; it never overrides the deterministic Risk Level or Decision.",
+    },
+    "ai_analyst_empty": {
+        "zh-TW": "先執行一個示範情境，AI 分析助理會根據目前事件提供追問與解釋。",
+        "en": "Run a demo scenario first. The AI analyst will explain the current event context.",
+        "bilingual": "先執行一個示範情境 / Run a demo scenario first. The AI analyst will explain the current event context.",
+    },
+    "ai_suggested_questions": {
+        "zh-TW": "建議追問",
+        "en": "Suggested questions",
+        "bilingual": "建議追問 / Suggested questions",
+    },
+    "ask_ai_analyst": {
+        "zh-TW": "詢問 AI 分析助理",
+        "en": "Ask AI Analyst",
+        "bilingual": "詢問 AI 分析助理 / Ask AI Analyst",
+    },
+    "ai_submit_question": {
+        "zh-TW": "送出問題",
+        "en": "Ask",
+        "bilingual": "送出問題 / Ask",
+    },
+    "ai_response_heading": {
+        "zh-TW": "AI 回覆",
+        "en": "AI Response",
+        "bilingual": "AI 回覆 / AI Response",
+    },
+    "ai_no_response": {
+        "zh-TW": "尚無 AI 回覆。",
+        "en": "No AI response yet.",
+        "bilingual": "尚無 AI 回覆 / No AI response yet.",
+    },
+    "ai_badge_followup": {
+        "zh-TW": "確定性追問",
+        "en": "Deterministic follow-up",
+        "bilingual": "確定性追問 / Deterministic follow-up",
+    },
+    "ai_badge_knowledge": {
+        "zh-TW": "RAG / 知識問答",
+        "en": "RAG / Knowledge Q&A",
+        "bilingual": "RAG / 知識問答 / Knowledge Q&A",
+    },
+    "ai_advisory_boundary": {
+        "zh-TW": "AI / RAG 回覆僅供分析師參考，不會覆蓋目前事件的 Risk Level 或 Decision。",
+        "en": "AI/RAG output is advisory analyst context and does not override the current Risk Level or Decision.",
+        "bilingual": "AI / RAG 回覆僅供分析師參考 / advisory analyst context; it does not override the current Risk Level or Decision.",
+    },
+    "ai_safety_note": {
+        "zh-TW": "AI 不偵測攻擊、不決定最終風險或決策、不執行任何防護動作；僅提供解釋與情境。",
+        "en": "The AI does not detect attacks, decide the final risk/decision, or execute enforcement; it only explains and adds context.",
+        "bilingual": "AI 不偵測攻擊、不決定風險/決策、不執行防護動作 / it only explains and adds context.",
+    },
+    "ai_advisory_only": {
+        "zh-TW": "僅供參考",
+        "en": "Advisory only",
+        "bilingual": "僅供參考 / Advisory only",
+    },
+    "ai_followup_panel_caption": {
+        "zh-TW": "使用目前 active context 解釋事件為何被如此判定；為確定性追問，不會用來覆蓋 Risk Level 或 Decision。",
+        "en": "Explains the current active context — why the event was classified this way. Deterministic follow-up; it does not override Risk Level or Decision.",
+        "bilingual": "使用目前 active context 解釋判定原因 / explains the current active context; deterministic follow-up, it does not override Risk Level or Decision.",
+    },
+    "ai_knowledge_empty": {
+        "zh-TW": "目前知識庫沒有足夠內容回答這題；請改問已收錄的攻擊類型，例如 Command Injection、SQL Injection、XSS、CSRF。",
+        "en": "The knowledge base doesn't have enough content for this question yet. Try a covered attack type, e.g. Command Injection, SQL Injection, XSS, or CSRF.",
+        "bilingual": "目前知識庫沒有足夠內容回答這題 / not enough knowledge content yet; try a covered attack type, e.g. Command Injection, SQL Injection, XSS, or CSRF.",
+    },
+    "knowledge_qa_caption": {
+        "zh-TW": "搜尋資安知識庫（RAG）；僅供參考，若知識庫沒有相關內容可能不會有答案。",
+        "en": "Searches the security knowledge base (RAG); advisory only — it may return no answer if the knowledge base lacks content.",
+        "bilingual": "搜尋資安知識庫（RAG）/ searches the security knowledge base; advisory only, may return no answer if content is missing.",
+    },
+    "knowledge_qa_input": {
+        "zh-TW": "詢問資安知識問題",
+        "en": "Ask a security knowledge question",
+        "bilingual": "詢問資安知識問題 / Ask a security knowledge question",
+    },
 }
 
 

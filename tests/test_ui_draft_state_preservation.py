@@ -9,11 +9,17 @@ from modules.ui.case_draft_view import STATUS_PENDING_APPROVAL, build_case_draft
 from modules.ui.case_memory_view import build_case_memory_display
 from modules.ui.console_state import (
     STATE_ANALYSIS_OUTPUT,
+    STATE_FOLLOWUP_OUTPUT,
+    STATE_FOLLOWUP_SKILL,
+    STATE_KNOWLEDGE_OUTPUT,
+    STATE_KNOWLEDGE_SKILL,
     STATE_LAST_OUTPUT,
     STATE_SIMILAR_CASE_OUTPUT,
     combined_display_output,
     record_analysis_output,
     record_draft_action_output,
+    record_followup_output,
+    record_knowledge_output,
     record_similar_case_output,
     summarize_active_context,
 )
@@ -155,3 +161,101 @@ def test_new_analysis_after_draft_still_clears_stale_similar_case_output() -> No
     assert session_state[STATE_SIMILAR_CASE_OUTPUT] == ""
     assert "CASE-SEED-001" not in combined_display_output(session_state)
     assert "new auth analysis" in combined_display_output(session_state)
+
+
+# --- v2.6-Y AI follow-up state preservation ---------------------------------
+
+FOLLOWUP_RESPONSE_TEXT = (
+    "AI: Repeated login failures followed by success are suspicious but do not "
+    "prove account compromise by themselves."
+)
+
+
+def test_followup_question_does_not_clear_analysis_or_similar_output() -> None:
+    session_state = _session_after_analysis_and_similar()
+
+    record_followup_output(
+        session_state,
+        question="這代表命令真的執行了嗎？",
+        response_text=FOLLOWUP_RESPONSE_TEXT,
+        selected_action="ExplainActiveEventSkill",
+    )
+
+    # preserved report sections survive the follow-up.
+    assert session_state[STATE_ANALYSIS_OUTPUT] == ANALYSIS_TEXT
+    assert session_state[STATE_SIMILAR_CASE_OUTPUT] == SIMILAR_TEXT
+    assert "Risk Level: HIGH" in combined_display_output(session_state)
+    assert "CASE-SEED-001" in combined_display_output(session_state)
+    # the follow-up answer is recorded for the AI Analyst panel.
+    assert session_state[STATE_FOLLOWUP_OUTPUT] == FOLLOWUP_RESPONSE_TEXT
+    assert session_state[STATE_LAST_OUTPUT] == FOLLOWUP_RESPONSE_TEXT
+
+
+def test_knowledge_question_does_not_clear_analysis_or_similar_output() -> None:
+    session_state = _session_after_analysis_and_similar()
+
+    record_knowledge_output(
+        session_state,
+        question="什麼是 Command Injection？",
+        response_text="AI: Command Injection is ...",
+        selected_action="KnowledgeQASkill",
+    )
+
+    assert session_state[STATE_ANALYSIS_OUTPUT] == ANALYSIS_TEXT
+    assert session_state[STATE_SIMILAR_CASE_OUTPUT] == SIMILAR_TEXT
+
+
+def test_followup_and_knowledge_use_distinct_state_slots() -> None:
+    session_state = _session_after_analysis_and_similar()
+
+    record_followup_output(
+        session_state,
+        question="為什麼 Decision 是 BLOCK？",
+        response_text="AI: deterministic explanation",
+        selected_action="ExplainActiveEventSkill",
+    )
+    record_knowledge_output(
+        session_state,
+        question="什麼是 Command Injection？",
+        response_text="AI: Command Injection is ...",
+        selected_action="KnowledgeQASkill",
+    )
+
+    # follow-up and knowledge answers/skills are kept in separate slots so each
+    # panel renders its own response with the correct route badge.
+    assert session_state[STATE_FOLLOWUP_OUTPUT] == "AI: deterministic explanation"
+    assert session_state[STATE_FOLLOWUP_SKILL] == "ExplainActiveEventSkill"
+    assert session_state[STATE_KNOWLEDGE_OUTPUT] == "AI: Command Injection is ..."
+    assert session_state[STATE_KNOWLEDGE_SKILL] == "KnowledgeQASkill"
+    # report sections still preserved after both AI calls.
+    assert session_state[STATE_ANALYSIS_OUTPUT] == ANALYSIS_TEXT
+    assert session_state[STATE_SIMILAR_CASE_OUTPUT] == SIMILAR_TEXT
+
+
+def test_export_after_followup_still_includes_analysis_and_similar_sections() -> None:
+    session_state = _session_after_analysis_and_similar()
+    record_followup_output(
+        session_state,
+        question="為什麼 Decision 是 BLOCK？",
+        response_text=FOLLOWUP_RESPONSE_TEXT,
+        selected_action="ExplainActiveEventSkill",
+    )
+
+    sections = parse_report_sections(combined_display_output(session_state))
+    export = build_markdown_report_export(
+        active_context_summary=summarize_active_context(None),
+        report_sections=sections,
+        case_memory_display=build_case_memory_display(),
+        case_draft_display=build_case_draft_display(
+            str(session_state.get(STATE_LAST_OUTPUT) or ""), None
+        ),
+        runtime_timing_display=build_runtime_timing_display(session_state),
+        route_policy_display=build_route_policy_display("ExplainActiveEventSkill", "為什麼 Decision 是 BLOCK？"),
+        raw_output=str(session_state.get(STATE_LAST_OUTPUT) or ""),
+        generated_at=GENERATED_AT,
+    )
+
+    assert "Risk Level: HIGH" in export.markdown
+    assert "CASE-SEED-001" in export.markdown
+    assert MISSING_ANALYSIS_REPORT not in export.markdown
+    assert MISSING_SIMILAR_CASES not in export.markdown

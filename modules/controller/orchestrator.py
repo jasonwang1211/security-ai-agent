@@ -95,6 +95,24 @@ class AgentSkillOrchestrator:
             self._payload_for_skill(selected_skill, text),
         )
 
+    def force_knowledge_qa(self, question: str) -> ControllerOutput:
+        """Dispatch the existing KnowledgeQASkill directly for a general question.
+
+        This is a thin, additive entry point that bypasses active-context
+        follow-up routing so a general security / RAG question is answered by
+        the knowledge path even when an active event/incident is present. It
+        reuses the same registered handler, RAG retrieval, and ToolPolicy gate
+        as normal routing; no retrieval, detection, risk, or decision behavior
+        changes.
+        """
+
+        text = str(question or "").strip()
+        if not text:
+            return self._clarification("Input is blank.")
+        if not is_tool_allowed_without_human_approval(KNOWLEDGE_QA_SKILL):
+            return self._blocked(KNOWLEDGE_QA_SKILL)
+        return self.controller.dispatch_tool(KNOWLEDGE_QA_SKILL, {"question": text})
+
     def _select_skill(self, text: str) -> str | None:
         state = get_agent_state(self.agent)
         active_context_kind = state.get("active_context_kind")

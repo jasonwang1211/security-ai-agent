@@ -256,6 +256,37 @@ def test_general_security_question_with_active_context_still_routes_to_knowledge
     assert agent.cli_state["pending_case_draft_request"] is pending_request
 
 
+def test_force_knowledge_qa_bypasses_active_incident_followup_routing(monkeypatch) -> None:
+    # v2.6-Y correction: a general knowledge question from the Knowledge Q&A
+    # panel must use KnowledgeQASkill even when an active incident exists, so it
+    # is not absorbed by ExplainActiveIncidentSkill follow-up routing.
+    agent = FakeAgent()
+    agent.cli_state["active_context_kind"] = "incident"
+    agent.cli_state["active_incident_context"] = object()
+
+    monkeypatch.setattr(orchestrator_module, "answer_incident_followup", lambda *_args: "incident")
+
+    def incident_handler(_input_data: BaseModel, _agent) -> ToolExecutionResult:
+        raise AssertionError("forced knowledge QA must not route to the incident follow-up skill")
+
+    def knowledge_handler(input_data: BaseModel, _agent) -> ToolExecutionResult:
+        assert isinstance(input_data, KnowledgeQuestionInput)
+        assert input_data.question == "RAG 在這個系統中的角色是什麼？"
+        return _ok("knowledge answer")
+
+    monkeypatch.setattr(orchestrator_module, "run_explain_active_incident_skill", incident_handler)
+    monkeypatch.setattr(orchestrator_module, "run_knowledge_qa_skill", knowledge_handler)
+
+    output = AgentSkillOrchestrator(agent).force_knowledge_qa("RAG 在這個系統中的角色是什麼？")
+
+    assert output.status == "ok"
+    assert output.selected_tool == KNOWLEDGE_QA_SKILL
+    assert output.response_text == "knowledge answer"
+    # active context is unchanged by the advisory knowledge question.
+    assert agent.cli_state["active_context_kind"] == "incident"
+    assert agent.cli_state["active_incident_context"] is not None
+
+
 def test_explicit_similar_case_command_routes_to_read_only_skill(monkeypatch) -> None:
     agent = FakeAgent()
     agent.cli_state["active_context_kind"] = "event"

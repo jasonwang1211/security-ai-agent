@@ -20,6 +20,12 @@ STATE_LAST_OUTPUT = "sentinel_last_output"
 STATE_LAST_SELECTED_ACTION = "sentinel_last_selected_action"
 STATE_ANALYSIS_OUTPUT = "sentinel_analysis_output"
 STATE_SIMILAR_CASE_OUTPUT = "sentinel_similar_case_output"
+STATE_FOLLOWUP_QUESTION = "sentinel_followup_question"
+STATE_FOLLOWUP_OUTPUT = "sentinel_followup_output"
+STATE_FOLLOWUP_SKILL = "sentinel_followup_skill"
+STATE_KNOWLEDGE_QUESTION = "sentinel_knowledge_question"
+STATE_KNOWLEDGE_OUTPUT = "sentinel_knowledge_output"
+STATE_KNOWLEDGE_SKILL = "sentinel_knowledge_skill"
 
 ACTIVE_EVENT_CONTEXT_KEY = "active_event_context"
 ACTIVE_INCIDENT_CONTEXT_KEY = "active_incident_context"
@@ -84,6 +90,12 @@ def bind_runtime(
     session_state.setdefault(STATE_LAST_SELECTED_ACTION, "")
     session_state.setdefault(STATE_ANALYSIS_OUTPUT, "")
     session_state.setdefault(STATE_SIMILAR_CASE_OUTPUT, "")
+    session_state.setdefault(STATE_FOLLOWUP_QUESTION, "")
+    session_state.setdefault(STATE_FOLLOWUP_OUTPUT, "")
+    session_state.setdefault(STATE_FOLLOWUP_SKILL, "")
+    session_state.setdefault(STATE_KNOWLEDGE_QUESTION, "")
+    session_state.setdefault(STATE_KNOWLEDGE_OUTPUT, "")
+    session_state.setdefault(STATE_KNOWLEDGE_SKILL, "")
     return cli_state
 
 
@@ -102,10 +114,14 @@ def record_output(
 
 
 def record_analysis_output(session_state: MutableMapping[str, Any], response_text: str) -> None:
-    """Store a new analysis output and clear stale similar-case display state."""
+    """Store a new analysis output and clear stale similar-case / follow-up state."""
 
     session_state[STATE_ANALYSIS_OUTPUT] = response_text
     session_state[STATE_SIMILAR_CASE_OUTPUT] = ""
+    # A new analysis means the previous context-specific AI follow-up is stale.
+    session_state[STATE_FOLLOWUP_QUESTION] = ""
+    session_state[STATE_FOLLOWUP_OUTPUT] = ""
+    session_state[STATE_FOLLOWUP_SKILL] = ""
 
 
 def record_similar_case_output(
@@ -141,6 +157,76 @@ def record_draft_action_output(
     )
 
 
+def _record_advisory_output(
+    session_state: MutableMapping[str, Any],
+    *,
+    question: str,
+    response_text: str,
+    selected_action: str | None,
+    question_key: str,
+    output_key: str,
+    skill_key: str,
+) -> None:
+    """Record an advisory AI answer while preserving report sections.
+
+    Updates the latest command / output / action (so Raw Output, Performance,
+    and Route / Policy reflect the AI follow-up) and stores the question, answer,
+    and the per-panel selected skill under the given keys. It must NOT touch the
+    preserved analysis report or similar-case output that the report sections
+    and Export Report still need.
+    """
+
+    session_state[question_key] = question
+    session_state[output_key] = response_text
+    session_state[skill_key] = selected_action or ""
+    record_output(
+        session_state,
+        user_input=question,
+        response_text=response_text,
+        selected_action=selected_action,
+    )
+
+
+def record_followup_output(
+    session_state: MutableMapping[str, Any],
+    *,
+    question: str,
+    response_text: str,
+    selected_action: str | None,
+) -> None:
+    """Record an AI follow-up answer without clearing preserved report sections."""
+
+    _record_advisory_output(
+        session_state,
+        question=question,
+        response_text=response_text,
+        selected_action=selected_action,
+        question_key=STATE_FOLLOWUP_QUESTION,
+        output_key=STATE_FOLLOWUP_OUTPUT,
+        skill_key=STATE_FOLLOWUP_SKILL,
+    )
+
+
+def record_knowledge_output(
+    session_state: MutableMapping[str, Any],
+    *,
+    question: str,
+    response_text: str,
+    selected_action: str | None,
+) -> None:
+    """Record a Knowledge Q&A answer without clearing preserved report sections."""
+
+    _record_advisory_output(
+        session_state,
+        question=question,
+        response_text=response_text,
+        selected_action=selected_action,
+        question_key=STATE_KNOWLEDGE_QUESTION,
+        output_key=STATE_KNOWLEDGE_OUTPUT,
+        skill_key=STATE_KNOWLEDGE_SKILL,
+    )
+
+
 def clear_active_context(session_state: MutableMapping[str, Any]) -> None:
     """Clear retained active context and displayed output without touching files."""
 
@@ -156,6 +242,12 @@ def clear_active_context(session_state: MutableMapping[str, Any]) -> None:
     session_state[STATE_LAST_OUTPUT] = ""
     session_state[STATE_ANALYSIS_OUTPUT] = ""
     session_state[STATE_SIMILAR_CASE_OUTPUT] = ""
+    session_state[STATE_FOLLOWUP_QUESTION] = ""
+    session_state[STATE_FOLLOWUP_OUTPUT] = ""
+    session_state[STATE_FOLLOWUP_SKILL] = ""
+    session_state[STATE_KNOWLEDGE_QUESTION] = ""
+    session_state[STATE_KNOWLEDGE_OUTPUT] = ""
+    session_state[STATE_KNOWLEDGE_SKILL] = ""
     session_state[STATE_LAST_SELECTED_ACTION] = "Clear Context"
 
 
