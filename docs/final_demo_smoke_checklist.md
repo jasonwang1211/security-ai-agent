@@ -121,3 +121,29 @@ python -m streamlit run ui/streamlit_app.py --server.fileWatcherType none
 - BLOCK / MONITOR / ALLOW = simulated。
 - RAG / 相似案例 / 圖譜 = advisory 解釋與情境。
 - Draft 需 human review 才能信任或提升。
+
+---
+
+## 11. 截圖證據檢查 / Screenshot Evidence Check
+
+確認 `docs/screenshots/` 內 8 張截圖都存在（總覽見 [screenshots/README.md](screenshots/README.md)）：
+
+- [ ] [01_console_home.png](screenshots/01_console_home.png) — 主控台與示範啟動器，無 active context。
+- [ ] [02_fast_command_injection_analysis.png](screenshots/02_fast_command_injection_analysis.png) — Fast：`HIGH` / `BLOCK`，⚡ Fast 模式橫幅。
+- [ ] [03_full_ai_assisted_analysis.png](screenshots/03_full_ai_assisted_analysis.png) — Full（加分）：`完整 AI 輔助` + `AI/RAG 輔助` + 🧠 紫色橫幅。
+- [ ] [04_ai_analyst_followup.png](screenshots/04_ai_analyst_followup.png) — 追問助理（確定性追問徽章）。
+- [ ] [05_knowledge_qa_rag.png](screenshots/05_knowledge_qa_rag.png) — RAG / 知識問答徽章。
+- [ ] [06_similar_cases.png](screenshots/06_similar_cases.png) — 核准相似案例 `CASE-SEED-001`。
+- [ ] [07_graph_relations.png](screenshots/07_graph_relations.png) — 關係圖譜。
+- [ ] [08_case_draft_export.png](screenshots/08_case_draft_export.png) — 案例草稿 / 匯出報告。
+
+逐張對照 demo 故事：
+
+- [ ] 02 vs 03 能清楚看出 **Fast（⚡ 青色）vs Full（🧠 紫色 + AI/RAG 輔助）** 的差異。
+- [ ] 04（確定性追問）與 05（RAG / 知識問答）兩種 AI Analyst 徽章顏色 / 文字不同。
+- [ ] 06 顯示 `CASE-SEED-001`；07 圖譜節點與關係可讀。
+- [ ] 08 顯示 Case Draft 與 Markdown 匯出（含 `safety_reviewed: false`）。
+- [ ] 截圖皆為 **繁體中文 (zh-TW)**；安全/模擬字樣未被誤改。
+
+> 備註：部分截圖較長（含完整 Analysis Report），放進投影片時可裁切（crop）只保留重點區塊；
+> 不要因為裁切而把「模擬決策 / 僅供參考 / 需人工審查」等安全字樣裁掉。

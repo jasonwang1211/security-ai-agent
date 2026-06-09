@@ -16,7 +16,24 @@ python -m streamlit run ui/streamlit_app.py --server.fileWatcherType none
 | 五分鐘簡報指南（流程、時間分配、重點） | [demo_presentation_guide.md](demo_presentation_guide.md) |
 | 五分鐘口語逐字稿（可照唸） | [demo_script_5min.md](demo_script_5min.md) |
 | 上台前最終檢查表 | [final_demo_smoke_checklist.md](final_demo_smoke_checklist.md) |
+| UI 截圖總覽 / Screenshot index | [screenshots/README.md](screenshots/README.md) |
 | 專案說明 / README | [../README.md](../README.md) |
+
+## 建議截圖示範路徑 / Recommended Screenshot Demo Path
+
+主線使用 **Fast deterministic** 模式（快速、穩定）。依序帶過以下截圖即可講完核心故事：
+
+1. [01_console_home.png](screenshots/01_console_home.png) — SOC 主控台與示範情境啟動器（尚無 active context）。
+2. [02_fast_command_injection_analysis.png](screenshots/02_fast_command_injection_analysis.png) — Fast 確定性命令注入結果（`HIGH` / `BLOCK`，⚡ Fast 模式橫幅）。
+3. [04_ai_analyst_followup.png](screenshots/04_ai_analyst_followup.png) — AI Analyst 追問助理（確定性追問解釋）。
+4. [05_knowledge_qa_rag.png](screenshots/05_knowledge_qa_rag.png) — RAG / 知識問答。
+5. [06_similar_cases.png](screenshots/06_similar_cases.png) — 核准相似案例（`CASE-SEED-001`）。
+6. [07_graph_relations.png](screenshots/07_graph_relations.png) — 關係圖譜。
+7. [08_case_draft_export.png](screenshots/08_case_draft_export.png) — 案例草稿 / 報告匯出。
+
+**加分 / 可選（bonus, optional）**：
+
+- [03_full_ai_assisted_analysis.png](screenshots/03_full_ai_assisted_analysis.png) — Full AI-assisted（`完整 AI 輔助` + `AI/RAG 輔助` 標記與紫色模式橫幅）。**首次執行較慢**（AI/RAG 模型暖機），建議當加分項而非主線。
 
 ## 預期示範結果 / Expected Demo Outputs
 

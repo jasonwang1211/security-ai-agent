@@ -32,6 +32,7 @@ Presentation and demo materials (index: [docs/DEMO_INDEX.md](docs/DEMO_INDEX.md)
 - [5-minute presentation guide](docs/demo_presentation_guide.md)
 - [5-minute spoken script](docs/demo_script_5min.md)
 - [Final demo smoke checklist](docs/final_demo_smoke_checklist.md)
+- [UI screenshots](docs/screenshots/README.md)
 
 `BLOCK` / `MONITOR` / `ALLOW` are simulated decisions; detection is rule-based; RAG, similar cases, and the graph are advisory analyst context; human review is required before trusting or promoting case drafts.
 
@@ -586,6 +587,7 @@ python -m streamlit run ui/streamlit_app.py --server.fileWatcherType none
 - [五分鐘簡報指南](docs/demo_presentation_guide.md)
 - [五分鐘口語逐字稿](docs/demo_script_5min.md)
 - [上台前最終檢查表](docs/final_demo_smoke_checklist.md)
+- [UI 截圖](docs/screenshots/README.md)
 
 `BLOCK` / `MONITOR` / `ALLOW` 為模擬決策；偵測為規則式（rule-based）；RAG、相似案例與關係圖僅為分析師參考脈絡；草稿在被信任或提升前需人工審查。
 

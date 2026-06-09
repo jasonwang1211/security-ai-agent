@@ -43,6 +43,28 @@ python -m streamlit run ui/streamlit_app.py --server.fileWatcherType none
 
 ---
 
+## 2b. 螢幕截圖示範路徑 / Screenshot-Guided Path
+
+若無法現場啟動，或要做投影片 / 錄影，可直接照下列截圖順序講解（檔案在 `docs/screenshots/`）。
+**主線一律用 Fast deterministic 模式**（快速、穩定、可重現）。
+
+| 段落 | 截圖 | 重點 |
+|---|---|---|
+| 介紹主控台 | [01_console_home.png](screenshots/01_console_home.png) | SOC 主控台、示範情境啟動器、尚無 active context |
+| 命令注入（主線，Fast） | [02_fast_command_injection_analysis.png](screenshots/02_fast_command_injection_analysis.png) | `Command Injection` / `HIGH` / `BLOCK`，⚡ Fast 模式橫幅 |
+| AI Analyst 追問 | [04_ai_analyst_followup.png](screenshots/04_ai_analyst_followup.png) | 確定性追問解釋；命中規則 ≠ 已執行 |
+| RAG 知識問答 | [05_knowledge_qa_rag.png](screenshots/05_knowledge_qa_rag.png) | RAG / 知識問答（advisory） |
+| 關係圖譜 | [07_graph_relations.png](screenshots/07_graph_relations.png) | 目前事件 ↔ `CASE-SEED-001` 的共享關係 |
+| 草稿 / 匯出 | [08_case_draft_export.png](screenshots/08_case_draft_export.png) | Case Draft（需核准）＋ Markdown 匯出 |
+
+需要時也可插入 [06_similar_cases.png](screenshots/06_similar_cases.png)（核准相似案例 `CASE-SEED-001`）。
+
+**加分 / 可選（bonus）：** [03_full_ai_assisted_analysis.png](screenshots/03_full_ai_assisted_analysis.png) —
+Full AI-assisted 會跑 AI/RAG 說明層，畫面上有 `完整 AI 輔助` + `AI/RAG 輔助` 標記與紫色模式橫幅。
+**首次執行較慢（模型暖機，約 30–60 秒）**，所以當作加分項展示，不要放在主線即時 demo。
+
+---
+
 ## 3. 時間分配 / Suggested Timing Breakdown
 
 | 時間 | 區段 | 內容 |

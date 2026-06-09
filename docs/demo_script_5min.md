@@ -27,6 +27,8 @@
 
 ## 1:30–2:40 命令注入示範 Command Injection（切到 Streamlit）
 
+`[截圖 / Screenshot: 01_console_home.png → 02_fast_command_injection_analysis.png]`（主線用 Fast deterministic 模式）
+
 > 「現在切到真正的系統——這是一個 Streamlit 的 SOC 主控台。我用內建的『命令注入示範』。
 > 輸入是 `test; rm -rf /tmp/test`，這裡有 shell 串接符號。我用 **Fast deterministic** 模式執行。
 > 結果出來：偵測為 **Command Injection**，命中規則 **CMD-001**，風險是 **HIGH**，決策是 **BLOCK**。
@@ -36,14 +38,21 @@
 
 ## 2:40–3:30 相似案例 + 圖譜 Similar Case & Graph
 
+`[截圖 / Screenshot: 06_similar_cases.png → 07_graph_relations.png]`
+
 > 「接著我按 **Find Similar Cases**。系統從**已人工核准**的案例種子裡，依結構化欄位找出最相似的歷史案例——這裡找到 **CASE-SEED-001**。
 > 注意：相似案例只是**參考脈絡**，它不會證明真的被入侵，也不會改變剛剛的 HIGH / BLOCK。
 > 再看 **Graph Relations**。這張關係圖把『目前事件』和相似案例,用 **attack、rule、evidence、risk、decision、similar** 這些關係連起來。
 > 它的價值是**解釋**：讓分析師一眼看出『為什麼系統覺得這兩個案例相關』,而不是再去做一次偵測。」
 
+> （可選 30 秒）切到 **AI Analyst** 分頁：`[截圖 / Screenshot: 04_ai_analyst_followup.png → 05_knowledge_qa_rag.png]`
+> 「追問助理用**目前事件的脈絡**做確定性解釋（例如『命中規則不代表命令真的執行了』）；知識問答則是 **RAG** 的資安知識查詢。兩者都標示**僅供參考**，不會覆蓋 Risk Level 或 Decision。」
+
 ---
 
 ## 3:30–4:20 草稿 / 匯出 Draft & Export
+
+`[截圖 / Screenshot: 08_case_draft_export.png]`
 
 > 「分析完之後,分析師可以把這個事件**擷取成 Case Draft**。
 > 但這裡有一個刻意的設計:草稿預設是 `safety_reviewed: false`,而且**需要明確的人工核准**才會寫出檔案。系統**不會自動**把它寫進正式知識庫、也不會自動提升成可信知識。
@@ -57,6 +66,15 @@
 > 我要很誠實地說明它**不會**做什麼:它**不會**執行真實的封鎖,**不會**控制真實的 firewall / WAF / EDR,**不會**停用帳號或重設密碼,也**不會**自動把草稿變成可信知識。
 > 它**會**做的是:用可重現的規則式偵測產生確定性結論,用 RAG 和圖譜提供解釋與情境,並且**要求人工審查**才能信任或提升任何草稿。
 > 所以這個專案的價值不是『取代 SOC』,而是示範一個**安全、可驗證、可解釋**的分流流程:確定性偵測當地基,AI 與圖譜負責解釋,所有動作都是模擬,最後仍然由人來把關。謝謝大家。」
+
+---
+
+## （加分 / 可選）Full AI-assisted bonus
+
+`[截圖 / Screenshot: 03_full_ai_assisted_analysis.png]`
+
+> 「如果還有時間，可以切到 **Full AI-assisted** 模式再跑一次——畫面會多出 `完整 AI 輔助` 與 `AI/RAG 輔助` 標記，代表多跑了 AI/RAG 說明層。
+> 但要說明：**首次執行較慢**（模型暖機，約 30–60 秒），而且 **Risk Level 與 Decision 還是同一套確定性結果**，AI 只是多給了解釋。所以正式 demo 我用 Fast 模式，這個當加分展示。」
 
 ---
 
