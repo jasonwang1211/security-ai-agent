@@ -1,5 +1,5 @@
 from modules.agent import SecurityAgent
-from modules.controller.orchestrator import build_default_v2_4_orchestrator
+from modules.controller.orchestrator import build_default_v2_5_orchestrator
 from modules.detector import RuleBasedDetector
 from modules.followup_handler import FollowupHandler
 from modules.llm_assist import LLMAssist
@@ -125,7 +125,7 @@ def main():
         triage_policy=triage_policy,
         llm_assist=llm_assist,
     )
-    orchestrator = build_default_v2_4_orchestrator(agent)
+    orchestrator = build_default_v2_5_orchestrator(agent)
 
     if rag_qa.is_ready():
         print("\nSecurity AI 已啟動。")

@@ -3,6 +3,7 @@ from modules.controller.skill_wrappers import (
     run_analyze_payload_skill,
     run_explain_active_event_skill,
     run_explain_active_incident_skill,
+    run_draft_case_capture_skill,
     run_incident_json_export_skill,
     run_knowledge_qa_skill,
     run_log_file_ingest_skill,
@@ -10,6 +11,7 @@ from modules.controller.skill_wrappers import (
     run_rag_security_qa_skill,
     run_raw_log_translate_skill,
     run_report_followup_skill,
+    run_retrieve_approved_similar_case_skill,
 )
 
 __all__ = [
@@ -17,6 +19,7 @@ __all__ = [
     "run_analyze_payload_skill",
     "run_explain_active_event_skill",
     "run_explain_active_incident_skill",
+    "run_draft_case_capture_skill",
     "run_incident_json_export_skill",
     "run_knowledge_qa_skill",
     "run_log_file_ingest_skill",
@@ -24,4 +27,5 @@ __all__ = [
     "run_rag_security_qa_skill",
     "run_raw_log_translate_skill",
     "run_report_followup_skill",
+    "run_retrieve_approved_similar_case_skill",
 ]

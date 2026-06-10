@@ -9,15 +9,19 @@ from modules.controller.skill_catalog import (
     EXPLAIN_ACTIVE_INCIDENT_SKILL,
     INCIDENT_JSON_EXPORT,
     KNOWLEDGE_QA_SKILL,
+    DRAFT_CASE_CAPTURE_SKILL,
     LOG_FILE_INGEST,
     PAYLOAD_TRIAGE,
     RAG_SECURITY_QA,
     RAW_LOG_TRANSLATE,
+    RETRIEVE_APPROVED_SIMILAR_CASE_SKILL,
     REPORT_FOLLOWUP,
     build_v1_5_registry,
     build_v1_5_tool_specs,
     build_v2_4_registry,
     build_v2_4_tool_specs,
+    build_v2_5_registry,
+    build_v2_5_tool_specs,
 )
 from modules.controller.types import IncidentJsonExportInput
 
@@ -47,6 +51,11 @@ DEFERRED_V2_4_SKILL_NAMES = {
     "RetrieveSimilarCaseSkill",
     "DraftCaseCaptureSkill",
 }
+EXPECTED_V2_5_SKILL_NAMES = [
+    *EXPECTED_V2_4_SKILL_NAMES,
+    DRAFT_CASE_CAPTURE_SKILL,
+    RETRIEVE_APPROVED_SIMILAR_CASE_SKILL,
+]
 
 
 def spec_by_name(name: str):
@@ -176,3 +185,27 @@ def test_v2_4_knowledge_skill_preserves_rag_and_llm_requirement_flags() -> None:
     assert spec.requires_rag is True
     assert spec.requires_llm is True
     assert spec.deterministic is False
+
+
+def test_build_v2_5_registry_adds_approval_gated_case_draft_skill() -> None:
+    registry = build_v2_5_registry()
+    specs = {item.name: item for item in build_v2_5_tool_specs()}
+
+    assert registry.list_names() == EXPECTED_V2_5_SKILL_NAMES
+    draft_spec = specs[DRAFT_CASE_CAPTURE_SKILL]
+    assert draft_spec.safety_level == "draft_write_review_required"
+    assert draft_spec.requires_llm is False
+    assert draft_spec.requires_rag is False
+    assert draft_spec.deterministic is True
+    assert draft_spec.allowed_input_kinds == ["case_draft_request"]
+
+
+def test_build_v2_5_registry_adds_read_only_similar_case_skill() -> None:
+    specs = {item.name: item for item in build_v2_5_tool_specs()}
+
+    similar_spec = specs[RETRIEVE_APPROVED_SIMILAR_CASE_SKILL]
+    assert similar_spec.safety_level == "advisory_explanation"
+    assert similar_spec.requires_llm is False
+    assert similar_spec.requires_rag is False
+    assert similar_spec.deterministic is True
+    assert similar_spec.allowed_input_kinds == ["similar_case_request"]

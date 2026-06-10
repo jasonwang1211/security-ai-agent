@@ -2,12 +2,14 @@
 
 from modules.controller.registry import ToolRegistry
 from modules.controller.types import (
+    CaseDraftInput,
     IncidentJsonExportInput,
     KnowledgeQuestionInput,
     LogFileInput,
     PayloadTriageInput,
     RawLogInput,
     ReportFollowupInput,
+    SimilarCaseInput,
     ToolExecutionResult,
     ToolSpec,
 )
@@ -23,6 +25,8 @@ ANALYZE_AUTHENTICATION_LOG_SKILL = "AnalyzeAuthenticationLogSkill"
 EXPLAIN_ACTIVE_EVENT_SKILL = "ExplainActiveEventSkill"
 EXPLAIN_ACTIVE_INCIDENT_SKILL = "ExplainActiveIncidentSkill"
 KNOWLEDGE_QA_SKILL = "KnowledgeQASkill"
+DRAFT_CASE_CAPTURE_SKILL = "DraftCaseCaptureSkill"
+RETRIEVE_APPROVED_SIMILAR_CASE_SKILL = "RetrieveApprovedSimilarCaseSkill"
 
 
 def build_v1_5_tool_specs() -> list[ToolSpec]:
@@ -170,3 +174,41 @@ def build_v2_4_registry() -> ToolRegistry:
     """Build a ToolRegistry for the v2.4 direct-input orchestration skills."""
 
     return ToolRegistry(build_v2_4_tool_specs())
+
+
+def build_v2_5_tool_specs() -> list[ToolSpec]:
+    """Return the v2.5 skill catalog with approval-gated case draft capture."""
+
+    return [
+        *build_v2_4_tool_specs(),
+        ToolSpec(
+            name=DRAFT_CASE_CAPTURE_SKILL,
+            description="Prepare, approve, cancel, and write isolated reviewed-later case drafts.",
+            input_model=CaseDraftInput,
+            output_model=ToolExecutionResult,
+            safety_level="draft_write_review_required",
+            deterministic=True,
+            requires_llm=False,
+            requires_rag=False,
+            allowed_input_kinds=["case_draft_request"],
+            notes="Writes only isolated workbench/case_drafts markdown after explicit approval.",
+        ),
+        ToolSpec(
+            name=RETRIEVE_APPROVED_SIMILAR_CASE_SKILL,
+            description="Retrieve approved similar case seeds for the current active context.",
+            input_model=SimilarCaseInput,
+            output_model=ToolExecutionResult,
+            safety_level="advisory_explanation",
+            deterministic=True,
+            requires_llm=False,
+            requires_rag=False,
+            allowed_input_kinds=["similar_case_request"],
+            notes="Read-only deterministic retrieval over manually curated approved case seeds.",
+        ),
+    ]
+
+
+def build_v2_5_registry() -> ToolRegistry:
+    """Build a ToolRegistry for the v2.5 direct-input orchestration skills."""
+
+    return ToolRegistry(build_v2_5_tool_specs())

@@ -6,13 +6,27 @@ autonomous tool selection, runtime policy enforcement, or real enforcement.
 
 from typing import Any
 
+from modules.controller.approved_case_retrieval import (
+    format_similar_case_output,
+    load_approved_case_seeds,
+    retrieve_approved_similar_cases,
+)
+from modules.controller.case_capture import (
+    PENDING_CASE_DRAFT_KEY,
+    PendingCaseDraftRequest,
+    build_pending_case_draft_request,
+    write_case_draft,
+)
+
 from modules.controller.types import (
     IncidentJsonExportInput,
+    CaseDraftInput,
     KnowledgeQuestionInput,
     LogFileInput,
     PayloadTriageInput,
     RawLogInput,
     ReportFollowupInput,
+    SimilarCaseInput,
     ToolExecutionResult,
 )
 from modules.log_pipeline import try_translate_raw_log_input
@@ -48,7 +62,9 @@ def _get_agent_state(agent: Any) -> dict[str, Any]:
             "active_event_context": None,
             "active_incident_context": None,
             "active_context_kind": "",
+            PENDING_CASE_DRAFT_KEY: None,
         }
+    agent.cli_state.setdefault(PENDING_CASE_DRAFT_KEY, None)
     return agent.cli_state
 
 
@@ -96,7 +112,7 @@ def run_log_file_ingest_skill(input_data: LogFileInput) -> ToolExecutionResult:
         from modules.mode_handlers import run_log_ingestion
 
         result = run_log_ingestion(input_data.path)
-        if "No such file or directory" in result or "霈??log 瑼?憭望?" in result:
+        if "No such file or directory" in result or "讀取 log 檔案失敗" in result:
             return ToolExecutionResult(
                 status="error",
                 output={"text": result},
@@ -248,3 +264,126 @@ def run_knowledge_qa_skill(
     """Run existing protected Mode 3 knowledge Q&A for direct-input orchestration."""
 
     return run_rag_security_qa_skill(input_data, agent)
+
+
+def run_draft_case_capture_skill(
+    input_data: CaseDraftInput,
+    agent: Any,
+) -> ToolExecutionResult:
+    """Prepare, approve, or cancel an approval-gated local case draft."""
+
+    try:
+        if agent is None:
+            return _clarification("DraftCaseCaptureSkill requires an agent with active context state")
+
+        state = _get_agent_state(agent)
+        if input_data.action == "cancel":
+            state[PENDING_CASE_DRAFT_KEY] = None
+            return _ok({"text": "Pending case draft request cancelled. No file was written."})
+
+        if input_data.action == "request":
+            pending = build_pending_case_draft_request(state, input_data.user_text)
+            if pending is None:
+                return _clarification(
+                    "No active payload event or authentication incident is available to draft. "
+                    "Analyze a payload or authentication log first; no file was written."
+                )
+            state[PENDING_CASE_DRAFT_KEY] = pending
+            return ToolExecutionResult(
+                status="clarification_required",
+                output={
+                    "text": (
+                        "Case draft request prepared from the current active context. "
+                        "Explicit approval is required before any markdown file is written. "
+                        "Type 'approve draft case' to create the isolated workbench draft, "
+                        "or 'cancel draft case' to clear this pending request."
+                    ),
+                    "fingerprint": pending.fingerprint,
+                    "source_context_type": pending.source_context_type,
+                },
+                warnings=[
+                    "DraftCaseCaptureSkill is WRITE_DRAFT and HUMAN_APPROVAL_REQUIRED; no file was written."
+                ],
+            )
+
+        pending_value = state.get(PENDING_CASE_DRAFT_KEY)
+        if pending_value is None:
+            return _clarification("No pending case draft request exists; no file was written.")
+        pending = (
+            pending_value
+            if isinstance(pending_value, PendingCaseDraftRequest)
+            else PendingCaseDraftRequest.model_validate(pending_value)
+        )
+        result = write_case_draft(pending)
+        if result.created or result.duplicate:
+            state[PENDING_CASE_DRAFT_KEY] = None
+        if result.created:
+            return _ok(
+                {
+                    "text": f"Case draft created for human review: {result.draft_path}",
+                    "draft_path": result.draft_path,
+                    "fingerprint": result.fingerprint,
+                },
+                warnings=result.warnings,
+            )
+        return ToolExecutionResult(
+            status="clarification_required",
+            output={
+                "text": f"Duplicate case draft detected; no file was overwritten: {result.draft_path}",
+                "draft_path": result.draft_path,
+                "fingerprint": result.fingerprint,
+            },
+            warnings=result.warnings,
+        )
+    except Exception as exc:
+        return _error(exc, "DraftCaseCaptureSkill")
+
+
+def run_retrieve_approved_similar_case_skill(
+    input_data: SimilarCaseInput,
+    agent: Any,
+) -> ToolExecutionResult:
+    """Retrieve approved similar case seeds for the current active context."""
+
+    try:
+        if agent is None:
+            return _clarification("RetrieveApprovedSimilarCaseSkill requires an agent")
+
+        state = _get_agent_state(agent)
+        context_kind = state.get("active_context_kind")
+        if context_kind == "event":
+            context = state.get("active_event_context")
+        elif context_kind == "incident":
+            context = state.get("active_incident_context")
+        else:
+            context = None
+
+        if context is None:
+            return _clarification(
+                "RetrieveApprovedSimilarCaseSkill requires an active payload event or authentication incident context"
+            )
+
+        seeds = load_approved_case_seeds()
+        result = retrieve_approved_similar_cases(context, seeds)
+        # Display-only language hint (set by the UI); does not affect retrieval,
+        # similarity scoring, matching, or any backend behavior.
+        report_language = getattr(agent, "report_language", None)
+        return _ok(
+            {
+                "text": format_similar_case_output(result, report_language),
+                "current_context_kind": result.current.context_kind,
+                "matches": [
+                    {
+                        "case_id": match.seed.case_id,
+                        "title": match.seed.title,
+                        "score": match.score,
+                        "reasons": list(match.reasons),
+                        "differences": list(match.differences),
+                    }
+                    for match in result.matches
+                ],
+                "command": input_data.command,
+            }
+        )
+    except Exception as exc:
+        return _error(exc, "RetrieveApprovedSimilarCaseSkill")

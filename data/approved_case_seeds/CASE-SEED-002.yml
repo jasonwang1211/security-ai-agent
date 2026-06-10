@@ -1,0 +1,33 @@
+schema_version: v2.5-approved-case1
+case_id: CASE-SEED-002
+title: Authentication Success After Failures With Simulated MONITOR
+review_status: approved_for_similarity_demo
+approved_for_retrieval: true
+case_type: auth_incident
+attack_types:
+  - Possible Account Compromise
+rule_ids: []
+finding_types:
+  - possible_account_compromise
+evidence_types:
+  - auth_failure_sequence
+  - success_after_failures
+risk_level: HIGH
+decision: MONITOR
+simulated_decision: true
+summary: Repeated authentication failures followed by a successful login created a suspicious but not conclusive account-compromise candidate.
+key_facts:
+  - Multiple failed login attempts occurred before a later successful login.
+  - The structured finding type was possible_account_compromise.
+  - The simulated decision was MONITOR for analyst review.
+investigation_notes:
+  - Compare source IP, user, device, and session context for the success event.
+  - Check MFA, privilege changes, and follow-on activity before concluding compromise.
+  - Preserve authentication logs and related session records.
+differences_to_check:
+  - Current incident may involve different users, source IPs, or timing windows.
+  - Success after failures is suspicious but does not prove account compromise by itself.
+analyst_conclusion: Treat the pattern as a high-risk investigation lead, not confirmed account takeover.
+outcome: Simulated MONITOR decision only; no real monitoring deployment or account action was executed.
+source_provenance: manually_curated_seed
+current_event_authority: advisory_only_no_override

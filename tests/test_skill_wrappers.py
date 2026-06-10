@@ -1,19 +1,32 @@
 import sys
+from pathlib import Path
 from typing import Any
 
+import pytest
+from pydantic import ValidationError
+
+import modules.controller.skill_wrappers as skill_wrappers_module
+from modules.controller.case_capture import PENDING_CASE_DRAFT_KEY, write_case_draft
+from modules.event_followup import ActiveEventContext
+from modules.incident_followup import build_active_auth_incident_context
+from modules.types import EvidenceBundle, EvidenceItem, Finding, Incident
+
 from modules.controller.types import (
+    CaseDraftInput,
     IncidentJsonExportInput,
     KnowledgeQuestionInput,
     LogFileInput,
     PayloadTriageInput,
     RawLogInput,
     ReportFollowupInput,
+    SimilarCaseInput,
     ToolExecutionResult,
 )
 from modules.controller.skill_wrappers import (
     run_analyze_payload_skill,
     run_explain_active_event_skill,
     run_explain_active_incident_skill,
+    run_draft_case_capture_skill,
     run_incident_json_export_skill,
     run_knowledge_qa_skill,
     run_log_file_ingest_skill,
@@ -21,6 +34,7 @@ from modules.controller.skill_wrappers import (
     run_rag_security_qa_skill,
     run_raw_log_translate_skill,
     run_report_followup_skill,
+    run_retrieve_approved_similar_case_skill,
 )
 
 
@@ -34,6 +48,7 @@ class FakeAgent:
             "active_event_context": None,
             "active_incident_context": None,
             "active_context_kind": "",
+            PENDING_CASE_DRAFT_KEY: None,
         }
 
     def handle_query(self, query, state):
@@ -261,3 +276,214 @@ def test_knowledge_qa_skill_uses_existing_protected_knowledge_path() -> None:
 
     assert result.status == "ok"
     assert result.output["text"] == "knowledge: What is XSS?"
+
+
+def test_retrieve_approved_similar_case_requires_active_context() -> None:
+    result = run_retrieve_approved_similar_case_skill(
+        SimilarCaseInput(command="find similar cases"),
+        FakeAgent(),
+    )
+
+    assert result.status == "clarification_required"
+    assert "requires an active" in str(result.error_message)
+
+
+def test_retrieve_approved_similar_case_uses_active_event_context() -> None:
+    agent = FakeAgent()
+    agent.cli_state["active_context_kind"] = "event"
+    agent.cli_state["active_event_context"] = _active_event_context()
+
+    result = run_retrieve_approved_similar_case_skill(
+        SimilarCaseInput(command="find similar cases"),
+        agent,
+    )
+
+    assert result.status == "ok"
+    assert result.output["current_context_kind"] == "active_event"
+    assert result.output["matches"][0]["case_id"] == "CASE-SEED-001"
+    assert "Historical approved cases are advisory references only" in result.output["text"]
+
+
+def _active_event_context(
+    payload: str = "cmd=whoami; password=supersecret src=10.0.0.7",
+) -> ActiveEventContext:
+    return ActiveEventContext(
+        original_input=payload,
+        attack_types=("Command Injection",),
+        matched_signatures={"Command Injection": (";", "whoami")},
+        rule_ids=("CMD-001",),
+        rule_sources=("detections/blue_team/command_injection.yml",),
+        risk_level="HIGH",
+        decision="BLOCK",
+        simulation_notice="Simulated BLOCK only.",
+        rendered_report="Mode 1 report",
+    )
+
+
+def test_case_draft_input_rejects_public_output_dir(tmp_path: Path) -> None:
+    with pytest.raises(ValidationError):
+        CaseDraftInput.model_validate(
+            {
+                "action": "approve",
+                "user_text": "approve draft case",
+                "output_dir": str(tmp_path),
+            }
+        )
+
+
+def test_draft_case_capture_request_without_active_context_writes_nothing(tmp_path: Path) -> None:
+    agent = FakeAgent()
+
+    result = run_draft_case_capture_skill(
+        CaseDraftInput(action="request", user_text="draft this case"),
+        agent,
+    )
+
+    assert result.status == "clarification_required"
+    assert "No active" in str(result.error_message)
+    assert list(tmp_path.iterdir()) == []
+    assert agent.cli_state[PENDING_CASE_DRAFT_KEY] is None
+
+
+def test_draft_case_capture_request_stores_pending_without_writing(tmp_path: Path) -> None:
+    agent = FakeAgent()
+    agent.cli_state["active_context_kind"] = "event"
+    agent.cli_state["active_event_context"] = _active_event_context()
+
+    result = run_draft_case_capture_skill(
+        CaseDraftInput(action="request", user_text="draft this case"),
+        agent,
+    )
+
+    assert result.status == "clarification_required"
+    assert "Explicit approval is required" in result.output["text"]
+    assert agent.cli_state[PENDING_CASE_DRAFT_KEY] is not None
+    assert list(tmp_path.iterdir()) == []
+
+
+def test_draft_case_capture_approval_writes_pending_snapshot_and_clears_state(
+    tmp_path: Path, monkeypatch
+) -> None:
+    agent = FakeAgent()
+    monkeypatch.setattr(
+        skill_wrappers_module,
+        "write_case_draft",
+        lambda pending: write_case_draft(pending, output_dir=tmp_path),
+    )
+    agent.cli_state["active_context_kind"] = "event"
+    agent.cli_state["active_event_context"] = _active_event_context()
+    request = run_draft_case_capture_skill(
+        CaseDraftInput(action="request", user_text="draft this case"),
+        agent,
+    )
+    pending_fingerprint = request.output["fingerprint"]
+    agent.cli_state["active_event_context"] = _active_event_context("<script>alert(1)</script>")
+
+    result = run_draft_case_capture_skill(
+        CaseDraftInput(action="approve", user_text="approve draft case"),
+        agent,
+    )
+
+    assert result.status == "ok"
+    assert result.output["fingerprint"] == pending_fingerprint
+    assert agent.cli_state[PENDING_CASE_DRAFT_KEY] is None
+    draft_path = Path(result.output["draft_path"])
+    assert draft_path.parent == tmp_path
+    markdown = draft_path.read_text(encoding="utf-8")
+    assert "supersecret" not in markdown
+    assert "<script>alert" not in markdown
+    assert "No real firewall" in markdown
+
+
+def test_draft_case_capture_approval_without_pending_writes_nothing(tmp_path: Path) -> None:
+    result = run_draft_case_capture_skill(
+        CaseDraftInput(action="approve", user_text="approve draft case"),
+        FakeAgent(),
+    )
+
+    assert result.status == "clarification_required"
+    assert "No pending" in str(result.error_message)
+    assert list(tmp_path.iterdir()) == []
+
+
+def test_draft_case_capture_cancel_clears_pending_and_later_approval_writes_nothing(tmp_path: Path) -> None:
+    agent = FakeAgent()
+    agent.cli_state["active_context_kind"] = "event"
+    agent.cli_state["active_event_context"] = _active_event_context()
+    run_draft_case_capture_skill(
+        CaseDraftInput(action="request", user_text="draft this case"),
+        agent,
+    )
+
+    cancel = run_draft_case_capture_skill(
+        CaseDraftInput(action="cancel", user_text="cancel draft case"),
+        agent,
+    )
+    approve = run_draft_case_capture_skill(
+        CaseDraftInput(action="approve", user_text="approve draft case"),
+        agent,
+    )
+
+    assert cancel.status == "ok"
+    assert agent.cli_state[PENDING_CASE_DRAFT_KEY] is None
+    assert approve.status == "clarification_required"
+    assert list(tmp_path.iterdir()) == []
+
+
+def _active_incident_context():
+    incident = Incident(
+        id="INC-20260605-001",
+        title="Possible Account Compromise",
+        status="ALERT",
+        risk_level="HIGH",
+        decision="MONITOR",
+        attack_type="Possible Account Compromise",
+        findings=[
+            Finding(
+                id="F-001",
+                finding_type="possible_account_compromise",
+                title="Successful login after failures",
+                status="ALERT",
+                risk_level="HIGH",
+                decision="MONITOR",
+                evidence_ids=["EV-001", "EV-003"],
+            )
+        ],
+        evidence_bundle=EvidenceBundle(
+            incident_id="INC-20260605-001",
+            items=[
+                EvidenceItem(
+                    id="EV-001",
+                    type="auth_failure_sequence",
+                    description="Repeated failed login attempts",
+                    value={"source_ip": "10.0.0.5", "user": "admin"},
+                ),
+                EvidenceItem(
+                    id="EV-003",
+                    type="success_after_failures",
+                    description="Successful login after failures",
+                    value={"source_ip": "10.0.0.5", "user": "admin"},
+                ),
+            ],
+        ),
+    )
+    return build_active_auth_incident_context(
+        incident,
+        rendered_summary="[Log Ingestion Summary]\n\nFile: demo_logs/scenario_a_mixed_auth.log\n",
+    )
+
+
+def test_draft_case_capture_auth_incident_request_stores_pending_without_writing(tmp_path: Path) -> None:
+    agent = FakeAgent()
+    agent.cli_state["active_context_kind"] = "incident"
+    agent.cli_state["active_incident_context"] = _active_incident_context()
+
+    result = run_draft_case_capture_skill(
+        CaseDraftInput(action="request", user_text="draft this incident case"),
+        agent,
+    )
+
+    assert result.status == "clarification_required"
+    assert result.output["source_context_type"] == "active_auth_incident"
+    assert agent.cli_state[PENDING_CASE_DRAFT_KEY] is not None
+    assert list(tmp_path.iterdir()) == []

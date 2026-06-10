@@ -1,6 +1,8 @@
 from pathlib import Path
 
 from modules.agent import SecurityAgent
+from modules.controller.skill_wrappers import run_retrieve_approved_similar_case_skill
+from modules.controller.types import SimilarCaseInput
 from modules.detector import RuleBasedDetector
 from modules.followup_handler import FollowupHandler
 from modules.incident_followup import ActiveAuthIncidentContext, answer_incident_followup
@@ -278,3 +280,95 @@ def test_incident_followup_returns_none_for_unrelated_question() -> None:
     context = run_scenario_a_mode2(agent)
 
     assert answer_incident_followup("random unrelated chat", context) is None
+
+
+# --- v2.6-Q language-aware auth-log incident report -------------------------
+
+
+def test_en_auth_log_output_preserves_english_markers() -> None:
+    output = run_log_ingestion(str(SCENARIO_A_LOG), agent=build_agent(), language="en")
+
+    assert "[Log Ingestion Summary]" in output
+    assert "[Structured Authentication Incident]" in output
+    assert "Risk Level: HIGH" in output
+    assert "Decision: MONITOR" in output
+
+
+def test_zh_tw_auth_log_output_uses_chinese_titles_and_keeps_dynamic_values() -> None:
+    agent = build_agent()
+    output = run_log_ingestion(str(SCENARIO_A_LOG), agent=agent, language="zh-TW")
+    incident_id = get_agent_state(agent)["active_incident_context"].incident.id
+
+    assert "[登入日誌匯入摘要]" in output
+    assert "[結構化驗證事件]" in output
+    assert "風險等級：HIGH" in output
+    assert "決策：MONITOR" in output
+    # dynamic values are not translated.
+    assert "Possible Account Compromise" in output
+    assert incident_id in output
+    assert incident_id.startswith("INC-")
+    assert "EV-001" in output
+    assert "F-001" in output
+    # english markers should not leak into the zh-TW report.
+    assert "[Log Ingestion Summary]" not in output
+    assert "[Structured Authentication Incident]" not in output
+
+
+def test_bilingual_auth_log_output_uses_compact_bilingual_labels() -> None:
+    output = run_log_ingestion(str(SCENARIO_A_LOG), agent=build_agent(), language="bilingual")
+
+    assert "[登入日誌匯入摘要 / Log Ingestion Summary]" in output
+    assert "[結構化驗證事件 / Structured Authentication Incident]" in output
+    assert "風險等級 / Risk Level" in output
+    assert "決策 / Decision" in output
+    assert "Possible Account Compromise" in output
+    assert "EV-001" in output
+    assert "F-001" in output
+
+
+def test_unsupported_auth_log_language_falls_back_to_english() -> None:
+    fallback = run_log_ingestion(str(SCENARIO_A_LOG), agent=build_agent(), language="fr")
+    english = run_log_ingestion(str(SCENARIO_A_LOG), agent=build_agent(), language="en")
+
+    assert fallback == english
+    assert "[Log Ingestion Summary]" in fallback
+
+
+def test_auth_log_language_resolved_from_agent_attribute() -> None:
+    agent = build_agent()
+    # The UI sets this transient display hint on the agent; the report builder
+    # reads it via getattr, so no backend model change is required.
+    agent.report_language = "zh-TW"  # type: ignore[attr-defined]
+
+    output = run_log_ingestion(str(SCENARIO_A_LOG), agent=agent)
+
+    assert "[登入日誌匯入摘要]" in output
+    assert "[結構化驗證事件]" in output
+
+
+def test_zh_auth_incident_similar_case_lookup_returns_case_seed_002() -> None:
+    agent = build_agent()
+    run_log_ingestion(str(SCENARIO_A_LOG), agent=agent, language="zh-TW")
+
+    similar = run_retrieve_approved_similar_case_skill(
+        SimilarCaseInput(command="find similar cases"),
+        agent,
+    )
+
+    assert similar.status == "ok"
+    assert similar.output["matches"][0]["case_id"] == "CASE-SEED-002"
+
+
+def test_auth_incident_context_unchanged_across_languages() -> None:
+    en_agent = build_agent()
+    zh_agent = build_agent()
+    run_log_ingestion(str(SCENARIO_A_LOG), agent=en_agent, language="en")
+    run_log_ingestion(str(SCENARIO_A_LOG), agent=zh_agent, language="zh-TW")
+
+    for agent in (en_agent, zh_agent):
+        context = get_agent_state(agent)["active_incident_context"]
+        assert context.incident.status == "SUSPICIOUS"
+        assert context.incident.risk_level == "HIGH"
+        assert context.incident.decision == "MONITOR"
+        assert context.incident.attack_type == "Possible Account Compromise"
+        assert context.incident.findings[0].id == "F-001"

@@ -136,7 +136,14 @@ _KNOWN_TOOL_POLICIES: dict[str, ToolPolicy] = {
         execution_mode="HUMAN_APPROVAL_REQUIRED",
         risk_level="MEDIUM",
         requires_human_approval=True,
-        reason="Future draft-only case capture must require human review.",
+        reason="Approval-gated case draft capture requires explicit human approval; request and cancel actions write nothing.",
+    ),
+    "RetrieveApprovedSimilarCaseSkill": ToolPolicy(
+        tool_name="RetrieveApprovedSimilarCaseSkill",
+        permission="READ_ONLY",
+        execution_mode="DIRECT_ALLOWED",
+        risk_level="LOW",
+        reason="Read-only retrieval over manually curated approved case seeds.",
     ),
     "vector_rag_search": ToolPolicy(
         tool_name="vector_rag_search",
@@ -300,10 +307,11 @@ def evaluate_tool_policy(tool_name: str) -> ToolPolicyDecision:
 
     policy = default_policy_for_tool(tool_name)
     allowed = (
-        policy.permission in {"READ_ONLY", "WRITE_DRAFT", "SIMULATED_ACTION"}
+        policy.permission in {"READ_ONLY", "SIMULATED_ACTION"}
         and policy.execution_mode != "BLOCKED"
+        and not policy.requires_human_approval
     )
-    if policy.permission == "WRITE_REVIEW_REQUIRED":
+    if policy.permission in {"WRITE_DRAFT", "WRITE_REVIEW_REQUIRED"}:
         allowed = False
     if policy.permission == "FORBIDDEN":
         allowed = False

@@ -1,0 +1,32 @@
+schema_version: v2.5-approved-case1
+case_id: CASE-SEED-001
+title: Command Injection Payload With Simulated BLOCK
+review_status: approved_for_similarity_demo
+approved_for_retrieval: true
+case_type: payload_event
+attack_types:
+  - Command Injection
+rule_ids:
+  - CMD-001
+finding_types: []
+evidence_types:
+  - shell_metacharacter_payload
+risk_level: HIGH
+decision: BLOCK
+simulated_decision: true
+summary: A web input contained shell metacharacters consistent with the Command Injection detector rule.
+key_facts:
+  - The payload used command-separator characters and command-like tokens.
+  - The reviewed detector mapping was CMD-001 for Command Injection.
+  - The project decision was simulated BLOCK because the deterministic risk level was HIGH.
+investigation_notes:
+  - Review server-side command execution sinks and process/audit logs.
+  - Check whether the payload reached a shell or command execution API.
+  - Preserve request, response, and application logs before changing the application.
+differences_to_check:
+  - Current payload may use different command tokens or encoding.
+  - Historical simulated BLOCK does not prove current command execution.
+analyst_conclusion: Similar command-injection indicators should be investigated, but execution success must be verified with current evidence.
+outcome: Simulated BLOCK decision only; no real enforcement was executed.
+source_provenance: manually_curated_seed
+current_event_authority: advisory_only_no_override

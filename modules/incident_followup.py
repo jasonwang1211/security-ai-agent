@@ -13,6 +13,11 @@ import re
 from dataclasses import dataclass
 from typing import Any
 
+from modules.controller.report_language import (
+    label_separator,
+    normalize_report_language,
+    report_text,
+)
 from modules.graph.builder import build_graph_snapshot
 from modules.graph.types import GraphSnapshot
 from modules.report_followup import explain_graph_followup_protected
@@ -43,31 +48,35 @@ def build_active_auth_incident_context(
     )
 
 
-def format_active_auth_incident_summary(context: ActiveAuthIncidentContext) -> str:
-    """Format a visible Mode 2 incident summary for follow-up handoff."""
+def format_active_auth_incident_summary(
+    context: ActiveAuthIncidentContext,
+    language: str = "en",
+) -> str:
+    """Format a visible Mode 2 incident summary for follow-up handoff.
 
+    Only the fixed titles/labels/notice text follow ``language``; the incident
+    facts (ID, status, attack type, risk, decision, evidence/finding IDs) are
+    inserted unchanged.
+    """
+
+    lang = normalize_report_language(language)
+    sep = label_separator(lang)
     incident = context.incident
     evidence_ids = sorted(incident.evidence_bundle.available_ids)
     finding_ids = [finding.id for finding in incident.findings]
+    decision_value = f"{incident.decision} {report_text('auth_decision_note', lang)}"
     return "\n".join(
         [
-            "[Structured Authentication Incident]",
-            f"Incident ID: {incident.id}",
-            f"Status: {incident.status}",
-            f"Attack Type: {incident.attack_type or incident.title}",
-            f"Risk Level: {incident.risk_level}",
-            (
-                f"Decision: {incident.decision} "
-                "(simulated decision; no real monitoring deployment, blocking, "
-                "password reset, account disablement, or enforcement was executed.)"
-            ),
-            f"Evidence IDs: {_join_or_none(evidence_ids)}",
-            f"Finding IDs: {_join_or_none(finding_ids)}",
-            (
-                "Failure-then-success authentication is suspicious, but it does not "
-                "prove account takeover or intrusion by itself."
-            ),
-            "Suggested follow-up questions:",
+            report_text("auth_incident_title", lang),
+            f"{report_text('incident_id_label', lang)}{sep}{incident.id}",
+            f"{report_text('status_label', lang)}{sep}{incident.status}",
+            f"{report_text('attack_type_label', lang)}{sep}{incident.attack_type or incident.title}",
+            f"{report_text('risk_level_label', lang)}{sep}{incident.risk_level}",
+            f"{report_text('decision_label', lang)}{sep}{decision_value}",
+            f"{report_text('evidence_ids_label', lang)}{sep}{_join_or_none(evidence_ids)}",
+            f"{report_text('finding_ids_label', lang)}{sep}{_join_or_none(finding_ids)}",
+            report_text("auth_failure_then_success_note", lang),
+            report_text("auth_suggested_followup_label", lang),
             *_bullet_lines(_followup_examples(evidence_ids, finding_ids, incident.decision)),
         ]
     )
