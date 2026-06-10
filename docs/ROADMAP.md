@@ -317,6 +317,26 @@ Focused validation:
 Boundary:
 
 v2.4 does not replace detector, incident, graph, or protected RAG authority. It does not implement or release LLM-assisted skill selection, `RetrieveSimilarCaseSkill`, executable `DraftCaseCaptureSkill`, Similar-Case Graph RAG, historical-case retrieval, Knowledge Capture or event write-back, automatic live ingestion, real firewall/WAF/EDR/account enforcement, real monitoring deployment, or RAG/LLM override of deterministic `Risk Level` or `Decision`. Any future write-capable capture skill must require explicit approval and human review before live ingestion.
+## v2.7 - Completed / Demo-Ready: AI Advisory and Safe Resource Exhaustion Demo
+
+v2.7 is documented as demo-ready with the deterministic safety boundary preserved:
+
+- AI Advisory / Evidence Gap capability is available as analyst context.
+- RAG knowledge expansion covers Resource Exhaustion, HTTP/2 DoS, and CVE terminology.
+- AI Analyst Brief summarizes deterministic advisory context without taking final authority.
+- Safe synthetic Resource Exhaustion demo scenario is available for manual UI smoke.
+
+Safety boundary remains unchanged: detector authority is rule-based, Risk Level / Decision are deterministic, `BLOCK` / `MONITOR` / `ALLOW` are simulated, advisory layers do not override current results, no real enforcement occurs, and no exploit, PoC, or traffic generation is provided.
+
+## v2.8 - Deferred Larger Work
+
+Candidate follow-up work moved beyond v2.7:
+
+- Richer analyst timeline.
+- More incident scenarios.
+- Deeper graph and case memory integration.
+- Optional report export polish.
+
 ## Non-Goals
 
 The roadmap does not include offensive automation or real enforcement actions.

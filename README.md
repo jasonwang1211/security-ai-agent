@@ -36,6 +36,22 @@ Presentation and demo materials (index: [docs/DEMO_INDEX.md](docs/DEMO_INDEX.md)
 
 `BLOCK` / `MONITOR` / `ALLOW` are simulated decisions; detection is rule-based; RAG, similar cases, and the graph are advisory analyst context; human review is required before trusting or promoting case drafts.
 
+### v2.7 AI Advisory Layer and Safe HTTP/2 Demo
+
+v2.7 adds a demo-ready advisory layer while preserving deterministic detection authority:
+
+- Deterministic AI Analyst Brief.
+- Evidence Gap Analyzer.
+- Resource Exhaustion / HTTP/2 DoS / CVE knowledge pack.
+- Expanded RAG routing for defensive knowledge questions.
+- RAG safety framing for advisory-only answers.
+- CVE / CVSS terminology guardrail.
+- Safe HTTP/2 Resource Exhaustion demo scenario.
+
+Manual smoke evidence and demo checks are documented in [v2.7 Manual Smoke Report](docs/v2.7_manual_smoke_report.md).
+
+Safety boundary: detector authority remains rule-based; Risk Level and Decision remain deterministic; `BLOCK`, `MONITOR`, and `ALLOW` are simulated; RAG, LLM-assisted explanation, Evidence Gap Analyzer, and AI Analyst Brief are advisory only; no real firewall/WAF/EDR/account action, exploit, PoC, or traffic generation is performed; human review is required.
+
 ### The Problem
 
 SOC-style triage has two common failure modes:
