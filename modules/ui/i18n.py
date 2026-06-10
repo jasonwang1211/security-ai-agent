@@ -719,6 +719,46 @@ _TRANSLATIONS: dict[str, dict[str, str]] = {
         "en": "Ask a security knowledge question",
         "bilingual": "詢問資安知識問題 / Ask a security knowledge question",
     },
+    "evidence_gap_panel_title": {
+        "zh-TW": "證據缺口分析",
+        "en": "Evidence Gap Analyzer",
+        "bilingual": "證據缺口分析 / Evidence Gap Analyzer",
+    },
+    "evidence_gap_panel_subtitle": {
+        "zh-TW": "確定性建議情境，協助判斷還缺哪些證據；這不是判決，也不會覆蓋 Risk Level 或 Decision。",
+        "en": "Deterministic advisory context to help decide what evidence is still needed. It is not a verdict and does not override Risk Level or Decision.",
+        "bilingual": "確定性建議情境 / deterministic advisory context; not a verdict and does not override Risk Level or Decision.",
+    },
+    "evidence_gap_empty": {
+        "zh-TW": "請先執行一次分析，才能產生證據缺口建議情境。",
+        "en": "Run an analysis first to generate evidence-gap advisory context.",
+        "bilingual": "請先執行一次分析 / Run an analysis first to generate evidence-gap advisory context.",
+    },
+    "evidence_gap_confirmed": {
+        "zh-TW": "已確認事實",
+        "en": "Confirmed facts",
+        "bilingual": "已確認事實 / Confirmed facts",
+    },
+    "evidence_gap_missing": {
+        "zh-TW": "缺少的證據",
+        "en": "Missing evidence",
+        "bilingual": "缺少的證據 / Missing evidence",
+    },
+    "evidence_gap_checks": {
+        "zh-TW": "建議檢查",
+        "en": "Recommended checks",
+        "bilingual": "建議檢查 / Recommended checks",
+    },
+    "evidence_gap_unsafe": {
+        "zh-TW": "不安全的假設",
+        "en": "Unsafe assumptions",
+        "bilingual": "不安全的假設 / Unsafe assumptions",
+    },
+    "evidence_gap_advisory_chip": {
+        "zh-TW": "確定性建議 · 未使用 LLM",
+        "en": "Deterministic advisory · no LLM",
+        "bilingual": "確定性建議 / Deterministic advisory · no LLM",
+    },
 }
 
 
