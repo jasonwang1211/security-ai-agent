@@ -50,3 +50,15 @@ python -m streamlit run ui/streamlit_app.py --server.fileWatcherType none
 - `BLOCK` / `MONITOR` / `ALLOW` 為模擬決策；不執行任何真實防火牆 / WAF / EDR / 帳號 / 監控動作。
 - RAG、相似案例與關係圖僅為分析師參考脈絡（advisory），不決定最終 risk / decision，也不證明入侵。
 - 草稿在被信任或提升前需人工審查（human review required）。
+
+## v2.7 Demo Path
+
+1. Start the Streamlit console.
+2. Load the Command Injection demo.
+3. Show AI Analyst Brief and Evidence Gap Analyzer.
+4. Ask a RAG / Knowledge Q&A question about HTTP/2 DoS or CVE context.
+5. Load the `HTTP/2 Resource Exhaustion Suspicion` safe demo.
+6. Show the boundaries: simulated decisions, no real enforcement, no exploit / PoC / traffic generation, advisory-only AI/RAG context, and human review required.
+
+Additional evidence: [v2.7_manual_smoke_report.md](v2.7_manual_smoke_report.md).
+Release notes: [v2.7_release_notes.md](v2.7_release_notes.md).

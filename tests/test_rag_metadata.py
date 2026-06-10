@@ -310,7 +310,7 @@ def test_load_metadata_from_directory_returns_empty_list_for_missing_directory(t
 def test_all_report_explainer_docs_have_frontmatter() -> None:
     doc_paths = sorted(REPORT_EXPLAINER_DIR.glob("*.md"))
 
-    assert len(doc_paths) == 20
+    assert len(doc_paths) == 25
     for doc_path in doc_paths:
         frontmatter, _body = split_frontmatter(doc_path.read_text(encoding="utf-8"))
         assert frontmatter, f"{doc_path} should have frontmatter"
@@ -319,7 +319,7 @@ def test_all_report_explainer_docs_have_frontmatter() -> None:
 def test_all_report_explainer_docs_parse_into_metadata() -> None:
     metadata = load_metadata_from_directory(REPORT_EXPLAINER_DIR)
 
-    assert len(metadata) == 20
+    assert len(metadata) == 25
     assert all(isinstance(item, KnowledgeDocMetadata) for item in metadata)
 
 

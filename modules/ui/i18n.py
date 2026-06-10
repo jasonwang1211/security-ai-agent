@@ -144,6 +144,16 @@ _TRANSLATIONS: dict[str, dict[str, str]] = {
         "en": "Tautology-style SQL injection in a query string.",
         "bilingual": "恆真條件 SQL 注入 / Tautology-style SQL injection.",
     },
+    "scenario_http2_resource_exhaustion_title": {
+        "zh-TW": "HTTP/2 資源耗盡疑似事件",
+        "en": "HTTP/2 Resource Exhaustion Suspicion",
+        "bilingual": "HTTP/2 資源耗盡疑似事件 / HTTP/2 Resource Exhaustion Suspicion",
+    },
+    "scenario_http2_resource_exhaustion_desc": {
+        "zh-TW": "合成遙測摘要：低流量卻伴隨伺服端資源壓力，供分析師安全複核。",
+        "en": "Synthetic telemetry summary for a suspected case where low inbound traffic correlates with server-side resource pressure.",
+        "bilingual": "合成遙測摘要 / Synthetic telemetry summary for suspected server-side resource pressure.",
+    },
     "scenario_auth_incident_title": {
         "zh-TW": "身分驗證事件示範",
         "en": "Authentication Incident Demo",
@@ -718,6 +728,101 @@ _TRANSLATIONS: dict[str, dict[str, str]] = {
         "zh-TW": "詢問資安知識問題",
         "en": "Ask a security knowledge question",
         "bilingual": "詢問資安知識問題 / Ask a security knowledge question",
+    },
+    "ai_analyst_brief_panel_title": {
+        "zh-TW": "AI 分析摘要",
+        "en": "AI Analyst Brief",
+        "bilingual": "AI 分析摘要 / AI Analyst Brief",
+    },
+    "ai_analyst_brief_panel_subtitle": {
+        "zh-TW": "確定性建議情境，彙整規則式結果、證據缺口與下一步複核建議；這不是最終判決。",
+        "en": "Deterministic advisory context summarizing rule-based results, evidence gaps, and next review steps. It is not a final verdict.",
+        "bilingual": "確定性建議情境 / deterministic advisory context summarizing rule-based results, evidence gaps, and next review steps; not a final verdict.",
+    },
+    "ai_analyst_brief_empty": {
+        "zh-TW": "請先執行一次分析，才能產生 AI 分析摘要。",
+        "en": "Run an analysis first to generate an AI Analyst Brief.",
+        "bilingual": "請先執行一次分析 / Run an analysis first to generate an AI Analyst Brief.",
+    },
+    "ai_analyst_brief_chip": {
+        "zh-TW": "確定性 AI 建議 · 未使用 LLM",
+        "en": "Deterministic AI advisory · no LLM",
+        "bilingual": "確定性 AI 建議 / Deterministic AI advisory · no LLM",
+    },
+    "ai_analyst_brief_what_happened": {
+        "zh-TW": "發生了什麼",
+        "en": "What happened",
+        "bilingual": "發生了什麼 / What happened",
+    },
+    "ai_analyst_brief_why_it_matters": {
+        "zh-TW": "為什麼重要",
+        "en": "Why it matters",
+        "bilingual": "為什麼重要 / Why it matters",
+    },
+    "ai_analyst_brief_deterministic_verdict": {
+        "zh-TW": "確定性判定",
+        "en": "Deterministic verdict",
+        "bilingual": "確定性判定 / Deterministic verdict",
+    },
+    "ai_analyst_brief_advisory_summary": {
+        "zh-TW": "建議摘要",
+        "en": "Advisory summary",
+        "bilingual": "建議摘要 / Advisory summary",
+    },
+    "ai_analyst_brief_evidence_gap": {
+        "zh-TW": "證據缺口摘要",
+        "en": "Evidence gap summary",
+        "bilingual": "證據缺口摘要 / Evidence gap summary",
+    },
+    "ai_analyst_brief_next_steps": {
+        "zh-TW": "建議下一步",
+        "en": "Recommended next steps",
+        "bilingual": "建議下一步 / Recommended next steps",
+    },
+    "ai_analyst_brief_unsafe": {
+        "zh-TW": "不安全的假設",
+        "en": "Unsafe assumptions",
+        "bilingual": "不安全的假設 / Unsafe assumptions",
+    },
+    "evidence_gap_panel_title": {
+        "zh-TW": "證據缺口分析",
+        "en": "Evidence Gap Analyzer",
+        "bilingual": "證據缺口分析 / Evidence Gap Analyzer",
+    },
+    "evidence_gap_panel_subtitle": {
+        "zh-TW": "確定性建議情境，協助判斷還缺哪些證據；這不是判決，也不會覆蓋 Risk Level 或 Decision。",
+        "en": "Deterministic advisory context to help decide what evidence is still needed. It is not a verdict and does not override Risk Level or Decision.",
+        "bilingual": "確定性建議情境 / deterministic advisory context; not a verdict and does not override Risk Level or Decision.",
+    },
+    "evidence_gap_empty": {
+        "zh-TW": "請先執行一次分析，才能產生證據缺口建議情境。",
+        "en": "Run an analysis first to generate evidence-gap advisory context.",
+        "bilingual": "請先執行一次分析 / Run an analysis first to generate evidence-gap advisory context.",
+    },
+    "evidence_gap_confirmed": {
+        "zh-TW": "已確認事實",
+        "en": "Confirmed facts",
+        "bilingual": "已確認事實 / Confirmed facts",
+    },
+    "evidence_gap_missing": {
+        "zh-TW": "缺少的證據",
+        "en": "Missing evidence",
+        "bilingual": "缺少的證據 / Missing evidence",
+    },
+    "evidence_gap_checks": {
+        "zh-TW": "建議檢查",
+        "en": "Recommended checks",
+        "bilingual": "建議檢查 / Recommended checks",
+    },
+    "evidence_gap_unsafe": {
+        "zh-TW": "不安全的假設",
+        "en": "Unsafe assumptions",
+        "bilingual": "不安全的假設 / Unsafe assumptions",
+    },
+    "evidence_gap_advisory_chip": {
+        "zh-TW": "確定性建議 · 未使用 LLM",
+        "en": "Deterministic advisory · no LLM",
+        "bilingual": "確定性建議 / Deterministic advisory · no LLM",
     },
 }
 

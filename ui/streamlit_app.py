@@ -123,6 +123,8 @@ from modules.ui.performance_view import (
     record_runtime_timing,
 )
 from modules.ui.route_policy_view import build_route_policy_display
+from modules.ui.ai_analyst_brief_view import render_ai_analyst_brief_panel_html
+from modules.ui.ai_advisory_view import render_evidence_gap_panel_html
 from modules.ui.visual_style import (
     ADVISORY_COLOR,
     DETERMINISTIC_COLOR,
@@ -1076,6 +1078,26 @@ def render_report_sections() -> None:
 
     with ai_analyst_tab:
         st.caption(t("ai_analyst_caption", language))
+        with st.container(border=True):
+            render_panel_heading(t("ai_analyst_brief_panel_title", language))
+            st.caption(t("ai_analyst_brief_panel_subtitle", language))
+            st.markdown(
+                render_ai_analyst_brief_panel_html(
+                    st.session_state.get(STATE_CLI_STATE), language=language
+                ),
+                unsafe_allow_html=True,
+            )
+
+        with st.container(border=True):
+            render_panel_heading(t("evidence_gap_panel_title", language))
+            st.caption(t("evidence_gap_panel_subtitle", language))
+            st.markdown(
+                render_evidence_gap_panel_html(
+                    st.session_state.get(STATE_CLI_STATE), language=language
+                ),
+                unsafe_allow_html=True,
+            )
+
         with st.container(border=True):
             render_panel_heading(translated_label(FOLLOWUP_ASSISTANT_PANEL, language))
             render_followup_assistant_panel(language)

@@ -18,14 +18,15 @@ def _by_id(scenario_id: str) -> DemoScenario:
     return scenario
 
 
-def test_list_demo_scenarios_returns_exactly_three_required_scenarios() -> None:
+def test_list_demo_scenarios_returns_required_scenarios() -> None:
     scenarios = list_demo_scenarios()
 
-    assert len(scenarios) == 3
+    assert len(scenarios) == 4
     assert {scenario.scenario_id for scenario in scenarios} == {
         "command_injection",
         "sql_injection",
         "authentication_incident",
+        "http2_resource_exhaustion",
     }
 
 
@@ -100,3 +101,60 @@ def test_scenario_data_is_immutable() -> None:
 
     with pytest.raises(dataclasses.FrozenInstanceError):
         scenario.input_text = "mutated"  # type: ignore[misc]
+
+
+def test_http2_resource_exhaustion_scenario_is_safe_synthetic_demo() -> None:
+    scenario = _by_id("http2_resource_exhaustion")
+    text = scenario.input_text.casefold()
+
+    assert "synthetic incident summary" in text
+    assert "http/2" in text
+    assert "resource exhaustion" in text
+    assert "low inbound request volume" in text
+    assert "worker saturation" in text
+    assert "concurrent stream" in text
+    assert "memory pressure" in text
+    assert scenario.expected_attack == "HTTP/2 Resource Exhaustion Suspicion"
+    assert scenario.expected_risk == "MEDIUM"
+    assert scenario.expected_decision == "MONITOR"
+    assert scenario.suggested_next_action == "none"
+    assert scenario.expected_case_id is None
+
+
+def test_http2_resource_exhaustion_scenario_has_safety_notes() -> None:
+    text = _by_id("http2_resource_exhaustion").input_text.casefold()
+
+    assert "synthetic demo only" in text
+    assert "no traffic generated" in text
+    assert "no real enforcement" in text
+    assert "cve context is not proof" in text
+    assert "human review required" in text
+
+
+def test_http2_resource_exhaustion_scenario_avoids_offensive_preview_language() -> None:
+    text = _by_id("http2_resource_exhaustion").input_text.casefold()
+
+    forbidden_phrases = (
+        "exploit",
+        "poc",
+        "attack a real server",
+        "send traffic",
+        "flood",
+        "amplify",
+        "requests per second",
+        "rps",
+    )
+    for phrase in forbidden_phrases:
+        assert phrase not in text
+
+
+def test_http2_resource_exhaustion_titles_are_language_aware() -> None:
+    zh_title = "HTTP/2 資源耗盡疑似事件"
+    zh = scenario_titles("zh-TW")
+    en = scenario_titles("en")
+    bilingual = scenario_titles("bilingual")
+
+    assert zh_title in zh
+    assert "HTTP/2 Resource Exhaustion Suspicion" in en
+    bilingual_title = f"{zh_title} / HTTP/2 Resource Exhaustion Suspicion"
+    assert bilingual_title in bilingual

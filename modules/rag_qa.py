@@ -27,6 +27,11 @@ class RAGQA:
     CONTROLLED_KNOWLEDGE_DIR = KNOWLEDGE_ROOT / "report_explainer"
     CANONICAL_RAG_TERM = "RAG（Retrieval-Augmented Generation，檢索增強生成）"
     CANONICAL_LLM_TERM = "LLM（Large Language Model，大型語言模型）"
+    # v2.7-F: CVE is an identifier, not a scoring system. CVSS is the scoring
+    # system. These canonical labels fix the observed "CVE（共通漏洞與風險評分系統）"
+    # confusion without touching legitimate CVSS mentions or CVE-IDs.
+    CANONICAL_CVE_TERM = "CVE（Common Vulnerabilities and Exposures，弱點識別編號）"
+    CANONICAL_CVSS_TERM = "CVSS（Common Vulnerability Scoring System，弱點評分系統）"
     MODE3_AUTHORITY_NOTICE = (
         "最終的 Risk Level 與 Decision 由本專案的 deterministic 系統流程產生；"
         "分析師可進行複核與後續調查，但 RAG 與 LLM 不會覆蓋這些最終欄位。"
@@ -45,6 +50,33 @@ class RAGQA:
         "RAG 與 LLM 僅提供解釋與輔助資訊，不會覆蓋最終的 Risk Level 或 Decision。"
         "此回答不代表已執行真實封鎖、監控部署、密碼重設、"
         "防火牆／WAF／EDR 設定變更或帳號處置。"
+    )
+
+    # v2.7-E: topic-scoped advisory note for Resource Exhaustion / HTTP/2 DoS /
+    # CVE answers. Appended deterministically; it only adds defensive framing and
+    # never rewrites the answer body or any legitimate technical term.
+    RESOURCE_EXHAUSTION_ADVISORY_NOTE = (
+        "防禦建議說明：以上內容屬建議人工評估性質，可作為防禦規劃參考，"
+        "需依資產版本、設定、暴露面與修補狀態確認；"
+        "不代表系統已執行真實封鎖或設定變更，也不提供 PoC、利用步驟或流量產生指引。"
+        "CVE 等背景情報不代表目前資產已被利用。"
+    )
+    RESOURCE_EXHAUSTION_TOPIC_TERMS = (
+        "resource exhaustion",
+        "http/2",
+        "http 2",
+        "denial of service",
+        "vulnerability",
+        "mitigation",
+        "資源耗盡",
+        "弱點情報",
+        "漏洞",
+        "安全分流",
+        "防禦緩解",
+        "緩解",
+        "證據缺口",
+        "背景情報",
+        "被利用",
     )
 
     PROJECT_ANSWER_RULES = """
@@ -91,6 +123,20 @@ Metadata suppression rules:
 2. Do not include YAML metadata from the knowledge file in the final answer.
 3. Use Structured Signals only as internal metadata hints.
 4. If the retrieved context contains Structured Signals, summarize the human-readable knowledge sections instead.
+""".strip()
+
+    # v2.7-E: defensive answer-safety instruction for security knowledge answers
+    # (especially Resource Exhaustion / HTTP/2 DoS / CVE). Keeps generated wording
+    # advisory and non-operational without adding offensive content.
+    RAG_ANSWER_SAFETY_RULES = """
+資安知識回答安全規則：
+1. 僅根據提供的檢索內容（retrieved context）作答，保持藍隊防禦判讀語氣。
+2. 不提供任何 PoC、利用步驟、精確攻擊參數或流量產生（traffic generation）指引。
+3. 所有處置建議皆為建議人工評估、可作為防禦規劃參考，需經人工審查後才可採用。
+4. 針對 HTTP/2、Resource Exhaustion、DoS 與緩解措施，請使用「建議人工評估」「可檢查」「可作為防禦規劃參考」等措辭；避免「立即採取防禦措施」「直接設定」「執行封鎖」等命令式或暗示系統會自動強制執行的說法，也不要列出精確的並行流數量、封包大小等攻擊或流量產生參數。
+5. CVE 等背景情報不代表目前資產已被利用，需依資產版本、設定、暴露面與修補狀態確認。
+6. 不得宣稱系統已執行真實封鎖或設定變更；BLOCK / MONITOR / ALLOW 皆為模擬決策，且不會覆蓋最終的 Risk Level 或 Decision。
+7. 術語請使用正確全名，不要發明錯誤展開：CVE = Common Vulnerabilities and Exposures（弱點識別編號），CVSS = Common Vulnerability Scoring System（弱點評分系統），RAG = Retrieval-Augmented Generation（檢索增強生成），LLM = Large Language Model（大型語言模型）。CVE 是弱點識別編號，不是評分系統；評分系統是 CVSS。DoS = Denial of Service（阻斷服務），DDoS = Distributed Denial of Service（分散式阻斷服務）。
 """.strip()
 
     def __init__(self):
@@ -277,6 +323,7 @@ Metadata suppression rules:
                 citations,
                 rule_ids=self._rule_ids_from_controlled_result(controlled_result),
                 limitations=["Controlled curated retrieval selected approved runtime metadata."],
+                query=query,
             )
 
         context, ok = self.retrieve_context(query)
@@ -295,6 +342,7 @@ Metadata suppression rules:
                 )
             ],
             limitations=["Existing vector retrieval fallback was used."],
+            query=query,
         )
 
     def _protect_mode3_answer(
@@ -304,9 +352,13 @@ Metadata suppression rules:
         *,
         rule_ids: list[str] | None = None,
         limitations: list[str] | None = None,
+        query: str = "",
     ) -> str:
+        polished = self._append_topic_advisory_note(
+            self._strip_structured_signals(answer), query
+        )
         protected_input = AnswerWithSources(
-            answer=self._append_mode3_boundary(self._strip_structured_signals(answer)),
+            answer=self._append_mode3_boundary(polished),
             sources=citations,
             rule_ids=rule_ids or [],
             confidence="MEDIUM",
@@ -322,6 +374,26 @@ Metadata suppression rules:
         if self.MODE3_BOUNDARY_NOTICE in answer:
             return answer
         return f"{answer.rstrip()}\n\n{self.MODE3_BOUNDARY_NOTICE}"
+
+    def _is_resource_exhaustion_topic(self, query: str) -> bool:
+        """Deterministically detect Resource Exhaustion / HTTP/2 DoS / CVE topics."""
+        normalized = (query or "").casefold()
+        if any(term in normalized for term in self.RESOURCE_EXHAUSTION_TOPIC_TERMS):
+            return True
+        # Short, ambiguous tokens matched on word boundaries (e.g. avoid "dosa").
+        return bool(re.search(r"\b(?:cve|dos)\b", normalized))
+
+    def _append_topic_advisory_note(self, answer: str, query: str) -> str:
+        """Append a defensive advisory note for Resource Exhaustion / DoS / CVE.
+
+        Only adds framing text; it never rewrites the answer body or any
+        technical term. No-op for other topics or if already present.
+        """
+        if not self._is_resource_exhaustion_topic(query):
+            return answer
+        if self.RESOURCE_EXHAUSTION_ADVISORY_NOTE in answer:
+            return answer
+        return f"{answer.rstrip()}\n\n{self.RESOURCE_EXHAUSTION_ADVISORY_NOTE}"
 
     def _rule_ids_from_controlled_result(self, result: ControlledRetrievalResult) -> list[str]:
         rule_ids: list[str] = []
@@ -500,10 +572,10 @@ Metadata suppression rules:
 
     def _build_answer_context(self, query: str, context: str) -> str:
         if self._is_report_guide_question(query):
-            return f"{self.PROJECT_ANSWER_RULES}\n\n{self.REPORT_GUIDE_ANSWER_RULES}\n\n{self.METADATA_SUPPRESSION_RULES}\n\n{context}"
+            return f"{self.RAG_ANSWER_SAFETY_RULES}\n\n{self.PROJECT_ANSWER_RULES}\n\n{self.REPORT_GUIDE_ANSWER_RULES}\n\n{self.METADATA_SUPPRESSION_RULES}\n\n{context}"
 
         focused_context = self.extract_relevant_section(context, query)
-        return f"{self.PROJECT_ANSWER_RULES}\n\n{self.METADATA_SUPPRESSION_RULES}\n\n{focused_context}"
+        return f"{self.RAG_ANSWER_SAFETY_RULES}\n\n{self.PROJECT_ANSWER_RULES}\n\n{self.METADATA_SUPPRESSION_RULES}\n\n{focused_context}"
 
     def _strip_structured_signals(self, text: str) -> str:
         if not text:
@@ -520,6 +592,7 @@ Metadata suppression rules:
 
         result = self._strip_inline_internal_metadata(result)
         result = self._normalize_visible_terminology(result)
+        result = self._normalize_cve_terminology(result)
         result = self._normalize_final_authority_claims(result)
         return result if result else text
 
@@ -569,6 +642,23 @@ Metadata suppression rules:
             result = re.sub(pattern, self.CANONICAL_LLM_TERM, result, flags=re.IGNORECASE)
 
         return result
+
+    def _normalize_cve_terminology(self, text: str) -> str:
+        """Rewrite incorrect CVE expansions (a scoring / risk-scoring system) to
+        the correct CVE meaning.
+
+        Only a bare ``CVE`` acronym directly followed by a parenthetical that
+        wrongly describes a scoring system is rewritten. Legitimate CVSS mentions,
+        correct CVE expansions (e.g. an identifier), and CVE-IDs like
+        ``CVE-2026-49975`` are left untouched.
+        """
+        pattern = re.compile(
+            r"(?<![A-Za-z0-9])CVE\s*[（(]\s*[^（()）]*"
+            r"(?:評分|scoring system|risk scoring|風險評分)"
+            r"[^（()）]*[）)]",
+            re.IGNORECASE,
+        )
+        return pattern.sub(self.CANONICAL_CVE_TERM, text)
 
     def _normalize_final_authority_claims(self, text: str) -> str:
         normalized_paragraphs = []

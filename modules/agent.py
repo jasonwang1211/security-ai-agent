@@ -75,10 +75,32 @@ def is_security_knowledge_question(query: str) -> bool:
         "csrf",
         "command injection",
         "path traversal",
+        # v2.7-D: Resource Exhaustion / HTTP/2 / CVE advisory knowledge topics.
+        "http/2",
+        "http 2",
+        "resource exhaustion",
+        "denial of service",
+        "vulnerability",
+        "patch status",
+        "mitigation",
+        "triage",
+        "資源耗盡",
+        "弱點情報",
+        "漏洞",
+        "安全分流",
+        "防禦緩解",
+        "緩解方式",
+        "證據缺口",
+        "背景情報",
+        "被利用的證明",
     ]
+    # Short, ambiguous tokens matched on word boundaries to avoid substring
+    # false positives (e.g. "dos" inside "dosa").
+    security_word_tokens = ("dos", "cve")
     question_markers = [
         "什麼是",
         "是什麼",
+        "什麼",
         "怎麼",
         "如何",
         "為什麼",
@@ -89,9 +111,15 @@ def is_security_knowledge_question(query: str) -> bool:
         "explain",
         "how to",
         "why",
+        "有哪些",
+        "哪些",
+        "能不能",
+        "可以直接當成",
     ]
 
-    has_security_topic = any(topic in normalized for topic in security_topics)
+    has_security_topic = any(topic in normalized for topic in security_topics) or bool(
+        re.search(r"\b(?:" + "|".join(security_word_tokens) + r")\b", normalized)
+    )
     has_question_marker = any(marker in normalized for marker in question_markers)
     return has_security_topic and has_question_marker
 

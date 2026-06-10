@@ -505,6 +505,141 @@ def apply_console_css() -> str:
   border-color: rgba(139, 92, 246, 0.40);
   border-left: 3px solid var(--sentinel-advisory);
 }
+/* v2.7-B Evidence Gap Analyzer panel: deterministic advisory analyst context.
+   Confirmed = green, Missing = amber, Checks = cyan, Unsafe = red,
+   Advisory boundary = purple. */
+.sentinel-brief { display: flex; flex-direction: column; gap: 10px; }
+.sentinel-brief-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+}
+.sentinel-brief-chip {
+  display: inline-block;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--sentinel-text-muted);
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--sentinel-border);
+  border-radius: 999px;
+  padding: 2px 10px;
+  overflow-wrap: anywhere;
+}
+.sentinel-brief-chip.det {
+  color: #bdeefb;
+  background: rgba(34, 211, 238, 0.12);
+  border-color: rgba(34, 211, 238, 0.45);
+}
+.sentinel-brief-section {
+  border: 1px solid var(--sentinel-border);
+  border-left: 3px solid var(--sentinel-info);
+  border-radius: 10px;
+  padding: 9px 12px;
+  background: rgba(10, 16, 26, 0.45);
+}
+.sentinel-brief-section.deterministic { border-left-color: var(--sentinel-cyan); }
+.sentinel-brief-section.advisory { border-left-color: var(--sentinel-advisory); }
+.sentinel-brief-section.gap { border-left-color: var(--sentinel-medium); }
+.sentinel-brief-section.unsafe {
+  border-left-color: var(--sentinel-high);
+  background: rgba(225, 75, 75, 0.06);
+}
+.sentinel-brief-h {
+  font-weight: 700;
+  font-size: 0.88rem;
+  letter-spacing: 0.2px;
+  margin-bottom: 4px;
+  color: #e6edf6;
+}
+.sentinel-brief-section.deterministic .sentinel-brief-h { color: #bdeefb; }
+.sentinel-brief-section.advisory .sentinel-brief-h { color: #ddd2ff; }
+.sentinel-brief-section.gap .sentinel-brief-h { color: #f3d39b; }
+.sentinel-brief-section.unsafe .sentinel-brief-h { color: #ffb4bc; }
+.sentinel-brief-section ul { margin: 2px 0 0 0; padding-left: 18px; }
+.sentinel-brief-section li {
+  margin: 3px 0;
+  line-height: 1.55;
+  font-size: 0.9rem;
+  color: #e6edf6;
+  overflow-wrap: anywhere;
+}
+.sentinel-brief-boundary {
+  border-left: 3px solid var(--sentinel-advisory);
+  background: rgba(139, 92, 246, 0.10);
+  border-radius: 10px;
+  padding: 9px 12px;
+  color: #ddd2ff;
+  font-size: 0.8rem;
+  overflow-wrap: anywhere;
+}
+.sentinel-gap { display: flex; flex-direction: column; gap: 10px; }
+.sentinel-gap-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+}
+.sentinel-gap-chip {
+  display: inline-block;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--sentinel-text-muted);
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--sentinel-border);
+  border-radius: 999px;
+  padding: 2px 10px;
+  overflow-wrap: anywhere;
+}
+.sentinel-gap-chip.det {
+  color: #bdeefb;
+  background: rgba(34, 211, 238, 0.12);
+  border-color: rgba(34, 211, 238, 0.45);
+}
+.sentinel-gap-section {
+  border: 1px solid var(--sentinel-border);
+  border-left: 3px solid var(--sentinel-info);
+  border-radius: 10px;
+  padding: 9px 12px;
+  background: rgba(10, 16, 26, 0.45);
+}
+.sentinel-gap-section.confirmed { border-left-color: var(--sentinel-low); }
+.sentinel-gap-section.missing { border-left-color: var(--sentinel-medium); }
+.sentinel-gap-section.checks { border-left-color: var(--sentinel-cyan); }
+.sentinel-gap-section.unsafe {
+  border-left-color: var(--sentinel-high);
+  background: rgba(225, 75, 75, 0.06);
+}
+.sentinel-gap-h {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-weight: 700;
+  font-size: 0.88rem;
+  letter-spacing: 0.2px;
+  margin-bottom: 4px;
+}
+.sentinel-gap-section.confirmed .sentinel-gap-h { color: #9ff0d0; }
+.sentinel-gap-section.missing .sentinel-gap-h { color: #f3d39b; }
+.sentinel-gap-section.checks .sentinel-gap-h { color: #bdeefb; }
+.sentinel-gap-section.unsafe .sentinel-gap-h { color: #ffb4bc; }
+.sentinel-gap-section ul { margin: 2px 0 0 0; padding-left: 18px; }
+.sentinel-gap-section li {
+  margin: 3px 0;
+  line-height: 1.55;
+  font-size: 0.9rem;
+  color: #e6edf6;
+  overflow-wrap: anywhere;
+}
+.sentinel-gap-boundary {
+  border-left: 3px solid var(--sentinel-advisory);
+  background: rgba(139, 92, 246, 0.10);
+  border-radius: 10px;
+  padding: 9px 12px;
+  color: #ddd2ff;
+  font-size: 0.8rem;
+  overflow-wrap: anywhere;
+}
 """.strip()
 
 

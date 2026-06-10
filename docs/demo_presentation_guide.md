@@ -140,3 +140,16 @@ Full AI-assisted 會跑 AI/RAG 說明層，畫面上有 `完整 AI 輔助` + `AI
 - 視覺展示頁：`docs/demo_showcase.html`
 - 口語逐字稿：`docs/demo_script_5min.md`
 - 上台前檢查表：`docs/final_demo_smoke_checklist.md`
+
+## v2.7 AI Advisory / HTTP/2 Demo Add-on
+
+Use this short path when showing the v2.7 additions:
+
+1. Start the Streamlit console.
+2. Load the Command Injection demo and show that detection, Risk Level, and Decision remain deterministic.
+3. Open the AI Analyst tab and show AI Analyst Brief followed by Evidence Gap Analyzer.
+4. Ask a Knowledge Q&A question such as `HTTP/2 Resource Exhaustion 是什麼？` or `CVE 情報可以直接當成資產已被利用的證明嗎？`.
+5. Load `HTTP/2 Resource Exhaustion Suspicion` from the Demo Scenario Launcher.
+6. State the safety boundary aloud: this is a synthetic incident summary, no traffic is generated, no real enforcement action is taken, and AI/RAG content is advisory only.
+
+The v2.7 manual smoke checklist is in [v2.7_manual_smoke_report.md](v2.7_manual_smoke_report.md).

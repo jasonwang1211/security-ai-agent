@@ -66,3 +66,32 @@ def test_i18n_helper_does_not_contain_display_name_mojibake_markers() -> None:
 
     for marker in ("蝜", "銝", "", ""):
         assert marker not in source
+
+AI_ANALYST_BRIEF_I18N_KEYS = (
+    "ai_analyst_brief_panel_title",
+    "ai_analyst_brief_panel_subtitle",
+    "ai_analyst_brief_empty",
+    "ai_analyst_brief_chip",
+    "ai_analyst_brief_what_happened",
+    "ai_analyst_brief_why_it_matters",
+    "ai_analyst_brief_deterministic_verdict",
+    "ai_analyst_brief_advisory_summary",
+    "ai_analyst_brief_evidence_gap",
+    "ai_analyst_brief_next_steps",
+    "ai_analyst_brief_unsafe",
+)
+
+
+def test_ai_analyst_brief_i18n_values_are_readable() -> None:
+    zh_title = "AI 分析摘要"
+    zh_empty_prefix = "請先執行一次分析"
+
+    for key in AI_ANALYST_BRIEF_I18N_KEYS:
+        for language in ("zh-TW", "en", "bilingual"):
+            assert "?" not in t(key, language)
+
+    assert zh_title in t("ai_analyst_brief_panel_title", "zh-TW")
+    assert zh_empty_prefix in t("ai_analyst_brief_empty", "zh-TW")
+    bilingual_title = t("ai_analyst_brief_panel_title", "bilingual")
+    assert zh_title in bilingual_title
+    assert "AI Analyst Brief" in bilingual_title

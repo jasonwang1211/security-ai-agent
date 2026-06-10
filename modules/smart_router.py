@@ -75,8 +75,45 @@ SECURITY_TOPIC_TERMS = (
     "防禦",
     "偵測",
     "攻擊",
+    # v2.7-D: Resource Exhaustion / HTTP/2 / CVE advisory knowledge topics.
+    "http/2",
+    "http 2",
+    "resource exhaustion",
+    "denial of service",
+    "vulnerability",
+    "patch status",
+    "mitigation",
+    "資源耗盡",
+    "弱點情報",
+    "漏洞",
+    "安全分流",
+    "防禦緩解",
+    "緩解方式",
+    "證據缺口",
+    "背景情報",
+    "被利用的證明",
 )
-QUESTION_MARKERS = ("?", "？", "what", "why", "how", "什麼", "為什麼", "如何", "怎麼")
+# Short, ambiguous tokens matched on word boundaries to avoid substring
+# false positives (e.g. "dos" inside "dosa", "cve" inside other words).
+SECURITY_TOPIC_WORD_TOKENS = ("dos", "cve")
+SECURITY_TOPIC_WORD_PATTERN = re.compile(
+    r"\b(?:" + "|".join(SECURITY_TOPIC_WORD_TOKENS) + r")\b", re.IGNORECASE
+)
+QUESTION_MARKERS = (
+    "?",
+    "？",
+    "what",
+    "why",
+    "how",
+    "什麼",
+    "為什麼",
+    "如何",
+    "怎麼",
+    "有哪些",
+    "哪些",
+    "能不能",
+    "可以直接當成",
+)
 REPORT_FOLLOWUP_TERMS = (
     "為什麼是 monitor",
     "為什麼是 block",
@@ -268,6 +305,8 @@ def _looks_like_payload_or_event(text: str) -> bool:
 
 def _looks_like_security_question(text: str) -> bool:
     normalized = text.casefold()
-    has_topic = any(term in normalized for term in SECURITY_TOPIC_TERMS)
+    has_topic = any(term in normalized for term in SECURITY_TOPIC_TERMS) or bool(
+        SECURITY_TOPIC_WORD_PATTERN.search(normalized)
+    )
     has_question_marker = any(marker in normalized for marker in QUESTION_MARKERS)
     return has_topic and has_question_marker

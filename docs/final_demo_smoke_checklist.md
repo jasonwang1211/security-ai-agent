@@ -147,3 +147,24 @@ python -m streamlit run ui/streamlit_app.py --server.fileWatcherType none
 
 > 備註：部分截圖較長（含完整 Analysis Report），放進投影片時可裁切（crop）只保留重點區塊；
 > 不要因為裁切而把「模擬決策 / 僅供參考 / 需人工審查」等安全字樣裁掉。
+
+## v2.7 AI Advisory / HTTP/2 Resource Exhaustion Smoke
+
+### Knowledge Q&A
+
+- [ ] `HTTP/2 Resource Exhaustion 是什麼？` routes to RAG / Knowledge Q&A and explains Resource Exhaustion / HTTP/2 DoS defensively.
+- [ ] `HTTP/2 Bomb 疑似事件要怎麼安全分流？` routes to RAG and gives safe analyst triage without enforcement claims or traffic generation.
+- [ ] `CVE 情報可以直接當成資產已被利用的證明嗎？` routes to RAG, defines CVE as Common Vulnerabilities and Exposures / a vulnerability identifier, does not confuse CVE with CVSS, and states CVE context is not proof of exploitation.
+- [ ] `HTTP/2 DoS 有哪些防禦緩解方式？` routes to RAG and gives defensive review guidance without claiming the system applied mitigations.
+- [ ] `Resource Exhaustion 證據缺口要看什麼？` routes to RAG and mentions telemetry, proxy/CDN/app server metrics, stream/reset/flow-control signals, and CPU/memory/resource indicators without claiming confirmed exploitation.
+
+### UI Scenario
+
+- [ ] Demo Scenario Launcher includes `HTTP/2 Resource Exhaustion Suspicion`.
+- [ ] Loading the scenario shows a synthetic incident summary only.
+- [ ] Scenario copy states no traffic generated, no real enforcement, and human review required.
+- [ ] AI Analyst tab order is AI Analyst Brief, Evidence Gap Analyzer, Follow-up Assistant, Knowledge Q&A.
+- [ ] AI Analyst Brief states deterministic advisory / no LLM.
+- [ ] Evidence Gap panel still appears.
+
+Safety boundary to repeat: rule-based detector authority, deterministic Risk Level / Decision, simulated `BLOCK` / `MONITOR` / `ALLOW`, advisory-only RAG/LLM/AI Analyst Brief, no real firewall/WAF/EDR/account action, no exploit / PoC / traffic generation, and human review required.

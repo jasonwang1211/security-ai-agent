@@ -248,5 +248,235 @@ def test_agent_does_not_fall_through_to_legacy_rag_when_answer_question_returns_
     assert answer == agent.NO_CONTEXT_MESSAGE
 
 
+# --------------------------------------------------------------------------- #
+# v2.7-E: RAG answer safety polish for Resource Exhaustion / HTTP/2 DoS / CVE
+# --------------------------------------------------------------------------- #
+RESOURCE_EXHAUSTION_QUESTIONS = [
+    "HTTP/2 Resource Exhaustion 是什麼？",
+    "HTTP/2 Bomb 疑似事件要怎麼安全分流？",
+    "CVE 情報可以直接當成資產已被利用的證明嗎？",
+    "HTTP/2 DoS 有哪些防禦緩解方式？",
+    "Resource Exhaustion 證據缺口要看什麼？",
+]
+
+OFFENSIVE_PHRASES = [
+    "run this exploit",
+    "attack a real server",
+    "send traffic to target",
+    "amplify against public target",
+    "working poc",
+]
+
+
+def test_rag_answer_safety_rules_contain_advisory_defensive_phrases() -> None:
+    rules = RAGQA.RAG_ANSWER_SAFETY_RULES
+    for phrase in (
+        "建議人工評估",
+        "可作為防禦規劃參考",
+        "需依資產版本、設定、暴露面與修補狀態確認",
+        "不提供任何 PoC",
+        "流量產生",
+        "CVE",
+        "BLOCK / MONITOR / ALLOW",
+        "不會覆蓋最終的 Risk Level 或 Decision",
+        "不得宣稱系統已執行真實封鎖或設定變更",
+    ):
+        assert phrase in rules, f"safety rules missing: {phrase}"
+
+
+def test_safety_rules_and_advisory_note_have_no_offensive_phrases() -> None:
+    combined = (
+        RAGQA.RAG_ANSWER_SAFETY_RULES + "\n" + RAGQA.RESOURCE_EXHAUSTION_ADVISORY_NOTE
+    ).lower()
+    for phrase in OFFENSIVE_PHRASES:
+        assert phrase not in combined, f"forbidden offensive phrase present: {phrase}"
+
+
+def test_build_answer_context_includes_rag_safety_rules() -> None:
+    rag = make_runtime()
+
+    context = rag._build_answer_context("HTTP/2 DoS 有哪些防禦緩解方式？", "knowledge context")
+
+    assert "資安知識回答安全規則" in context
+    assert "建議人工評估" in context
+    assert "不提供任何 PoC" in context
+    # Existing project rules and retrieved context are still present.
+    assert "Retrieval-Augmented Generation" in context
+    assert "knowledge context" in context
+
+
+def test_is_resource_exhaustion_topic_matches_required_questions() -> None:
+    rag = make_runtime()
+
+    for question in RESOURCE_EXHAUSTION_QUESTIONS:
+        assert rag._is_resource_exhaustion_topic(question) is True, question
+
+    # Non Resource-Exhaustion topics and "dos" substrings must not match.
+    assert rag._is_resource_exhaustion_topic("什麼是 SQL Injection？") is False
+    assert rag._is_resource_exhaustion_topic("How do I cook dosa at home?") is False
+    assert rag._is_resource_exhaustion_topic("") is False
+
+
+def test_append_topic_advisory_note_only_for_resource_exhaustion_topics() -> None:
+    rag = make_runtime()
+
+    dos_answer = rag._append_topic_advisory_note("HTTP/2 緩解內容。", "HTTP/2 DoS 緩解方式？")
+    assert "建議人工評估" in dos_answer
+    assert "可作為防禦規劃參考" in dos_answer
+    assert "不提供 PoC" in dos_answer
+
+    # No advisory note for an unrelated topic; the body is returned unchanged.
+    sql_answer = rag._append_topic_advisory_note("SQL Injection 說明。", "什麼是 SQL Injection？")
+    assert sql_answer == "SQL Injection 說明。"
+
+    # Idempotent: the note is not duplicated.
+    twice = rag._append_topic_advisory_note(dos_answer, "HTTP/2 DoS 緩解方式？")
+    assert twice.count(RAGQA.RESOURCE_EXHAUSTION_ADVISORY_NOTE) == 1
+
+
+def test_cve_answer_states_cve_is_not_proof_of_exploitation() -> None:
+    rag = make_runtime()
+
+    answer = rag._append_topic_advisory_note(
+        "CVE 是已知弱點識別碼。", "CVE 情報可以直接當成資產已被利用的證明嗎？"
+    )
+
+    assert "CVE 等背景情報不代表目前資產已被利用" in answer
+
+
+def test_resource_exhaustion_answer_keeps_advisory_note_and_boundary() -> None:
+    rag = make_runtime("HTTP/2 DoS 緩解措施可包含調整並行 stream 與 timeout。")
+    cast(Any, rag).retrieve_controlled_context = lambda _query: ("", False, None)
+    cast(Any, rag).retrieve_context = lambda _query: ("knowledge context", True)
+
+    answer = rag.answer_question("HTTP/2 DoS 有哪些防禦緩解方式？")
+
+    assert "HTTP/2 DoS 緩解措施" in answer  # legitimate technical body preserved
+    assert "建議人工評估" in answer
+    assert "不提供 PoC" in answer
+    assert "CVE 等背景情報不代表目前資產已被利用" in answer
+    assert RAGQA.MODE3_BOUNDARY_NOTICE in answer
+
+
+def test_non_resource_topic_answer_has_no_advisory_note() -> None:
+    rag = make_runtime("CMD-001 explains Command Injection. BLOCK remains simulated.")
+
+    answer = rag.answer_question(
+        "請說明 CMD-001 Command Injection 的判讀重點，以及 BLOCK 是否代表真實封鎖？"
+    )
+
+    assert RAGQA.RESOURCE_EXHAUSTION_ADVISORY_NOTE not in answer
+    assert RAGQA.MODE3_BOUNDARY_NOTICE in answer
+
+
+# --------------------------------------------------------------------------- #
+# v2.7-F: security term normalization (CVE / CVSS / RAG / LLM / DoS / DDoS)
+# --------------------------------------------------------------------------- #
+def test_incorrect_cve_scoring_expansion_is_normalized() -> None:
+    rag = make_runtime()
+
+    result = rag._strip_structured_signals("CVE（共通漏洞與風險評分系統）是一種識別碼。")
+
+    assert "共通漏洞與風險評分系統" not in result
+    assert "Common Vulnerabilities and Exposures" in result
+    assert "弱點識別編號" in result
+
+
+def test_cve_wrongly_given_cvss_english_definition_is_normalized() -> None:
+    rag = make_runtime()
+
+    result = rag._strip_structured_signals("CVE (Common Vulnerability Scoring System) tracks severity.")
+
+    assert RAGQA.CANONICAL_CVE_TERM in result
+    assert "CVE (Common Vulnerability Scoring System)" not in result
+
+
+def test_cve_and_cvss_distinction_is_preserved() -> None:
+    rag = make_runtime()
+
+    result = rag._strip_structured_signals("CVE 是弱點識別編號，CVSS 是共通弱點評分系統。")
+
+    assert "弱點識別編號" in result
+    assert "共通弱點評分系統" in result
+
+
+def test_legitimate_cvss_parenthetical_is_not_rewritten_to_cve() -> None:
+    rag = make_runtime()
+
+    result = rag._strip_structured_signals("CVSS（共通弱點評分系統）用於評分嚴重度。")
+
+    assert "CVSS（共通弱點評分系統）" in result
+    assert RAGQA.CANONICAL_CVE_TERM not in result
+
+
+def test_cve_id_is_not_rewritten() -> None:
+    rag = make_runtime()
+
+    result = rag._strip_structured_signals("追蹤 CVE-2026-49975 的修補狀態。")
+
+    assert "CVE-2026-49975" in result
+
+
+def test_dos_and_ddos_terms_are_not_corrupted() -> None:
+    rag = make_runtime()
+
+    text = (
+        "DoS 是 Denial of Service（阻斷服務）。"
+        "DDoS 是 Distributed Denial of Service（分散式阻斷服務）。"
+    )
+    result = rag._strip_structured_signals(text)
+
+    assert "Denial of Service" in result
+    assert "Distributed Denial of Service" in result
+    assert "阻斷服務" in result
+    assert "分散式阻斷服務" in result
+
+
+def test_rag_llm_normalization_still_applies_alongside_cve() -> None:
+    rag = make_runtime()
+
+    result = rag._strip_structured_signals(
+        "RAG（Reasoning and Generation with Alternatives）與 "
+        "CVE（共通漏洞與風險評分系統）都需要正名。"
+    )
+
+    assert RAGQA.CANONICAL_RAG_TERM in result
+    assert "Reasoning and Generation with Alternatives" not in result
+    assert RAGQA.CANONICAL_CVE_TERM in result
+    assert "共通漏洞與風險評分系統" not in result
+
+
+def test_safety_rules_include_canonical_cve_cvss_guidance() -> None:
+    rules = RAGQA.RAG_ANSWER_SAFETY_RULES
+
+    assert "Common Vulnerabilities and Exposures" in rules
+    assert "Common Vulnerability Scoring System" in rules
+    assert "CVE 是弱點識別編號，不是評分系統" in rules
+
+
+def test_canonical_terms_and_rules_have_no_offensive_phrases() -> None:
+    combined = (
+        RAGQA.RAG_ANSWER_SAFETY_RULES
+        + RAGQA.CANONICAL_CVE_TERM
+        + RAGQA.CANONICAL_CVSS_TERM
+    ).lower()
+    for phrase in OFFENSIVE_PHRASES:
+        assert phrase not in combined, f"forbidden offensive phrase present: {phrase}"
+
+
+def test_cve_answer_normalizes_term_and_keeps_advisory_boundary() -> None:
+    rag = make_runtime("CVE（共通漏洞與風險評分系統）是已知弱點識別碼。")
+    cast(Any, rag).retrieve_controlled_context = lambda _query: ("", False, None)
+    cast(Any, rag).retrieve_context = lambda _query: ("knowledge context", True)
+
+    answer = rag.answer_question("CVE 情報可以直接當成資產已被利用的證明嗎？")
+
+    assert "共通漏洞與風險評分系統" not in answer
+    assert "Common Vulnerabilities and Exposures" in answer
+    # v2.7-E advisory note + safety boundary remain intact.
+    assert "CVE 等背景情報不代表目前資產已被利用" in answer
+    assert RAGQA.MODE3_BOUNDARY_NOTICE in answer
+
+
 def _raise_vector_fallback():
     raise AssertionError("controlled retrieval should run before vector fallback")

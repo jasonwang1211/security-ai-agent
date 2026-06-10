@@ -56,6 +56,45 @@ def test_xss_question_routes_to_rag_security_qa_not_payload_triage():
     _assert_route("XSS 是什麼？", "security_knowledge_question", "rag_security_qa")
 
 
+RESOURCE_EXHAUSTION_KNOWLEDGE_QUESTIONS = [
+    "HTTP/2 Resource Exhaustion 是什麼？",
+    "HTTP/2 Bomb 疑似事件要怎麼安全分流？",
+    "CVE 情報可以直接當成資產已被利用的證明嗎？",
+    "HTTP/2 DoS 有哪些防禦緩解方式？",
+    "Resource Exhaustion 證據缺口要看什麼？",
+]
+
+
+@pytest.mark.parametrize("question", RESOURCE_EXHAUSTION_KNOWLEDGE_QUESTIONS)
+def test_resource_exhaustion_questions_route_to_rag_security_qa(question: str):
+    # v2.7-D: these must reach the existing Knowledge Q&A / RAG path, not be
+    # treated as payloads, log paths, or report follow-ups.
+    _assert_route(question, "security_knowledge_question", "rag_security_qa")
+
+
+def test_xss_payload_still_routes_to_payload_triage_after_expansion():
+    _assert_route("<script>alert(1)</script>", "payload_or_event", "payload_triage")
+
+
+def test_log_file_path_still_routes_to_log_ingest_after_expansion():
+    _assert_route(r"C:\logs\auth.log", "log_file_path", "log_file_ingest")
+
+
+def test_benign_chat_without_security_terms_is_not_routed_to_knowledge():
+    decision = route_user_input("Please summarize today's lunch menu.")
+
+    assert decision.input_kind == "unknown"
+    assert decision.route == "clarification_required"
+
+
+def test_dos_substring_does_not_falsely_trigger_knowledge_route():
+    # "dosa" contains the substring "dos" but is not a security topic; the
+    # word-boundary guard must prevent a false knowledge-question match.
+    decision = route_user_input("How do I cook dosa at home?")
+
+    assert decision.input_kind == "unknown"
+
+
 def test_ev_id_report_followup_routes_to_report_followup():
     _assert_route("EV-003 是什麼意思？", "report_followup", "report_followup")
 
