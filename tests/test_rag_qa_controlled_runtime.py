@@ -369,5 +369,114 @@ def test_non_resource_topic_answer_has_no_advisory_note() -> None:
     assert RAGQA.MODE3_BOUNDARY_NOTICE in answer
 
 
+# --------------------------------------------------------------------------- #
+# v2.7-F: security term normalization (CVE / CVSS / RAG / LLM / DoS / DDoS)
+# --------------------------------------------------------------------------- #
+def test_incorrect_cve_scoring_expansion_is_normalized() -> None:
+    rag = make_runtime()
+
+    result = rag._strip_structured_signals("CVE（共通漏洞與風險評分系統）是一種識別碼。")
+
+    assert "共通漏洞與風險評分系統" not in result
+    assert "Common Vulnerabilities and Exposures" in result
+    assert "弱點識別編號" in result
+
+
+def test_cve_wrongly_given_cvss_english_definition_is_normalized() -> None:
+    rag = make_runtime()
+
+    result = rag._strip_structured_signals("CVE (Common Vulnerability Scoring System) tracks severity.")
+
+    assert RAGQA.CANONICAL_CVE_TERM in result
+    assert "CVE (Common Vulnerability Scoring System)" not in result
+
+
+def test_cve_and_cvss_distinction_is_preserved() -> None:
+    rag = make_runtime()
+
+    result = rag._strip_structured_signals("CVE 是弱點識別編號，CVSS 是共通弱點評分系統。")
+
+    assert "弱點識別編號" in result
+    assert "共通弱點評分系統" in result
+
+
+def test_legitimate_cvss_parenthetical_is_not_rewritten_to_cve() -> None:
+    rag = make_runtime()
+
+    result = rag._strip_structured_signals("CVSS（共通弱點評分系統）用於評分嚴重度。")
+
+    assert "CVSS（共通弱點評分系統）" in result
+    assert RAGQA.CANONICAL_CVE_TERM not in result
+
+
+def test_cve_id_is_not_rewritten() -> None:
+    rag = make_runtime()
+
+    result = rag._strip_structured_signals("追蹤 CVE-2026-49975 的修補狀態。")
+
+    assert "CVE-2026-49975" in result
+
+
+def test_dos_and_ddos_terms_are_not_corrupted() -> None:
+    rag = make_runtime()
+
+    text = (
+        "DoS 是 Denial of Service（阻斷服務）。"
+        "DDoS 是 Distributed Denial of Service（分散式阻斷服務）。"
+    )
+    result = rag._strip_structured_signals(text)
+
+    assert "Denial of Service" in result
+    assert "Distributed Denial of Service" in result
+    assert "阻斷服務" in result
+    assert "分散式阻斷服務" in result
+
+
+def test_rag_llm_normalization_still_applies_alongside_cve() -> None:
+    rag = make_runtime()
+
+    result = rag._strip_structured_signals(
+        "RAG（Reasoning and Generation with Alternatives）與 "
+        "CVE（共通漏洞與風險評分系統）都需要正名。"
+    )
+
+    assert RAGQA.CANONICAL_RAG_TERM in result
+    assert "Reasoning and Generation with Alternatives" not in result
+    assert RAGQA.CANONICAL_CVE_TERM in result
+    assert "共通漏洞與風險評分系統" not in result
+
+
+def test_safety_rules_include_canonical_cve_cvss_guidance() -> None:
+    rules = RAGQA.RAG_ANSWER_SAFETY_RULES
+
+    assert "Common Vulnerabilities and Exposures" in rules
+    assert "Common Vulnerability Scoring System" in rules
+    assert "CVE 是弱點識別編號，不是評分系統" in rules
+
+
+def test_canonical_terms_and_rules_have_no_offensive_phrases() -> None:
+    combined = (
+        RAGQA.RAG_ANSWER_SAFETY_RULES
+        + RAGQA.CANONICAL_CVE_TERM
+        + RAGQA.CANONICAL_CVSS_TERM
+    ).lower()
+    for phrase in OFFENSIVE_PHRASES:
+        assert phrase not in combined, f"forbidden offensive phrase present: {phrase}"
+
+
+def test_cve_answer_normalizes_term_and_keeps_advisory_boundary() -> None:
+    rag = make_runtime("CVE（共通漏洞與風險評分系統）是已知弱點識別碼。")
+    cast(Any, rag).retrieve_controlled_context = lambda _query: ("", False, None)
+    cast(Any, rag).retrieve_context = lambda _query: ("knowledge context", True)
+
+    answer = rag.answer_question("CVE 情報可以直接當成資產已被利用的證明嗎？")
+
+    assert "共通漏洞與風險評分系統" not in answer
+    assert "Common Vulnerabilities and Exposures" in answer
+    # v2.7-E advisory note + safety boundary remain intact.
+    assert "CVE 等背景情報不代表目前資產已被利用" in answer
+    assert RAGQA.MODE3_BOUNDARY_NOTICE in answer
+
+
 def _raise_vector_fallback():
     raise AssertionError("controlled retrieval should run before vector fallback")

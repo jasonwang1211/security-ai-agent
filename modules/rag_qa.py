@@ -27,6 +27,11 @@ class RAGQA:
     CONTROLLED_KNOWLEDGE_DIR = KNOWLEDGE_ROOT / "report_explainer"
     CANONICAL_RAG_TERM = "RAG（Retrieval-Augmented Generation，檢索增強生成）"
     CANONICAL_LLM_TERM = "LLM（Large Language Model，大型語言模型）"
+    # v2.7-F: CVE is an identifier, not a scoring system. CVSS is the scoring
+    # system. These canonical labels fix the observed "CVE（共通漏洞與風險評分系統）"
+    # confusion without touching legitimate CVSS mentions or CVE-IDs.
+    CANONICAL_CVE_TERM = "CVE（Common Vulnerabilities and Exposures，弱點識別編號）"
+    CANONICAL_CVSS_TERM = "CVSS（Common Vulnerability Scoring System，弱點評分系統）"
     MODE3_AUTHORITY_NOTICE = (
         "最終的 Risk Level 與 Decision 由本專案的 deterministic 系統流程產生；"
         "分析師可進行複核與後續調查，但 RAG 與 LLM 不會覆蓋這些最終欄位。"
@@ -131,6 +136,7 @@ Metadata suppression rules:
 4. 針對 HTTP/2、Resource Exhaustion、DoS 與緩解措施，請使用「建議人工評估」「可檢查」「可作為防禦規劃參考」等措辭；避免「立即採取防禦措施」「直接設定」「執行封鎖」等命令式或暗示系統會自動強制執行的說法，也不要列出精確的並行流數量、封包大小等攻擊或流量產生參數。
 5. CVE 等背景情報不代表目前資產已被利用，需依資產版本、設定、暴露面與修補狀態確認。
 6. 不得宣稱系統已執行真實封鎖或設定變更；BLOCK / MONITOR / ALLOW 皆為模擬決策，且不會覆蓋最終的 Risk Level 或 Decision。
+7. 術語請使用正確全名，不要發明錯誤展開：CVE = Common Vulnerabilities and Exposures（弱點識別編號），CVSS = Common Vulnerability Scoring System（弱點評分系統），RAG = Retrieval-Augmented Generation（檢索增強生成），LLM = Large Language Model（大型語言模型）。CVE 是弱點識別編號，不是評分系統；評分系統是 CVSS。DoS = Denial of Service（阻斷服務），DDoS = Distributed Denial of Service（分散式阻斷服務）。
 """.strip()
 
     def __init__(self):
@@ -586,6 +592,7 @@ Metadata suppression rules:
 
         result = self._strip_inline_internal_metadata(result)
         result = self._normalize_visible_terminology(result)
+        result = self._normalize_cve_terminology(result)
         result = self._normalize_final_authority_claims(result)
         return result if result else text
 
@@ -635,6 +642,23 @@ Metadata suppression rules:
             result = re.sub(pattern, self.CANONICAL_LLM_TERM, result, flags=re.IGNORECASE)
 
         return result
+
+    def _normalize_cve_terminology(self, text: str) -> str:
+        """Rewrite incorrect CVE expansions (a scoring / risk-scoring system) to
+        the correct CVE meaning.
+
+        Only a bare ``CVE`` acronym directly followed by a parenthetical that
+        wrongly describes a scoring system is rewritten. Legitimate CVSS mentions,
+        correct CVE expansions (e.g. an identifier), and CVE-IDs like
+        ``CVE-2026-49975`` are left untouched.
+        """
+        pattern = re.compile(
+            r"(?<![A-Za-z0-9])CVE\s*[（(]\s*[^（()）]*"
+            r"(?:評分|scoring system|risk scoring|風險評分)"
+            r"[^（()）]*[）)]",
+            re.IGNORECASE,
+        )
+        return pattern.sub(self.CANONICAL_CVE_TERM, text)
 
     def _normalize_final_authority_claims(self, text: str) -> str:
         normalized_paragraphs = []
