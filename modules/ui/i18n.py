@@ -719,6 +719,61 @@ _TRANSLATIONS: dict[str, dict[str, str]] = {
         "en": "Ask a security knowledge question",
         "bilingual": "詢問資安知識問題 / Ask a security knowledge question",
     },
+    "ai_analyst_brief_panel_title": {
+        "zh-TW": "AI 分析摘要",
+        "en": "AI Analyst Brief",
+        "bilingual": "AI 分析摘要 / AI Analyst Brief",
+    },
+    "ai_analyst_brief_panel_subtitle": {
+        "zh-TW": "確定性建議情境，彙整規則式結果、證據缺口與下一步複核建議；這不是最終判決。",
+        "en": "Deterministic advisory context summarizing rule-based results, evidence gaps, and next review steps. It is not a final verdict.",
+        "bilingual": "確定性建議情境 / deterministic advisory context summarizing rule-based results, evidence gaps, and next review steps; not a final verdict.",
+    },
+    "ai_analyst_brief_empty": {
+        "zh-TW": "請先執行一次分析，才能產生 AI 分析摘要。",
+        "en": "Run an analysis first to generate an AI Analyst Brief.",
+        "bilingual": "請先執行一次分析 / Run an analysis first to generate an AI Analyst Brief.",
+    },
+    "ai_analyst_brief_chip": {
+        "zh-TW": "確定性 AI 建議 · 未使用 LLM",
+        "en": "Deterministic AI advisory · no LLM",
+        "bilingual": "確定性 AI 建議 / Deterministic AI advisory · no LLM",
+    },
+    "ai_analyst_brief_what_happened": {
+        "zh-TW": "發生了什麼",
+        "en": "What happened",
+        "bilingual": "發生了什麼 / What happened",
+    },
+    "ai_analyst_brief_why_it_matters": {
+        "zh-TW": "為什麼重要",
+        "en": "Why it matters",
+        "bilingual": "為什麼重要 / Why it matters",
+    },
+    "ai_analyst_brief_deterministic_verdict": {
+        "zh-TW": "確定性判定",
+        "en": "Deterministic verdict",
+        "bilingual": "確定性判定 / Deterministic verdict",
+    },
+    "ai_analyst_brief_advisory_summary": {
+        "zh-TW": "建議摘要",
+        "en": "Advisory summary",
+        "bilingual": "建議摘要 / Advisory summary",
+    },
+    "ai_analyst_brief_evidence_gap": {
+        "zh-TW": "證據缺口摘要",
+        "en": "Evidence gap summary",
+        "bilingual": "證據缺口摘要 / Evidence gap summary",
+    },
+    "ai_analyst_brief_next_steps": {
+        "zh-TW": "建議下一步",
+        "en": "Recommended next steps",
+        "bilingual": "建議下一步 / Recommended next steps",
+    },
+    "ai_analyst_brief_unsafe": {
+        "zh-TW": "不安全的假設",
+        "en": "Unsafe assumptions",
+        "bilingual": "不安全的假設 / Unsafe assumptions",
+    },
     "evidence_gap_panel_title": {
         "zh-TW": "證據缺口分析",
         "en": "Evidence Gap Analyzer",
