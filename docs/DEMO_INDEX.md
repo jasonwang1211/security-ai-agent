@@ -61,3 +61,4 @@ python -m streamlit run ui/streamlit_app.py --server.fileWatcherType none
 6. Show the boundaries: simulated decisions, no real enforcement, no exploit / PoC / traffic generation, advisory-only AI/RAG context, and human review required.
 
 Additional evidence: [v2.7_manual_smoke_report.md](v2.7_manual_smoke_report.md).
+Release notes: [v2.7_release_notes.md](v2.7_release_notes.md).
