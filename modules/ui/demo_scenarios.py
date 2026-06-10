@@ -57,6 +57,17 @@ _DEMO_SCENARIOS: tuple[DemoScenario, ...] = (
         expected_case_id="CASE-SEED-003",
     ),
     DemoScenario(
+        scenario_id="http2_resource_exhaustion",
+        title_key="scenario_http2_resource_exhaustion_title",
+        description_key="scenario_http2_resource_exhaustion_desc",
+        input_text='[synthetic incident summary]\nevent_type=http2_resource_exhaustion_suspicion\nasset=edge-proxy-01\nprotocol=HTTP/2\nscenario=Resource Exhaustion Suspicion\nobservation_window=10m\nsignals:\n- low inbound request volume compared with elevated worker saturation\n- elevated concurrent stream count observed by reverse proxy metrics\n- repeated stream reset / long-lived connection pattern observed in telemetry\n- increased memory pressure and request queue delay\n- CVE context is not proof of successful abuse\nnotes:\n- synthetic demo only\n- no traffic generated\n- no vulnerability reproduction material\n- no real enforcement\n- human review required',
+        expected_attack="HTTP/2 Resource Exhaustion Suspicion",
+        expected_risk="MEDIUM",
+        expected_decision="MONITOR",
+        suggested_next_action=SUGGESTED_NEXT_NONE,
+        expected_case_id=None,
+    ),
+    DemoScenario(
         scenario_id="authentication_incident",
         title_key="scenario_auth_incident_title",
         description_key="scenario_auth_incident_desc",

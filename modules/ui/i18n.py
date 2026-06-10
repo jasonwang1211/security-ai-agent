@@ -144,6 +144,16 @@ _TRANSLATIONS: dict[str, dict[str, str]] = {
         "en": "Tautology-style SQL injection in a query string.",
         "bilingual": "恆真條件 SQL 注入 / Tautology-style SQL injection.",
     },
+    "scenario_http2_resource_exhaustion_title": {
+        "zh-TW": "HTTP/2 資源耗盡疑似事件",
+        "en": "HTTP/2 Resource Exhaustion Suspicion",
+        "bilingual": "HTTP/2 資源耗盡疑似事件 / HTTP/2 Resource Exhaustion Suspicion",
+    },
+    "scenario_http2_resource_exhaustion_desc": {
+        "zh-TW": "合成遙測摘要：低流量卻伴隨伺服端資源壓力，供分析師安全複核。",
+        "en": "Synthetic telemetry summary for a suspected case where low inbound traffic correlates with server-side resource pressure.",
+        "bilingual": "合成遙測摘要 / Synthetic telemetry summary for suspected server-side resource pressure.",
+    },
     "scenario_auth_incident_title": {
         "zh-TW": "身分驗證事件示範",
         "en": "Authentication Incident Demo",
