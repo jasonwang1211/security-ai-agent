@@ -63,3 +63,43 @@ class EvidenceGapAnalysis(BaseModel):
     advisory_boundary: str = ADVISORY_BOUNDARY
     llm_status: str = "not_used"
     source: str = "deterministic_ai_advisory"
+
+class AIAnalystBriefInput(BaseModel):
+    """Input envelope for the deterministic AI Analyst Brief backend.
+
+    The nested ``AIAdvisoryInput`` carries already-computed deterministic facts.
+    Optional context fields are read-only display/advisory context and must not
+    be interpreted as replacements for the authoritative verdict. Extra fields
+    remain forbidden so callers cannot smuggle authoritative names into the
+    brief input.
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    advisory_input: AIAdvisoryInput
+    evidence_gap: EvidenceGapAnalysis | None = None
+    similar_case_ids: list[str] = Field(default_factory=list)
+    graph_relation_summary: list[str] = Field(default_factory=list)
+    case_draft_status: str | None = None
+    run_mode: str | None = None
+
+
+class AIAnalystBrief(BaseModel):
+    """Structured deterministic analyst brief.
+
+    The output intentionally exposes no field named ``risk_level`` or
+    ``decision``. Deterministic labels may appear only inside narrative list
+    items, preserving the rule-based verdict as context rather than authority
+    granted to the advisory layer.
+    """
+
+    what_happened: list[str] = Field(default_factory=list)
+    why_it_matters: list[str] = Field(default_factory=list)
+    deterministic_verdict: list[str] = Field(default_factory=list)
+    advisory_summary: list[str] = Field(default_factory=list)
+    evidence_gap_summary: list[str] = Field(default_factory=list)
+    recommended_next_steps: list[str] = Field(default_factory=list)
+    unsafe_assumptions: list[str] = Field(default_factory=list)
+    safety_boundary: str = ADVISORY_BOUNDARY
+    llm_status: str = "not_used"
+    source: str = "deterministic_ai_analyst_brief"
