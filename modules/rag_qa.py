@@ -3,11 +3,6 @@ import os
 import re
 from typing import Any
 
-from langchain_community.chat_models import ChatOllama
-from langchain_community.embeddings import HuggingFaceEmbeddings
-from langchain_community.vectorstores import Chroma
-from langchain_core.prompts import ChatPromptTemplate
-
 from config import CHROMA_PATH, EMBED_MODEL, MODEL_NAME, TOP_K
 from modules.rag.controlled_retrieval import ControlledRetrievalResult, select_controlled_sources
 from modules.rag.metadata import load_metadata_from_directory
@@ -15,6 +10,14 @@ from modules.rag.source_assembly import source_citation_from_metadata
 from modules.rag.types import AnswerWithSources, SourceCitation
 from modules.rag_query_planner import KNOWLEDGE_ROOT, RAGQueryPlanner
 from modules.report_followup import protect_answer_with_guardrails
+
+
+
+def _chat_prompt_template_class() -> Any:
+    from langchain_core.prompts import ChatPromptTemplate
+
+    return ChatPromptTemplate
+
 
 OpenCCClass: Any = None
 try:
@@ -147,8 +150,24 @@ Metadata suppression rules:
         self.controlled_metadata_items = self._load_controlled_metadata()
         self.vectorstore = None
         self.init_error = None
+        self._components_initialized = False
+        self.main_prompt = None
+        self.point_follow_prompt = None
+        self.natural_follow_prompt = None
 
-        self.main_prompt = ChatPromptTemplate.from_template(
+        self._initialize_prompts()
+
+    def _initialize_prompts(self):
+        if self.main_prompt is not None:
+            return
+
+        try:
+            prompt_template = _chat_prompt_template_class()
+        except Exception as exc:
+            self.init_error = exc
+            return
+
+        self.main_prompt = prompt_template.from_template(
             """
 你是資安知識問答助手，請根據提供的內容回答問題。
 重要規則：
@@ -164,7 +183,7 @@ Metadata suppression rules:
 """
         )
 
-        self.point_follow_prompt = ChatPromptTemplate.from_template(
+        self.point_follow_prompt = prompt_template.from_template(
             """
 你是資安知識問答助手，請針對指定重點做延伸說明。
 重要規則：
@@ -177,7 +196,7 @@ Metadata suppression rules:
 """
         )
 
-        self.natural_follow_prompt = ChatPromptTemplate.from_template(
+        self.natural_follow_prompt = prompt_template.from_template(
             """
 你是資安知識問答助手，請根據既有主題回答後續追問。
 重要規則：
@@ -202,7 +221,6 @@ Metadata suppression rules:
 """
         )
 
-        self._initialize_components()
 
     def _load_controlled_metadata(self):
         try:
@@ -211,13 +229,23 @@ Metadata suppression rules:
             return []
 
     def _initialize_components(self):
+        if self._components_initialized:
+            return
+
+        self._components_initialized = True
+        self._initialize_prompts()
+
         try:
+            from langchain_community.embeddings import HuggingFaceEmbeddings
+
             self.embeddings = HuggingFaceEmbeddings(model_name=EMBED_MODEL)
         except Exception as exc:
             self.init_error = exc
             return
 
         try:
+            from langchain_community.chat_models import ChatOllama
+
             self.llm = ChatOllama(model=MODEL_NAME, temperature=0)
             self.query_planner = RAGQueryPlanner(llm=self.llm)
         except Exception as exc:
@@ -231,6 +259,8 @@ Metadata suppression rules:
             return
 
         try:
+            from langchain_community.vectorstores import Chroma
+
             self.vectorstore = Chroma(
                 persist_directory=CHROMA_PATH,
                 embedding_function=self.embeddings,
@@ -239,10 +269,20 @@ Metadata suppression rules:
             self.init_error = exc
             self.vectorstore = None
 
+    def _ensure_initialized(self) -> None:
+        # Tests may construct focused RAGQA instances via __new__ to exercise
+        # answer-safety helpers without real RAG dependencies. Those objects do
+        # not own runtime component state and should not initialize it here.
+        if not hasattr(self, "_components_initialized"):
+            return
+        self._initialize_components()
+
     def is_ready(self) -> bool:
+        self._ensure_initialized()
         return self.vectorstore is not None and self.llm is not None
 
     def _get_query_plan(self, query: str):
+        self._ensure_initialized()
         cache_key = query or ""
         if cache_key not in self._query_plan_cache:
             if self.query_planner is None:
@@ -311,6 +351,7 @@ Metadata suppression rules:
         return context, bool(context), result
 
     def answer_question(self, query: str) -> str | None:
+        self._ensure_initialized()
         controlled_context, ok, controlled_result = self.retrieve_controlled_context(query)
         if ok:
             answer = self.generate_answer(query, controlled_context)
@@ -443,6 +484,7 @@ Metadata suppression rules:
         return "\n\n".join(sections).strip()
 
     def retrieve_context(self, query: str):
+        self._ensure_initialized()
         if not query:
             return "", False
 
@@ -700,12 +742,15 @@ Metadata suppression rules:
         return has_final_field and has_analyst_actor and has_decision_action
 
     def generate_answer(self, query: str, context: str):
+        self._ensure_initialized()
         if not query:
             return "請先輸入問題。"
         if not context:
             return "目前找不到足夠的知識內容來回答這個問題。"
 
         prompt_context = self._build_answer_context(query, context)
+        if self.main_prompt is None:
+            return "RAG answer generation is unavailable."
         chain = self.main_prompt | self.llm
         answer = self._to_traditional(
             self._safe_invoke(
@@ -717,8 +762,12 @@ Metadata suppression rules:
         return self._strip_structured_signals(answer)
 
     def explain_point(self, target: str):
+        self._ensure_initialized()
         if not target:
             return "目前沒有可延伸說明的重點。"
+
+        if self.point_follow_prompt is None:
+            return "RAG follow-up is unavailable."
 
         chain = self.point_follow_prompt | self.llm
         return self._to_traditional(
@@ -730,8 +779,12 @@ Metadata suppression rules:
         )
 
     def handle_natural_followup(self, focus: str, question: str):
+        self._ensure_initialized()
         if not focus or not question:
             return "目前缺少足夠的上下文來回答追問。"
+
+        if self.natural_follow_prompt is None:
+            return "RAG follow-up is unavailable."
 
         chain = self.natural_follow_prompt | self.llm
         answer = self._to_traditional(

@@ -4,7 +4,6 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
-from langchain_community.chat_models import ChatOllama
 from langchain_core.prompts import ChatPromptTemplate
 
 from config import MODEL_NAME
@@ -143,6 +142,8 @@ User question:
 
     def _get_llm(self):
         if self.llm is None:
+            from langchain_community.chat_models import ChatOllama
+
             self.llm = ChatOllama(model=self.model_name, temperature=0)
         return self.llm
 

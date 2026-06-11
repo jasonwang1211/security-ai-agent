@@ -18,7 +18,7 @@ from modules.controller.skill_catalog import (
 from modules.detector import RuleBasedDetector
 from modules.followup_handler import FollowupHandler
 from modules.llm_assist import LLMAssist
-from modules.rag_qa import RAGQA
+from modules.lazy_rag import LazyRAGQA
 from modules.responder import Responder
 from modules.triage_policy import TriagePolicy
 from modules.ui.case_draft_view import (
@@ -181,7 +181,7 @@ _ANALYSIS_MODE_NOTE_KEYS = {
 def build_agent() -> SecurityAgent:
     """Build the same local runtime components used by the CLI entrypoint."""
 
-    rag_qa = RAGQA()
+    rag_qa = LazyRAGQA()
     followup_handler = FollowupHandler()
     detector = RuleBasedDetector()
     responder = Responder()

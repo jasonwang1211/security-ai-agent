@@ -3,7 +3,7 @@ from modules.controller.orchestrator import build_default_v2_5_orchestrator
 from modules.detector import RuleBasedDetector
 from modules.followup_handler import FollowupHandler
 from modules.llm_assist import LLMAssist
-from modules.rag_qa import RAGQA
+from modules.lazy_rag import LazyRAGQA
 from modules.responder import Responder
 from modules.mode_handlers import (
     run_followup,
@@ -111,7 +111,7 @@ def _run_standard_mode(handler, user_input):
 def main():
     print("正在啟動 Security AI...")
 
-    rag_qa = RAGQA()
+    rag_qa = LazyRAGQA()
     followup_handler = FollowupHandler()
     detector = RuleBasedDetector()
     responder = Responder()
@@ -127,10 +127,7 @@ def main():
     )
     orchestrator = build_default_v2_5_orchestrator(agent)
 
-    if rag_qa.is_ready():
-        print("\nSecurity AI 已啟動。")
-    else:
-        print("\nSecurity AI 已啟動，但知識庫目前不可用，仍可進行攻擊偵測與防禦建議。")
+    print("\nSecurity AI ready. RAG initializes on first knowledge question.")
 
     mode_handlers = {
         "1": {
