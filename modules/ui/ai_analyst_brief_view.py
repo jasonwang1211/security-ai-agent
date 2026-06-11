@@ -23,6 +23,7 @@ from modules.ui.i18n import DEFAULT_LANGUAGE, t
 
 def build_ai_analyst_brief_from_cli_state(
     cli_state: Mapping[str, Any] | None,
+    language: str = DEFAULT_LANGUAGE,
 ) -> AIAnalystBrief | None:
     """Build a deterministic brief from current active context, or None.
 
@@ -36,7 +37,8 @@ def build_ai_analyst_brief_from_cli_state(
     if advisory_input is None:
         return None
     return build_ai_analyst_brief(
-        AIAnalystBriefInput(advisory_input=advisory_input, evidence_gap=None)
+        AIAnalystBriefInput(advisory_input=advisory_input, evidence_gap=None),
+        language=language,
     )
 
 
@@ -46,7 +48,7 @@ def render_ai_analyst_brief_panel_html(
 ) -> str:
     """Return full panel HTML: empty state or deterministic analyst brief."""
 
-    brief = build_ai_analyst_brief_from_cli_state(cli_state)
+    brief = build_ai_analyst_brief_from_cli_state(cli_state, language=language)
     if brief is None:
         return build_empty_brief_state_html(language)
     return build_ai_analyst_brief_html(brief, language=language)

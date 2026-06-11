@@ -135,7 +135,7 @@ Deferred cleanup items:
 - create a shared subprocess import guard helper if repeated patterns keep growing
 - split `tests/test_report_followup.py` if protected report follow-up coverage becomes too large
 - make eval dataset validation and eval runner behavior more explicitly layered
-- consider a future `docs/MANUAL_LLM_SMOKE.md` for manual local LLM/RAG checks
+- consider a local-only manual LLM/RAG checklist for machine-specific checks
 - if future package migration happens, reorganize tests by owner cluster only after ownership is stable
 
 ## 8. Non-Goals
@@ -155,6 +155,6 @@ This document does not:
 ## 9. Follow-up Actions
 
 - Phase 9A-6: Optional Package Migration Plan
-- Future: standalone manual LLM/RAG smoke checklist
+- Future: standalone local-only manual LLM/RAG smoke checklist
 - Future: shared subprocess import guard helper
 - Future: test layout cleanup after ownership and package boundaries are stable

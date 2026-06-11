@@ -111,6 +111,35 @@ def test_command_injection_brief_includes_rule_and_execution_not_proven_language
     assert "outbound" in text
 
 
+def test_command_injection_brief_supports_zh_tw_output() -> None:
+    brief = build_ai_analyst_brief(
+        AIAnalystBriefInput(advisory_input=command_injection_input()),
+        language="zh-TW",
+    )
+    text = _brief_text(brief)
+
+    assert "規則式偵測命中 command injection" in text
+    assert "cmd-001" in text
+    assert "不代表命令已成功執行" in text
+    assert "deterministic pipeline" in text
+    assert "不執行真實 firewall" in text
+    assert brief.llm_status == "not_used"
+
+
+def test_command_injection_brief_supports_bilingual_output() -> None:
+    brief = build_ai_analyst_brief(
+        AIAnalystBriefInput(advisory_input=command_injection_input()),
+        language="bilingual",
+    )
+    text = _brief_text(brief)
+
+    assert "規則式偵測命中 command injection" in text
+    assert "rule-based detection matched command injection" in text
+    assert "successful command execution is not proven" in text
+    assert "不執行真實 firewall" in text
+    assert "no real enforcement" in text
+
+
 def test_sql_injection_brief_does_not_claim_exfiltration() -> None:
     brief = build_ai_analyst_brief(AIAnalystBriefInput(advisory_input=sql_injection_input()))
     text = _brief_text(brief)

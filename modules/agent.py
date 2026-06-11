@@ -179,18 +179,25 @@ class SecurityAgent:
         return any(marker in normalized for marker in explanation_markers)
 
     def build_rag_answer(self, query):
+        language = getattr(self, "report_language", None)
         if not self.rag_qa.is_ready():
             return self.KB_UNAVAILABLE_MESSAGE
 
         if hasattr(self.rag_qa, "answer_question"):
-            answer = self.rag_qa.answer_question(query)
+            try:
+                answer = self.rag_qa.answer_question(query, language=language)
+            except TypeError:
+                answer = self.rag_qa.answer_question(query)
             return answer if answer is not None else self.NO_CONTEXT_MESSAGE
 
         context, ok = self.rag_qa.retrieve_context(query)
         if not ok:
             return self.NO_CONTEXT_MESSAGE
 
-        return self.rag_qa.generate_answer(query, context)
+        try:
+            return self.rag_qa.generate_answer(query, context, language=language)
+        except TypeError:
+            return self.rag_qa.generate_answer(query, context)
 
     def _update_state(self, state, query, answer, keep_focus=False):
         state["last_question"] = query

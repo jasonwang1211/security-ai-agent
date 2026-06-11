@@ -154,6 +154,27 @@ _TRANSLATIONS: dict[str, dict[str, str]] = {
         "en": "Synthetic telemetry summary for a suspected case where low inbound traffic correlates with server-side resource pressure.",
         "bilingual": "合成遙測摘要 / Synthetic telemetry summary for suspected server-side resource pressure.",
     },
+    "scenario_http2_resource_exhaustion_preview": {
+        "zh-TW": (
+            "摘要：合成 HTTP/2 資源耗盡疑似事件\n"
+            "重點：低請求量 + worker/resource pressure\n"
+            "跡象：stream reset / long-lived connection telemetry\n"
+            "邊界：no traffic generated / no real enforcement / human review required"
+        ),
+        "en": (
+            "Summary: Synthetic HTTP/2 resource exhaustion suspicion\n"
+            "Signals: low request volume + worker/resource pressure\n"
+            "Telemetry: stream reset / long-lived connection pattern\n"
+            "Boundary: no traffic generated / no real enforcement / human review required"
+        ),
+        "bilingual": (
+            "摘要 / Summary：合成 HTTP/2 資源耗盡疑似事件 / "
+            "synthetic HTTP/2 resource exhaustion suspicion\n"
+            "重點 / Signals：低請求量 + worker/resource pressure\n"
+            "跡象 / Telemetry：stream reset / long-lived connection pattern\n"
+            "邊界 / Boundary：no traffic generated / no real enforcement / human review required"
+        ),
+    },
     "scenario_auth_incident_title": {
         "zh-TW": "身分驗證事件示範",
         "en": "Authentication Incident Demo",

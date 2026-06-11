@@ -104,6 +104,25 @@ def test_command_injection_active_context_renders_brief() -> None:
     assert "deterministic_ai_analyst_brief" in html
 
 
+def test_command_injection_active_context_renders_zh_tw_brief() -> None:
+    html = render_ai_analyst_brief_panel_html(command_injection_state(), language="zh-TW")
+    low = html.casefold()
+
+    assert "規則式偵測命中 command injection" in low
+    assert "不代表命令已成功執行" in low
+    assert "llm_status: not_used" in html
+    assert "不執行真實 firewall" in low
+
+
+def test_command_injection_active_context_renders_bilingual_brief() -> None:
+    html = render_ai_analyst_brief_panel_html(command_injection_state(), language="bilingual")
+    low = html.casefold()
+
+    assert "規則式偵測命中 command injection" in low
+    assert "rule-based detection matched command injection" in low
+    assert "no real enforcement" in low
+
+
 def test_sql_injection_active_context_does_not_claim_confirmed_exfiltration() -> None:
     html = render_ai_analyst_brief_panel_html(sql_injection_state(), language="en")
     low = html.casefold()

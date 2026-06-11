@@ -5,3 +5,5 @@ chroma_db/
 .DS_Store
 Thumbs.db
 /workbench/case_drafts/*.md
+# Local-only presentation/demo helper files
+local_demo_materials/
