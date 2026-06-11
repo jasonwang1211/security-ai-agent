@@ -75,6 +75,7 @@ If Knowledge Q&A / RAG is unavailable after rebuilding the environment, confirm 
 
 ## Documentation
 
+- [Traditional Chinese Overview](docs/zh-TW/README.zh-TW.md)
 - [User Operation Guide](docs/USER_OPERATION_GUIDE.md)
 - [Test Report](docs/TEST_REPORT.md)
 - [Code Review Audit](docs/CODE_REVIEW_AUDIT.md)
