@@ -151,6 +151,29 @@ def test_command_injection_match_does_not_prove_execution() -> None:
     assert "execut" in unsafe
 
 
+def test_command_injection_gap_supports_zh_tw_output() -> None:
+    analysis = analyze_evidence_gap(command_injection_input(), language="zh-TW")
+    text = _all_text(analysis)
+
+    assert "確定性規則命中" in text
+    assert "輸入命中 command injection" in text
+    assert "不代表命令已成功執行" in text
+    assert "程序執行證據" in text
+    assert "不執行真實 firewall" in text
+    assert analysis.llm_status == "not_used"
+
+
+def test_command_injection_gap_supports_bilingual_output() -> None:
+    analysis = analyze_evidence_gap(command_injection_input(), language="bilingual")
+    text = _all_text(analysis)
+
+    assert "確定性規則命中" in text
+    assert "deterministic rule match" in text
+    assert "程序執行證據" in text
+    assert "process execution evidence" in text
+    assert "no real enforcement" in text
+
+
 def test_sql_injection_does_not_claim_exfiltration() -> None:
     analysis = analyze_evidence_gap(sql_injection_input())
     text = _all_text(analysis)

@@ -41,11 +41,11 @@ class LazyRAGQA:
     def retrieve_context(self, query: str) -> Any:
         return self._get_instance().retrieve_context(query)
 
-    def generate_answer(self, query: str, context: str) -> Any:
-        return self._get_instance().generate_answer(query, context)
+    def generate_answer(self, query: str, context: str, *args: Any, **kwargs: Any) -> Any:
+        return self._get_instance().generate_answer(query, context, *args, **kwargs)
 
-    def answer_question(self, query: str) -> str | None:
-        return self._get_instance().answer_question(query)
+    def answer_question(self, query: str, *args: Any, **kwargs: Any) -> str | None:
+        return self._get_instance().answer_question(query, *args, **kwargs)
 
     def explain_point(self, target: str) -> Any:
         return self._get_instance().explain_point(target)

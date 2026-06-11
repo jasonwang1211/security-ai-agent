@@ -8,6 +8,7 @@ from modules.ui.demo_scenarios import (
     DemoScenario,
     find_demo_scenario,
     list_demo_scenarios,
+    scenario_preview_text,
     scenario_titles,
 )
 
@@ -131,6 +132,46 @@ def test_http2_resource_exhaustion_scenario_has_safety_notes() -> None:
     assert "human review required" in text
 
 
+def test_http2_resource_exhaustion_preview_is_shorter_than_full_input() -> None:
+    scenario = _by_id("http2_resource_exhaustion")
+    preview = scenario_preview_text(scenario, "en")
+
+    assert len(preview) < len(scenario.input_text)
+    assert "synthetic http/2 resource exhaustion suspicion" in preview.casefold()
+    assert "no traffic generated" in preview.casefold()
+    assert "no real enforcement" in preview.casefold()
+    assert "human review required" in preview.casefold()
+    assert "[synthetic incident summary]" not in preview.casefold()
+    assert "event_type=http2_resource_exhaustion_suspicion" not in preview.casefold()
+
+
+def test_http2_resource_exhaustion_preview_is_language_aware() -> None:
+    scenario = _by_id("http2_resource_exhaustion")
+
+    zh = scenario_preview_text(scenario, "zh-TW")
+    en = scenario_preview_text(scenario, "en")
+    bilingual = scenario_preview_text(scenario, "bilingual")
+
+    assert "合成 HTTP/2 資源耗盡疑似事件" in zh
+    assert "Synthetic HTTP/2 resource exhaustion suspicion" in en
+    assert "合成 HTTP/2 資源耗盡疑似事件" in bilingual
+    assert "synthetic HTTP/2 resource exhaustion suspicion" in bilingual
+
+
+def test_non_http2_scenarios_keep_input_as_preview() -> None:
+    scenario = _by_id("command_injection")
+
+    assert scenario_preview_text(scenario, "en") == scenario.input_text
+
+
+def test_streamlit_launcher_loads_full_input_text_not_preview() -> None:
+    source = Path("ui/streamlit_app.py").read_text(encoding="utf-8")
+
+    assert "scenario_preview_text(scenario, language)" in source
+    assert "st.session_state[TEXT_AREA_KEY] = scenario.input_text" in source
+    assert "st.session_state[TEXT_AREA_KEY] = preview_text" not in source
+
+
 def test_http2_resource_exhaustion_scenario_avoids_offensive_preview_language() -> None:
     text = _by_id("http2_resource_exhaustion").input_text.casefold()
 
@@ -158,3 +199,54 @@ def test_http2_resource_exhaustion_titles_are_language_aware() -> None:
     assert "HTTP/2 Resource Exhaustion Suspicion" in en
     bilingual_title = f"{zh_title} / HTTP/2 Resource Exhaustion Suspicion"
     assert bilingual_title in bilingual
+
+
+def test_http2_preview_is_structured_summary_rows() -> None:
+    scenario = _by_id("http2_resource_exhaustion")
+
+    en = scenario_preview_text(scenario, "en")
+    en_lines = [line for line in en.splitlines() if line.strip()]
+    assert len(en_lines) >= 4  # readable rows, not one long code/log line
+    assert "Summary:" in en
+    assert "Signals:" in en
+    assert "Telemetry:" in en
+    assert "Boundary:" in en
+
+    zh = scenario_preview_text(scenario, "zh-TW")
+    zh_lines = [line for line in zh.splitlines() if line.strip()]
+    assert len(zh_lines) >= 4
+    assert "摘要：" in zh
+    assert "邊界：" in zh
+    # The structured preview must not embed the raw synthetic incident block.
+    assert "event_type=http2_resource_exhaustion_suspicion" not in zh
+    assert "[synthetic incident summary]" not in zh
+
+
+def test_streamlit_launcher_renders_structured_preview_as_rows_not_code() -> None:
+    source = Path("ui/streamlit_app.py").read_text(encoding="utf-8")
+
+    # Structured (preview_key) scenarios render as readable rows; only short
+    # one-line payload previews fall back to a <code> block.
+    assert "scenario.preview_key" in source
+    assert "sentinel-demo-preview-row" in source
+    assert 'preview_block = f\'<code class="sentinel-code">{html.escape(preview_text)}</code>\'' in source
+
+
+def test_streamlit_launcher_clears_stale_active_context_before_loading_input() -> None:
+    source = Path("ui/streamlit_app.py").read_text(encoding="utf-8")
+
+    # Within the Load Scenario handler, the stale active context (and its run
+    # mode) is cleared before the new pending input is written to the textarea,
+    # so a loaded scenario is not displayed next to the previous run's context.
+    idx_button = source.index('key=f"load_scenario_{scenario.scenario_id}"')
+    idx_clear = source.index("clear_active_context(st.session_state)", idx_button)
+    idx_run_mode = source.index("st.session_state.pop(STATE_ANALYSIS_RUN_MODE, None)", idx_button)
+    idx_textarea = source.index(
+        "st.session_state[TEXT_AREA_KEY] = scenario.input_text", idx_button
+    )
+
+    assert idx_button < idx_clear < idx_textarea
+    assert idx_button < idx_run_mode < idx_textarea
+    # The load handler must not trigger analysis.
+    load_block = source[idx_button:idx_textarea]
+    assert "run_direct_input(" not in load_block

@@ -143,3 +143,19 @@ def test_lazy_rag_provider_constructs_real_runtime_on_first_rag_call() -> None:
     assert calls == ["answer:What is RAG?"]
     assert provider.is_ready() is True
     assert calls == ["answer:What is RAG?", "is_ready"]
+
+
+def test_lazy_rag_provider_forwards_language_kwargs_on_first_rag_call() -> None:
+    calls: list[str] = []
+
+    class FakeRAG:
+        def answer_question(self, query: str, *, language: str | None = None) -> str:
+            calls.append(f"answer:{query}:{language}")
+            return "fake localized answer"
+
+    provider = LazyRAGQA(factory=lambda: FakeRAG())
+
+    assert provider.is_initialized is False
+    assert provider.answer_question("What is RAG?", language="en") == "fake localized answer"
+    assert provider.is_initialized is True
+    assert calls == ["answer:What is RAG?:en"]

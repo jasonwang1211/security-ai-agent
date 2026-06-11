@@ -235,5 +235,5 @@ def render_evidence_gap_panel_html(
     advisory_input = build_advisory_input(cli_state)
     if advisory_input is None:
         return build_empty_state_html(language)
-    analysis = analyze_evidence_gap(advisory_input)
+    analysis = analyze_evidence_gap(advisory_input, language=language)
     return build_evidence_gap_html(analysis, language=language)

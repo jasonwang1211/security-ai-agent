@@ -31,6 +31,7 @@ class DemoScenario:
     expected_decision: str
     suggested_next_action: str
     expected_case_id: str | None = None
+    preview_key: str | None = None
 
 
 _DEMO_SCENARIOS: tuple[DemoScenario, ...] = (
@@ -66,6 +67,7 @@ _DEMO_SCENARIOS: tuple[DemoScenario, ...] = (
         expected_decision="MONITOR",
         suggested_next_action=SUGGESTED_NEXT_NONE,
         expected_case_id=None,
+        preview_key="scenario_http2_resource_exhaustion_preview",
     ),
     DemoScenario(
         scenario_id="authentication_incident",
@@ -102,3 +104,14 @@ def scenario_titles(language: str = DEFAULT_LANGUAGE) -> tuple[str, ...]:
 
     selected = normalize_language(language)
     return tuple(t(scenario.title_key, selected) for scenario in _DEMO_SCENARIOS)
+
+
+def scenario_preview_text(
+    scenario: DemoScenario, language: str = DEFAULT_LANGUAGE
+) -> str:
+    """Return compact launcher preview text without changing loadable input."""
+
+    selected = normalize_language(language)
+    if scenario.preview_key:
+        return t(scenario.preview_key, selected)
+    return scenario.input_text

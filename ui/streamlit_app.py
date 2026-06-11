@@ -45,6 +45,7 @@ from modules.ui.demo_scenarios import (
     SUGGESTED_NEXT_FIND_SIMILAR,
     DemoScenario,
     list_demo_scenarios,
+    scenario_preview_text,
 )
 from modules.ui.console_state import (
     SIMILAR_CASE_COMMAND,
@@ -1140,6 +1141,19 @@ def _demo_card_body_html(scenario: DemoScenario, language: str) -> str:
             f'<span class="sentinel-pill-outline sentinel-pill-case">{html.escape(scenario.expected_case_id)}</span>'
         )
     suggested = _scenario_suggested_label(scenario.suggested_next_action, language)
+    preview_text = scenario_preview_text(scenario, language)
+    if scenario.preview_key:
+        # Structured (multi-line) previews render as readable summary rows, not a
+        # code/log block, so longer synthetic scenarios stay visually balanced
+        # with the short one-line payload previews.
+        preview_rows = "".join(
+            f'<div class="sentinel-demo-preview-row">{html.escape(line.strip())}</div>'
+            for line in preview_text.splitlines()
+            if line.strip()
+        )
+        preview_block = f'<div class="sentinel-demo-preview">{preview_rows}</div>'
+    else:
+        preview_block = f'<code class="sentinel-code">{html.escape(preview_text)}</code>'
     return (
         '<div class="sentinel-demo-body">'
         f'<div class="sentinel-demo-title">{html.escape(t(scenario.title_key, language))}</div>'
@@ -1149,7 +1163,7 @@ def _demo_card_body_html(scenario: DemoScenario, language: str) -> str:
         f'{"".join(pills)}'
         "</div>"
         f'<div class="sentinel-meta-label">{html.escape(t("input_preview", language))}</div>'
-        f'<code class="sentinel-code">{html.escape(scenario.input_text)}</code>'
+        f'{preview_block}'
         '<div class="sentinel-muted">'
         f'{html.escape(t("suggested_next", language))}: {html.escape(suggested)}'
         "</div>"
@@ -1160,9 +1174,12 @@ def _demo_card_body_html(scenario: DemoScenario, language: str) -> str:
 def render_demo_scenario_launcher(language: str) -> None:
     """Render compact SOC playbook demo cards that load input into the textarea.
 
-    Loading a scenario only writes the scenario input into the existing input
-    session state and records a status note. It does not run analysis, clear
-    active context, or change any backend behavior.
+    Loading a scenario writes the scenario input into the existing input session
+    state, records a status note, and clears the previous active-context display
+    (context, run mode, and advisory output) so a freshly loaded scenario is not
+    shown next to a stale context. It does not run analysis, change detector /
+    risk / decision logic, or initialize RAG, and it keeps the selected language
+    and analysis mode.
     """
 
     render_panel_heading(t("demo_scenario_launcher", language))
@@ -1176,6 +1193,13 @@ def render_demo_scenario_launcher(language: str) -> None:
                 key=f"load_scenario_{scenario.scenario_id}",
                 use_container_width=True,
             ):
+                # UI-only: clear the previous active context (and its run mode /
+                # advisory output) so the loaded scenario is not displayed next to
+                # a stale context. This does not run analysis, change detector /
+                # risk / decision logic, or initialize RAG; it keeps the selected
+                # language and analysis mode and the freshly loaded textarea input.
+                clear_active_context(st.session_state)
+                st.session_state.pop(STATE_ANALYSIS_RUN_MODE, None)
                 st.session_state[TEXT_AREA_KEY] = scenario.input_text
                 st.session_state[STATE_SCENARIO_NOTE] = t(scenario.title_key, language)
 

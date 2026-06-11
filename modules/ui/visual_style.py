@@ -357,6 +357,22 @@ def apply_console_css() -> str:
   font-size: 0.8rem;
   line-height: 1.35;
 }
+/* Structured demo preview: readable summary rows (not a code/log block), so
+   longer synthetic scenarios stay visually balanced with short payload cards. */
+.sentinel-demo-preview {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  margin: 2px 0 6px 0;
+}
+.sentinel-demo-preview-row {
+  color: #cdd8e6;
+  font-size: 0.78rem;
+  line-height: 1.4;
+  padding-left: 9px;
+  border-left: 2px solid var(--sentinel-border-strong);
+  overflow-wrap: anywhere;
+}
 .sentinel-meta-row {
   display: flex;
   flex-wrap: wrap;

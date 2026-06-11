@@ -10,6 +10,13 @@ from modules.rag.source_assembly import source_citation_from_metadata
 from modules.rag.types import AnswerWithSources, SourceCitation
 from modules.rag_query_planner import KNOWLEDGE_ROOT, RAGQueryPlanner
 from modules.report_followup import protect_answer_with_guardrails
+from modules.output_language import (
+    DEFAULT_OUTPUT_LANGUAGE,
+    OUTPUT_LANGUAGE_BILINGUAL,
+    OUTPUT_LANGUAGE_EN,
+    normalize_output_language,
+    output_language_instruction,
+)
 
 
 
@@ -54,6 +61,17 @@ class RAGQA:
         "此回答不代表已執行真實封鎖、監控部署、密碼重設、"
         "防火牆／WAF／EDR 設定變更或帳號處置。"
     )
+    MODE3_BOUNDARY_NOTICE_EN = (
+        "Safety boundary: BLOCK, MONITOR, and ALLOW are simulated project decisions. "
+        "RAG and LLM content is advisory explanation only and does not override the "
+        "final Risk Level or Decision. This answer does not mean real blocking, "
+        "monitoring deployment, password reset, firewall/WAF/EDR configuration "
+        "change, or account action was executed."
+    )
+    MODE3_BOUNDARY_NOTICE_BILINGUAL = (
+        f"{MODE3_BOUNDARY_NOTICE} / Safety boundary: RAG and LLM content is advisory "
+        "only and does not override deterministic Risk Level or Decision."
+    )
 
     # v2.7-E: topic-scoped advisory note for Resource Exhaustion / HTTP/2 DoS /
     # CVE answers. Appended deterministically; it only adds defensive framing and
@@ -63,6 +81,18 @@ class RAGQA:
         "需依資產版本、設定、暴露面與修補狀態確認；"
         "不代表系統已執行真實封鎖或設定變更，也不提供 PoC、利用步驟或流量產生指引。"
         "CVE 等背景情報不代表目前資產已被利用。"
+    )
+    RESOURCE_EXHAUSTION_ADVISORY_NOTE_EN = (
+        "Defensive triage note: use this content for safe analyst review and "
+        "defensive planning. Confirm asset version, configuration, exposure, "
+        "telemetry, and patch status. This does not mean the system applied real "
+        "blocking or configuration changes, and it does not provide PoC, exploit "
+        "steps, or traffic-generation guidance. CVE context is not proof that the "
+        "current asset was exploited."
+    )
+    RESOURCE_EXHAUSTION_ADVISORY_NOTE_BILINGUAL = (
+        f"{RESOURCE_EXHAUSTION_ADVISORY_NOTE} / Defensive triage note: no PoC, "
+        "exploit steps, traffic generation, or real enforcement; CVE context is not proof."
     )
     RESOURCE_EXHAUSTION_TOPIC_TERMS = (
         "resource exhaustion",
@@ -85,7 +115,7 @@ class RAGQA:
     PROJECT_ANSWER_RULES = """
 專案知識回答規則：
 1. 請使用提供的本專案 blue-team knowledge 內容回答，不要改用通用資安報告格式。
-2. 請使用繁體中文回答；Security Triage Report、Risk Level、Decision、AI Assist 等專有欄位可保留英文。
+2. 請遵守 Output language policy（語言政策）作答；Security Triage Report、Risk Level、Decision、AI Assist 等專有欄位可保留英文。
 3. 如果問題詢問 Security Triage Report、triage report、report、分流報告、應變報告或「怎麼看」，必須說明本專案實際報告區塊：
    0. Quick Verdict
    1. Summary
@@ -171,8 +201,8 @@ Metadata suppression rules:
             """
 你是資安知識問答助手，請根據提供的內容回答問題。
 重要規則：
-1. 回答必須只使用繁體中文。
-2. 不可輸出簡體中文；若術語或表述常見為簡體寫法，請先轉換為繁體中文再回答。
+1. 請依參考內容開頭的 Output language policy（語言政策）指定的語言與風格作答。
+2. 使用正確的資安術語全名，避免錯誤展開或簡繁混淆。
 3. 優先依據提供內容作答，保持準確、精簡、清楚。
 4. 若內容不足以支持明確結論，請明確說明資訊不足，不要臆測。
 
@@ -187,8 +217,8 @@ Metadata suppression rules:
             """
 你是資安知識問答助手，請針對指定重點做延伸說明。
 重要規則：
-1. 回答必須只使用繁體中文。
-2. 不可輸出簡體中文；若術語或表述常見為簡體寫法，請先轉換為繁體中文再回答。
+1. 請遵守 Output language policy（語言政策）：預設以繁體中文為主並保留必要英文資安術語，介面語言為 English 時以英文作答。
+2. 使用正確的資安術語全名，避免造成混淆。
 3. 先直接解釋重點，再補充其風險、判讀方式或防禦意義。
 4. 內容要清楚、精簡，避免離題。
 
@@ -200,8 +230,8 @@ Metadata suppression rules:
             """
 你是資安知識問答助手，請根據既有主題回答後續追問。
 重要規則：
-1. 回答必須只使用繁體中文。
-2. 不可輸出簡體中文；若術語或表述常見為簡體寫法，請先轉換為繁體中文再回答。
+1. 請遵守 Output language policy（語言政策）：預設以繁體中文為主並保留必要英文資安術語，介面語言為 English 時以英文作答。
+2. 保持清楚、精簡、防禦導向的語氣，避免臆測。
 3. 回答必須緊扣目前主題，不能轉成一般程式教學、SQL 教學或與主題無關的背景知識。
 4. 請從藍隊、防禦、偵測、風險判讀、日誌分析或事件應變的角度回答。
 5. 不可提供任何程式碼、正則表示式、腳本、查詢語句範例或 exploit 建構步驟。
@@ -350,11 +380,16 @@ Metadata suppression rules:
         context = "\n\n".join(sections).strip()
         return context, bool(context), result
 
-    def answer_question(self, query: str) -> str | None:
+    def answer_question(
+        self, query: str, language: str | None = DEFAULT_OUTPUT_LANGUAGE
+    ) -> str | None:
         self._ensure_initialized()
+        output_language = normalize_output_language(language)
         controlled_context, ok, controlled_result = self.retrieve_controlled_context(query)
         if ok:
-            answer = self.generate_answer(query, controlled_context)
+            answer = self._generate_answer_for_language(
+                query, controlled_context, output_language
+            )
             citations = [
                 source_citation_from_metadata(match.metadata)
                 for match in controlled_result.matches
@@ -365,13 +400,14 @@ Metadata suppression rules:
                 rule_ids=self._rule_ids_from_controlled_result(controlled_result),
                 limitations=["Controlled curated retrieval selected approved runtime metadata."],
                 query=query,
+                language=output_language,
             )
 
         context, ok = self.retrieve_context(query)
         if not ok:
             return None
 
-        answer = self.generate_answer(query, context)
+        answer = self._generate_answer_for_language(query, context, output_language)
         return self._protect_mode3_answer(
             answer,
             [
@@ -384,7 +420,16 @@ Metadata suppression rules:
             ],
             limitations=["Existing vector retrieval fallback was used."],
             query=query,
+            language=output_language,
         )
+
+    def _generate_answer_for_language(self, query: str, context: str, language: str) -> str:
+        try:
+            return self.generate_answer(query, context, language=language)
+        except TypeError:
+            # Tests and older adapters may monkeypatch generate_answer(query, context).
+            # Fallback preserves existing behavior without changing retrieval semantics.
+            return self.generate_answer(query, context)
 
     def _protect_mode3_answer(
         self,
@@ -394,12 +439,14 @@ Metadata suppression rules:
         rule_ids: list[str] | None = None,
         limitations: list[str] | None = None,
         query: str = "",
+        language: str | None = DEFAULT_OUTPUT_LANGUAGE,
     ) -> str:
+        output_language = normalize_output_language(language)
         polished = self._append_topic_advisory_note(
-            self._strip_structured_signals(answer), query
+            self._strip_structured_signals(answer), query, output_language
         )
         protected_input = AnswerWithSources(
-            answer=self._append_mode3_boundary(polished),
+            answer=self._append_mode3_boundary(polished, output_language),
             sources=citations,
             rule_ids=rule_ids or [],
             confidence="MEDIUM",
@@ -411,10 +458,20 @@ Metadata suppression rules:
         )
         return protected.answer.answer
 
-    def _append_mode3_boundary(self, answer: str) -> str:
-        if self.MODE3_BOUNDARY_NOTICE in answer:
+    def _mode3_boundary_notice(self, language: str) -> str:
+        if language == OUTPUT_LANGUAGE_EN:
+            return self.MODE3_BOUNDARY_NOTICE_EN
+        if language == OUTPUT_LANGUAGE_BILINGUAL:
+            return self.MODE3_BOUNDARY_NOTICE_BILINGUAL
+        return self.MODE3_BOUNDARY_NOTICE
+
+    def _append_mode3_boundary(
+        self, answer: str, language: str | None = DEFAULT_OUTPUT_LANGUAGE
+    ) -> str:
+        notice = self._mode3_boundary_notice(normalize_output_language(language))
+        if notice in answer:
             return answer
-        return f"{answer.rstrip()}\n\n{self.MODE3_BOUNDARY_NOTICE}"
+        return f"{answer.rstrip()}\n\n{notice}"
 
     def _is_resource_exhaustion_topic(self, query: str) -> bool:
         """Deterministically detect Resource Exhaustion / HTTP/2 DoS / CVE topics."""
@@ -424,7 +481,19 @@ Metadata suppression rules:
         # Short, ambiguous tokens matched on word boundaries (e.g. avoid "dosa").
         return bool(re.search(r"\b(?:cve|dos)\b", normalized))
 
-    def _append_topic_advisory_note(self, answer: str, query: str) -> str:
+    def _resource_exhaustion_advisory_note(self, language: str) -> str:
+        if language == OUTPUT_LANGUAGE_EN:
+            return self.RESOURCE_EXHAUSTION_ADVISORY_NOTE_EN
+        if language == OUTPUT_LANGUAGE_BILINGUAL:
+            return self.RESOURCE_EXHAUSTION_ADVISORY_NOTE_BILINGUAL
+        return self.RESOURCE_EXHAUSTION_ADVISORY_NOTE
+
+    def _append_topic_advisory_note(
+        self,
+        answer: str,
+        query: str,
+        language: str | None = DEFAULT_OUTPUT_LANGUAGE,
+    ) -> str:
         """Append a defensive advisory note for Resource Exhaustion / DoS / CVE.
 
         Only adds framing text; it never rewrites the answer body or any
@@ -432,9 +501,10 @@ Metadata suppression rules:
         """
         if not self._is_resource_exhaustion_topic(query):
             return answer
-        if self.RESOURCE_EXHAUSTION_ADVISORY_NOTE in answer:
+        note = self._resource_exhaustion_advisory_note(normalize_output_language(language))
+        if note in answer:
             return answer
-        return f"{answer.rstrip()}\n\n{self.RESOURCE_EXHAUSTION_ADVISORY_NOTE}"
+        return f"{answer.rstrip()}\n\n{note}"
 
     def _rule_ids_from_controlled_result(self, result: ControlledRetrievalResult) -> list[str]:
         rule_ids: list[str] = []
@@ -575,6 +645,13 @@ Metadata suppression rules:
         except Exception:
             return text
 
+    def _convert_output_for_language(self, text: str, language: str | None) -> str:
+        # Simplified->Traditional conversion only when Traditional Chinese is the
+        # target (zh-TW or bilingual). English answers are not forced to Traditional.
+        if normalize_output_language(language) == OUTPUT_LANGUAGE_EN:
+            return text
+        return self._to_traditional(text)
+
     def _filter_followup_examples(self, text: str) -> str:
         if not text:
             return text
@@ -612,12 +689,24 @@ Metadata suppression rules:
         intent = str(getattr(plan, "intent", "") or "").lower()
         return "triage_report" in topic or intent == "report_guide"
 
-    def _build_answer_context(self, query: str, context: str) -> str:
+    def _build_language_instruction(self, language: str | None) -> str:
+        return (
+            "Output language policy:\n"
+            f"{output_language_instruction(language)}"
+        )
+
+    def _build_answer_context(
+        self,
+        query: str,
+        context: str,
+        language: str | None = DEFAULT_OUTPUT_LANGUAGE,
+    ) -> str:
+        language_instruction = self._build_language_instruction(language)
         if self._is_report_guide_question(query):
-            return f"{self.RAG_ANSWER_SAFETY_RULES}\n\n{self.PROJECT_ANSWER_RULES}\n\n{self.REPORT_GUIDE_ANSWER_RULES}\n\n{self.METADATA_SUPPRESSION_RULES}\n\n{context}"
+            return f"{language_instruction}\n\n{self.RAG_ANSWER_SAFETY_RULES}\n\n{self.PROJECT_ANSWER_RULES}\n\n{self.REPORT_GUIDE_ANSWER_RULES}\n\n{self.METADATA_SUPPRESSION_RULES}\n\n{context}"
 
         focused_context = self.extract_relevant_section(context, query)
-        return f"{self.RAG_ANSWER_SAFETY_RULES}\n\n{self.PROJECT_ANSWER_RULES}\n\n{self.METADATA_SUPPRESSION_RULES}\n\n{focused_context}"
+        return f"{language_instruction}\n\n{self.RAG_ANSWER_SAFETY_RULES}\n\n{self.PROJECT_ANSWER_RULES}\n\n{self.METADATA_SUPPRESSION_RULES}\n\n{focused_context}"
 
     def _strip_structured_signals(self, text: str) -> str:
         if not text:
@@ -741,24 +830,29 @@ Metadata suppression rules:
         )
         return has_final_field and has_analyst_actor and has_decision_action
 
-    def generate_answer(self, query: str, context: str):
+    def generate_answer(
+        self,
+        query: str,
+        context: str,
+        language: str | None = DEFAULT_OUTPUT_LANGUAGE,
+    ):
         self._ensure_initialized()
         if not query:
             return "請先輸入問題。"
         if not context:
             return "目前找不到足夠的知識內容來回答這個問題。"
 
-        prompt_context = self._build_answer_context(query, context)
+        output_language = normalize_output_language(language)
+        prompt_context = self._build_answer_context(query, context, output_language)
         if self.main_prompt is None:
             return "RAG answer generation is unavailable."
         chain = self.main_prompt | self.llm
-        answer = self._to_traditional(
-            self._safe_invoke(
-                chain,
-                {"context": prompt_context, "question": query},
-                "回答生成失敗，請稍後再試。",
-            )
+        raw_answer = self._safe_invoke(
+            chain,
+            {"context": prompt_context, "question": query},
+            "回答生成失敗，請稍後再試。",
         )
+        answer = self._convert_output_for_language(raw_answer, output_language)
         return self._strip_structured_signals(answer)
 
     def explain_point(self, target: str):

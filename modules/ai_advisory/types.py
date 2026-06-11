@@ -15,8 +15,9 @@ ADVISORY_BOUNDARY = (
     "Deterministic AI-advisory analyst context only. No LLM or RAG is used. "
     "This does not change, replace, or override the rule-based Risk Level or "
     "Decision; BLOCK / MONITOR / ALLOW remain simulated. It writes no detection "
-    "rules, live knowledge, graph facts, or enforcement state, and it does not "
-    "replace required human review."
+    "rules, live knowledge, graph facts, or enforcement state. No real firewall, "
+    "WAF, EDR, account, cloud, SIEM, or SOAR action is executed; no exploit, PoC, "
+    "or traffic generation is provided; human review is required."
 )
 
 

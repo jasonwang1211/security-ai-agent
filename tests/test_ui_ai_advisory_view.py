@@ -135,6 +135,28 @@ def test_command_injection_panel_says_match_does_not_prove_execution() -> None:
     assert "outbound" in low
 
 
+def test_command_injection_panel_renders_zh_tw_evidence_gap() -> None:
+    panel = render_evidence_gap_panel_html(command_injection_state(), language="zh-TW")
+    low = panel.casefold()
+
+    assert "確定性規則命中" in low
+    assert "不代表命令已成功執行" in low
+    assert "程序執行證據" in low
+    assert "llm_status: not_used" in panel
+    assert "不執行真實 firewall" in low
+
+
+def test_command_injection_panel_renders_bilingual_evidence_gap() -> None:
+    panel = render_evidence_gap_panel_html(command_injection_state(), language="bilingual")
+    low = panel.casefold()
+
+    assert "確定性規則命中" in low
+    assert "deterministic rule match" in low
+    assert "程序執行證據" in low
+    assert "process execution evidence" in low
+    assert "no real enforcement" in low
+
+
 def test_sql_injection_panel_does_not_claim_exfiltration() -> None:
     panel = render_evidence_gap_panel_html(sql_injection_state(), language="en")
     low = panel.lower()

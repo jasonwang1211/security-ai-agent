@@ -226,6 +226,79 @@ def test_mode3_prompt_context_uses_required_rag_terminology() -> None:
     assert "Reasoning and Generation with Alternatives" not in context
 
 
+def test_mode3_prompt_context_is_output_language_aware() -> None:
+    rag = make_runtime()
+
+    zh = rag._build_answer_context("HTTP/2 Resource Exhaustion 是什麼？", "knowledge", language="zh-TW")
+    en = rag._build_answer_context("What is HTTP/2 Resource Exhaustion?", "knowledge", language="en")
+    bilingual = rag._build_answer_context(
+        "HTTP/2 Resource Exhaustion 是什麼？", "knowledge", language="bilingual"
+    )
+
+    assert "繁體中文為主" in zh
+    assert "Answer in English" in en
+    assert "Traditional Chinese first" in bilingual
+    assert "no PoC" in en or "PoC" in en
+    assert "Risk Level" in zh and "Decision" in zh
+    assert "knowledge" in zh and "knowledge" in en and "knowledge" in bilingual
+    # English mode must not carry the old hardcoded Traditional-Chinese-only
+    # mandate from the project answer rules.
+    assert "請使用繁體中文回答" not in en
+    assert "回答必須只使用繁體中文" not in en
+    assert "不可輸出簡體中文" not in en
+    # The shared safety rules and CVE/CVSS guardrail remain present in every mode.
+    for context in (zh, en, bilingual):
+        assert "資安知識回答安全規則" in context
+        assert "Common Vulnerabilities and Exposures" in context
+        assert "Common Vulnerability Scoring System" in context
+
+
+def test_mode3_boundary_and_advisory_note_follow_output_language() -> None:
+    rag = make_runtime("HTTP/2 Resource Exhaustion answer.")
+    cast(Any, rag).retrieve_controlled_context = lambda _query: ("", False, None)
+    cast(Any, rag).retrieve_context = lambda _query: ("knowledge context", True)
+
+    answer = rag.answer_question("What is HTTP/2 Resource Exhaustion?", language="en")
+
+    assert "Safety boundary:" in answer
+    assert "Defensive triage note:" in answer
+    assert "no real enforcement" in answer.casefold() or "real blocking" in answer.casefold()
+    assert "CVE context is not proof" in answer
+
+
+def test_rag_qa_has_no_hardcoded_traditional_chinese_only_mandate() -> None:
+    # v2.8-D: prompt templates and project answer rules must defer to the Output
+    # language policy instead of forcing Traditional-Chinese-only output.
+    source = Path("modules/rag_qa.py").read_text(encoding="utf-8")
+
+    assert "回答必須只使用繁體中文" not in source
+    assert "不可輸出簡體中文" not in source
+    assert "請使用繁體中文回答" not in source
+    # The policy hook is wired in.
+    assert "output_language_instruction" in source
+    assert "Output language policy" in source
+
+
+def test_english_output_is_not_force_converted_to_traditional() -> None:
+    # English answers must not be pushed through the Simplified->Traditional
+    # conversion; Traditional targets (zh-TW / bilingual) still convert.
+    rag = make_runtime()
+    converted: list[str] = []
+
+    def _fake_to_traditional(text: str) -> str:
+        converted.append(text)
+        return f"TRAD:{text}"
+
+    cast(Any, rag)._to_traditional = _fake_to_traditional
+
+    assert rag._convert_output_for_language("simplified body", "en") == "simplified body"
+    assert converted == []
+
+    assert rag._convert_output_for_language("内容", "zh-TW") == "TRAD:内容"
+    assert rag._convert_output_for_language("内容", "bilingual") == "TRAD:内容"
+    assert converted == ["内容", "内容"]
+
+
 def test_agent_does_not_fall_through_to_legacy_rag_when_answer_question_returns_none() -> None:
     class ProtectedPathOnlyRAG:
         def is_ready(self):
