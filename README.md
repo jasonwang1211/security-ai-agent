@@ -1,102 +1,121 @@
-# Sentinel Project — AI 輔助藍隊安全分流原型 / AI-Assisted Blue-Team Security Triage Prototype
+# Sentinel Project — AI 輔助藍隊安全分流系統
 
-## 專案摘要 / Project Summary
+Sentinel Project 是一個防禦導向的資安威脅偵測與應變展示系統，用來示範藍隊分析師如何在可解釋、可控、可驗證的流程中處理可疑事件。
 
-Sentinel Project 是防禦導向的 SOC 分流展示系統。它把 rule-based detection、deterministic Risk Level / Decision 與 simulated response 保留為安全底線，再用 AI Analyst Brief、Evidence Gap、RAG Knowledge Q&A、Approved Similar Cases、Relationship Graph、Case Draft 與 Export Report 提供分析師參考。
+## 專題動機
 
-Sentinel Project is a defensive SOC-style triage prototype. Rule-based detection and deterministic risk/decision logic remain the authority path, while AI/RAG-style panels provide advisory analyst context only.
+這個專題的重點不是讓 AI 直接判斷「是不是攻擊」，也不是讓 AI 自動封鎖或處置事件。相反地，本系統把最終偵測與風險判定保留在可檢查的 deterministic logic 中，再讓 AI / RAG 相關功能協助分析師理解原因、補足背景、比較案例、整理證據缺口與產生報告。
 
-## 目前亮點 / Current Highlights
+換句話說，AI 在這個專題中是分析輔助層，不是最終裁決者。
 
-- 規則式偵測 Command Injection、SQL Injection、Path Traversal、XSS。
-- Deterministic Risk Level 與 simulated `BLOCK` / `MONITOR` / `ALLOW`。
-- Streamlit SOC Analyst Console，支援 Fast deterministic 與 Full AI-assisted mode。
-- UI 語言選擇會影響 AI Analyst Brief、Evidence Gap 與 Knowledge Q&A output：`zh-TW` 以繁體中文為主，`en` 使用英文，`bilingual` 使用精簡中英雙語。
-- HTTP/2 Resource Exhaustion demo card 使用短 preview；Load Scenario 仍會把完整 synthetic incident summary 放入主 textarea。
-- AI Analyst Brief、Evidence Gap Analyzer、Knowledge Q&A / RAG、Approved Similar Cases、Relationship Graph。
-- Case Draft 與 Markdown Export preview 保留 human-review boundary。
-- v2.8 lazy RAG startup：Fast path 不會 eager-load Chroma / embeddings / Torch stack。
+## 系統架構流程
 
-## 安全邊界 / Safety Boundary
+```text
+使用者輸入
+→ Rule-Based Detector
+→ 攻擊分類
+→ Risk Level
+→ Decision
+→ AI / RAG 輔助解釋
+→ 報告輸出
+```
 
+這條流程刻意把「判定權」與「說明權」分開：Rule-Based Detector 與 deterministic policy 負責判定，AI Analyst Brief、Evidence Gap Analyzer、Knowledge Q&A / RAG、Similar Cases 與 Graph 則負責提供分析師參考。
+
+## 核心設計理念
+
+- 攻擊偵測是 rule-based，不是 AI 判斷。
+- Risk Level / Decision 由 deterministic logic 產生。
+- `BLOCK` / `MONITOR` / `ALLOW` 是 simulated decisions，只代表系統展示中的建議狀態。
+- RAG / LLM / AI Analyst Brief / Evidence Gap Analyzer 只提供分析師參考，不覆蓋最終判定。
+- 歷史案例、知識庫回答與關係圖都不能證明目前事件已成功入侵或已成功執行。
+
+## 目前功能亮點
+
+- Fast deterministic mode：快速執行規則式偵測與確定性分流。
+- Full AI-assisted mode：保留可選的 AI / RAG 輔助分析路徑。
+- Lazy RAG startup：避免啟動時過早載入 Chroma、embedding、Torch 等重型依賴。
+- Language-aware output：UI 語言會影響 AI Analyst Brief、Evidence Gap 與 RAG 回答風格。
+- AI Analyst Brief：整理目前事件、判定原因、分析摘要與下一步建議。
+- Evidence Gap Analyzer：列出已確認事實、缺少的證據、建議檢查項目與不安全假設。
+- Knowledge Q&A / RAG：回答防禦導向的資安知識問題。
+- Approved Similar Cases：讀取人工核准的相似案例種子資料，供分析比較。
+- Relationship Graph：展示目前事件、風險、決策、案例與關係脈絡。
+- Case Draft：產生需要人工審查的案例草稿。
+- Markdown Export：提供報告匯出預覽。
+- HTTP/2 Resource Exhaustion safe synthetic demo：以合成事件摘要示範 HTTP/2 / Resource Exhaustion / DoS 分流，不產生真實流量。
+
+## 安全邊界
+
+- No real firewall / WAF / EDR / account / cloud / SIEM / SOAR action.
+- No exploit, PoC, or traffic generation.
+- Human review required.
 - Detector remains rule-based.
 - Risk Level / Decision remain deterministic.
-- `BLOCK` / `MONITOR` / `ALLOW` are simulated project decisions.
-- RAG / LLM / AI Analyst Brief / Evidence Gap are advisory only.
-- No real firewall, WAF, EDR, account, cloud, SIEM, or SOAR action is performed.
-- No exploit, PoC, or traffic generation is provided.
-- Human review is required before operational action, case promotion, or knowledge promotion.
+- `BLOCK` / `MONITOR` / `ALLOW` remain simulated.
+- RAG / LLM / AI Analyst Brief / Evidence Gap Analyzer are advisory only.
 
-## 快速開始 / Quick Start
+## 快速開始
+
+以下為通用 PowerShell 範例，請依自己的環境替換 repo URL 與 Python/venv 設定。
 
 ```powershell
-cd C:\Users\jason\Desktop\sentinel_project
+git clone <your-repo-url>
+cd sentinel_project
 .\venv\Scripts\Activate.ps1
 python -m streamlit run ui/streamlit_app.py --server.fileWatcherType none
 ```
 
-CLI mode:
+CLI 模式：
 
 ```powershell
 python app.py
 ```
 
-If Knowledge Q&A is unavailable after an environment rebuild, intentionally rebuild the local RAG index:
+如果重建環境後 Knowledge Q&A / RAG 無法使用，請確認本機知識索引是否已建立，再依專案文件執行必要的索引建立流程。
 
-```powershell
-python ingest_knowledge.py
-```
+## Demo 操作建議
 
-## 建議展示流程 / Recommended Demo Path
+1. 開啟 Streamlit console。
+2. 選擇 Fast deterministic mode。
+3. 載入 Command Injection demo 或 HTTP/2 Resource Exhaustion safe demo。
+4. 點擊 Run input。
+5. 查看 AI Analyst Brief、Evidence Gap Analyzer、Knowledge Q&A / RAG、Approved Similar Cases、Relationship Graph、Case Draft 與 Markdown Export。
+6. 說明安全邊界：這是 simulated decision，不會執行真實封鎖或處置。
 
-1. 啟動 Streamlit console。
-2. 選擇 UI 語言，確認輸出語言會跟著切換。
-3. 載入 Command Injection demo。
-4. 執行 Fast deterministic analysis，展示 `HIGH / BLOCK`。
-5. 開啟 AI Analyst Brief 與 Evidence Gap Analyzer，確認繁體中文/英文/雙語輸出。
-6. 詢問 Knowledge Q&A，例如 HTTP/2 DoS 或 CVE 問題。
-7. Click Find Similar Cases and show `CASE-SEED-001`.
-8. Show Relationship Graph.
-9. Show Case Draft / Export preview.
-10. Load the safe HTTP/2 Resource Exhaustion demo; card preview is short, full input remains safety-complete.
+建議展示順序：
 
-## 文件連結 / Documentation Links
+- 先用 Command Injection 展示 `HIGH / BLOCK` 的 deterministic path。
+- 再展示 AI Analyst Brief 與 Evidence Gap Analyzer 如何協助分析師理解事件。
+- 接著展示 Similar Cases、Graph 與 Export。
+- 最後載入 HTTP/2 Resource Exhaustion safe demo，強調它是合成事件摘要，不產生流量，也不提供 exploit / PoC。
+
+## 文件與截圖
 
 - [User Operation Guide](docs/USER_OPERATION_GUIDE.md)
 - [Test Report](docs/TEST_REPORT.md)
 - [Code Review Audit](docs/CODE_REVIEW_AUDIT.md)
-- [Screenshot Index](docs/screenshots/README.md)
 - [Demo Index](docs/DEMO_INDEX.md)
-- [Demo Presentation Guide](docs/demo_presentation_guide.md)
-- [Final Demo Smoke Checklist](docs/final_demo_smoke_checklist.md)
-- [v2.7 Release Notes](docs/v2.7_release_notes.md)
-- [v2.7 Release Gate](docs/v2.7_release_gate.md)
-- [v2.8 Startup Import Audit](docs/v2.8_startup_import_audit.md)
-- [v2.8 Cache Cleanup Checklist](docs/v2.8_cache_cleanup_checklist.md)
+- [Screenshot Index](docs/screenshots/README.md)
 
-## 架構摘要 / Architecture Summary
+## 測試與驗證
 
-```text
-User input or demo scenario
--> Streamlit UI or CLI
--> Controller / Orchestrator
--> Rule-Based Detector and Log Pipeline
--> TriagePolicy deterministic risk/decision
--> Simulated response notice
--> Advisory layers: AI Analyst Brief, Evidence Gap, RAG Q&A, Similar Cases, Graph
--> Human-reviewed Case Draft / Export
-```
+目前 release gate / final validation 摘要：
 
-Authoritative path: deterministic detection and policy. Advisory layers explain, compare, translate output style, and identify evidence gaps, but they do not override the current event's Risk Level or Decision.
+- pytest：`1168 passed`
+- ruff：passed
+- mypy：passed
+- gitleaks：passed，並使用 `.gitleaksignore` 處理 false-positive cases
+- screenshot refresh：completed
 
-## 驗證快照 / Validation Snapshot
+這些驗證代表目前 demo flow、語言感知輸出、Lazy RAG startup、AI advisory panels 與截圖文件已完成同步。它們不代表系統具備 production IDS / IPS 能力。
 
-- v2.7 release gate: pytest `1140 passed in 15.75s`, ruff passed, mypy passed on rerun, `git diff --check` passed, Gitleaks passed with `216 commits scanned`, `no leaks found`.
-- v2.8-C lazy RAG validation: startup regression tests `4 passed`, RAG focused tests `94 passed`, fast/UI analysis tests `26 passed`, full pytest `1144 passed in 11.85s`, ruff passed, mypy passed with `Success: no issues found in 160 source files`.
-- v2.8-D Fix Pass adds language-aware output policy and HTTP/2 short preview tests; see [docs/TEST_REPORT.md](docs/TEST_REPORT.md) for current command results.
+## 非目標 / 限制
 
-## 非目標 / Non-Goals
-
-這不是 production SOC platform、WAF、EDR、SIEM、SOAR、exploit framework、traffic generator 或 autonomous enforcement system。
-
-This is a defensive academic/demo prototype focused on clear safety boundaries, reviewable evidence, and professor-ready analyst UX.
+- 這不是 production IDS / IPS。
+- 不會真的封鎖攻擊。
+- 不做紅隊攻擊工具。
+- 不產生攻擊流量。
+- 不提供 exploit 或 PoC。
+- AI 不作為最終裁決者。
+- RAG、LLM、相似案例與關係圖都只提供分析脈絡，不覆蓋 Rule-Based Detector 與 deterministic Decision。
