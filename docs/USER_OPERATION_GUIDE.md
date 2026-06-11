@@ -1,127 +1,103 @@
 # User Operation Guide
 
-This guide explains how to start Sentinel Project, run the main demo flow, read the output, and understand the safety boundaries.
+## Purpose
 
-## 1. Project Overview
+This guide explains how to run the Sentinel Project Streamlit analyst console and how to interpret each major panel. The console is the primary demo UI for reviewers, professors, and first-time users.
 
-Sentinel Project is a defensive SOC triage prototype. It combines Rule-Based Detector output, deterministic Risk Level / Decision logic, AI Analyst Brief, Evidence Gap Analyzer, Knowledge Q&A / RAG, Approved Similar Cases, Relationship Graph, Case Draft, and Markdown Export.
+## UI Entry Point
 
-## 2. What The System Does
+```text
+ui/streamlit_app.py
+```
 
-The system can:
-
-- Analyze suspicious payloads or demo incident inputs.
-- Display attack classification, Risk Level, and Decision.
-- Provide AI Analyst Brief and Evidence Gap Analyzer output.
-- Answer defensive Knowledge Q&A / RAG questions.
-- Show Approved Similar Cases and Relationship Graph context.
-- Generate human-reviewed Case Draft and Markdown Export content.
-
-## 3. What The System Does Not Do
-
-The system does not:
-
-- Attack real systems.
-- Generate exploit or proof-of-concept steps.
-- Generate attack traffic.
-- Modify firewall, WAF, EDR, account, cloud, SIEM, or SOAR state.
-- Allow RAG, LLM output, historical cases, or graph context to override the deterministic verdict.
-
-## 4. Safety Boundary
-
-- Rule-Based Detector is the detection authority.
-- Risk Level and Decision are deterministic.
-- `BLOCK`, `MONITOR`, and `ALLOW` are simulated.
-- RAG, LLM, AI Analyst Brief, and Evidence Gap provide advisory context only.
-- No real firewall, WAF, EDR, account, cloud, SIEM, or SOAR action is performed.
-- No exploit, proof-of-concept, or traffic generation is provided.
-- Human review is required.
-
-## 5. Requirements
-
-Recommended environment:
-
-- PowerShell or an equivalent shell.
-- Python and a project virtual environment.
-- Streamlit.
-- pytest, ruff, and mypy for validation.
-- A local knowledge index if Knowledge Q&A / RAG is needed.
-
-## 6. Quick Start
+Launch command:
 
 ```powershell
-git clone <your-repo-url>
-cd sentinel_project
-.\venv\Scripts\Activate.ps1
 python -m streamlit run ui/streamlit_app.py --server.fileWatcherType none
 ```
 
-CLI mode:
+The UI is a local demo console. It does not perform real firewall, WAF, EDR, account, cloud, SIEM, or SOAR actions.
 
-```powershell
-python app.py
-```
-
-## 7. Recommended Demo Flow
+## Recommended Professor Demo Flow
 
 1. Start the Streamlit console.
 2. Select Fast deterministic mode.
 3. Load the Command Injection demo.
 4. Click Run input.
-5. Confirm the deterministic result, such as `Command Injection`, `HIGH`, and simulated `BLOCK`.
-6. Review AI Analyst Brief and Evidence Gap Analyzer.
-7. Review Knowledge Q&A / RAG.
-8. Review Approved Similar Cases and Relationship Graph.
-9. Review Case Draft and Markdown Export.
-10. Load the safe synthetic HTTP/2 Resource Exhaustion demo and confirm that it is synthetic, advisory, and non-operational.
+5. Point out attack type, Risk Level, simulated Decision, and rule ID.
+6. Open AI Analyst Brief and explain that it is advisory context only.
+7. Open Evidence Gap Analyzer and show confirmed facts vs missing evidence.
+8. Use Knowledge Q&A / RAG for a defensive question such as HTTP/2 DoS or CVE context.
+9. Review Approved Similar Cases and Relationship Graph.
+10. Review Case Draft and Markdown Export.
+11. Load the HTTP/2 Resource Exhaustion safe demo and point out that no traffic is generated.
 
-## 8. Reading The Output
+## Major Panels and Tabs
 
-### Risk Level
+### Input and Scenario Loader
 
-Risk Level is produced by deterministic policy from the available evidence. It is not an LLM guess.
+The input panel controls language, analysis mode, and demo scenarios. Scenario cards are safe presets for review. Loading a scenario only fills the input area or context; it does not execute real traffic or enforcement.
 
-### Decision
+### Deterministic Result
 
-Decision is simulated:
-
-- `BLOCK`: simulated block recommendation.
-- `MONITOR`: simulated monitoring or review recommendation.
-- `ALLOW`: insufficient deterministic evidence to block or monitor.
+After Run input, the console displays the active context, attack classification, Risk Level, simulated Decision, and rule or evidence summary. This is the authority path.
 
 ### AI Analyst Brief
 
-AI Analyst Brief summarizes the current event, deterministic reasoning, evidence gaps, and next review steps. It is advisory context only.
+AI Analyst Brief summarizes what happened, why it matters, the deterministic verdict, advisory summary, evidence gap summary, recommended next steps, and unsafe assumptions. It is advisory only and does not override Risk Level or Decision.
 
 ### Evidence Gap Analyzer
 
-Evidence Gap Analyzer helps avoid overclaiming. For example, a payload rule match does not prove successful execution; telemetry, logs, EDR data, or network evidence may still be needed.
+Evidence Gap Analyzer separates confirmed facts from missing evidence. It helps reviewers avoid unsafe conclusions such as assuming command execution, account compromise, or successful exploitation from a single rule match.
 
 ### Knowledge Q&A / RAG
 
-Knowledge Q&A answers defensive security questions. Answers do not override Risk Level or Decision.
+Knowledge Q&A / RAG answers defensive security questions from approved knowledge context. It is useful for HTTP/2 Resource Exhaustion, CVE vs CVSS terminology, mitigation concepts, and analyst triage framing. It does not provide exploit steps, PoC instructions, or traffic generation guidance.
 
-### Similar Cases / Graph
+### Approved Similar Cases
 
-Similar cases and graph context support comparison and explanation. They do not prove compromise.
+Approved Similar Cases retrieves curated seed cases for comparison. Similarity reasons and differences are deterministic. Historical cases are advisory references only and do not prove the current event.
 
-## 9. Screenshot Gallery
+### Relationship Graph
 
-See [screenshots/README.md](screenshots/README.md) for the current screenshot gallery.
+Relationship Graph presents event, rule, risk, decision, and approved-case context. It is a visual investigation aid, not graph-based detection authority.
 
-## 10. Validation Evidence
+### Case Draft / Export
 
-See:
+Case Draft and Markdown Export prepare report material for human review. Drafts and exports are not operational actions and are not automatically promoted to live knowledge.
 
-- [TEST_REPORT.md](TEST_REPORT.md)
-- [v2.8_release_gate.md](v2.8_release_gate.md)
+## Common Demo Checks
 
-## 11. Troubleshooting
+| Check | Expected result |
+|---|---|
+| Command Injection demo | Command Injection, HIGH, simulated BLOCK. |
+| Authentication incident demo | Possible Account Compromise, HIGH, simulated MONITOR, with no claim of proven compromise. |
+| HTTP/2 Resource Exhaustion safe demo | HTTP/2 Resource Exhaustion Suspicion, MEDIUM, simulated MONITOR, with no traffic generation. |
+| AI Analyst Brief | Advisory wording and no final AI verdict. |
+| Evidence Gap Analyzer | Missing evidence and unsafe assumptions remain visible. |
+| Similar Cases / Graph | Context appears only after relevant current context exists. |
+
+## Troubleshooting
 
 - If Streamlit does not start, confirm that the virtual environment is active and Streamlit is installed.
-- If Knowledge Q&A cannot answer, confirm that the local knowledge index exists.
-- If Full AI-assisted mode is slow, use Fast deterministic mode for the primary demo path.
+- If Knowledge Q&A / RAG is unavailable, confirm that local RAG dependencies and indexes are available in your environment.
+- If screenshot paths do not render on GitHub, confirm that files still exist under `docs/screenshots/`.
+- If a result looks stale, clear context and run the scenario again.
+- If local LLM support is unavailable, use Fast deterministic mode for the core demo.
 
-## 12. Final Reminder
+## Safety Reminder
 
-Sentinel Project is an academic/demo prototype. It demonstrates safe triage architecture and AI advisory workflow. It is not a production IDS/IPS or autonomous response platform.
+- Rule-Based Detector is the detection authority.
+- Risk Level / Decision are deterministic.
+- BLOCK / MONITOR / ALLOW are simulated.
+- RAG / LLM / AI Analyst Brief / Evidence Gap are advisory only.
+- No real firewall / WAF / EDR / account / cloud / SIEM / SOAR action is performed.
+- No exploit / PoC / traffic generation is provided.
+- Human review is required.
+
+## Related Documentation
+
+- [UI walkthrough](UI_WALKTHROUGH.md)
+- [Screenshot gallery](screenshots/README.md)
+- [Test report](TEST_REPORT.md)
+- [v2.8 release gate](v2.8_release_gate.md)
