@@ -1,170 +1,163 @@
-# Final Demo Smoke Checklist / 上台前最終檢查表
+﻿# Final Demo Smoke Checklist / 最終展示檢查表
 
-展示 / 錄影 / 面試**前**，依序跑過這份檢查表。全部勾完再上台。
-（本檔為文件，不會改動任何後端或 UI 行為。）
+Use this checklist before a live professor/reviewer demo. It is written for the current v2.8 Streamlit SOC Analyst Console.
 
----
+本檢查表適用於 v2.8 Streamlit SOC 分析主控台展示前的最後確認。
 
-## 1. Git 狀態檢查 / Git State
-
-```powershell
-git status --short --untracked-files=all   # 應乾淨，或只有預期中的未提交變更
-git log -1 --oneline                       # 確認在預期的 commit
-git stash list                             # 確認延後的 stash 仍在
-```
-
-- [ ] 工作目錄狀態符合預期（沒有意外修改）。
-- [ ] 目前分支 / commit 正確。
-- [ ] 延後的 `stash@{0}`（v2.3-B mode3 graph expansion）仍存在。
-
----
-
-## 2. Python / venv 檢查 / Environment
+## 1. Git State / Git 狀態
 
 ```powershell
-.\venv\Scripts\python.exe --version        # 確認虛擬環境的 Python
-.\venv\Scripts\python.exe -m pytest -q      # （可選）確認測試全綠
+git branch --show-current
+git rev-parse --short HEAD
+git status --short --untracked-files=all
 ```
 
-- [ ] venv 可用，相依套件已安裝。
-- [ ] （可選）pytest 全數通過。
+- [ ] You are on the expected demo branch.
+- [ ] The current HEAD is the expected review baseline.
+- [ ] Any uncommitted files are intentional documentation/screenshot work.
+- [ ] No release tag, push, merge, reset, clean, or delete action is performed during smoke.
 
----
-
-## 3. Streamlit 啟動 / Start the Console
+## 2. Environment / 環境確認
 
 ```powershell
-python -m streamlit run ui/streamlit_app.py --server.fileWatcherType none
+.\venv\Scripts\python.exe --version
+.\venv\Scripts\python.exe -m streamlit --version
 ```
 
-- [ ] 瀏覽器開啟主控台，畫面為深色 cyber/SOC 風格。
-- [ ] 上方 SOC 狀態列、控制面板、示範卡片正常顯示。
+- [ ] Virtual environment exists.
+- [ ] Streamlit is available.
+- [ ] Browser can open localhost.
+- [ ] Optional local AI/RAG services are available only if you plan to show Full AI-assisted mode.
 
----
+## 3. Start Console / 啟動主控台
 
-## 4. 視覺展示頁 / Showcase Page
+```powershell
+.\venv\Scripts\python.exe -m streamlit run ui/streamlit_app.py --server.fileWatcherType none
+```
 
-直接用瀏覽器開啟：`docs/demo_showcase.html`
+- [ ] Console opens without StreamlitAPIException.
+- [ ] Language selector displays Traditional Chinese, English, and bilingual labels.
+- [ ] Analysis mode selector is visible.
+- [ ] Demo Scenario Launcher is visible.
+- [ ] HTTP/2 Resource Exhaustion launcher card shows a short preview rather than the full synthetic incident summary.
 
-- [ ] 頁面可直接開啟（不需後端）。
-- [ ] 鍵盤 `←` / `→` / `Space` 可切換場景，`P` 可暫停。
-- [ ] Previous / Next / Pause(Play) 按鈕正常。
-- [ ] 7 個場景都能正常顯示（Hero、架構、命令注入、驗證事件、圖譜、草稿/匯出、安全邊界）。
+## 4. Core Fast Demo / 核心快速展示
 
----
+- [ ] Select Fast deterministic mode.
+- [ ] Run Command Injection input: `test; rm -rf /tmp/test`.
+- [ ] Active Context shows event context.
+- [ ] Result shows Command Injection.
+- [ ] Risk Level is `HIGH`.
+- [ ] Decision is simulated `BLOCK`.
+- [ ] Safety Boundary does not claim real enforcement.
 
-## 5. 示範情境 / Demo Scenarios（在 Streamlit 內）
+## 5. AI Analyst Panels / AI 分析面板
 
-預設使用 **Fast deterministic** 模式（快速、確定性、不依賴 LLM/RAG）。
-從「示範情境啟動器」載入輸入，按「執行輸入」。
+Open the AI Analyst tab.
 
-| 示範 | 輸入 | 預期結果 |
-|---|---|---|
-| Command Injection Demo | `test; rm -rf /tmp/test` | **Command Injection / HIGH / BLOCK / CASE-SEED-001** |
-| SQL Injection Demo | `?id=1' OR '1'='1` | **SQL Injection / HIGH / BLOCK / CASE-SEED-003** |
-| Authentication Incident Demo | `demo_logs\scenario_a_mixed_auth.log` | **Possible Account Compromise / HIGH / MONITOR / CASE-SEED-002** |
+- [ ] AI Analyst Brief appears first.
+- [ ] AI Analyst Brief states deterministic advisory / no LLM.
+- [ ] AI Analyst Brief output follows the selected UI language.
+- [ ] Evidence Gap Analyzer appears after AI Analyst Brief.
+- [ ] Evidence Gap output follows the selected UI language.
+- [ ] Follow-up Assistant appears after Evidence Gap Analyzer.
+- [ ] Knowledge Q&A appears after Follow-up Assistant.
+- [ ] Evidence Gap content lists missing evidence instead of claiming confirmed execution.
 
-- [ ] Command Injection → HIGH / BLOCK，Find Similar Cases → CASE-SEED-001。
-- [ ] SQL Injection → HIGH / BLOCK，Find Similar Cases → CASE-SEED-003。
-- [ ] Auth incident → HIGH / MONITOR，Find Similar Cases → CASE-SEED-002。
-- [ ] 動態值（payload、CMD-001、shell_metacharacter_payload、incident ID、EV/F-ID）顯示正常且未被翻譯。
+## 6. Knowledge Q&A / 知識問答
 
----
+Ask one or more safe defensive questions:
 
-## 6. 語言檢查 / Language Checks
+- [ ] `HTTP/2 Resource Exhaustion 是什麼？`
+- [ ] `HTTP/2 Bomb 疑似事件要怎麼安全分流？`
+- [ ] `CVE 情報可以直接當成資產已被利用的證明嗎？`
+- [ ] `HTTP/2 DoS 有哪些防禦緩解方式？`
+- [ ] `Resource Exhaustion 證據缺口要看什麼？`
 
-切換「介面語言 / Interface Language」：
+Expected:
 
-- [ ] 繁體中文：固定標籤與安全說明為中文。
-- [ ] English：固定標籤與安全說明為英文。
-- [ ] 中英雙語：固定標籤為精簡的「中 / English」格式。
-- [ ] 切換語言後，動態值（risk/decision/case ID/路徑/payload）維持不變。
+- [ ] Routes to Knowledge Q&A / RAG.
+- [ ] Output follows the selected UI language.
+- [ ] Uses defensive advisory wording.
+- [ ] Does not provide exploit, PoC, or traffic-generation instructions.
+- [ ] Does not claim real enforcement.
+- [ ] Does not confuse CVE with CVSS.
+- [ ] States CVE context is not proof of exploitation.
 
----
+## 7. Similar Cases / 相似案例
 
-## 7. 各面板檢查 / Panel Checks
+- [ ] Click Find Similar Cases after the Command Injection analysis.
+- [ ] Approved Similar Cases shows `CASE-SEED-001`.
+- [ ] Similarity reasons and key differences are visible.
+- [ ] Output states historical cases are advisory only and do not override current Risk Level or Decision.
 
-- [ ] **Graph Relations**：互動式關係圖可顯示節點與關係（attack / rule / evidence / risk / decision / similar）。
-- [ ] **Export Report**：可預覽 Markdown，安全說明與包裝段落為對應語言；下載按鈕可用，且不會在 repo 寫入檔案。
-- [ ] **Case Draft**：Request / Approve / Cancel 行為正常；安全邊界 bullet 為對應語言；`safety_reviewed` 預設 false。
-- [ ] **Safety Boundary**：每次執行都顯示模擬與權限邊界。
-- [ ] **Performance / Route / Policy**：計時與路由/政策資訊正常顯示。
+Optional additional checks:
 
----
+- [ ] SQL Injection scenario maps to `CASE-SEED-003`.
+- [ ] Authentication incident scenario maps to `CASE-SEED-002`.
+- [ ] Authentication output says repeated failures followed by success are suspicious but do not prove compromise by themselves.
 
-## 8. 現場展示要避免的事 / Things to Avoid During Live Demo
+## 8. Graph Relations / 關係圖
 
-- 不要宣稱系統「真的攔截攻擊」或「控制真實防火牆 / WAF / EDR」。
-- 不要說 LLM 是主要偵測器，或 RAG 決定最終 risk/decision。
-- 不要說相似案例「證明」已遭入侵。
-- 不要在現場才第一次切到 Full AI-assisted 模式（可能較慢）；先用 Fast 模式。
-- 不要在展示途中編輯程式碼或重啟環境（Streamlit 會 rerun）。
-- 不要承諾即時的雲端 / 外部呼叫；本專案不做真實外部動作。
+- [ ] Graph Relations tab shows current event relationships.
+- [ ] Nodes/relationships include current event, attack type, rule, evidence, risk, decision, and similar case where available.
+- [ ] Graph output does not claim to be detection authority.
+- [ ] After a new analysis run, stale similar-case or graph lines from the old context do not remain.
 
----
+## 9. Case Draft and Export / 案例草稿與匯出
 
-## 9. 臨場排錯 / Last-Minute Troubleshooting
+- [ ] Case Draft tab shows request/approve/cancel behavior as expected.
+- [ ] Draft wording keeps human-review boundary.
+- [ ] Export Report tab renders copyable report content.
+- [ ] Export does not write report files to disk automatically.
+- [ ] Export does not change Risk Level, Decision, or case state.
 
-- **Streamlit 開不起來**：先用 `docs/demo_showcase.html` 完整講解流程，之後再排錯。
-- **檔案監看造成 rerun 異常**：確認有加 `--server.fileWatcherType none`。
-- **Full AI-assisted 很慢 / 未就緒**：改用 Fast deterministic 模式，並說明「AI 解釋層是可選的，核心結論不依賴它」。
-- **Auth 示範找不到日誌**：確認從專案根目錄啟動，且 `demo_logs\scenario_a_mixed_auth.log` 存在。
-- **語言沒變**：重新從「介面語言」下拉選擇一次；本變更只影響固定文字，不影響動態結果。
-- **畫面太亮 / 對比不足**：本專案已內建深色主題（`.streamlit/config.toml`）；若仍異常，重新整理頁面。
-
----
-
-## 10. 一頁式快速口訣 / One-Line Reminders
-
-- 偵測 = rule-based。
-- Risk / Decision = deterministic 專案決策。
-- BLOCK / MONITOR / ALLOW = simulated。
-- RAG / 相似案例 / 圖譜 = advisory 解釋與情境。
-- Draft 需 human review 才能信任或提升。
-
----
-
-## 11. 截圖證據檢查 / Screenshot Evidence Check
-
-確認 `docs/screenshots/` 內 8 張截圖都存在（總覽見 [screenshots/README.md](screenshots/README.md)）：
-
-- [ ] [01_console_home.png](screenshots/01_console_home.png) — 主控台與示範啟動器，無 active context。
-- [ ] [02_fast_command_injection_analysis.png](screenshots/02_fast_command_injection_analysis.png) — Fast：`HIGH` / `BLOCK`，⚡ Fast 模式橫幅。
-- [ ] [03_full_ai_assisted_analysis.png](screenshots/03_full_ai_assisted_analysis.png) — Full（加分）：`完整 AI 輔助` + `AI/RAG 輔助` + 🧠 紫色橫幅。
-- [ ] [04_ai_analyst_followup.png](screenshots/04_ai_analyst_followup.png) — 追問助理（確定性追問徽章）。
-- [ ] [05_knowledge_qa_rag.png](screenshots/05_knowledge_qa_rag.png) — RAG / 知識問答徽章。
-- [ ] [06_similar_cases.png](screenshots/06_similar_cases.png) — 核准相似案例 `CASE-SEED-001`。
-- [ ] [07_graph_relations.png](screenshots/07_graph_relations.png) — 關係圖譜。
-- [ ] [08_case_draft_export.png](screenshots/08_case_draft_export.png) — 案例草稿 / 匯出報告。
-
-逐張對照 demo 故事：
-
-- [ ] 02 vs 03 能清楚看出 **Fast（⚡ 青色）vs Full（🧠 紫色 + AI/RAG 輔助）** 的差異。
-- [ ] 04（確定性追問）與 05（RAG / 知識問答）兩種 AI Analyst 徽章顏色 / 文字不同。
-- [ ] 06 顯示 `CASE-SEED-001`；07 圖譜節點與關係可讀。
-- [ ] 08 顯示 Case Draft 與 Markdown 匯出（含 `safety_reviewed: false`）。
-- [ ] 截圖皆為 **繁體中文 (zh-TW)**；安全/模擬字樣未被誤改。
-
-> 備註：部分截圖較長（含完整 Analysis Report），放進投影片時可裁切（crop）只保留重點區塊；
-> 不要因為裁切而把「模擬決策 / 僅供參考 / 需人工審查」等安全字樣裁掉。
-
-## v2.7 AI Advisory / HTTP/2 Resource Exhaustion Smoke
-
-### Knowledge Q&A
-
-- [ ] `HTTP/2 Resource Exhaustion 是什麼？` routes to RAG / Knowledge Q&A and explains Resource Exhaustion / HTTP/2 DoS defensively.
-- [ ] `HTTP/2 Bomb 疑似事件要怎麼安全分流？` routes to RAG and gives safe analyst triage without enforcement claims or traffic generation.
-- [ ] `CVE 情報可以直接當成資產已被利用的證明嗎？` routes to RAG, defines CVE as Common Vulnerabilities and Exposures / a vulnerability identifier, does not confuse CVE with CVSS, and states CVE context is not proof of exploitation.
-- [ ] `HTTP/2 DoS 有哪些防禦緩解方式？` routes to RAG and gives defensive review guidance without claiming the system applied mitigations.
-- [ ] `Resource Exhaustion 證據缺口要看什麼？` routes to RAG and mentions telemetry, proxy/CDN/app server metrics, stream/reset/flow-control signals, and CPU/memory/resource indicators without claiming confirmed exploitation.
-
-### UI Scenario
+## 10. HTTP/2 Resource Exhaustion Safe Demo / HTTP/2 資源耗盡安全展示
 
 - [ ] Demo Scenario Launcher includes `HTTP/2 Resource Exhaustion Suspicion`.
-- [ ] Loading the scenario shows a synthetic incident summary only.
-- [ ] Scenario copy states no traffic generated, no real enforcement, and human review required.
-- [ ] AI Analyst tab order is AI Analyst Brief, Evidence Gap Analyzer, Follow-up Assistant, Knowledge Q&A.
-- [ ] AI Analyst Brief states deterministic advisory / no LLM.
-- [ ] Evidence Gap panel still appears.
+- [ ] Launcher card preview is compact and does not dominate the homepage.
+- [ ] Loading the scenario fills the main textarea with the full synthetic incident summary.
+- [ ] Scenario text says no traffic generated.
+- [ ] Scenario text says no real enforcement.
+- [ ] Scenario text says human review is required.
+- [ ] AI Analyst Brief and Evidence Gap Analyzer still appear.
+- [ ] RAG questions about HTTP/2 DoS stay defensive.
 
-Safety boundary to repeat: rule-based detector authority, deterministic Risk Level / Decision, simulated `BLOCK` / `MONITOR` / `ALLOW`, advisory-only RAG/LLM/AI Analyst Brief, no real firewall/WAF/EDR/account action, no exploit / PoC / traffic generation, and human review required.
+## 11. Screenshot Evidence / 截圖證據
+
+Confirm these files exist under `docs/screenshots/`:
+
+- [ ] `01_console_home.png`
+- [ ] `02_fast_command_injection_analysis.png`
+- [ ] `03_ai_analyst_brief.png`
+- [ ] `04_evidence_gap_analyzer.png`
+- [ ] `05_knowledge_qa_rag.png`
+- [ ] `06_similar_cases.png`
+- [ ] `07_relationship_graph.png`
+- [ ] `08_case_draft_export.png`
+- [ ] `09_http2_resource_exhaustion_demo.png`
+- [ ] `10_full_ai_assisted_optional.png`
+
+## 12. Safety Boundary To Say Aloud / 現場口頭安全邊界
+
+- [ ] Detector remains rule-based.
+- [ ] Risk Level / Decision remain deterministic.
+- [ ] `BLOCK`, `MONITOR`, and `ALLOW` are simulated.
+- [ ] RAG / LLM / AI Analyst Brief / Evidence Gap are advisory only.
+- [ ] No real firewall, WAF, EDR, account, cloud, SIEM, or SOAR action is performed.
+- [ ] No exploit, PoC, or traffic generation is included.
+- [ ] Human review is required.
+
+## 13. Backup Plan / 備援方案
+
+- [ ] If Streamlit is slow, use the screenshot guide in [screenshots/README.md](screenshots/README.md).
+- [ ] If Full AI-assisted mode is slow, stay in Fast deterministic mode.
+- [ ] If Knowledge Q&A is slow on first use, explain v2.8 lazy-loads RAG only when needed.
+- [ ] If a live browser issue occurs, use [USER_OPERATION_GUIDE.md](USER_OPERATION_GUIDE.md) and [DEMO_INDEX.md](DEMO_INDEX.md) as static evidence.
+
+## 14. Validation References / 驗證參考
+
+- [TEST_REPORT.md](TEST_REPORT.md)
+- [CODE_REVIEW_AUDIT.md](CODE_REVIEW_AUDIT.md)
+- [v2.7_release_gate.md](v2.7_release_gate.md)
+- [v2.7_manual_smoke_report.md](v2.7_manual_smoke_report.md)

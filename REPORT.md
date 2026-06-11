@@ -1,980 +1,161 @@
-# Demo Walkthrough and Verification Report
+# Sentinel Project Report / 專案報告
 
-[English](#english) | [繁體中文](#繁體中文)
+## 專案動機 / Project Motivation
 
-<a id="english"></a>
-# English
+Sentinel Project 探索如何把 AI 輔助放進 SOC 分析流程，同時避免讓 AI 取得不安全的最終判定權。系統設計重點不是「自動封鎖一切」，而是讓分析師更快看懂事件、證據缺口、相似案例與後續複核方向。
 
-> Project: AI-assisted Security Threat Detection and Response System
-> Current phase: v2.4 released as `v2.4.0`.
-> Release baseline: tag `v2.4.0`
-> Release focus: Deterministic direct-input Agent Skill Orchestration over protected v2.3 runtime capabilities
+Sentinel Project explores AI-assisted SOC triage while preserving deterministic safety authority. The system helps analysts explain, compare, and document cases without giving AI final decision control.
 
-Full CLI excerpts are available in [demo_outputs.md](demo_outputs.md).
+## 目前版本重點 / Current Version Focus
 
-This report documents representative CLI workflows and pass/fail verification against the current unified `Security Triage Report` contract. It is not a statistical benchmark. Precision / recall, false positive rate, and retrieval quality evaluation are planned for a later milestone.
+目前 v2.8 demo-ready 狀態包含 v2.7 AI advisory features 與 v2.8 lazy RAG startup discipline。本次 Fix Pass 讓 UI output 依照語言選擇切換：
 
----
+- `zh-TW`: 繁體中文為主，保留必要英文資安術語。
+- `en`: English output.
+- `bilingual`: 繁體中文先，附精簡 English support。
 
-## v1.3 Evidence and Incident Capability
+HTTP/2 Resource Exhaustion demo launcher card 現在只顯示短 preview；按 Load Scenario 時仍會載入完整 synthetic incident summary 與所有 safety lines。
 
-What changed:
-
-- Added `EvidenceItem`, `EvidenceBundle`, `Finding`, `Incident`, `GenerationMetadata`, and `LLMAssessment` schemas.
-- Added `LLMGuardrails` for evidence references, deterministic downgrade protection, unilateral `BLOCK` caution, attack-type allowlisting, and confidence sanity.
-- Added `auth_success` normalization in the log pipeline.
-- Added deterministic time-window and sequence correlation for `possible_account_compromise`.
-- Added JSON Incident Report export utilities.
-- Added report-aware follow-up helpers for EV-ID / F-ID lookup and report explanation.
-- Added evidence-grounded LLMAssist fallback/advisory assessment with guardrail validation.
-- Added Scenario A mixed authentication demo log and integration coverage.
-- Added 11 `report_explainer` KB docs for report-aware explanation.
-
-Verification:
-
-- `python -m pytest` -> `102 passed`
-- `python -m ruff check .` -> passed
-- `python -m mypy app.py modules tests` -> passed
-
-Representative Scenario A:
+## 架構摘要 / Architecture Summary
 
 ```text
-Mixed auth log
--> parse / normalize
--> time-window + sequence correlation
--> possible_account_compromise
--> Risk Level: HIGH
--> Decision: MONITOR
--> JSON Incident Report
--> EV-003 follow-up explanation
--> LLMAssist advisory assessment with guardrails
-```
-
-Boundary note:
-
-This is not confirmed compromise. `MONITOR` means analyst review / simulated monitoring. The prototype does not perform real firewall, WAF, EDR, SIEM, or SOAR action. LLMAssist remains advisory and cannot override the deterministic final decision.
-
----
-
-## v1.4 Detection-as-Code Lite
-
-What changed:
-
-- Added `modules/detection_rules.py` for the `DetectionRule` schema.
-- Added `modules/rule_loader.py` for YAML rule loading and schema validation.
-- Added YAML rules under `detections/blue_team/`.
-- Updated the detector adapter so YAML rules are the primary path.
-- Exposed rule metadata in detector results.
-
-Supported YAML rule files:
-
-- `xss_basic.yml`
-- `sql_injection_basic.yml`
-- `path_traversal_basic.yml`
-- `command_injection_basic.yml`
-
-Verification:
-
-- `python -m pytest` -> `141 passed`
-- `python -m ruff check .` -> passed
-- `python -m mypy app.py modules tests` -> passed
-
-Boundary note:
-
-YAML rules are the primary deterministic detection path. Hard-coded signatures remain as a conservative fallback. No real firewall, WAF, EDR, SIEM, SOAR, or cloud enforcement is performed.
-
----
-
-## v1.5 ControllerAgent and Tool Registry
-
-What changed:
-
-- Added typed ControllerAgent infrastructure for future agent skill orchestration.
-- Added `ToolRegistry`, six `ToolSpec` entries, thin skill wrappers, and deterministic route dispatch.
-- Verified `ToolRegistry` + Skill Catalog + Skill Wrappers together through `ControllerAgent` integration tests.
-- Kept `ControllerAgent` isolated from `app.py` and the current CLI runtime.
-
-Boundary note:
-
-This milestone does not change existing CLI behavior. `ControllerAgent` dispatches only by explicit route or tool name; it does not perform LLM routing, free-form input classification, Auto Route, or Smart Router behavior.
-
-v1.5 verification:
-
-- `python -m pytest` -> `240 passed`
-- `python -m ruff check .` -> passed
-- `python -m mypy app.py modules tests` -> passed
-
-## v1.6 RAG v2 Foundation
-
-v1.6 update:
-
-- Added source-cited RAG v2 helper infrastructure for traceable report and rule explanations.
-- Added RAG v2 boundary models, metadata parsing, rule-based intent classification, exact ID extraction, metadata-aware planning, source assembly, and deterministic Report Explainer v2 / Rule Explainer v2 helpers.
-- Added frontmatter metadata support for the 11 `report_explainer` docs.
-- Kept these helpers isolated from the existing `modules/rag_qa.py` runtime and CLI paths.
-- Quality gate: `python -m pytest` -> `366 passed`; `python -m ruff check .` -> passed; `python -m mypy app.py modules tests` -> passed.
-
-v1.6 boundary note:
-
-This milestone improves RAG traceability and explainability; it is not a runtime RAG replacement. Existing CLI behavior remains unchanged. RAG v2 helpers are deterministic and test-covered. RAG does not become a detection source, and the final verdict remains deterministic and policy-controlled.
-
-## v1.7 Answer Safety / Evaluation / Smart Router Foundation
-
-v1.7 adds reliability infrastructure before user-facing router activation.
-
-What changed:
-
-- Added eval cases for answer safety, report QA, router routing, and payload detection.
-- Added deterministic AnswerGuardrails for unsafe claims such as real enforcement, RAG as detection source, LLM final verdict override, and MONITOR as confirmed compromise.
-- Added deterministic Evaluation Runner smoke checks.
-- Added an isolated rule-based Smart Router route decision helper.
-- Added CI Gitleaks secret scanning and moved reusable log ingestion runner code into `modules/`.
-
-Boundary note:
-
-Smart Router classifies input into finalized route categories, but it is not wired into the CLI yet and does not execute tools. Existing CLI behavior remains unchanged. AnswerGuardrails are deterministic checks, not an LLM safety classifier. The quality gate is `445 passed`, with ruff and mypy passing.
-
-## v1.8 Protected Runtime Wiring and Analyst UX
-
-v1.8 starts narrow protected integration, not broad runtime replacement.
-
-What changed:
-
-- Added protected report/rule explanation helpers that use existing RAG v2 helpers and AnswerGuardrails.
-- Refined unsafe helper output to return conservative Traditional Chinese fallback wording.
-- Added Smart Router preview mode for route decisions only; it does not execute tools.
-- Added deterministic analyst follow-up suggestions, not LLM-generated suggestions.
-- Kept existing CLI behavior unchanged.
-
-Boundary note:
-
-`RAGQA` remains the active general knowledge QA runtime. Smart Router preview is not the default CLI path. No LLM routing, final verdict override, Investigation Planner, or real firewall/WAF/SIEM/SOAR enforcement is introduced. The quality gate is `487 passed`, with ruff and mypy passing.
-
-## v1.9 Architecture Cleanup and Orchestration Contracts
-
-v1.9 is an engineering milestone for architecture cleanup and orchestration contracts, not a runtime feature release.
-
-What changed:
-
-- Added `docs/v1.9-spec.md` as the detailed v1.9 design source of truth.
-- Added `docs/ARCHITECTURE_MAP.md` for runtime, helper, staged, eval, and docs ownership.
-- Added ADRs for deterministic ControllerAgent behavior, follow-up boundaries, RAGQA/RAG helper coexistence, Tool Permission Model, and Workflow Plan Model.
-- Added schema-only Tool Permission Contract and tests.
-- Added schema-only Workflow Plan Contract and tests.
-- Added Testing Strategy and Package Migration Plan documentation.
-- Migrated RAG helper modules into `modules/rag/` with flat compatibility shims.
-- Migrated controller/orchestration modules into `modules/controller/` with flat compatibility shims.
-- Added manual LLM/RAG smoke checklist documentation as manual-only, not CI, and not executed.
-
-Boundary note:
-
-Tool Policy and Workflow Plan are contract-only. They are not connected to runtime flow, do not execute tools, and do not make Smart Router the default CLI route. `ControllerAgent` does not auto-execute. `RAGQA` remains the active general knowledge QA runtime. Graph RAG, Knowledge Capture, and Agent Skill Orchestration runtime remain deferred. AI does not decide attacks or override Risk Level / Decision. `BLOCK`, `MONITOR`, and `ALLOW` remain simulated, with no real firewall/WAF/SIEM/SOAR enforcement. The historical v2.1 release gate was `600 passed`, with ruff, mypy, `git diff --check`, and Gitleaks passing.
-
-## v2.0 Knowledge Graph Foundation
-
-v2.0 adds deterministic graph helper infrastructure, not runtime graph retrieval.
-
-What changed:
-
-- Added typed graph contracts: `GraphNodeKind`, `GraphEdgeKind`, `GraphSourceRef`, `GraphNode`, `GraphEdge`, and `GraphSnapshot`.
-- Added `build_graph_snapshot(...)` for structured `Incident` objects and explicitly provided `DetectionRule` objects.
-- Added read-only graph lookup helpers: `get_node`, `get_neighbors`, `get_edges_for_node`, `find_nodes_by_kind`, `get_related_findings`, `get_related_rules`, and `get_incident_context`.
-- Added JSON-serializable graph export helpers: `graph_snapshot_to_dict` and `graph_snapshot_to_json`.
-- Recorded the 2A-3 decision: no `rule_graph.py` for now, explicit `DetectionRule` seed remains inside the builder, and KnowledgeDoc graph seed is deferred until a metadata audit.
-
-Boundary note:
-
-The graph is evidence/context structure, not detection authority. It does not load YAML or files, infer relationships from free text, call LLM/RAG/vector systems, execute tools, replace `RAGQA`, replace the Rule-Based Detector, write knowledge, or change Risk Level / Decision. `BLOCK`, `MONITOR`, and `ALLOW` remain simulated, and deterministic detector / risk / decision remain final authority. The v2.0 release gate passed.
-
-## v2.1 Graph-Backed Explanation MVP
-
-v2.1 adds one visible protected helper capability over the v2.0 in-memory graph foundation.
-
-What changed:
-
-- Added `modules/graph/explainers.py` with `explain_graph_reference(snapshot, reference_id) -> AnswerWithSources`.
-- Supports exact `EV-*`, `F-*`, rule ID, and `INC-*` references by following explicit graph nodes and edges only.
-- Reuses existing `SourceCitation.metadata` for graph node, edge, and source provenance; no RAG schema expansion was needed.
-- Added `explain_graph_followup_protected(...)` in `modules/report_followup.py`, so graph-backed answers pass through existing `AnswerGuardrails`.
-- Normalizes outward-facing rule IDs such as `CMD-001` while citations retain real graph node and edge IDs.
-
-Focused verification:
-
-```text
-Scenario A graph explanation:
-EV-003 explicitly supports F-001.
-Decision remains MONITOR.
-```
-
-Boundary note:
-
-This is graph-backed explanation, not Graph RAG retrieval. It is currently a protected helper and tested integration capability, not CLI auto-routing or a new `app.py` mode. Missing references do not produce fabricated graph citations, disconnected existing nodes are reported as having no explicit relationship, and graph explanations do not change Risk Level / Decision.
-
-## v2.2 Curated RAG Graph Seed Foundation
-
-v2.2 released as `v2.2.0`.
-
-Batch 2.2-A promoted reviewed curated knowledge:
-
-- Promoted 9 reviewed Traditional Chinese report-explainer KB documents into live `knowledge/blue_team/report_explainer/`.
-- Expanded live report-explainer coverage from 11 to 20 documents.
-- Added minimal typed metadata support for `title`, `review_status`, `finding_types`, `evidence_types`, `decision_labels`, and `tags`.
-- Promoted documents use `schema_version: v2.2-live1` and `review_status: approved_for_runtime_promotion`.
-- Five authentication documents remain retrieval/explanation context only and do not define graph-seed edges.
-- Four verified rule explainers retain reviewed attack/rule metadata: XSS / `XSS-001` / `MEDIUM` / simulated `MONITOR`; SQL Injection / `SQLI-001` / `HIGH` / simulated `BLOCK`; Path Traversal / `PATH-001` / `HIGH` / simulated `BLOCK`; Command Injection / `CMD-001` / `HIGH` / simulated `BLOCK`.
-- Resolved references were added before live promotion.
-
-Batch 2.2-B added narrow protected graph/knowledge assembly:
-
-- Added `modules/graph/knowledge_doc_seed.py`.
-- `build_knowledge_doc_seed(...)` accepts parsed `KnowledgeDocMetadata` plus explicitly supplied `DetectionRule` objects.
-- Graph-seed candidates must be approved for runtime promotion.
-- Retrieval-only documents with empty attack/rule metadata produce no seed graph output.
-- Seed helper creates only `KNOWLEDGE_DOC -> ATTACK_TYPE` through `RELATED_TO_ATTACK` and `KNOWLEDGE_DOC -> DETECTION_RULE` through `MAPS_TO_RULE`.
-- Seed uses reviewed `attack_types` / `rule_ids` and explicit `DetectionRule` cross-validation.
-- It does not load files, parse prose, parse `graph_links`, call RAG/LLM/vector systems, or change detector/risk/decision behavior.
-- Added `combine_hybrid_explanation_protected(...)` in `modules/report_followup.py`.
-- Hybrid helper combines already-built graph context and already-built curated knowledge context, preserves citations, then applies existing deterministic guardrails.
-- Hybrid helper is assembly-only; it does not perform automatic retrieval.
-
-Demonstrated coverage:
-
-- Scenario A authentication hybrid case combines graph context for `EV-003` supporting `F-001` with curated authentication KB context. The Decision remains simulated `MONITOR`, and generic KB does not introduce KnowledgeDoc-to-Evidence/Finding edges.
-- Command Injection hybrid case connects the approved command-injection explainer to `ATTACK_TYPE:Command Injection` and `DETECTION_RULE:CMD-001`. Graph provenance and curated KB citations coexist, the Decision remains simulated `BLOCK`, and no real enforcement occurs.
-
-Focused validation already completed:
-
-- Batch 2.2-A focused validation: `67 passed`, Ruff passed, Mypy passed, `git diff --check` passed.
-- Batch 2.2-B focused validation: `96 passed`, Ruff passed, Mypy passed, `git diff --check` passed.
-- Full v2.2 release gate: `628 passed`, Ruff passed, Mypy passed across 99 source files, `git diff --check` passed, and Gitleaks found no leaks across 160 commits scanned.
-
-Boundary note:
-
-Deterministic detector / risk / decision remain final authority. Graph and curated RAG context provide explanation/support only. `ALLOW`, `MONITOR`, and `BLOCK` remain simulated decisions. v2.2 implements protected hybrid explanation/context assembly using explicit graph context plus curated knowledge source context; it does not implement automatic Graph RAG retrieval, vector-to-graph expansion, Knowledge Capture, LLM graph extraction, `RAGQA` replacement, CLI auto-route, Risk Level / Decision override, or real enforcement. Existing legacy KB documents remain supported, and full corpus schema migration is deferred.
-
-## v2.3 Controlled Retrieval and Structured Follow-Up
-
-v2.3 released as `v2.3.0`.
-
-Implemented and manually verified runtime scope:
-
-- v2.3-A protected controlled Mode 3 retrieval selects reviewed approved sources before the existing vector fallback for reviewed targets including SQL Injection, `CMD-001`, and `success_after_failures`.
-- Mode 3 applies the protected answer path with Traditional Chinese safety boundary text, internal metadata-label suppression, canonical visible RAG / LLM terminology, and deterministic final-authority wording.
-- v2.3-B Mode 1 payload analysis stores `ActiveEventContext` with facts from the current payload-analysis flow only.
-- Mode 4 can answer current payload-event questions about classification reasoning, matched rule/signature evidence, simulated Decision boundary, successful-exploitation uncertainty, and defensive investigation/remediation guidance.
-- v2.3-C Mode 2 qualifying authentication logs create structured `Incident`, `Evidence`, and `Finding` values through deterministic correlation.
-- Scenario A stores `ActiveAuthIncidentContext`, builds an explicit in-memory `GraphSnapshot`, and displays the current structured incident summary with `INC-20260501-001`, `EV-003`, `F-001`, `HIGH`, and simulated `MONITOR`.
-- Mode 4 can explain `EV-003`, the explicit `EV-003` / `F-001` support relationship, why `MONITOR` was selected, why the sequence does not confirm account compromise, and defensive investigation next steps.
-- Non-qualifying Mode 2 log analysis clears stale structured context so follow-up cannot accidentally use an older incident.
-
-Manual smoke evidence:
-
-- Mode 1 input `test; rm -rf /tmp/test` retained `Command Injection`, `HIGH`, `BLOCK`, matched command-injection signatures, and simulation notice. Follow-up confirmed `BLOCK` is simulated and the rule match does not prove successful command execution.
-- Mode 2 input `demo_logs\scenario_a_mixed_auth.log` produced a structured authentication incident summary containing `Incident ID: INC-20260501-001`, `Attack Type: Possible Account Compromise`, `Risk Level: HIGH`, `Decision: MONITOR` with simulated-decision wording, `EV-003`, and `F-001`. Follow-up used explicit `GraphSnapshot` facts and did not claim confirmed intrusion or real monitoring deployment.
-
-Boundary note:
-
-v2.3 includes graph-grounded follow-up for the current structured authentication incident only. The runtime uses explicit current-event graph relationships for evidence/finding explanation; it is not Similar-Case Graph RAG and not LLM-generated graph reasoning. v2.3 does not implement direct-input Auto Router, Agent Skill Orchestration, LLM-assisted skill selection, approved historical-case retrieval, Knowledge Capture or event write-back, automatic vector-to-graph expansion, the deferred Mode 3 KnowledgeDoc graph-expansion WIP, real firewall/WAF/EDR/account action, or RAG/LLM override of deterministic `Risk Level` or `Decision`.
-
-## v2.4 Deterministic Agent Skill Orchestration Runtime
-
-v2.4 released as `v2.4.0`. The current release baseline is tag `v2.4.0`.
-
-Implemented runtime scope:
-
-- Direct user input is now the primary CLI interaction path.
-- Users can enter a suspicious payload, authentication log path, active-context follow-up question, or general security knowledge question without manually selecting Mode 1 / 2 / 3 / 4 first.
-- Typing `menu` preserves the legacy four-mode interface as a debug/demo fallback.
-- The runtime deterministically routes to `AnalyzePayloadSkill`, `AnalyzeAuthenticationLogSkill`, `ExplainActiveEventSkill`, `ExplainActiveIncidentSkill`, or `KnowledgeQASkill`.
-- Skill selection is deterministic and not LLM-selected.
-- The skill layer wraps already-working v2.3 runtime capabilities rather than redefining detector, incident, graph, or RAG authority.
-- `ToolPolicy` gating permits approved read/analysis flows and keeps future write-capable behavior blocked or approval-required.
-- Payload analysis can retain `ActiveEventContext`; qualifying authentication log analysis can retain `ActiveAuthIncidentContext`.
-- Structured current-event/current-incident follow-up takes precedence when applicable.
-- General knowledge Q&A may be used while an active context exists and does not overwrite that structured context.
-
-Focused implementation validation already completed:
-
-- Pytest: `110 passed in 1.64s`
-- Ruff: passed
-- Mypy: passed across 108 source files
-- `git diff --check`: passed
-- Mojibake scan over v2.4-A touched files: no known corrupted fragments found
-
-Manual runtime smoke evidence:
-
-- Direct payload input `test; rm -rf /tmp/test` routed to payload analysis without selecting Mode 1, produced Command Injection / `HIGH` / simulated `BLOCK`, and preserved current-event follow-up.
-- Direct log input `demo_logs\scenario_a_mixed_auth.log` routed to authentication log correlation without selecting Mode 2, produced the structured Scenario A incident, and preserved current-incident graph follow-up.
-- SQL Injection knowledge input used the protected knowledge path while the active incident context remained available for later `EV-003` follow-up.
-- `menu` opened the legacy four-mode interface.
-
-Boundary note:
-
-v2.4 orchestrates existing v2.3 runtime capabilities. It does not replace the detector, graph facts, or protected RAG logic. It does not implement or release LLM-assisted skill selection, `RetrieveSimilarCaseSkill`, executable `DraftCaseCaptureSkill`, Similar-Case Graph RAG, historical-case retrieval, Knowledge Capture or event write-back, automatic live ingestion, real firewall/WAF/EDR/account enforcement, real monitoring deployment, or RAG/LLM override of deterministic `Risk Level` or `Decision`. Any future write-capable capture skill must require explicit approval and human review before live ingestion.
-### v1.4 Detection-as-Code Lite / YAML 規則式偵測
-
-v1.4 將 XSS、SQL Injection、Path Traversal、Command Injection 的 payload signatures 移至 `detections/blue_team/` YAML 規則。系統新增 `DetectionRule` schema 與 YAML rule loader，detector adapter 以 YAML 作為主要偵測路徑，並在 detector result 中保留 rule ID、source path、severity、confidence、MITRE techniques 與 references 等 metadata。
-
-此階段仍是 deterministic rule-based detection，不是 ML detection，也不是 LLM-generated rules。Hard-coded signatures 仍保留作為保守 fallback，且不執行任何真實 enforcement。
-
-### v1.3 證據與事件能力
-
-v1.3 將系統從單一事件分析推進到 incident-style evidence handling。系統現在能使用 EV-ID / F-ID 保存證據與 finding，針對 authentication log 進行 time-window sequence correlation，偵測 repeated auth_failure followed by auth_success 的 `possible_account_compromise` 情境，並輸出 JSON Incident Report。
-
-驗證結果：`pytest` 為 `102 passed`，`ruff` 通過，`mypy app.py modules tests` 通過。此判定仍是 deterministic correlation；`possible_account_compromise` 代表可疑但未確認的 compromise，因此 v1.3 預設為 `HIGH / MONITOR`。LLMAssist 只提供 advisory reasoning，並受到 guardrails 限制；最終 decision 不會被 LLM 覆蓋，也不會執行真實 enforcement。
-
----
-
-## 1. Report Overview
-
-The current system is an AI-assisted blue-team security triage prototype. It supports:
-
-- Suspicious payload / event analysis
-- Single raw log translation
-- Log file ingestion and aggregation
-- RAG-based security knowledge Q&A
-- Follow-up explanation
-- Unified `[Security Triage Report]` output
-
-The latest milestone adds v2.4 deterministic direct-input Agent Skill Orchestration over the protected v2.3 runtime capabilities. Direct input can route to payload analysis, authentication log analysis, active-context follow-up, or protected knowledge Q&A while preserving `ActiveEventContext` and `ActiveAuthIncidentContext`. Skill selection is deterministic, not LLM-selected, and does not implement Similar-Case Graph RAG, Knowledge Capture, real enforcement, or Risk Level / Decision override.
-
----
-
-## 2. System Overview
-
-| Capability | Current Behavior |
-|---|---|
-| CLI Modes | The menu routes users to payload/event analysis, log file ingestion, security knowledge Q&A, follow-up explanation, or exit. |
-| Unified Triage Output | Security analysis results use `[Security Triage Report]` with Quick Verdict, Summary, Evidence, Why It Matters, Recommended Response, Simulation Notice, and AI Assist sections. |
-| Payload / Event Analysis | Known suspicious payloads are routed by CLI mode handlers, analyzed by SecurityAgent, scored by `TriagePolicy`, and optionally enriched by `LLMAssist`. |
-| Single Raw Log Translation | Raw authentication log lines are handled by the consolidated log pipeline and triaged as authentication failures. |
-| Log File Ingestion | Log files are parsed, normalized, aggregated, and adapted by `modules/log_pipeline.py`, then optionally sent to SecurityAgent. |
-| Brute Force Candidate Analysis | Repeated authentication failures can aggregate into a `brute_force_candidate` event for SecurityAgent triage. |
-| RAG Knowledge Q&A | Mode 3 uses a dedicated knowledge route, `RAGQueryPlanner`, preferred source selection, and Chroma fallback for explanatory answers. |
-| Follow-up Explanation | Mode 4 remains available for additional explanation based on previous context. |
-
----
-
-## 3. Architecture
-
-### A. Payload Flow
-
-```text
-User Input
--> CLI Mode Handler
--> SecurityAgent
--> Rule-Based Detector
--> TriagePolicy
--> LLMAssist
+User input or demo scenario
+-> deterministic detector / log parser
+-> deterministic risk and decision policy
 -> Security Triage Report
+-> advisory layers:
+   - AI Analyst Brief
+   - Evidence Gap Analyzer
+   - Knowledge Q&A / RAG
+   - Approved Similar Cases
+   - Relationship Graph
+   - Case Draft / Export
 ```
 
-### B. Single Raw Log Flow
+前三層是 authority path。後面的 AI/RAG/UI panels 只提供 advisory analyst context。
 
-```text
-Raw Log Line
--> Consolidated Log Pipeline
--> Raw Log Translation
--> Authentication Failure Triage Report
-```
+## 規則式偵測 / Rule-Based Detection
 
-### C. Log File Flow
+Payload detections 使用 deterministic Detection-as-Code rules，支援 Command Injection、SQL Injection、Path Traversal、XSS 等類型。Authentication log scenario 會先被正規化為 structured evidence / findings，再進入 deterministic risk 與 decision pipeline。
 
-```text
-Log File
--> Consolidated Log Pipeline
--> Aggregated Event
--> SecurityAgent
--> Security Triage Report
-```
-
-### D. RAG QA Flow
-
-```text
-Security Question
--> Dedicated Knowledge Q&A route
--> RAGQueryPlanner
--> Preferred source selection / Chroma fallback
--> RAG Answer
-```
-
-Mode 3 RAG is used for knowledge explanation only. It does not decide attack type, risk level, or final simulated action.
-
----
-
-## 4. Demo Cases Summary
-
-| ID | Category | Input | Expected Behavior | Result |
-|---|---|---|---|---|
-| D01 | Mode 1 XSS Payload | `<script>alert(1)</script>` | `ALERT / XSS / MEDIUM / MONITOR` | Passed |
-| D02 | Mode 1 Single Raw Auth Log | `2026-05-01T10:00:00Z login_failed src_ip=10.0.0.5 user=admin endpoint=/login status=401` | Input Translation plus `REVIEW / Authentication Failure / LOW / MONITOR` | Passed |
-| D03 | Mode 2 `auth_bruteforce.log` Summary | `demo_logs\auth_bruteforce.log` | 10 `auth_failure` events aggregated into 1 `brute_force_candidate` | Passed |
-| D04 | Mode 2 `auth_bruteforce.log` SecurityAgent Analysis | `demo_logs\auth_bruteforce.log` | `SUSPICIOUS / Brute Force or Brute Force + Credential Stuffing / MONITOR` | Passed |
-| D05 | Mode 3 Brute Force Q&A | Brute force question | RAG answer about brute force and blue-team interpretation | Passed |
-| D06 | Mode 3 Login Failure Analysis Q&A | Login failure analysis question | Mentions `source_ip`, endpoint, user, time window, HTTP `401` / `403`, brute force / credential stuffing | Passed |
-| D07 | Mode 3 Security Triage Report Guide | Security Triage Report guide question | Explains Quick Verdict, Summary, Evidence, Why It Matters, Recommended Response, Simulation Notice, AI Assist, Risk Level, Decision, and simulated decisions | Passed |
-| D08 | Mode 1 XSS Regression | `<script>alert(1)</script>` | Rule-based report still works | Passed |
-| D09 | Mode 1 Command Injection Regression | `test; rm -rf /tmp/test` | Rule-based Command Injection detection with `HIGH / BLOCK` | Passed |
-| D10 | YAML Detection-as-Code | `; rm -rf /tmp/test` | YAML rule `CMD-001` matched with severity / confidence / MITRE metadata | Passed |
-| D11 | ControllerAgent Dispatch | explicit route / mode hint | Deterministic dispatch through ToolRegistry and wrapper skills | Passed |
-| D12 | RAG v2 Source-Cited Explainers | report/rule question helper | Metadata-aware plan -> SourceCitation -> AnswerWithSources | Passed |
-| D13 | Answer Safety / Eval Runner / Smart Router Foundation | rule-based helper tests | Deterministic guardrails + eval runner + Smart Router route decision | Passed |
-| D14 | Protected Runtime Wiring / Analyst UX Foundation | protected helper tests | Guarded report/rule explanation + Smart Router preview + deterministic follow-up suggestions | Passed |
-| D15 | Architecture Cleanup / Orchestration Contracts | docs + contract tests | Ownership map + ADRs + Tool Permission Contract + Workflow Plan Contract + testing/migration docs | Passed |
-| D16 | v2.1 Graph-Backed Explanation MVP | Scenario A / EV-003 | EV-003 explicitly supports F-001; Decision remains MONITOR | Passed (focused test) |
-| D17 | v2.2 Scenario A Hybrid Explanation | graph + curated auth KB context | EV-003 supports F-001, curated auth KB citations coexist, Decision remains simulated MONITOR | Passed (focused test) |
-| D18 | v2.2 Command Injection Hybrid Explanation | approved KnowledgeDoc seed + curated rule KB | Command Injection explainer maps to ATTACK_TYPE:Command Injection and DETECTION_RULE:CMD-001; Decision remains simulated BLOCK | Passed (focused test) |
-| D19 | v2.3 Event-Grounded Payload Follow-Up | `test; rm -rf /tmp/test` + Mode 4 follow-ups | Current `ActiveEventContext` explains Command Injection, `HIGH / BLOCK`, simulated boundary, exploitation uncertainty, and investigation next steps | Passed (manual smoke) |
-| D20 | v2.3 Graph-Grounded Authentication Incident Follow-Up | `demo_logs\scenario_a_mixed_auth.log` + Mode 4 follow-ups | Current `ActiveAuthIncidentContext` explains `INC-20260501-001`, `EV-003`, `F-001`, `HIGH / MONITOR`, explicit support relation, and no confirmed compromise | Passed (manual smoke) |
-| D21 | v2.4 Direct-Input Agent Runtime | direct payload, log path, active follow-ups, SQL Injection question, `menu` | Deterministic skill orchestration routes to approved skills, preserves active contexts, and leaves the legacy menu available | Passed (manual smoke) |
-
----
-
-## 5. Detailed Demo Results
-
-### D01 - Mode 1 XSS Payload
-
-Input:
-
-```html
-<script>alert(1)</script>
-```
-
-Observed summary:
-
-```text
-[Security Triage Report]
-
-0. Quick Verdict
-Verdict: This event is likely XSS.
-Risk Level: MEDIUM
-Decision: MONITOR
-Reason: Matched XSS indicators: <script>, alert(
-
-1. Summary
-Status: ALERT
-Attack Type: XSS
-Risk Level: MEDIUM
-Decision: MONITOR
-Detection Source: rule_based_detector (rule_based)
-```
-
-Evaluation: Passed.
-
-The rule-based path still detects XSS and emits the current unified report format.
-
-### D02 - Mode 1 Single Raw Auth Log
-
-Input:
-
-```text
-2026-05-01T10:00:00Z login_failed src_ip=10.0.0.5 user=admin endpoint=/login status=401
-```
-
-Observed summary:
-
-```text
-[Input Translation]
-Detected Input Type: raw_log
-Normalized Event Type: auth_failure
-Converted SecurityAgent Input:
-login failed from source_ip 10.0.0.5 against /login for user admin
-
-[Security Triage Report]
-
-0. Quick Verdict
-Verdict: This is a failed login event. A single failure is not enough to confirm brute force.
-Risk Level: LOW
-Decision: MONITOR
-
-1. Summary
-Status: REVIEW
-Attack Type: Authentication Failure
-Risk Level: LOW
-Decision: MONITOR
-Detection Source: raw_log_translation
-```
-
-Evaluation: Passed.
-
-A single failed login is treated as a reviewable authentication signal, not enough evidence by itself to confirm brute force.
-
-### D03 - Mode 2 auth_bruteforce.log Summary
-
-Input:
-
-```text
-demo_logs\auth_bruteforce.log
-```
-
-Observed summary:
-
-```text
-[Log Ingestion Summary]
-
-Total Lines: 10
-Parsed Logs: 10
-Normalized Events: 10
-Aggregated Events: 1
-
-Detected Event Types:
-- auth_failure: 10
-
-Aggregated Finding:
-- Event Type: brute_force_candidate
-- Source IP: 192.168.1.10
-- Target: /login
-- Failed Count: 10
-```
-
-Evaluation: Passed.
-
-Mode 2 now demonstrates that repeated authentication failures can be aggregated before SecurityAgent analysis.
-
-### D04 - Mode 2 auth_bruteforce.log SecurityAgent Analysis
-
-Observed summary:
-
-```text
-[Security Triage Report]
-
-0. Quick Verdict
-Verdict: This event is suspicious for Brute Force or Credential Stuffing.
-Risk Level: HIGH
-Decision: MONITOR
-
-1. Summary
-Status: SUSPICIOUS
-Attack Type: Brute Force / Credential Stuffing
-Risk Level: HIGH
-Decision: MONITOR
-Detection Source: llm_assist + signal_extraction
-```
-
-Evaluation: Passed.
-
-Aggregated failures from the same source and target become suspicious brute-force or credential-stuffing evidence while the final decision remains a simulated `MONITOR`.
-
-### D05 - Mode 3 Brute Force Q&A
-
-Question:
-
-```text
-What is brute force?
-```
-
-Expected result:
-
-```text
-RAG-supported explanation of repeated credential guessing from a blue-team perspective.
-```
-
-Evaluation: Passed.
-
-### D06 - Mode 3 Login Failure Analysis Q&A
-
-Question:
-
-```text
-How should repeated login failures be analyzed?
-```
-
-Expected result:
-
-```text
-Mentions time window, source_ip, endpoint, user, HTTP 401 / 403, brute force / credential stuffing, and false-positive considerations.
-```
-
-Evaluation: Passed.
-
-### D07 - Mode 3 Security Triage Report Guide
-
-Question:
-
-```text
-How should I read a Security Triage Report?
-```
-
-Expected result:
-
-```text
-Explains the report sections and clarifies that BLOCK, MONITOR, and ALLOW are simulated decisions.
-```
-
-Evaluation: Passed.
-
-### D08 - Mode 1 XSS Regression
-
-Input:
-
-```html
-<script>alert(1)</script>
-```
-
-Expected result:
-
-```text
-Rule-based XSS report remains stable.
-```
-
-Evaluation: Passed.
-
-### D09 - Mode 1 Command Injection Regression
-
-Input:
+Example:
 
 ```text
 test; rm -rf /tmp/test
+-> Command Injection
+-> CMD-001
+-> Risk Level: HIGH
+-> Decision: BLOCK (simulated)
 ```
 
-Observed summary:
-
-```text
-[Security Triage Report]
-
-1. Summary
-Status: ALERT
-Attack Type: Command Injection
-Risk Level: HIGH
-Decision: BLOCK
-Detection Source: rule_based_detector (rule_based)
-```
-
-Evaluation: Passed.
-
-The rule-based detector now recognizes high-signal command injection payload indicators and routes them through the current unified report format.
-
----
-
-## 6. Quality Foundation
-
-The current branch also includes a small but important quality foundation:
-
-- Architecture consolidation around `SecurityAgent`, `TriagePolicy`, `LLMAssist`, `mode_handlers.py`, `log_pipeline.py`, and `RAGQueryPlanner`
-- Expanded golden smoke tests for payload regressions, benign input, malformed raw logs, and empty input
-- Direct consolidated log pipeline tests for parsing, normalization, and brute-force aggregation
-- Pydantic boundary model tests for `modules/types.py`
-- Evidence / incident model, guardrail, correlator, exporter, follow-up, LLMAssist, and Scenario A integration tests
-- ControllerAgent unit and integration tests for the six v1.5 wrapper skills
-- RAG v2 type, metadata, intent, planner, source assembly, and explainer tests
-- AnswerGuardrails, eval case loader, eval runner, and Smart Router tests
-- Protected report/rule helper, Smart Router preview, and analyst suggestion tests
-- Tool Permission Contract and Workflow Plan Contract tests
-- v1.9 documentation source-of-truth docs for architecture ownership, testing strategy, ADRs, and package migration planning
-- v2.0 graph type, builder, lookup, and exporter focused tests
-- v2.1 graph-backed explanation, protected adapter, and Scenario A focused tests
-- v2.2 focused metadata, KnowledgeDoc seed, protected hybrid explanation, and Scenario A integration checks
-- `pytest` for regression checks; latest full release-gate result is v2.4 `693 passed in 14.72s`
-- v2.2 focused validation: Batch 2.2-A `67 passed`; Batch 2.2-B `96 passed`; both with Ruff, Mypy, and `git diff --check` passing
-- `ruff` for linting and import hygiene
-- Lenient `mypy` as a gradual typing baseline
-- v2.4 release gate also passed Ruff, Mypy across 108 source files, `git diff --check`, and Gitleaks with no leaks found across 171 commits scanned using `gitleaks detect --source . --verbose --redact`
-- GitHub Actions CI for automated quality checks
-
----
-
-## 7. Overall Evaluation
-
-| Capability | Result |
-|---|---|
-| Unified Security Triage Report | Passed |
-| Mode 1 payload triage | Passed |
-| Mode 1 raw log translation | Passed |
-| Single `auth_failure` triage | Passed |
-| Mode 2 log ingestion and aggregation | Passed |
-| Mode 2 `brute_force_candidate` SecurityAgent analysis | Passed |
-| Mode 3 dedicated knowledge Q&A routing | Passed |
-| `RAGQueryPlanner` and preferred source selection | Passed |
-| Rule-based Command Injection detection | Passed |
-| YAML Detection-as-Code | Passed |
-| ControllerAgent deterministic dispatch infrastructure | Passed |
-| RAG v2 source-cited explainer helpers | Passed |
-| AnswerGuardrails / eval runner / Smart Router foundation | Passed |
-| Protected runtime wiring / analyst UX foundation | Passed |
-| v1.9 architecture cleanup / orchestration contracts | Passed |
-| v2.0 Knowledge Graph Foundation helpers | Focused phase checks passed |
-| v2.1 Graph-Backed Explanation MVP | Release gate passed |
-| v2.2 Curated RAG Graph Seed Foundation | Released as `v2.2.0` |
-| v2.2 focused pytest / Ruff / Mypy / diff-check | Passed |
-| v2.2 full release gate | Passed: `628 passed`, Ruff, Mypy, diff-check, Gitleaks |
-| v2.3 full release gate | Passed: `670 passed in 8.23s`, Ruff, Mypy across 106 source files, diff-check, Gitleaks across 167 commits |
-| v2.3 Controlled Retrieval and Structured Follow-Up | Released as `v2.3.0` |
-| v2.3 manual runtime smoke | Passed for Mode 3 controlled retrieval, Mode 1 event follow-up, and Mode 2 graph-grounded incident follow-up |
-| v2.4 full release gate | Passed: `693 passed in 14.72s`, Ruff, Mypy across 108 source files, diff-check, Gitleaks across 171 commits |
-| v2.4 focused deterministic validation | Passed: `110 passed in 1.64s`, Ruff, Mypy across 108 source files, diff-check, mojibake scan |
-| v2.4 direct-input manual runtime smoke | Passed for payload input, auth log path input, active follow-up, protected knowledge Q&A, and `menu` fallback |
-
-Overall result:
-
-```text
-v2.4 released as `v2.4.0`. The current branch contains deterministic direct-input skill orchestration over protected controlled Mode 3 retrieval, event-grounded Mode 1 follow-up, and graph-grounded current-incident Mode 2 authentication follow-up. LLM-assisted skill selection, Similar-Case Graph RAG, Knowledge Capture, real enforcement, and Risk Level / Decision override remain deferred.
-```
-
----
-
-## 8. Key Findings
-
-1. The system now separates a single `auth_failure` from an aggregated `brute_force_candidate`.
-2. A single authentication failure is triaged as `REVIEW / LOW / MONITOR`.
-3. Aggregated repeated failures can become suspicious Brute Force / Credential Stuffing evidence.
-4. Rule-based detections and LLMAssist suggestions now both use the unified `[Security Triage Report]`.
-5. Mode 3 RAG QA is no longer driven by the old keyword fallback in the active routing path.
-6. RAG is used for security knowledge explanation, while detection, risk, and decision fields remain part of the triage pipeline.
-
----
-
-## 9. Limitations
-
-This demo remains a functional prototype with the following limitations:
-
-- Not all real-world log formats are supported.
-- There is no real firewall, WAF, EDR, or production SIEM action.
-- `BLOCK`, `MONITOR`, and `ALLOW` are simulated decisions only.
-- LLM suggestions do not override the final system `Decision`.
-- RAG is not used for primary detection.
-- Direct input is now the primary CLI path, while the legacy menu remains available as a debug/demo fallback.
-- Startup still initializes heavy RAG, embedding, and Chroma components.
-- LLM-assisted Smart Input Router behavior and autonomous write-capable skills remain future work.
-- `RAGQueryPlanner` improves retrieval, but answer quality still depends on the quality of knowledge files and local LLM output.
-
-For planned future work, see [docs/ROADMAP.md](docs/ROADMAP.md).
-
----
-
-<a id="繁體中文"></a>
-# 繁體中文
-
-> 專案：AI 輔助安全威脅偵測與回應系統
-> 目前里程碑：v2.4 已發布為 `v2.4.0`。
-> 目前 release baseline：tag `v2.4.0`
-> 里程碑：deterministic direct-input Agent Skill Orchestration，沿用受保護的 v2.3 runtime capabilities
-完整 CLI 範例可參考 [demo_outputs.md](demo_outputs.md)。
-
-本報告記錄代表性的 CLI 流程與 pass/fail 驗證，用來確認目前統一 `Security Triage Report` 契約是否穩定。這不是統計式 benchmark；precision / recall、false positive rate 與 retrieval quality evaluation 會留到後續里程碑。
-
----
-
-## 1. 報告概述
-
-目前系統是一個 AI-assisted blue-team security triage prototype，支援：
-
-- Suspicious payload / event analysis
-- Single raw log translation
-- Log file ingestion and aggregation
-- RAG-based security knowledge Q&A
-- Follow-up explanation
-- Unified Security Triage Report
-
-v2.4 新增 deterministic direct-input Agent Skill Orchestration，讓使用者可直接輸入 payload、authentication log path、active-context follow-up 或 security knowledge question，不必先手動選擇 Mode 1 / 2 / 3 / 4。此狀態為已發布為 `v2.4.0`；目前 release baseline 為 `v2.4.0`。Skill selection 是 deterministic，不是 LLM-selected；此版本不代表 LLM-assisted skill selection、Similar-Case Graph RAG、Knowledge Capture、real enforcement 或 Risk Level / Decision override 已實作。
-
-Focused verification 範例：
-
-```text
-Scenario A:
-EV-003 explicitly supports F-001.
-Curated authentication KB context is combined with graph citations.
-Decision remains simulated MONITOR.
-
-Command Injection:
-KnowledgeDoc seed maps the command-injection explainer to CMD-001.
-Decision remains simulated BLOCK.
-```
-
-此能力是受保護的 hybrid explanation/context assembly，不是 automatic Graph RAG retrieval。Graph 與 curated RAG context 只提供 explanation/support，不改變 Risk Level / Decision、不取代規則式偵測器或 `RAGQA`、不呼叫 LLM 或 vector system、不執行工具，也不代表真實 enforcement。
-
----
-
-## 2. 系統概覽
-
-| 能力 | 目前行為 |
-|---|---|
-| CLI 模式 | 選單可進入 payload / event analysis、log file ingestion、security knowledge Q&A、follow-up explanation 或離開。 |
-| 統一分流輸出 | 安全分析結果使用 `[Security Triage Report]`，包含 Quick Verdict、Summary、Evidence、Why It Matters、Recommended Response、Simulation Notice 與 AI Assist。 |
-| Payload / Event Analysis | 可疑 payload 由 CLI Mode Handler 送入 `SecurityAgent`，透過 Rule-Based Detector、`TriagePolicy` 與選用 `LLMAssist` 產生報告。 |
-| Single Raw Log Translation | 單筆原始 authentication log 由 Consolidated Log Pipeline 轉譯，並以 authentication failure 進行分流。 |
-| Log File Ingestion | `modules/log_pipeline.py` 負責解析、正規化、聚合與轉接日誌，再視情況送入 SecurityAgent。 |
-| Brute Force Candidate Analysis | 重複登入失敗可聚合為 `brute_force_candidate`，再交由 SecurityAgent 分析。 |
-| RAG Knowledge Q&A | Mode 3 使用 `RAGQueryPlanner`、preferred source selection 與 Chroma fallback 提供知識解釋。 |
-| Follow-up Explanation | Mode 4 可根據前文提供補充說明。 |
-
----
-
-## 3. 架構
-
-目前架構使用下列核心元件：
-
-- CLI Mode Handler
-- SecurityAgent
-- Rule-Based Detector
-- TriagePolicy
-- LLMAssist
-- Consolidated Log Pipeline
-- RAGQueryPlanner
-- Unified Security Triage Report
-
-整體流程：
-
-```text
-使用者輸入
--> CLI Mode Handler
--> SecurityAgent
--> Rule-Based Detector / Consolidated Log Pipeline / RAGQueryPlanner
--> TriagePolicy
--> LLMAssist
--> Unified Security Triage Report
-```
-
-Payload flow:
-
-```text
-User Input
--> CLI Mode Handler
--> SecurityAgent
--> Rule-Based Detector
--> TriagePolicy
--> LLMAssist
--> Security Triage Report
-```
-
-Single raw log flow:
-
-```text
-Raw Log Line
--> Consolidated Log Pipeline
--> Raw Log Translation
--> Authentication Failure Triage Report
-```
-
-Log file flow:
-
-```text
-Log File
--> Consolidated Log Pipeline
--> Aggregated Event
--> SecurityAgent
--> Security Triage Report
-```
-
-RAG QA flow:
-
-```text
-Security Question
--> Dedicated Knowledge Q&A route
--> RAGQueryPlanner
--> Preferred source selection / Chroma fallback
--> RAG Answer
-```
-
-Mode 3 RAG 只負責知識解釋，不決定 attack type、risk level 或模擬 action。
-
----
-
-## 4. Demo 摘要
-
-| ID | 類別 | 輸入 | 預期行為 | 結果 |
-|---|---|---|---|---|
-| D01 | Mode 1 XSS payload | `<script>alert(1)</script>` | `ALERT / XSS / MEDIUM / MONITOR` | Passed |
-| D02 | Mode 1 single raw auth log | `login_failed src_ip=10.0.0.5 user=admin endpoint=/login status=401` | Input Translation 加上 `REVIEW / Authentication Failure / LOW / MONITOR` | Passed |
-| D03 | Mode 2 `auth_bruteforce.log` summary | `demo_logs\auth_bruteforce.log` | 10 筆 `auth_failure` 聚合成 1 筆 `brute_force_candidate` | Passed |
-| D04 | Mode 2 `auth_bruteforce.log` SecurityAgent analysis | `demo_logs\auth_bruteforce.log` | `SUSPICIOUS / Brute Force or Credential Stuffing / MONITOR` | Passed |
-| D05 | Mode 3 brute force Q&A | brute force 問題 | 以藍隊角度解釋重複 credential guessing | Passed |
-| D06 | Mode 3 login failure analysis Q&A | 登入失敗分析問題 | 提到 `source_ip`、endpoint、user、time window、HTTP `401` / `403`、brute force / credential stuffing | Passed |
-| D07 | Mode 3 Security Triage Report guide | Security Triage Report 閱讀問題 | 解釋 Quick Verdict、Summary、Evidence、Why It Matters、Recommended Response、Simulation Notice、AI Assist、Risk Level、Decision 與模擬決策 | Passed |
-| D08 | Mode 1 XSS regression | `<script>alert(1)</script>` | 規則式 XSS 報告維持穩定 | Passed |
-| D09 | Mode 1 Command Injection regression | `test; rm -rf /tmp/test` | Rule-Based Detector 偵測 Command Injection，風險 `HIGH`，決策 `BLOCK` | Passed |
-| D10 | YAML Detection-as-Code | `; rm -rf /tmp/test` | YAML rule `CMD-001` 命中，並顯示 severity / confidence / MITRE metadata | Passed |
-| D11 | ControllerAgent Dispatch | explicit route / mode hint | 透過 ToolRegistry 與 wrapper skills 進行 deterministic dispatch | Passed |
-| D12 | RAG v2 Source-Cited Explainers | report/rule question helper | Metadata-aware plan -> SourceCitation -> AnswerWithSources | Passed |
-| D16 | v2.1 Graph-Backed Explanation MVP | Scenario A / EV-003 | EV-003 明確支援 F-001；Decision 維持 MONITOR | Passed（focused test） |
-| D17 | v2.2 Scenario A hybrid explanation | graph + curated auth KB context | curated auth KB 與 graph citation coexist；Decision 維持 simulated MONITOR | Passed（focused test） |
-| D18 | v2.2 Command Injection hybrid explanation | approved KnowledgeDoc seed + curated rule KB | Command Injection explainer 對應 `CMD-001`；Decision 維持 simulated BLOCK | Passed（focused test） |
-| D19 | v2.3 Event-grounded payload follow-up | `test; rm -rf /tmp/test` + Mode 4 follow-ups | `ActiveEventContext` 解釋 Command Injection、`HIGH / BLOCK`、simulated boundary、exploitation uncertainty 與 investigation next steps | Passed（manual smoke） |
-| D20 | v2.3 Graph-grounded authentication incident follow-up | `demo_logs\scenario_a_mixed_auth.log` + Mode 4 follow-ups | `ActiveAuthIncidentContext` 解釋 `INC-20260501-001`、`EV-003`、`F-001`、`HIGH / MONITOR`、explicit support relation，且不宣稱 confirmed compromise | Passed（manual smoke） |
-
----
-
-## 5. 品質基礎
-
-此分支已完成下列品質基礎：
-
-- architecture consolidation
-- expanded golden smoke tests
-- direct consolidated log pipeline tests
-- Pydantic boundary model tests
-- AnswerGuardrails / eval runner / Smart Router tests
-- protected helper / Smart Router preview / analyst suggestion tests
-- Tool Permission Contract / Workflow Plan Contract tests
-- v2.0 graph type / builder / lookup / exporter focused tests
-- v2.1 graph-backed explanation / protected adapter / Scenario A focused tests
-- v2.2 metadata / KnowledgeDoc seed / protected hybrid explanation focused tests
-- `pytest` latest full gate：v2.4 `693 passed in 14.72s`
-- v2.2 focused validation：Batch 2.2-A `67 passed`；Batch 2.2-B `96 passed`；兩者 Ruff、Mypy、`git diff --check` 均通過
-- v2.4 full release gate：Ruff、Mypy（108 source files）、`git diff --check` 與 Gitleaks（no leaks found；171 commits scanned）均通過
-- `ruff`
-- lenient `mypy`
-- GitHub Actions CI
-
-這些檢查讓目前的 demo flow、Pydantic boundary types 與 consolidated architecture 在後續導入 ControllerAgent / Tool Registry 前有更穩定的回歸基礎。
-
----
-
-## 6. 整體評估
-
-| 能力 | 結果 |
-|---|---|
-| Unified Security Triage Report | Passed |
-| Mode 1 payload triage | Passed |
-| Mode 1 raw log translation | Passed |
-| Single `auth_failure` triage | Passed |
-| Mode 2 log ingestion and aggregation | Passed |
-| Mode 2 `brute_force_candidate` SecurityAgent analysis | Passed |
-| Mode 3 dedicated knowledge Q&A routing | Passed |
-| `RAGQueryPlanner` and preferred source selection | Passed |
-| Rule-based Command Injection detection | Passed |
-| YAML Detection-as-Code | Passed |
-| RAG v2 source-cited explainer helpers | Passed |
-| v1.9 architecture cleanup / orchestration contracts | Passed |
-| v2.0 Knowledge Graph Foundation helpers | Focused phase checks passed |
-| v2.1 Graph-Backed Explanation MVP | Release gate passed |
-| v2.2 Curated RAG Graph Seed Foundation | 已發布為 `v2.2.0` |
-| v2.2 focused pytest / Ruff / Mypy / diff-check | 通過 |
-| v2.2 full release gate | 通過：`628 passed`、Ruff、Mypy、diff-check、Gitleaks |
-| v2.3 Controlled Retrieval and Structured Follow-Up | 已發布為 `v2.3.0` |
-| v2.3 manual runtime smoke | Mode 3 controlled retrieval、Mode 1 event follow-up、Mode 2 graph-grounded incident follow-up 已通過人工 smoke |
-
-整體結果：
-
-```text
-v2.4 已發布為 `v2.4.0`。目前 release baseline 為 `v2.4.0`。此分支包含 deterministic direct-input skill orchestration，並沿用 protected controlled Mode 3 retrieval、Mode 1 current-event follow-up，以及 Mode 2 current-incident GraphSnapshot authentication follow-up。LLM-assisted skill selection、Similar-Case Graph RAG、Knowledge Capture、real enforcement 與 Risk Level / Decision override 仍維持延後。
-```
-
----
-
-## 7. 主要觀察
-
-1. 系統已能區分單筆 `auth_failure` 與聚合後的 `brute_force_candidate`。
-2. 單筆登入失敗會被分流為 `REVIEW / LOW / MONITOR`。
-3. 多筆重複登入失敗可形成 Brute Force / Credential Stuffing 的可疑證據。
-4. 規則式偵測與 LLMAssist 建議都會透過統一 `[Security Triage Report]` 呈現。
-5. Mode 3 RAG QA 已走 dedicated knowledge route 與 `RAGQueryPlanner`。
-6. RAG 用於知識解釋；偵測、風險與決策仍由 triage pipeline 產生。
-
----
-
-## 8. 限制
-
-- 尚未支援所有真實世界日誌格式。
-- 沒有真實 firewall、WAF、EDR 或 production SIEM action。
-- `BLOCK`、`MONITOR`、`ALLOW` 都是模擬決策。
-- LLMAssist 建議不覆蓋最終系統 `Decision`。
-- RAG 不作為主要偵測層。
-- 目前 CLI 仍是選單式，尚未成為完整 Main Controller Agent。
-- 啟動時仍可能初始化較重的 RAG、embedding 與 Chroma 元件。
-- Smart Input Router / Main Controller Agent 仍是未來工作。
-- `RAGQueryPlanner` 可改善檢索，但答案品質仍取決於知識檔與本地 LLM 輸出。
-
-後續規劃請見 [docs/ROADMAP.md](docs/ROADMAP.md)。
-
----
-
-完整 CLI 範例可參考 [demo_outputs.md](demo_outputs.md)。
+## 確定性風險與決策 / Deterministic Risk and Decision
+
+Risk Level 與 Decision 不由 LLM 產生。它們由 deterministic code 計算，並以 Security Triage Report 顯示。
+
+- `BLOCK`: simulated block recommendation.
+- `MONITOR`: simulated monitoring / analyst review recommendation.
+- `ALLOW`: no sufficient deterministic evidence to block or monitor.
+
+No real firewall, WAF, EDR, account, cloud, SIEM, or SOAR action is performed.
+
+## AI/RAG 建議角色 / AI/RAG Advisory Role
+
+AI/RAG layers 可以摘要、說明、指出 evidence gaps、回答防禦型知識問題、比對 approved similar cases，並協助撰寫 human-reviewed report content。
+
+它們不能：
+
+- override Risk Level or Decision;
+- prove compromise;
+- prove successful execution;
+- perform real enforcement;
+- provide exploit, PoC, or traffic-generation guidance.
+
+## AI 分析摘要 / AI Analyst Brief
+
+AI Analyst Brief 是 deterministic advisory output，`llm_status: not_used`。它會依 UI language selection 輸出繁體中文、英文或精簡雙語。
+
+內容包含：
+
+- 發生了什麼 / What happened.
+- 為什麼重要 / Why it matters.
+- 確定性判定 / Deterministic verdict.
+- 建議摘要 / Advisory summary.
+- 證據缺口摘要 / Evidence gap summary.
+- 建議下一步 / Recommended next steps.
+- 不安全的假設 / Unsafe assumptions.
+
+## 證據缺口分析器 / Evidence Gap Analyzer
+
+Evidence Gap Analyzer 協助分析師避免過度推論。它列出還需要確認的 telemetry、logs、process evidence、database evidence、identity/session evidence 或 resource indicators。
+
+本次 Fix Pass 後，Evidence Gap output 也會依 UI language selection 顯示。
+
+## 知識問答 / Knowledge Q&A
+
+Knowledge Q&A 使用 RAG / approved knowledge 做防禦型說明。本次 Fix Pass 加入 lightweight output language policy：
+
+- UI language changes do not initialize RAG, Chroma, embeddings, Torch, sentence-transformers, or ChatOllama.
+- RAG prompt keeps one safety block and adds one selected language instruction block.
+- Retrieval selection, controlled source selection, citations, CVE/CVSS normalization, and answer safety guardrails are unchanged.
+
+## 核准相似案例 / Approved Similar Cases
+
+Approved Similar Cases 只讀取 manually curated approved seed files。相似案例是 historical advisory reference，不會覆蓋目前事件的 Risk Level / Decision，也不證明目前事件成功執行或已被入侵。
+
+## 關係圖 / Relationship Graph
+
+Relationship Graph 顯示 current event、attack type、rule、evidence、risk、decision、similar case 的關係。它是 explanation context，不是 graph-based detection authority。
+
+## 案例草稿與匯出 / Case Draft and Export
+
+Case Draft 與 Export Report 服務於 human review。Draft remains approval-gated，Export Report 是 copyable preview，不會自動寫入正式報告或 knowledge base。
+
+## 安全 HTTP/2 資源耗盡示範 / Safe HTTP/2 Resource Exhaustion Demo
+
+HTTP/2 Resource Exhaustion scenario 是 synthetic incident summary。Launcher card 顯示短 preview；Load Scenario 會載入完整 input，包括：
+
+- synthetic incident summary;
+- no traffic generated;
+- no vulnerability reproduction material;
+- no real enforcement;
+- human review required.
+
+此 demo 不產生 HTTP/2 traffic，不提供 exploit / PoC，不宣稱 confirmed exploitation。
+
+## 測試摘要 / Testing Summary
+
+Automated tests cover:
+
+- rule-based detection and deterministic policy;
+- UI demo scenario preview behavior;
+- output language policy;
+- AI Analyst Brief language-aware output;
+- Evidence Gap language-aware output;
+- RAG prompt language instruction and lazy forwarding;
+- RAG controlled runtime safety;
+- lazy RAG startup regression;
+- Streamlit UI helper rendering without importing Streamlit.
+
+See [docs/TEST_REPORT.md](docs/TEST_REPORT.md).
+
+## 限制 / Limitations
+
+This is a prototype, not a production SOC platform. It does not replace SIEM/SOAR, endpoint telemetry, vulnerability management, incident response approval, or expert analyst judgment.
+
+Known limitations:
+
+- no real enforcement;
+- no production alert ingestion pipeline;
+- no autonomous remediation;
+- RAG quality depends on approved knowledge content;
+- case memory is a curated demo corpus, not a production case database.
+
+## 安全邊界 / Safety Boundary
+
+- Detector remains rule-based.
+- Risk Level / Decision remain deterministic.
+- `BLOCK` / `MONITOR` / `ALLOW` remain simulated.
+- RAG / LLM / AI Analyst Brief / Evidence Gap are advisory only.
+- No real firewall, WAF, EDR, account, cloud, SIEM, or SOAR action is performed.
+- No exploit, PoC, or traffic generation is included.
+- Human review is required.
