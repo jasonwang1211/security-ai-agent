@@ -111,10 +111,12 @@ Approved Similar Cases 提供 approved seed cases 的比較；Relationship Graph
 
 ## 截圖證明什麼
 
-- [Console home](../screenshots/01_console_home.png)：主 UI、demo cards、mode controls 與 safety framing。
-- [AI Analyst Brief](../screenshots/03_ai_analyst_brief.png)：AI advisory panel 不覆蓋 deterministic verdict。
-- [Evidence Gap Analyzer](../screenshots/04_evidence_gap_analyzer.png)：confirmed facts、missing evidence 與 unsafe assumptions。
-- [HTTP/2 safe demo](../screenshots/09_http2_resource_exhaustion_demo.png)：safe synthetic scenario，不產生攻擊流量。
+繁中 UI 截圖保留於 `docs/screenshots/zh-TW/`；英文 UI 截圖請見 `docs/screenshots/en/`。
+
+- [Console home](../screenshots/zh-TW/01_console_home.png)：主 UI、demo cards、mode controls 與 safety framing。
+- [AI Analyst Brief](../screenshots/zh-TW/03_ai_analyst_brief.png)：AI advisory panel 不覆蓋 deterministic verdict。
+- [Evidence Gap Analyzer](../screenshots/zh-TW/04_evidence_gap_analyzer.png)：confirmed facts、missing evidence 與 unsafe assumptions。
+- [HTTP/2 safe demo](../screenshots/zh-TW/09_http2_resource_exhaustion_demo.png)：safe synthetic scenario，不產生攻擊流量。
 
 ## 限制
 

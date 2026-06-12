@@ -94,7 +94,7 @@ python -m streamlit run ui/streamlit_app.py --server.fileWatcherType none
 - [English Project Report](../../REPORT.md)
 - [UI Walkthrough](../UI_WALKTHROUGH.md)
 - [User Operation Guide](../USER_OPERATION_GUIDE.md)
-- [Screenshot Gallery](../screenshots/README.md)
+- [Screenshot Gallery](../screenshots/README.md)（繁中 UI 截圖保留於 `docs/screenshots/zh-TW/`，英文 UI 截圖見 `docs/screenshots/en/`）
 - [Test Report](../TEST_REPORT.md)
 - [Code Review Audit](../CODE_REVIEW_AUDIT.md)
 

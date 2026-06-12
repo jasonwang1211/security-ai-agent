@@ -8,25 +8,25 @@ The main demo is not a backend API. It is an analyst-facing console that lets re
 
 ### Streamlit Analyst Console
 
-![Streamlit analyst console home](docs/screenshots/01_console_home.png)
+![Streamlit analyst console home](docs/screenshots/en/01_console_home.png)
 
 The console home shows the primary demo surface: language and mode controls, scenario launcher cards, input area, active context, and safety messaging.
 
 ### AI Analyst Brief
 
-![AI Analyst Brief panel](docs/screenshots/03_ai_analyst_brief.png)
+![AI Analyst Brief panel](docs/screenshots/en/03_ai_analyst_brief.png)
 
 The AI Analyst Brief summarizes the current event in analyst language while keeping the deterministic verdict separate from advisory explanation.
 
 ### Evidence Gap Analyzer
 
-![Evidence Gap Analyzer panel](docs/screenshots/04_evidence_gap_analyzer.png)
+![Evidence Gap Analyzer panel](docs/screenshots/en/04_evidence_gap_analyzer.png)
 
 The Evidence Gap Analyzer highlights confirmed facts, missing evidence, review tasks, and unsafe assumptions. It does not override Risk Level or Decision.
 
 ### HTTP/2 Resource Exhaustion Safe Demo
 
-![HTTP/2 Resource Exhaustion safe synthetic demo](docs/screenshots/09_http2_resource_exhaustion_demo.png)
+![HTTP/2 Resource Exhaustion safe synthetic demo](docs/screenshots/en/09_http2_resource_exhaustion_demo.png)
 
 The HTTP/2 scenario is a safe synthetic incident summary. It demonstrates defensive triage without exploit steps, proof-of-concept material, or traffic generation.
 
@@ -108,10 +108,10 @@ User input / demo scenario
 
 | Scenario | Input type | Expected classification | Risk Level | Simulated Decision | What it demonstrates | Screenshot |
 |---|---|---|---|---|---|---|
-| Command Injection demo | Payload text | Command Injection | HIGH | BLOCK | Deterministic payload triage, rule evidence, AI advisory panels, evidence gaps. | [AI Analyst Brief](docs/screenshots/03_ai_analyst_brief.png) |
-| Authentication incident demo | Authentication log path or synthetic log content | Possible Account Compromise | HIGH | MONITOR | Suspicious login sequence triage without claiming confirmed compromise. | [Console home](docs/screenshots/01_console_home.png) |
-| HTTP/2 Resource Exhaustion safe synthetic demo | Synthetic incident summary | HTTP/2 Resource Exhaustion Suspicion | MEDIUM | MONITOR | Safe DoS/resource-exhaustion triage with no traffic generation. | [HTTP/2 demo](docs/screenshots/09_http2_resource_exhaustion_demo.png) |
-| Optional Full AI-assisted mode | User-selected mode | Depends on input | Deterministic policy remains authoritative | Simulated only | Optional AI/RAG explanation path while preserving the safety boundary. | [Full AI-assisted optional](docs/screenshots/10_full_ai_assisted_optional.png) |
+| Command Injection demo | Payload text | Command Injection | HIGH | BLOCK | Deterministic payload triage, rule evidence, AI advisory panels, evidence gaps. | [AI Analyst Brief](docs/screenshots/en/03_ai_analyst_brief.png) |
+| Authentication incident demo | Authentication log path or synthetic log content | Possible Account Compromise | HIGH | MONITOR | Suspicious login sequence triage without claiming confirmed compromise. | [Console home](docs/screenshots/en/01_console_home.png) |
+| HTTP/2 Resource Exhaustion safe synthetic demo | Synthetic incident summary | HTTP/2 Resource Exhaustion Suspicion | MEDIUM | MONITOR | Safe DoS/resource-exhaustion triage with no traffic generation. | [HTTP/2 demo](docs/screenshots/en/09_http2_resource_exhaustion_demo.png) |
+| Optional Full AI-assisted mode | User-selected mode | Depends on input | Deterministic policy remains authoritative | Simulated only | Optional AI/RAG explanation path while preserving the safety boundary. | [Full AI-assisted optional](docs/screenshots/en/10_full_ai_assisted_optional.png) |
 
 ## Quick Start
 

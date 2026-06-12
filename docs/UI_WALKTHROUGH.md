@@ -35,14 +35,14 @@ The UI entry point is `ui/streamlit_app.py`.
 
 | Feature area | What it shows | Screenshot |
 |---|---|---|
-| Console home | Scenario cards, mode controls, input area, and safety framing. | [01_console_home.png](screenshots/01_console_home.png) |
-| AI Analyst Brief | Advisory event summary and deterministic boundary. | [03_ai_analyst_brief.png](screenshots/03_ai_analyst_brief.png) |
-| Evidence Gap Analyzer | Confirmed facts, missing evidence, review tasks, unsafe assumptions. | [04_evidence_gap_analyzer.png](screenshots/04_evidence_gap_analyzer.png) |
-| Knowledge Q&A / RAG | Defensive knowledge answer with advisory framing. | [05_knowledge_qa_rag.png](screenshots/05_knowledge_qa_rag.png) |
-| Similar Cases | Approved historical comparison without override authority. | [06_similar_cases.png](screenshots/06_similar_cases.png) |
-| Relationship Graph | Read-only visual context for event, rule, risk, decision, and case links. | [07_relationship_graph.png](screenshots/07_relationship_graph.png) |
-| Case Draft / Export | Reviewable draft and Markdown export material. | [08_case_draft_export.png](screenshots/08_case_draft_export.png) |
-| HTTP/2 safe demo | Synthetic incident summary with no traffic generation. | [09_http2_resource_exhaustion_demo.png](screenshots/09_http2_resource_exhaustion_demo.png) |
+| Console home | Scenario cards, mode controls, input area, and safety framing. | [01_console_home.png](screenshots/en/01_console_home.png) |
+| AI Analyst Brief | Advisory event summary and deterministic boundary. | [03_ai_analyst_brief.png](screenshots/en/03_ai_analyst_brief.png) |
+| Evidence Gap Analyzer | Confirmed facts, missing evidence, review tasks, unsafe assumptions. | [04_evidence_gap_analyzer.png](screenshots/en/04_evidence_gap_analyzer.png) |
+| Knowledge Q&A / RAG | Defensive knowledge answer with advisory framing. | [05_knowledge_qa_rag.png](screenshots/en/05_knowledge_qa_rag.png) |
+| Similar Cases | Approved historical comparison without override authority. | [06_similar_cases.png](screenshots/en/06_similar_cases.png) |
+| Relationship Graph | Read-only visual context for event, rule, risk, decision, and case links. | [07_relationship_graph.png](screenshots/en/07_relationship_graph.png) |
+| Case Draft / Export | Reviewable draft and Markdown export material. | [08_case_draft_export.png](screenshots/en/08_case_draft_export.png) |
+| HTTP/2 safe demo | Synthetic incident summary with no traffic generation. | [09_http2_resource_exhaustion_demo.png](screenshots/en/09_http2_resource_exhaustion_demo.png) |
 
 ## Safety Boundary
 

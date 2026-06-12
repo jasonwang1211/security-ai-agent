@@ -84,10 +84,10 @@ python -m streamlit run ui/streamlit_app.py --server.fileWatcherType none
 
 ### Screenshot Evidence
 
-- [Console home](docs/screenshots/01_console_home.png): scenario launcher and main UI surface.
-- [AI Analyst Brief](docs/screenshots/03_ai_analyst_brief.png): advisory summary and deterministic boundary.
-- [Evidence Gap Analyzer](docs/screenshots/04_evidence_gap_analyzer.png): missing evidence and unsafe assumptions.
-- [HTTP/2 safe demo](docs/screenshots/09_http2_resource_exhaustion_demo.png): safe synthetic Resource Exhaustion scenario.
+- [Console home](docs/screenshots/en/01_console_home.png): scenario launcher and main UI surface.
+- [AI Analyst Brief](docs/screenshots/en/03_ai_analyst_brief.png): advisory summary and deterministic boundary.
+- [Evidence Gap Analyzer](docs/screenshots/en/04_evidence_gap_analyzer.png): missing evidence and unsafe assumptions.
+- [HTTP/2 safe demo](docs/screenshots/en/09_http2_resource_exhaustion_demo.png): safe synthetic Resource Exhaustion scenario.
 
 ## Core Modules
 
@@ -139,11 +139,11 @@ Validation focuses on deterministic behavior, safety boundaries, UI helper behav
 
 | Screenshot | Evidence |
 |---|---|
-| [01_console_home.png](docs/screenshots/01_console_home.png) | The Streamlit console is the main demo UI, with four scenario cards and visible safety framing. |
-| [03_ai_analyst_brief.png](docs/screenshots/03_ai_analyst_brief.png) | AI Analyst Brief appears as advisory context and keeps deterministic boundaries visible. |
-| [04_evidence_gap_analyzer.png](docs/screenshots/04_evidence_gap_analyzer.png) | Evidence Gap separates confirmed facts from missing evidence and unsafe assumptions. |
-| [05_knowledge_qa_rag.png](docs/screenshots/05_knowledge_qa_rag.png) | Knowledge Q&A / RAG is presented as defensive advisory context. |
-| [09_http2_resource_exhaustion_demo.png](docs/screenshots/09_http2_resource_exhaustion_demo.png) | HTTP/2 Resource Exhaustion is represented as a safe synthetic incident summary, not traffic generation. |
+| [01_console_home.png](docs/screenshots/en/01_console_home.png) | The Streamlit console is the main demo UI, with four scenario cards and visible safety framing. |
+| [03_ai_analyst_brief.png](docs/screenshots/en/03_ai_analyst_brief.png) | AI Analyst Brief appears as advisory context and keeps deterministic boundaries visible. |
+| [04_evidence_gap_analyzer.png](docs/screenshots/en/04_evidence_gap_analyzer.png) | Evidence Gap separates confirmed facts from missing evidence and unsafe assumptions. |
+| [05_knowledge_qa_rag.png](docs/screenshots/en/05_knowledge_qa_rag.png) | Knowledge Q&A / RAG is presented as defensive advisory context. |
+| [09_http2_resource_exhaustion_demo.png](docs/screenshots/en/09_http2_resource_exhaustion_demo.png) | HTTP/2 Resource Exhaustion is represented as a safe synthetic incident summary, not traffic generation. |
 
 ## Limitations
 
