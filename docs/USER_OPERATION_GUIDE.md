@@ -1,103 +1,136 @@
 # User Operation Guide
 
-## Purpose
+This guide covers setup, launch, operating modes, and troubleshooting. For a step-by-step UI demo path, use [UI_WALKTHROUGH.md](UI_WALKTHROUGH.md).
 
-This guide explains how to run the Sentinel Project Streamlit analyst console and how to interpret each major panel. The console is the primary demo UI for reviewers, professors, and first-time users.
+## Environment Assumptions
 
-## UI Entry Point
+Recommended local environment:
 
-```text
-ui/streamlit_app.py
-```
+- Windows PowerShell or a compatible shell;
+- Python virtual environment;
+- dependencies installed from requirements.txt;
+- optional local AI/RAG services only when testing Full AI-assisted or Knowledge Q&A paths.
 
-Launch command:
+The project can demonstrate the primary workflow in Fast deterministic mode without relying on optional LLM/RAG warm-up.
 
-```powershell
+## Install and Activate
+
+~~~powershell
+git clone https://github.com/jasonwang1211/security-ai-agent.git
+cd security-ai-agent
+python -m venv venv
+.\venv\Scripts\Activate.ps1
+pip install -r requirements.txt
+~~~
+
+## Streamlit Launch
+
+~~~powershell
 python -m streamlit run ui/streamlit_app.py --server.fileWatcherType none
-```
+~~~
 
-The UI is a local demo console. It does not perform real firewall, WAF, EDR, account, cloud, SIEM, or SOAR actions.
+Use --server.fileWatcherType none if the Streamlit file watcher causes slow startup or noisy reload behavior.
 
-## Recommended Professor Demo Flow
+## CLI Launch
 
-1. Start the Streamlit console.
-2. Select Fast deterministic mode.
-3. Load the Command Injection demo.
-4. Click Run input.
-5. Point out attack type, Risk Level, simulated Decision, and rule ID.
-6. Open AI Analyst Brief and explain that it is advisory context only.
-7. Open Evidence Gap Analyzer and show confirmed facts vs missing evidence.
-8. Use Knowledge Q&A / RAG for a defensive question such as HTTP/2 DoS or CVE context.
-9. Review Approved Similar Cases and Relationship Graph.
-10. Review Case Draft and Markdown Export.
-11. Load the HTTP/2 Resource Exhaustion safe demo and point out that no traffic is generated.
+~~~powershell
+python app.py
+~~~
 
-## Major Panels and Tabs
+CLI mode is useful for direct input testing. The Streamlit console is the recommended public demo surface.
 
-### Input and Scenario Loader
+## Analysis Modes
 
-The input panel controls language, analysis mode, and demo scenarios. Scenario cards are safe presets for review. Loading a scenario only fills the input area or context; it does not execute real traffic or enforcement.
+### Fast Deterministic Mode
 
-### Deterministic Result
+Use this for the main demo.
 
-After Run input, the console displays the active context, attack classification, Risk Level, simulated Decision, and rule or evidence summary. This is the authority path.
+Expected behavior:
 
-### AI Analyst Brief
+- rule-based detection runs;
+- Risk Level and Decision are deterministic;
+- BLOCK / MONITOR / ALLOW are simulated;
+- optional AI/RAG explanation warm-up is skipped;
+- startup is faster after the v2.8 Lazy RAG refactor.
 
-AI Analyst Brief summarizes what happened, why it matters, the deterministic verdict, advisory summary, evidence gap summary, recommended next steps, and unsafe assumptions. It is advisory only and does not override Risk Level or Decision.
+### Full AI-Assisted Mode
 
-### Evidence Gap Analyzer
+Use this only when optional AI/RAG services are available and you want to demonstrate the extended explanation path.
 
-Evidence Gap Analyzer separates confirmed facts from missing evidence. It helps reviewers avoid unsafe conclusions such as assuming command execution, account compromise, or successful exploitation from a single rule match.
+Expected behavior:
 
-### Knowledge Q&A / RAG
+- deterministic detection remains authoritative;
+- AI/RAG output is advisory only;
+- first run can be slower while local models or retrieval dependencies warm up;
+- unavailable AI/RAG components should not change the deterministic result.
 
-Knowledge Q&A / RAG answers defensive security questions from approved knowledge context. It is useful for HTTP/2 Resource Exhaustion, CVE vs CVSS terminology, mitigation concepts, and analyst triage framing. It does not provide exploit steps, PoC instructions, or traffic generation guidance.
+## Lazy RAG Startup Behavior
 
-### Approved Similar Cases
+v2.8 keeps heavy RAG and embedding-related dependencies out of the fastest deterministic startup path. Knowledge Q&A and Full AI-assisted features may initialize RAG-related components only when those paths are used.
 
-Approved Similar Cases retrieves curated seed cases for comparison. Similarity reasons and differences are deterministic. Historical cases are advisory references only and do not prove the current event.
+This design improves demo startup while preserving the same safety boundary.
 
-### Relationship Graph
+## If RAG / Ollama / Chroma / Embedding Is Unavailable
 
-Relationship Graph presents event, rule, risk, decision, and approved-case context. It is a visual investigation aid, not graph-based detection authority.
+Expected safe behavior:
 
-### Case Draft / Export
+- deterministic analysis should still work;
+- Risk Level and Decision should not change;
+- advisory panels should degrade gracefully or show that optional context is unavailable;
+- no fallback should claim proof of exploitation or perform enforcement.
 
-Case Draft and Markdown Export prepare report material for human review. Drafts and exports are not operational actions and are not automatically promoted to live knowledge.
+Suggested checks:
 
-## Common Demo Checks
+1. Confirm Fast deterministic mode works first.
+2. Confirm the input is a supported demo scenario.
+3. Confirm optional local AI/RAG services are running only if you intend to use them.
+4. Treat unavailable RAG/LLM output as a demo environment issue, not a detection failure.
 
-| Check | Expected result |
+## If Streamlit Is Slow or Reloads Repeatedly
+
+Use:
+
+~~~powershell
+python -m streamlit run ui/streamlit_app.py --server.fileWatcherType none
+~~~
+
+Also check:
+
+- the virtual environment is active;
+- dependencies are installed;
+- no stale Streamlit process is occupying the expected port;
+- the browser is pointed at the URL printed by Streamlit.
+
+## Pre-Demo Checklist
+
+Before a live demo:
+
+- open the Streamlit console;
+- set Interface Language as needed;
+- select Fast deterministic mode for the primary path;
+- load Command Injection Demo once;
+- verify Risk Level HIGH and Decision BLOCK appear as simulated labels;
+- click Find Similar Cases and confirm approved cases appear;
+- check AI Analyst Brief and Evidence Gap Analyzer;
+- load HTTP/2 Resource Exhaustion Suspicion and confirm the old active context clears;
+- keep the safety boundary visible.
+
+## Common Problems and Expected Behavior
+
+| Situation | Expected behavior |
 |---|---|
-| Command Injection demo | Command Injection, HIGH, simulated BLOCK. |
-| Authentication incident demo | Possible Account Compromise, HIGH, simulated MONITOR, with no claim of proven compromise. |
-| HTTP/2 Resource Exhaustion safe demo | HTTP/2 Resource Exhaustion Suspicion, MEDIUM, simulated MONITOR, with no traffic generation. |
-| AI Analyst Brief | Advisory wording and no final AI verdict. |
-| Evidence Gap Analyzer | Missing evidence and unsafe assumptions remain visible. |
-| Similar Cases / Graph | Context appears only after relevant current context exists. |
+| Optional RAG/LLM is unavailable | Deterministic analysis still works; advisory context may be unavailable. |
+| Similar cases not requested yet | Similar-case panel may show no approved similar cases until the button is clicked. |
+| HTTP/2 scenario loaded but not run | Textarea contains synthetic input; active context should remain empty/pending. |
+| Full AI-assisted first run is slow | Local AI/RAG warm-up can take time. |
+| BLOCK appears in UI | It is simulated only; no real enforcement occurs. |
 
-## Troubleshooting
-
-- If Streamlit does not start, confirm that the virtual environment is active and Streamlit is installed.
-- If Knowledge Q&A / RAG is unavailable, confirm that local RAG dependencies and indexes are available in your environment.
-- If screenshot paths do not render on GitHub, confirm that files still exist under `docs/screenshots/`.
-- If a result looks stale, clear context and run the scenario again.
-- If local LLM support is unavailable, use Fast deterministic mode for the core demo.
-
-## Safety Reminder
+## Safety Reminders
 
 - Rule-Based Detector is the detection authority.
 - Risk Level / Decision are deterministic.
-- BLOCK / MONITOR / ALLOW are simulated.
-- RAG / LLM / AI Analyst Brief / Evidence Gap are advisory only.
+- BLOCK / MONITOR / ALLOW are simulated decisions only.
+- RAG / LLM / AI Analyst Brief / Evidence Gap Analyzer / Similar Cases / Relationship Graph provide advisory context only.
 - No real firewall / WAF / EDR / account / cloud / SIEM / SOAR action is performed.
-- No exploit / PoC / traffic generation is provided.
+- No exploit code, PoC generation, traffic generation, or offensive automation is provided.
 - Human review is required.
-
-## Related Documentation
-
-- [UI walkthrough](UI_WALKTHROUGH.md)
-- [Screenshot gallery](screenshots/README.md)
-- [Test report](TEST_REPORT.md)
-- [v2.8 release gate](v2.8_release_gate.md)
