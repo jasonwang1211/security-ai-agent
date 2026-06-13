@@ -2,7 +2,7 @@
 
 ## Abstract
 
-Sentinel Project is an AI-assisted blue-team security triage prototype. It demonstrates a safe architecture for adding AI and retrieval-assisted context to a SOC-style workflow while preserving deterministic detection authority.
+Sentinel Project is an AI-assisted blue-team security triage prototype. It separates deterministic security decisions from advisory AI/RAG components inside a SOC-style workflow, so supported scenarios can be reviewed, tested, and explained without giving AI final authority.
 
 The system uses a Rule-Based Detector and deterministic policy logic to classify supported security inputs, assign Risk Level, and produce simulated BLOCK / MONITOR / ALLOW decisions. AI/RAG features such as AI Analyst Brief, Evidence Gap Analyzer, Knowledge Q&A, Similar Cases, and Relationship Graph provide analyst context only. They do not override the current event's Risk Level or Decision.
 
@@ -10,7 +10,7 @@ The system uses a Rule-Based Detector and deterministic policy logic to classify
 
 Security triage requires speed, consistency, and clear evidence. AI tools can help summarize findings and surface context, but they become unsafe if they are treated as final detection authority or allowed to trigger real operational action.
 
-The project addresses this problem by separating deterministic security authority from AI advisory support. It shows how an analyst-facing UI can make this boundary visible during a demo.
+The project addresses this problem by separating deterministic security authority from AI advisory support. The analyst-facing UI makes that boundary visible during review: the verdict path stays deterministic, while AI/RAG panels explain context and gaps.
 
 ## Motivation
 
@@ -20,7 +20,7 @@ Sentinel Project intentionally keeps the final triage path small, reproducible, 
 
 ## Requirements / Scope
 
-The project demonstrates:
+The current prototype includes:
 
 - deterministic classification for supported payload and incident scenarios;
 - deterministic Risk Level and Decision logic;
@@ -39,7 +39,7 @@ Out of scope:
 ## Design Principles
 
 1. Keep security authority deterministic and reviewable.
-2. Make AI value visible without granting AI unsafe authority.
+2. Use AI for summaries, retrieval context, and evidence framing without granting unsafe authority.
 3. Keep demo scenarios defensive and synthetic.
 4. Separate active event facts from historical or advisory context.
 5. Require human review before any operational use outside the demo.
@@ -82,7 +82,7 @@ User input / demo scenario
 
 The authority path ends at deterministic classification, Risk Level, and simulated Decision. Advisory layers can explain, compare, and document, but they cannot override the authority path.
 
-## Module Design
+## Core Modules
 
 | Module area | Responsibility | Safety boundary |
 |---|---|---|
@@ -157,4 +157,4 @@ Future work should preserve the deterministic authority boundary while improving
 
 ## Conclusion
 
-Sentinel Project demonstrates a practical pattern for AI-assisted security triage: deterministic detection and policy remain authoritative, while AI/RAG components provide advisory context for human analysts. This design makes AI useful in the workflow without making it the final judge or an autonomous enforcement mechanism.
+Sentinel Project implements a practical pattern for AI-assisted security triage: deterministic detection and policy remain authoritative, while AI/RAG components provide advisory context for human analysts. The result is a reviewable workflow where AI reduces analyst reading effort without becoming the final judge or an autonomous enforcement mechanism.

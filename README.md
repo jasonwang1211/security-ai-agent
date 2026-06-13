@@ -1,8 +1,8 @@
 # Sentinel Project - AI-Assisted Blue-Team Security Triage
 
-Sentinel Project is an AI-assisted blue-team security triage prototype. It demonstrates how a SOC-style analyst console can combine rule-based detection, deterministic Risk Level / Decision logic, simulated response decisions, and advisory AI/RAG context without giving AI final security authority.
+Sentinel Project is an AI-assisted blue-team security triage prototype. It implements a SOC-style Streamlit analyst console where supported inputs are classified by rule-based logic, assigned deterministic Risk Level / Decision values, and enriched with optional AI/RAG advisory context. The AI features are visible in the workflow, but they do not own the verdict path.
 
-The project is designed for review, teaching, and portfolio demonstration. It is not a production IDS/IPS, not a red-team tool, and not an autonomous response system.
+The repository is written for project review, demo walkthroughs, and portfolio discussion. It is not a production IDS/IPS, not a red-team tool, and not an autonomous response system.
 
 ## Screenshot Showcase
 

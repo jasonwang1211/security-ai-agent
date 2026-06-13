@@ -1,35 +1,41 @@
 # Roadmap
 
-Current baseline: v2.8 demo-ready.
+## Current Baseline: v2.8 Demo-Ready
 
-Sentinel Project is currently focused on a defensible blue-team demonstration workflow: deterministic detection and decision logic first, advisory AI and retrieval context second.
+Sentinel Project currently includes a Streamlit analyst console, deterministic detection authority, advisory AI/RAG context, bilingual public documentation, and English / Traditional Chinese screenshot sets.
 
-## Completed
+## Short-Term Polish
 
-- v2.7 AI advisory layer and safe HTTP/2 Resource Exhaustion synthetic demo.
-- v2.8 Lazy RAG startup so deterministic analysis can start without loading heavy retrieval dependencies.
-- Language-aware output policy for analyst-facing advisory text.
-- Public documentation cleanup for README, project report, user guide, validation evidence, and screenshot gallery.
-- Screenshot gallery refresh covering the current Streamlit analyst console.
+- Documentation architecture and public navigation cleanup.
+- GitHub release packaging and release-note polish.
+- Repository About, topics, and public-facing metadata.
+- Public review and demo readiness checks.
+- Continued screenshot and documentation consistency checks.
 
-## Next
+## v2.9 Candidate Work
 
-- Public documentation polish and link hygiene.
-- Packaging and release polish for a cleaner GitHub handoff.
-- Additional defensive synthetic scenarios for analyst triage practice.
-- Analyst timeline and event replay views.
-- Read-only graph and approved-case memory improvements.
+- Analyst Timeline / Event Replay for clearer investigation storytelling.
+- More defensive synthetic scenarios.
+- Improved report export formatting.
+- Approved case review workflow.
+- Read-only graph / case memory improvements.
+
+## Long-Term Ideas
+
+- More structured evidence schemas.
+- Additional scenario packs.
+- Optional report PDF export.
+- Structured UI state replay for demos and review sessions.
+- More mature packaging for public releases.
 
 ## Non-Goals
 
-- No real firewall, WAF, EDR, account, cloud, SIEM, or SOAR action.
-- No exploit, proof-of-concept, or traffic generation.
-- No AI final verdict and no AI override of deterministic Risk Level or Decision.
+- No production IDS/IPS claim.
+- No real enforcement.
+- No exploit / PoC / traffic generation.
+- No AI final verdict.
+- No autonomous firewall, WAF, EDR, account, cloud, SIEM, or SOAR action.
 
 ## Safety Boundary
 
-- Rule-Based Detector remains the detection authority.
-- Risk Level and Decision remain deterministic.
-- BLOCK, MONITOR, and ALLOW remain simulated decisions.
-- RAG, LLM, AI Analyst Brief, and Evidence Gap Analyzer provide advisory context only.
-- Human review is required before any operational action.
+Future work must preserve the current authority split: Rule-Based Detector and deterministic policy own the verdict path; AI/RAG, Similar Cases, and Relationship Graph remain advisory context only.
