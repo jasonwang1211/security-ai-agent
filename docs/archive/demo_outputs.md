@@ -1,5 +1,7 @@
 # Demo Outputs / Demo 輸出範例
 
+> **Historical / legacy (through v2.4). 歷史檔案（至 v2.4）。** This file captures older CLI/runtime demo output excerpts (v2.3-v2.4) and is **not** the current v2.8 demo entry point; the test counts and CLI-only framing below are historical and do not reflect the current v2.8 validation summary. For the current demo and validation, see [README](../../README.md), [UI walkthrough](../UI_WALKTHROUGH.md), and [Test report](../TEST_REPORT.md). / 本檔為舊版 CLI/runtime demo 輸出摘錄（v2.3-v2.4），並非目前 v2.8 的 demo 入口；以下測試數與純 CLI 描述皆為歷史內容，不代表目前 v2.8 驗證摘要。目前 demo 與驗證請見 README、UI walkthrough 與 Test report。
+
 This document shows representative output excerpts for the current CLI/runtime demo flows, including the v2.4 deterministic direct-input Agent Skill Orchestration implementation.
 
 本文件整理目前 CLI/runtime demo flows 的代表性輸出摘錄，包含 v2.3 controlled retrieval and structured follow-up 實作。
