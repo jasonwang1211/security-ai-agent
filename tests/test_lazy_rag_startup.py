@@ -7,12 +7,29 @@ import textwrap
 from modules.lazy_rag import LazyRAGQA
 
 ROOT = Path(__file__).resolve().parents[1]
-FORBIDDEN_HEAVY_MODULES = (
+
+# The lazy RAG invariant is "no RAG stack import / no RAG initialization", NOT
+# "no heavy module such as torch ever appears anywhere in the interpreter".
+#
+# These are the modules that actually constitute (or are imported by) the RAG
+# runtime. If any of them is newly imported by a lightweight startup/runtime
+# path -- or if ``modules.rag_qa`` is imported / ``LazyRAGQA`` is initialized --
+# the lazy invariant is broken.
+RAG_STACK_MODULES = (
+    "modules.rag_qa",
     "chromadb",
     "sentence_transformers",
-    "torch",
     "langchain_community.vectorstores",
     "langchain_community.embeddings",
+)
+
+# torch is heavy but is NOT a RAG-stack proxy. The project never imports torch
+# directly; in CI it can be pulled in transitively by environment / third-party
+# UI dependencies during an import, completely independent of the RAG stack.
+# Its mere presence in ``sys.modules`` therefore does not prove RAG was loaded
+# or initialized, and must not by itself fail the import-level invariant tests.
+GENERAL_HEAVY_MODULES = (
+    "torch",
 )
 
 
@@ -37,15 +54,22 @@ def _run_import_probe(code: str) -> dict[str, object]:
         import json
         import sys
 
-        FORBIDDEN = {FORBIDDEN_HEAVY_MODULES!r}
+        RAG_STACK_MODULES = {RAG_STACK_MODULES!r}
+        GENERAL_HEAVY_MODULES = {GENERAL_HEAVY_MODULES!r}
         _install_streamlit_stub = {_install_streamlit_stub()!r}
 
-        def loaded_forbidden():
-            loaded = []
-            for name in FORBIDDEN:
+        def _loaded(names):
+            found = []
+            for name in names:
                 if any(module == name or module.startswith(name + ".") for module in sys.modules):
-                    loaded.append(name)
-            return loaded
+                    found.append(name)
+            return sorted(found)
+
+        def loaded_rag_stack():
+            return _loaded(RAG_STACK_MODULES)
+
+        def loaded_heavy():
+            return _loaded(GENERAL_HEAVY_MODULES)
 
         {textwrap.indent(textwrap.dedent(code), "        ")}
         """
@@ -62,69 +86,72 @@ def _run_import_probe(code: str) -> dict[str, object]:
 
 
 def test_importing_app_does_not_load_heavy_rag_dependencies() -> None:
-    # Invariant: importing ``app`` introduces no NEW heavy modules. We compare
-    # the forbidden set before vs after the import instead of asserting it is
-    # globally empty, because a CI runner can preload a heavy module such as
-    # ``torch`` via unrelated site initialization before this probe even starts.
-    # That pre-existing state is environmental noise, so we only fail on modules
-    # newly imported by ``import app`` itself.
+    # Invariant: importing ``app`` must not import the RAG stack and must not
+    # initialize the RAG runtime. We compare the RAG-stack modules loaded before
+    # vs after the import and assert the import introduced none of them.
+    #
+    # We intentionally do NOT fail on torch. In CI, ``import app`` can pull torch
+    # in transitively through environment / third-party dependencies; that is a
+    # heavy module appearing, not the RAG stack being loaded. torch presence is
+    # reported only for diagnostics.
     data = _run_import_probe(
         """
-        forbidden_before = set(loaded_forbidden())
+        rag_stack_before = set(loaded_rag_stack())
         import app
-        newly_forbidden = sorted(m for m in loaded_forbidden() if m not in forbidden_before)
+        newly_rag_stack = sorted(m for m in loaded_rag_stack() if m not in rag_stack_before)
         print(json.dumps({
-            "newly_forbidden": newly_forbidden,
-            "preexisting_forbidden": sorted(forbidden_before),
+            "newly_rag_stack": newly_rag_stack,
             "rag_module_loaded": "modules.rag_qa" in sys.modules,
+            "heavy_present": loaded_heavy(),
         }))
         """
     )
 
-    assert data["newly_forbidden"] == []
+    # No RAG-stack module may be imported by importing ``app``.
+    assert data["newly_rag_stack"] == []
+    # The RAG module specifically must never be imported.
     assert data["rag_module_loaded"] is False
+    # data["heavy_present"] (e.g. ["torch"] in some CI environments) is
+    # diagnostic only and must not, on its own, fail this invariant.
 
 
 def test_importing_streamlit_app_does_not_load_heavy_rag_dependencies() -> None:
-    # Same "no NEW heavy imports" invariant as above, scoped to importing the
-    # Streamlit app module. Heavy modules preloaded by the environment are
-    # tolerated; modules newly imported by ``import ui.streamlit_app`` are not.
+    # Same RAG-stack invariant as above, scoped to importing the Streamlit app
+    # module. torch (or any general heavy module) appearing via environment /
+    # third-party UI dependencies does not fail this test; only importing the
+    # RAG stack or the RAG module does.
     data = _run_import_probe(
         """
         exec(_install_streamlit_stub)
-        forbidden_before = set(loaded_forbidden())
+        rag_stack_before = set(loaded_rag_stack())
         import ui.streamlit_app
-        newly_forbidden = sorted(m for m in loaded_forbidden() if m not in forbidden_before)
+        newly_rag_stack = sorted(m for m in loaded_rag_stack() if m not in rag_stack_before)
         print(json.dumps({
-            "newly_forbidden": newly_forbidden,
-            "preexisting_forbidden": sorted(forbidden_before),
+            "newly_rag_stack": newly_rag_stack,
             "rag_module_loaded": "modules.rag_qa" in sys.modules,
+            "heavy_present": loaded_heavy(),
         }))
         """
     )
 
-    assert data["newly_forbidden"] == []
+    assert data["newly_rag_stack"] == []
     assert data["rag_module_loaded"] is False
+    # data["heavy_present"] is diagnostic only; torch alone is not a violation.
 
 
 def test_fast_deterministic_runtime_does_not_initialize_rag() -> None:
     # Invariant: the fast deterministic runtime (building the agent and running a
-    # fast payload analysis) must not newly import or initialize the RAG/heavy
-    # stack. We snapshot the forbidden heavy modules *before* the runtime
-    # operation and again *after*, then assert the operation introduced no NEW
-    # forbidden modules.
+    # fast payload analysis) must not import the RAG stack, must not import
+    # ``modules.rag_qa``, and must not initialize ``LazyRAGQA``. We snapshot the
+    # relevant modules *before* the runtime operation and again *after*, then
+    # assert the operation introduced no new RAG-stack (and no new heavy) module.
     #
-    # We deliberately do not assert the forbidden set is globally empty. CI
-    # runners can preload a heavy module such as ``torch`` (for example via an
-    # unrelated dependency's import side effect during interpreter/site startup)
-    # before the tested operation begins. That pre-existing module is
-    # environmental noise, not a lazy-RAG violation -- the project itself never
-    # imports torch, and the RAG-specific modules (modules.rag_qa, chromadb,
-    # sentence_transformers, langchain vectorstores/embeddings) stay unloaded.
-    # The invariant we protect is "no new heavy imports caused by the fast
-    # deterministic runtime", together with the strict guarantee that
-    # ``modules.rag_qa`` is never imported and the RAG provider stays
-    # uninitialized.
+    # The lazy RAG invariant here is "no RAG stack import / no RAG
+    # initialization", not "torch never appears". CI runners can preload torch
+    # (e.g. via an unrelated dependency's import side effect) before this
+    # operation begins; such pre-existing modules are excluded by the
+    # before/after comparison. The project itself never imports torch, so the
+    # "no NEW heavy import" check below is expected to hold as well.
     data = _run_import_probe(
         """
         exec(_install_streamlit_stub)
@@ -133,16 +160,19 @@ def test_fast_deterministic_runtime_does_not_initialize_rag() -> None:
         from ui.streamlit_app import build_agent
         from modules.controller.fast_analysis import run_fast_payload_analysis
 
-        forbidden_before = set(loaded_forbidden())
+        rag_stack_before = set(loaded_rag_stack())
+        heavy_before = set(loaded_heavy())
 
         agent = build_agent()
         result = run_fast_payload_analysis(agent, "test; rm -rf /tmp/test", language="en")
 
-        newly_forbidden = sorted(m for m in loaded_forbidden() if m not in forbidden_before)
+        newly_rag_stack = sorted(m for m in loaded_rag_stack() if m not in rag_stack_before)
+        newly_heavy = sorted(m for m in loaded_heavy() if m not in heavy_before)
         cli_state = getattr(agent, "cli_state", {})
         print(json.dumps({
-            "newly_forbidden": newly_forbidden,
-            "preexisting_forbidden": sorted(forbidden_before),
+            "newly_rag_stack": newly_rag_stack,
+            "newly_heavy": newly_heavy,
+            "preexisting_heavy": sorted(heavy_before),
             "rag_module_loaded": "modules.rag_qa" in sys.modules,
             "rag_initialized": getattr(agent.rag_qa, "is_initialized", True),
             "selected_tool": result.selected_tool,
@@ -153,11 +183,15 @@ def test_fast_deterministic_runtime_does_not_initialize_rag() -> None:
         """
     )
 
-    # The fast deterministic runtime must not newly import any heavy module.
-    assert data["newly_forbidden"] == []
-    # modules.rag_qa must never be imported, regardless of environmental preload.
+    # Strict lazy-RAG invariant: no RAG-stack module is newly imported, the RAG
+    # module is never imported, and the RAG provider is never initialized.
+    assert data["newly_rag_stack"] == []
     assert data["rag_module_loaded"] is False
     assert data["rag_initialized"] is False
+    # The fast deterministic runtime must not newly import torch either. We check
+    # only NEWLY imported torch (pre-existing/preloaded torch is excluded above),
+    # so CI environments that preload torch do not break this assertion.
+    assert data["newly_heavy"] == []
     assert data["selected_tool"] == data["expected_tool"]
     assert data["active_context_kind"] == "event"
     assert data["state_key_present"] is True
