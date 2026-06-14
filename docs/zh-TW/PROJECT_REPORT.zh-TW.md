@@ -1,126 +1,214 @@
-# Sentinel Project 專題報告（繁體中文）
+# Sentinel Project 專題報告：AI 輔助藍隊安全分流系統
 
 ## 摘要
 
-Sentinel Project 是一個 AI 輔助藍隊安全分流系統，設計目標是展示可解釋、可控制、具安全邊界的資安分析流程。系統以 Rule-Based Detector 作為偵測權威，透過 deterministic logic 產生 Risk Level 與 Decision，再由 AI Analyst Brief、Evidence Gap Analyzer、Knowledge Q&A / RAG、Approved Similar Cases 與 Relationship Graph 提供分析師參考。
+Sentinel Project 是一個 AI-assisted blue-team security triage prototype，目標是展示如何在不破壞安全邊界的情況下，把 AI 與 RAG 放進資安分析流程。系統以 Rule-Based Detector 與 deterministic policy 作為偵測與分流權威，再透過 AI Analyst Brief、Evidence Gap Analyzer、Knowledge Q&A / RAG、Approved Similar Cases 與 Relationship Graph 提供分析師參考。
 
-本專題的核心立場是：AI 可以協助整理、解釋與提醒，但不能直接覆蓋偵測結果、風險等級或決策。BLOCK / MONITOR / ALLOW 都是 simulated decisions，不代表真實封鎖、監控或通報動作。
+本專題不讓 AI 直接判斷攻擊是否成立，也不讓 AI 決定 Risk Level 或 Decision。BLOCK / MONITOR / ALLOW 皆為 simulated decisions，不代表真實封鎖、監控部署或 remediation。
 
-## 專題背景與動機
+## 1. 專題背景與動機
 
-資安事件分流需要速度，也需要謹慎。若完全依賴 AI 產生判斷，可能出現 hallucination、不可追溯推論、過度確認攻擊成功，或誤把 advisory context 當成 final verdict 的風險。
+### 1.1 資安分流的問題
 
-本專題因此將 AI 放在 analyst support layer，而不是 decision authority。系統先以可檢查的規則偵測與分類，再用 AI/RAG 類功能補充分析脈絡，例如事件摘要、證據缺口、知識問答、相似案例與圖形關聯。這種架構更適合專題展示，也更符合藍隊工作流程中的安全責任邊界。
+資安事件分流需要快速、可解釋且可重現的判斷。分析師需要知道目前事件屬於哪一類、風險程度為何、哪些證據已確認、還缺少哪些證據，以及下一步應該如何複核。
 
-## 系統架構
+### 1.2 AI 導入資安流程的風險
 
-整體架構可分為五個層次：
+AI 可以協助整理資訊，但如果讓 AI 成為最終裁決者，就可能產生錯誤信心。LLM 可能因 hallucination、prompt sensitivity 或資料不足而過度推論，甚至把可疑事件說成已確認入侵。
 
-- Input layer：接收 payload、log、demo scenario 或 knowledge question。
-- Detection layer：以 Rule-Based Detector 判斷攻擊類型與擷取證據。
-- Decision layer：用 deterministic logic 產生 Risk Level / Decision。
-- Advisory layer：產生 AI Analyst Brief、Evidence Gap、RAG answer、Similar Cases 與 Graph context。
-- Presentation layer：透過 Streamlit console 呈現互動式 demo 與報告內容。
+### 1.3 本專題目標
 
-核心流程是：使用者輸入 → Rule-Based Detector → 攻擊分類與證據擷取 → deterministic Risk Level → deterministic Decision → AI / RAG advisory context → 報告、草稿與匯出。
+本專題實作一種安全的混合架構：deterministic detection and policy 保留權威，AI/RAG 只提供 advisory context。AI 被用來整理摘要、提示證據缺口與查詢防禦知識，但不直接參與攻擊判斷、風險決策或自動化防護。
 
-## 模組設計
+### 1.4 專題展示重點
 
-### Rule-Based Detector
+- 以 Streamlit 串接可操作的 SOC analyst triage prototype。
+- Rule-Based Detector 作為偵測權威。
+- deterministic Risk Level / Decision。
+- AI/RAG/Similar Cases/Relationship Graph 只作為 advisory layer。
+- safe synthetic demo scenarios，不提供 exploit、PoC 或 traffic generation。
 
-Rule-Based Detector 是偵測權威，負責根據可觀察的輸入特徵判斷事件類型。它不是 LLM prompt，也不是讓 AI 自由推論攻擊結果。
+## 2. 相關概念
 
-### Risk Level / Decision
+### 2.1 Rule-Based Detection
 
-Risk Level 與 Decision 由 deterministic logic 產生。Decision 包含 BLOCK、MONITOR、ALLOW，但在本專題中都是 simulated decisions，只用於展示安全分流流程。
+Rule-Based Detection 使用明確規則與特徵比對來判斷支援的 payload 或 incident pattern。它的優點是可測試、可重現、可追蹤，適合用於專題展示中的 detection authority。
 
-### AI Analyst Brief
+### 2.2 RAG
 
-AI Analyst Brief 整理目前分析結果，說明發生了什麼、為什麼重要、目前 deterministic verdict 是什麼、有哪些建議下一步與不安全假設。它是 advisory context，不是最終裁決。
+RAG 代表 Retrieval-Augmented Generation。它可以從 approved defensive knowledge context 中取回相關內容，協助回答防禦性問題。但 RAG 回答不能證明目前事件已被利用，也不能覆蓋 deterministic verdict。
 
-### Evidence Gap Analyzer
+### 2.3 LLM Advisory
 
-Evidence Gap Analyzer 協助分析師看到目前還缺少哪些佐證，例如 server telemetry、authentication sequence、proxy/CDN 指標、resource usage 或 exploit success evidence。它不會直接宣稱 compromise 或 exploitation confirmed。
+LLM 或 AI advisory layer 可用來摘要、解釋、產生建議檢查項目，但不能作為 Risk Level、Decision 或 real enforcement 的來源。
 
-### Knowledge Q&A / RAG
+### 2.4 SOC Triage
 
-Knowledge Q&A / RAG 用於防禦導向知識問答，例如 CVE 與 CVSS 差異、HTTP/2 DoS 防禦觀念、Resource Exhaustion 證據缺口。回答必須維持 advisory wording，不提供 exploit、PoC 或 traffic generation。
+SOC triage 強調快速分類、風險排序、證據整理與人工複核。本專題用 Streamlit Analyst Console 模擬這個分析流程。
 
-### Approved Similar Cases
+### 2.5 Streamlit UI
 
-Approved Similar Cases 使用 approved seed corpus 進行 read-only comparison。它可以說明相似原因與差異，但歷史案例不能證明目前事件已成功攻擊，也不能覆蓋 Risk Level 或 Decision。
+Streamlit UI 提供一個可操作的 analyst console，包含 demo cards、active context、AI advisory panels、case intelligence、graph context 與 report export。
 
-### Relationship Graph
+## 3. 系統設計
 
-Relationship Graph 是分析師視覺輔助，用來呈現目前事件、證據、案例與關聯資訊。它不是自動化執行工具，也不是 final fact authority。
+### 3.1 整體流程
 
-### Case Draft / Export
+~~~text
+使用者輸入 / demo scenario
+  -> Streamlit Analyst Console 或 CLI
+  -> Rule-Based Detector
+  -> 攻擊或事件分類
+  -> deterministic Risk Level
+  -> simulated Decision
+  -> advisory layers
+     -> AI Analyst Brief
+     -> Evidence Gap Analyzer
+     -> Knowledge Q&A / RAG
+     -> Approved Similar Cases
+     -> Relationship Graph
+  -> Human-reviewed Case Draft / Markdown Export
+~~~
 
-Case Draft 與 Markdown Export 用於整理人類可審閱的報告草稿。這些輸出需要 Human review，不代表自動提報、入庫或執行防禦動作。
+### 3.2 Authority Path
 
-## Demo 功能
+Authority Path 包含 Rule-Based Detector、Risk Level 與 Decision。這條路徑負責目前事件的 deterministic verdict，也是系統中最重要的安全邊界。
 
-目前 v2.8 demo-ready 版本的展示重點包含：
+### 3.3 Advisory Path
 
-- Fast deterministic mode。
-- Full AI-assisted mode。
-- Lazy RAG startup。
-- Language-aware output。
-- AI Analyst Brief。
-- Evidence Gap Analyzer。
-- Knowledge Q&A / RAG。
-- Approved Similar Cases。
-- Relationship Graph。
-- Case Draft 與 Markdown Export。
-- HTTP/2 Resource Exhaustion safe synthetic demo。
+Advisory Path 包含 AI Analyst Brief、Evidence Gap Analyzer、Knowledge Q&A / RAG、Approved Similar Cases 與 Relationship Graph。它們可以說明、比較、整理脈絡，但不能修改 deterministic verdict。
 
-建議展示流程是先使用 Command Injection demo 說明 deterministic detection，再展示 AI Analyst 與 Evidence Gap，接著用 Knowledge Q&A 詢問 HTTP/2 DoS 或 CVE 問題，最後載入 HTTP/2 Resource Exhaustion safe demo 說明系統如何維持安全邊界。
+### 3.4 Human Review Path
 
-## 安全邊界
+Case Draft 與 Markdown Export 產生的是報告素材，不是自動化 remediation。任何真實營運動作都需要 Human review。
 
-本專題明確保留以下安全邊界：
+### 3.5 為什麼不讓 AI 決定攻擊
 
-- 偵測是 Rule-Based Detector，不是 AI 判斷。
-- Risk Level / Decision 是 deterministic。
-- BLOCK / MONITOR / ALLOW 是 simulated。
-- RAG / LLM / AI Analyst Brief / Evidence Gap 只提供 advisory context。
-- 不做真實 firewall / WAF / EDR / account / cloud / SIEM / SOAR 動作。
-- 不提供 exploit / PoC / traffic generation。
-- 需要 Human review。
+AI 可能生成流暢但不可靠的文字。若讓 AI 直接決定攻擊與否，reviewer 很難判斷結果是否可重現。因此本專題保留 Rule-Based Detector 作為偵測權威。
 
-這些限制不是功能不足，而是本專題刻意設計的安全控制：AI 可以協助理解，但不應越權成為最終決策者或執行者。
+### 3.6 為什麼 BLOCK / MONITOR / ALLOW 是 simulated decisions
 
-## 測試與驗證
+BLOCK / MONITOR / ALLOW 用來展示 deterministic policy 的分流結果。它們不代表真實封鎖、監控部署、停用帳號、修改 cloud policy、送出 SIEM/SOAR action 或執行 remediation。
 
-專案目前維持 v2.8 demo-ready 驗證紀錄。正式測試與 release gate 文件記錄了 pytest、ruff、mypy、gitleaks、screenshot refresh 與文件連結檢查等結果。
+## 4. 模組設計
 
-驗證重點包括：
+### 4.1 Rule-Based Detector
 
-- deterministic detection 與 decision behavior。
-- Fast deterministic startup 不載入 heavy RAG dependency。
-- RAG / LLM / AI advisory output 不覆蓋 final verdict。
-- Evidence Gap 與 Similar Cases 不宣稱未證實的 compromise。
-- HTTP/2 safe synthetic demo 不產生攻擊流量。
-- 公開文件與 screenshot gallery 可供 GitHub 瀏覽。
+負責判斷支援的 payload / incident pattern，例如 Command Injection、possible account compromise sequence、HTTP/2 Resource Exhaustion Suspicion。
 
-## 限制
+### 4.2 Risk Level / Decision
 
-Sentinel Project 不是 production IDS / IPS，也不是 SOC 自動化平台。它不會連接真實 firewall、WAF、EDR、account、cloud、SIEM 或 SOAR，也不會執行封鎖、停權、通報或監控部署。
+根據 deterministic policy 產生 Risk Level 與 simulated Decision。這些輸出不依賴 LLM。
 
-此外，本專題不提供 exploit、PoC、traffic generation，也不把 CVE 情報直接視為資產已被利用的證明。所有分析都需要 Human review。
+### 4.3 AI Analyst Brief
 
-## 未來工作
+將目前事件整理成分析師容易閱讀的摘要，包含 what happened、why it matters、deterministic verdict context、next steps 與 unsafe assumptions。
 
-後續可以延伸的方向包括：
+### 4.4 Evidence Gap Analyzer
+
+列出 confirmed facts、missing evidence、recommended checks 與 unsafe assumptions。它協助分析師避免把可疑事件過度宣稱成已確認攻擊。
+
+### 4.5 Knowledge Q&A / RAG
+
+回答防禦導向知識問題，例如 HTTP/2 DoS、CVE、Resource Exhaustion。它不提供 exploit、PoC 或 traffic generation。
+
+### 4.6 Approved Similar Cases
+
+讀取 manually curated approved seed cases，提供 deterministic similarity reasons、key differences 與 advisory boundary。歷史案例不能證明目前事件。
+
+### 4.7 Relationship Graph
+
+以視覺方式呈現目前事件、規則、風險、決策與 approved cases 的關聯。Graph 是 explanatory only，不是 graph-based detection。
+
+### 4.8 Case Draft / Markdown Export
+
+提供 human-reviewed report material。Draft 與 Export 不能被視為 live remediation proof。
+
+### 4.9 Streamlit Analyst Console
+
+整合 scenario launcher、mode selector、active context、analysis report、AI advisory panels、case intelligence、graph context、case draft 與 markdown export。
+
+## 5. Demo 情境
+
+### 5.1 Command Injection Demo
+
+輸入 payload text，預期分類為 Command Injection，Risk Level 為 HIGH，simulated Decision 為 BLOCK。展示 rule-based payload detection、rule evidence 與 evidence gap。
+
+### 5.2 Authentication Incident Demo
+
+使用 authentication log path 或 synthetic log content，展示多次登入失敗後成功登入的可疑序列。系統可標示 Possible Account Compromise，但不宣稱已確認帳號被盜用。
+
+### 5.3 HTTP/2 Resource Exhaustion Safe Demo
+
+使用 safe synthetic incident summary 展示 resource exhaustion triage。此情境不產生攻擊流量，不提供 exploit 或 PoC，也不宣稱真實 enforcement。
+
+### 5.4 UI 截圖導覽
+
+英文 UI 截圖保留於 docs/screenshots/en/，繁中 UI 截圖保留於 docs/screenshots/zh-TW/。公開文件透過 screenshot gallery 呈現主要功能區塊。
+
+## 6. 測試與驗證
+
+### 6.1 驗證範圍
+
+驗證重點包含 deterministic behavior、safety boundary、UI helper behavior、RAG control、language-aware output、documentation links 與 release gate。
+
+### 6.2 pytest
+
+最近一次記錄的 v2.8 release-gate validation summary 顯示 pytest：1168 passed。
+
+### 6.3 ruff / mypy
+
+最近一次記錄的 release-gate summary 顯示 ruff 與 mypy passed。
+
+### 6.4 gitleaks
+
+最近一次記錄的 release-gate summary 顯示 gitleaks passed，並使用 .gitleaksignore 處理 false-positive safety-boundary wording。
+
+### 6.5 Screenshot refresh
+
+英文與繁中 UI screenshot sets 已分離，避免英文 README 使用繁中 UI 截圖造成視覺不一致。
+
+### 6.6 Safety Boundary 驗證
+
+測試與文件皆需保留：AI/RAG advisory only、simulated decisions、no real enforcement、no exploit / PoC / traffic generation、Human review required。
+
+## 7. 與其他做法比較
+
+### 7.1 Rule-based-only 的限制
+
+只使用 rule-based-only 的系統雖然穩定，但展示上較難呈現分析師需要的脈絡、證據缺口、知識查詢與報告輔助。
+
+### 7.2 AI-only 的風險
+
+只使用 AI-only 的系統雖然容易產生流暢說明，但不適合承擔偵測與決策權威，因為結果可能不可重現，也可能缺乏證據約束。
+
+### 7.3 本專題的混合架構
+
+Sentinel Project 採用 deterministic first, AI advisory second。Rule-Based Detector and deterministic policy 負責 authority path，AI/RAG/Similar Cases/Relationship Graph 負責 advisory support。
+
+## 8. 專題貢獻
+
+本專題的主要貢獻如下：
+
+- 完成一個以 Streamlit 為主要介面的 blue-team triage prototype，可從輸入、偵測結果、風險等級、決策到報告輸出一路追蹤。
+- 將偵測與決策權威限制在 Rule-Based Detector 與 deterministic policy，避免 LLM 直接影響 final verdict。
+- 實作 AI Analyst Brief 與 Evidence Gap Analyzer，讓輸出不只給結論，也標示缺少哪些證據與哪些假設不應過度延伸。
+- 將 RAG、Approved Similar Cases、Relationship Graph 設計成 read-only / advisory context，提供防禦知識、相似案例與關聯脈絡，但不覆蓋 deterministic verdict。
+- 使用 safe synthetic scenarios 呈現 Command Injection、authentication incident 與 HTTP/2 Resource Exhaustion Suspicion，不產生攻擊流量、不提供 exploit 或 PoC。
+- 整理英文與繁體中文公開文件、截圖與操作導覽，讓此 repo 可作為個人 security engineering portfolio 與後續功能延伸的基礎。
+
+## 9. 限制
+
+本專題支援的是 bounded demo scenarios，不代表完整威脅偵測產品。它不執行真實封鎖、不產生攻擊流量、不提供 exploit，也不取代實際 SOC、SIEM、SOAR、EDR 或 incident response approval。
+
+## 10. 未來工作
 
 - 增加更多 defensive synthetic scenarios。
 - 建立 analyst timeline 與 event replay。
 - 強化 read-only Relationship Graph 與 approved-case memory。
-- 改善 packaging、release polish 與公開文件結構。
-- 擴充報告審核與匯出流程。
+- 改善 Markdown export / report packaging。
+- 持續整理公開文件、截圖與 release materials。
 
-## 結論
+## 11. 結論
 
-Sentinel Project 展示了一種較安全的 AI-assisted security triage 架構：偵測與決策保持 deterministic，AI 與 RAG 則作為 analyst advisory layer。這讓系統可以展示 AI 的輔助價值，同時避免讓 AI 直接成為不可控的最終裁決者。
-
-對專題展示而言，這個設計能清楚說明系統流程、展示可視化分析能力，也能回答資安場景中最重要的問題：哪些是確定的？哪些只是建議？哪些必須交由人類審查？
+Sentinel Project 實作了一種安全的 AI-assisted security triage 架構。它保留 deterministic detection and policy 作為權威，並把 AI/RAG 放在 analyst advisory layer。這個設計讓 AI 可以協助閱讀、整理與複核，同時避免讓 AI 成為最終裁決者、攻擊工具或真實自動化防護系統。

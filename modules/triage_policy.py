@@ -8,6 +8,7 @@ class TriagePolicy:
         "Path Traversal": "HIGH",
         "Command Injection": "HIGH",
         "XSS": "MEDIUM",
+        "HTTP/2 Resource Exhaustion Suspicion": "MEDIUM",
     }
     RISK_PRIORITY = {
         "LOW": 1,

@@ -1,8 +1,10 @@
 # Architecture Debt Engineering Journal
 
-Current milestone: v2.4 released as `v2.4.0`
-Current baseline: tag `v2.4.0`
-Last full quality gate: v2.4 `693 passed in 14.72s`; Ruff, Mypy across 108 source files, diff-check, and Gitleaks passed across 171 commits scanned
+> Historical engineering journal. The milestone, baseline, and quality-gate figures below are recorded as of v2.4 and are not the current state. For the current v2.8 validation summary see [docs/TEST_REPORT.md](docs/TEST_REPORT.md) and [docs/v2.8_release_gate.md](docs/v2.8_release_gate.md).
+
+Historical milestone (as of v2.4): released as `v2.4.0`
+Historical baseline: tag `v2.4.0`
+Last recorded full quality gate (v2.4): `693 passed in 14.72s`; Ruff, Mypy across 108 source files, diff-check, and Gitleaks passed across 171 commits scanned
 
 This document tracks structural debt cleanup as an engineering discipline: reducing module sprawl, consolidating thin wrappers, and preserving deterministic safety boundaries before adding more agentic behavior.
 
@@ -308,7 +310,7 @@ v2.4 orchestrates existing v2.3 runtime capabilities. It does not replace detect
 - `python -m mypy app.py modules tests` -> passed, `108 source files`
 - `git diff --check` -> passed
 - Gitleaks -> passed, no leaks found across 171 commits scanned using `gitleaks detect --source . --verbose --redact`
-- Pytest writable basetemp: `C:\Users\jason\Desktop\sentinel_pytest_runs\v2_4_gate_02389f227c3b468c9aca3b7b774e7190`
+- Pytest used a dedicated writable basetemp outside the repository to avoid local temp/cache permission issues (local path intentionally omitted).
 
 ## v2.2 Focused Validation
 

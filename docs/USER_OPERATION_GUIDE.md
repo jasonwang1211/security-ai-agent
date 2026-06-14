@@ -1,127 +1,136 @@
 # User Operation Guide
 
-This guide explains how to start Sentinel Project, run the main demo flow, read the output, and understand the safety boundaries.
+This guide covers setup, launch, operating modes, and troubleshooting. For a step-by-step UI demo path, use [UI_WALKTHROUGH.md](UI_WALKTHROUGH.md).
 
-## 1. Project Overview
+## Environment Assumptions
 
-Sentinel Project is a defensive SOC triage prototype. It combines Rule-Based Detector output, deterministic Risk Level / Decision logic, AI Analyst Brief, Evidence Gap Analyzer, Knowledge Q&A / RAG, Approved Similar Cases, Relationship Graph, Case Draft, and Markdown Export.
+Recommended local environment:
 
-## 2. What The System Does
+- Windows PowerShell or a compatible shell;
+- Python virtual environment;
+- dependencies installed from requirements.txt;
+- optional local AI/RAG services only when testing Full AI-assisted or Knowledge Q&A paths.
 
-The system can:
+The project can demonstrate the primary workflow in Fast deterministic mode without relying on optional LLM/RAG warm-up.
 
-- Analyze suspicious payloads or demo incident inputs.
-- Display attack classification, Risk Level, and Decision.
-- Provide AI Analyst Brief and Evidence Gap Analyzer output.
-- Answer defensive Knowledge Q&A / RAG questions.
-- Show Approved Similar Cases and Relationship Graph context.
-- Generate human-reviewed Case Draft and Markdown Export content.
+## Install and Activate
 
-## 3. What The System Does Not Do
+~~~powershell
+git clone https://github.com/jasonwang1211/security-ai-agent.git
+cd security-ai-agent
+python -m venv venv
+.\venv\Scripts\Activate.ps1
+pip install -r requirements.txt
+~~~
 
-The system does not:
+## Streamlit Launch
 
-- Attack real systems.
-- Generate exploit or proof-of-concept steps.
-- Generate attack traffic.
-- Modify firewall, WAF, EDR, account, cloud, SIEM, or SOAR state.
-- Allow RAG, LLM output, historical cases, or graph context to override the deterministic verdict.
+~~~powershell
+python -m streamlit run ui/streamlit_app.py --server.fileWatcherType none
+~~~
 
-## 4. Safety Boundary
+Use --server.fileWatcherType none if the Streamlit file watcher causes slow startup or noisy reload behavior.
+
+## CLI Launch
+
+~~~powershell
+python app.py
+~~~
+
+CLI mode is useful for direct input testing. The Streamlit console is the recommended public demo surface.
+
+## Analysis Modes
+
+### Fast Deterministic Mode
+
+Use this for the main demo.
+
+Expected behavior:
+
+- rule-based detection runs;
+- Risk Level and Decision are deterministic;
+- BLOCK / MONITOR / ALLOW are simulated;
+- optional AI/RAG explanation warm-up is skipped;
+- startup is faster after the v2.8 Lazy RAG refactor.
+
+### Full AI-Assisted Mode
+
+Use this only when optional AI/RAG services are available and you want to demonstrate the extended explanation path.
+
+Expected behavior:
+
+- deterministic detection remains authoritative;
+- AI/RAG output is advisory only;
+- first run can be slower while local models or retrieval dependencies warm up;
+- unavailable AI/RAG components should not change the deterministic result.
+
+## Lazy RAG Startup Behavior
+
+v2.8 keeps heavy RAG and embedding-related dependencies out of the fastest deterministic startup path. Knowledge Q&A and Full AI-assisted features may initialize RAG-related components only when those paths are used.
+
+This design improves demo startup while preserving the same safety boundary.
+
+## If RAG / Ollama / Chroma / Embedding Is Unavailable
+
+Expected safe behavior:
+
+- deterministic analysis should still work;
+- Risk Level and Decision should not change;
+- advisory panels should degrade gracefully or show that optional context is unavailable;
+- no fallback should claim proof of exploitation or perform enforcement.
+
+Suggested checks:
+
+1. Confirm Fast deterministic mode works first.
+2. Confirm the input is a supported demo scenario.
+3. Confirm optional local AI/RAG services are running only if you intend to use them.
+4. Treat unavailable RAG/LLM output as a demo environment issue, not a detection failure.
+
+## If Streamlit Is Slow or Reloads Repeatedly
+
+Use:
+
+~~~powershell
+python -m streamlit run ui/streamlit_app.py --server.fileWatcherType none
+~~~
+
+Also check:
+
+- the virtual environment is active;
+- dependencies are installed;
+- no stale Streamlit process is occupying the expected port;
+- the browser is pointed at the URL printed by Streamlit.
+
+## Pre-Demo Checklist
+
+Before a live demo:
+
+- open the Streamlit console;
+- set Interface Language as needed;
+- select Fast deterministic mode for the primary path;
+- load Command Injection Demo once;
+- verify Risk Level HIGH and Decision BLOCK appear as simulated labels;
+- click Find Similar Cases and confirm approved cases appear;
+- check AI Analyst Brief and Evidence Gap Analyzer;
+- load HTTP/2 Resource Exhaustion Suspicion and confirm the old active context clears;
+- keep the safety boundary visible.
+
+## Common Problems and Expected Behavior
+
+| Situation | Expected behavior |
+|---|---|
+| Optional RAG/LLM is unavailable | Deterministic analysis still works; advisory context may be unavailable. |
+| Similar cases not requested yet | Similar-case panel may show no approved similar cases until the button is clicked. |
+| HTTP/2 scenario loaded but not run | Textarea contains synthetic input; active context should remain empty/pending. |
+| Full AI-assisted first run is slow | Local AI/RAG warm-up can take time. |
+| BLOCK appears in UI | It is simulated only; no real enforcement occurs. |
+
+## Safety Reminders
 
 - Rule-Based Detector is the detection authority.
-- Risk Level and Decision are deterministic.
-- `BLOCK`, `MONITOR`, and `ALLOW` are simulated.
-- RAG, LLM, AI Analyst Brief, and Evidence Gap provide advisory context only.
-- No real firewall, WAF, EDR, account, cloud, SIEM, or SOAR action is performed.
-- No exploit, proof-of-concept, or traffic generation is provided.
+- Risk Level / Decision are deterministic.
+- BLOCK / MONITOR / ALLOW are simulated decisions only.
+- RAG / LLM / AI Analyst Brief / Evidence Gap Analyzer / Similar Cases / Relationship Graph provide advisory context only.
+- No real firewall / WAF / EDR / account / cloud / SIEM / SOAR action is performed.
+- No exploit code, PoC generation, traffic generation, or offensive automation is provided.
 - Human review is required.
-
-## 5. Requirements
-
-Recommended environment:
-
-- PowerShell or an equivalent shell.
-- Python and a project virtual environment.
-- Streamlit.
-- pytest, ruff, and mypy for validation.
-- A local knowledge index if Knowledge Q&A / RAG is needed.
-
-## 6. Quick Start
-
-```powershell
-git clone <your-repo-url>
-cd sentinel_project
-.\venv\Scripts\Activate.ps1
-python -m streamlit run ui/streamlit_app.py --server.fileWatcherType none
-```
-
-CLI mode:
-
-```powershell
-python app.py
-```
-
-## 7. Recommended Demo Flow
-
-1. Start the Streamlit console.
-2. Select Fast deterministic mode.
-3. Load the Command Injection demo.
-4. Click Run input.
-5. Confirm the deterministic result, such as `Command Injection`, `HIGH`, and simulated `BLOCK`.
-6. Review AI Analyst Brief and Evidence Gap Analyzer.
-7. Review Knowledge Q&A / RAG.
-8. Review Approved Similar Cases and Relationship Graph.
-9. Review Case Draft and Markdown Export.
-10. Load the safe synthetic HTTP/2 Resource Exhaustion demo and confirm that it is synthetic, advisory, and non-operational.
-
-## 8. Reading The Output
-
-### Risk Level
-
-Risk Level is produced by deterministic policy from the available evidence. It is not an LLM guess.
-
-### Decision
-
-Decision is simulated:
-
-- `BLOCK`: simulated block recommendation.
-- `MONITOR`: simulated monitoring or review recommendation.
-- `ALLOW`: insufficient deterministic evidence to block or monitor.
-
-### AI Analyst Brief
-
-AI Analyst Brief summarizes the current event, deterministic reasoning, evidence gaps, and next review steps. It is advisory context only.
-
-### Evidence Gap Analyzer
-
-Evidence Gap Analyzer helps avoid overclaiming. For example, a payload rule match does not prove successful execution; telemetry, logs, EDR data, or network evidence may still be needed.
-
-### Knowledge Q&A / RAG
-
-Knowledge Q&A answers defensive security questions. Answers do not override Risk Level or Decision.
-
-### Similar Cases / Graph
-
-Similar cases and graph context support comparison and explanation. They do not prove compromise.
-
-## 9. Screenshot Gallery
-
-See [screenshots/README.md](screenshots/README.md) for the current screenshot gallery.
-
-## 10. Validation Evidence
-
-See:
-
-- [TEST_REPORT.md](TEST_REPORT.md)
-- [v2.8_release_gate.md](v2.8_release_gate.md)
-
-## 11. Troubleshooting
-
-- If Streamlit does not start, confirm that the virtual environment is active and Streamlit is installed.
-- If Knowledge Q&A cannot answer, confirm that the local knowledge index exists.
-- If Full AI-assisted mode is slow, use Fast deterministic mode for the primary demo path.
-
-## 12. Final Reminder
-
-Sentinel Project is an academic/demo prototype. It demonstrates safe triage architecture and AI advisory workflow. It is not a production IDS/IPS or autonomous response platform.

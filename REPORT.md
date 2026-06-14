@@ -2,129 +2,159 @@
 
 ## Abstract
 
-Sentinel Project is an AI-assisted blue-team security triage prototype. It uses a Rule-Based Detector and deterministic Risk Level / Decision logic as the security authority, then layers AI Analyst Brief, Evidence Gap Analyzer, Knowledge Q&A / RAG, Approved Similar Cases, Relationship Graph, Case Draft, and Markdown Export on top as analyst support.
+Sentinel Project is an AI-assisted blue-team security triage prototype. It separates deterministic security decisions from advisory AI/RAG components inside a SOC-style workflow, so supported scenarios can be reviewed, tested, and explained without giving AI final authority.
 
-The project demonstrates how AI can improve explanation, investigation, comparison, and reporting without giving AI final decision authority or operational enforcement power.
+The system uses a Rule-Based Detector and deterministic policy logic to classify supported security inputs, assign Risk Level, and produce simulated BLOCK / MONITOR / ALLOW decisions. AI/RAG features such as AI Analyst Brief, Evidence Gap Analyzer, Knowledge Q&A, Similar Cases, and Relationship Graph provide analyst context only. They do not override the current event's Risk Level or Decision.
 
-## Background and Motivation
+## Problem Statement
 
-Security analysts often need to quickly answer several questions: what kind of event is this, how risky is it, what should be reviewed next, and what evidence is still missing. AI and RAG can help summarize context and retrieve defensive knowledge, but they introduce risk if they are allowed to determine attacks, change severity, or trigger response actions.
+Security triage requires speed, consistency, and clear evidence. AI tools can help summarize findings and surface context, but they become unsafe if they are treated as final detection authority or allowed to trigger real operational action.
 
-Sentinel Project therefore uses a safety-first architecture:
+The project addresses this problem by separating deterministic security authority from AI advisory support. The analyst-facing UI makes that boundary visible during review: the verdict path stays deterministic, while AI/RAG panels explain context and gaps.
 
-- Detection and triage remain deterministic.
-- AI/RAG features provide advisory context only.
-- `BLOCK`, `MONITOR`, and `ALLOW` are simulated decisions.
-- Human review is required before operational action.
+## Motivation
+
+Many AI security demos blur the line between explanation and authority. A model may produce fluent text that sounds confident even when evidence is incomplete. In security operations, this can lead to false confidence, premature escalation, or unsafe remediation claims.
+
+Sentinel Project intentionally keeps the final triage path small, reproducible, and auditable. AI is used where it is strongest for a demo: summarization, explanation, evidence-gap framing, defensive knowledge retrieval, and report assistance.
+
+## Requirements / Scope
+
+The current prototype includes:
+
+- deterministic classification for supported payload and incident scenarios;
+- deterministic Risk Level and Decision logic;
+- simulated response decisions only;
+- advisory AI/RAG context for analysts;
+- safe synthetic demo scenarios;
+- documentation and screenshots suitable for public GitHub review.
+
+Out of scope:
+
+- production IDS/IPS enforcement;
+- real firewall, WAF, EDR, account, cloud, SIEM, or SOAR action;
+- exploit code, PoC generation, traffic generation, or offensive automation;
+- AI-controlled final verdicts.
+
+## Design Principles
+
+1. Keep security authority deterministic and reviewable.
+2. Use AI for summaries, retrieval context, and evidence framing without granting unsafe authority.
+3. Keep demo scenarios defensive and synthetic.
+4. Separate active event facts from historical or advisory context.
+5. Require human review before any operational use outside the demo.
+
+## Why Rule-Based Detection Remains Authoritative
+
+The Rule-Based Detector provides reproducible behavior for the supported demo scenarios. Its outputs can be tested, reviewed, and explained through rule IDs and matched evidence. This makes the authority path suitable for a controlled educational demo.
+
+LLM output is intentionally excluded from final attack classification because generative models can hallucinate, overgeneralize, or infer facts that are not present in the input.
+
+## Why AI Is Advisory Only
+
+AI/RAG components help the analyst understand and investigate the deterministic result. They may explain what happened, identify missing evidence, propose review steps, answer defensive questions, or compare approved cases. They must not change the current Risk Level, Decision, live detection facts, graph facts, knowledge corpus, or operational state.
+
+This advisory-only design preserves the safety boundary while still demonstrating practical AI-assisted workflow value.
+
+## Why BLOCK / MONITOR / ALLOW Are Simulated
+
+BLOCK / MONITOR / ALLOW labels communicate a possible triage decision inside the project. They are simulated decisions only. The project does not perform real blocking, monitoring deployment, account action, cloud policy change, SIEM action, SOAR playbook execution, or remediation.
+
+The labels are useful for showing how a blue-team triage workflow can be structured, but they are not proof of real enforcement.
 
 ## System Architecture
 
-```text
+~~~text
 User input / demo scenario
--> Streamlit console or CLI
--> Rule-Based Detector / log parser
--> Attack classification
--> Deterministic Risk Level
--> Deterministic Decision
--> Advisory layers
--> Human-reviewed report / draft / export
-```
+  -> Streamlit analyst console or CLI
+  -> Rule-Based Detector
+  -> Attack / incident classification
+  -> Deterministic Risk Level
+  -> Simulated Decision
+  -> Advisory context
+     -> AI Analyst Brief
+     -> Evidence Gap Analyzer
+     -> Knowledge Q&A / RAG
+     -> Approved Similar Cases
+     -> Relationship Graph
+  -> Human-reviewed Case Draft / Markdown Export
+~~~
 
-The authority path is the rule-based detector, structured incident parsing, risk policy, and decision policy. Advisory layers do not change the current event's Risk Level or Decision.
+The authority path ends at deterministic classification, Risk Level, and simulated Decision. Advisory layers can explain, compare, and document, but they cannot override the authority path.
 
-## Module Design
+## Core Modules
 
-### Rule-Based Detector
+| Module area | Responsibility | Safety boundary |
+|---|---|---|
+| Rule-Based Detector | Classifies supported payload and incident patterns. | Detection authority. |
+| Risk / Decision policy | Computes deterministic Risk Level and simulated Decision. | Final demo verdict path. |
+| Controller / orchestration | Routes explicit commands and deterministic skill flows. | Does not use LLM routing as authority. |
+| AI advisory | Builds AI Analyst Brief and Evidence Gap summaries. | Advisory only; no LLM authority. |
+| RAG / Knowledge Q&A | Retrieves approved defensive knowledge context. | Advisory only; no exploit guidance. |
+| Approved Similar Cases | Loads curated approved seed cases for comparison. | Historical cases do not prove current compromise. |
+| Relationship Graph | Displays read-only relationship context. | Explanatory only; not graph-based detection. |
+| Case Draft / Export | Produces reviewable report material. | Human review required. |
 
-The system detects common payload classes such as Command Injection, SQL Injection, Path Traversal, and XSS using explicit deterministic rules. This makes the result reproducible, reviewable, and testable.
+## Streamlit Analyst Console
 
-### Risk Level and Decision
+The Streamlit console is the primary demo surface. It provides scenario loading, mode selection, active context display, deterministic output, AI advisory panels, case intelligence, graph context, and report export.
 
-Risk Level and Decision are not generated by an LLM. They are computed by deterministic policy and shown in the Security Triage Report.
+For launch and troubleshooting details, use [docs/USER_OPERATION_GUIDE.md](docs/USER_OPERATION_GUIDE.md). For a step-by-step demo path, use [docs/UI_WALKTHROUGH.md](docs/UI_WALKTHROUGH.md).
 
-- `BLOCK`: simulated block recommendation.
-- `MONITOR`: simulated monitoring or analyst-review recommendation.
-- `ALLOW`: insufficient deterministic evidence to block or monitor.
+## Demonstration Scenarios
 
-### AI Analyst Brief
-
-AI Analyst Brief summarizes what happened, why it matters, the deterministic verdict, advisory summary, evidence gap summary, recommended next steps, and unsafe assumptions. It is advisory output and does not override the deterministic verdict.
-
-### Evidence Gap Analyzer
-
-Evidence Gap Analyzer helps analysts identify missing evidence and avoid unsafe assumptions. For example, a rule match for Command Injection does not prove that a command successfully executed; process telemetry, server logs, EDR data, or network evidence may still be needed.
-
-### Knowledge Q&A / RAG
-
-Knowledge Q&A uses RAG to answer defensive security questions. The v2.8 work adds language-aware output policy and Lazy RAG startup so the fast deterministic path does not eagerly load Chroma, embeddings, Torch, or other heavy dependencies.
-
-### Approved Similar Cases
-
-Approved Similar Cases loads manually curated seed cases for comparison. Historical cases are advisory references only. They do not override the current event's Risk Level or Decision and do not prove compromise.
-
-### Relationship Graph
-
-Relationship Graph displays context across the current event, attack type, rule, evidence, risk, decision, and similar cases. It is explanation context, not a graph-based detector.
-
-### Case Draft and Markdown Export
-
-Case Draft and Markdown Export support human-reviewed reporting. Drafts are not automatically promoted into live knowledge and do not represent enforcement actions.
-
-## Demo Capabilities
-
-The current demo-ready flow includes:
-
-- Command Injection deterministic triage.
-- Authentication incident triage.
-- Safe synthetic HTTP/2 Resource Exhaustion scenario.
-- AI Analyst Brief and Evidence Gap Analyzer.
-- Knowledge Q&A / RAG for defensive questions.
-- Approved Similar Cases and Relationship Graph.
-- Case Draft and Markdown Export.
-- Fast deterministic mode and optional Full AI-assisted mode.
-
-The HTTP/2 Resource Exhaustion demo is a synthetic incident summary. It does not generate HTTP/2 traffic, provide exploit material, or claim confirmed exploitation.
-
-## Safety Boundary
-
-All public documentation and UI behavior must preserve this boundary:
-
-- Rule-Based Detector is the detection authority.
-- Risk Level and Decision are deterministic.
-- `BLOCK`, `MONITOR`, and `ALLOW` are simulated.
-- RAG, LLM, AI Analyst Brief, and Evidence Gap provide advisory context only.
-- No real firewall, WAF, EDR, account, cloud, SIEM, or SOAR action is performed.
-- No exploit, proof-of-concept, or traffic generation is provided.
-- Human review is required.
+| Scenario | Input type | Expected classification | Risk Level | Simulated Decision | Demonstrates |
+|---|---|---|---|---|---|
+| Command Injection demo | Payload text | Command Injection | HIGH | BLOCK | Deterministic payload detection, rule evidence, AI advisory panels, evidence gaps. |
+| Authentication incident demo | Authentication log path or synthetic log | Possible Account Compromise | HIGH | MONITOR | Suspicious login sequence review without claiming confirmed compromise. |
+| HTTP/2 Resource Exhaustion safe synthetic demo | Synthetic incident summary | HTTP/2 Resource Exhaustion Suspicion | MEDIUM | MONITOR | Defensive DoS/resource-exhaustion triage without traffic generation. |
+| Optional Full AI-assisted mode | User-selected mode | Depends on input | Deterministic policy remains authoritative | Simulated only | Optional AI/RAG explanation while preserving boundaries. |
 
 ## Testing and Validation
 
-Current release-gate validation summary:
+Last recorded v2.8 release-gate validation summary:
 
-- pytest: `1168 passed`
+- pytest: 1168 passed
 - ruff: passed
 - mypy: passed
-- gitleaks: passed with `.gitleaksignore` false-positive handling
-- screenshot refresh: completed
+- gitleaks: passed with .gitleaksignore false-positive handling
+- screenshot language refresh: completed
 
-Detailed validation evidence is documented in [docs/TEST_REPORT.md](docs/TEST_REPORT.md) and [docs/v2.8_release_gate.md](docs/v2.8_release_gate.md).
+Validation covers deterministic behavior, safety-boundary regressions, UI helper behavior, RAG control, language-aware output, documentation links, and release-gate checks. It does not claim production IDS/IPS effectiveness.
 
-## Limitations
+Supporting materials:
 
-- This is not a production IDS or IPS.
-- It does not replace SIEM, SOAR, EDR, endpoint telemetry, vulnerability management, or incident response approval.
-- RAG answer quality depends on approved knowledge content.
-- Similar Cases are a curated demo corpus, not a production case database.
-- AI does not have final decision authority or operational enforcement authority.
+- [Test report](docs/TEST_REPORT.md)
+- [v2.8 release gate](docs/v2.8_release_gate.md)
+- [Screenshot gallery](docs/screenshots/README.md)
+
+## Safety Boundary
+
+- Rule-Based Detector is the detection authority.
+- Risk Level / Decision are deterministic.
+- BLOCK / MONITOR / ALLOW are simulated decisions only.
+- RAG / LLM / AI Analyst Brief / Evidence Gap Analyzer / Similar Cases / Relationship Graph provide advisory context only.
+- Historical approved cases do not prove current compromise or successful execution.
+- No real firewall / WAF / EDR / account / cloud / SIEM / SOAR action is performed.
+- No exploit code, PoC generation, traffic generation, or offensive automation is provided.
+- Human review is required.
+
+## Limitations and Non-Goals
+
+Sentinel Project is not a production IDS/IPS, not a real blocking engine, not an exploit generator, not a red-team tool, and not an autonomous incident-response system. It does not replace SIEM, SOAR, EDR, vulnerability management, or incident response approval.
+
+The demo supports a bounded set of scenarios. Its purpose is to demonstrate architecture, workflow, and safety boundaries, not broad threat coverage.
 
 ## Future Work
 
-- Separate public documentation, historical release notes, and local demo materials more clearly.
-- Add more defensive synthetic incident scenarios.
-- Improve analyst timeline and event replay workflows.
-- Expand read-only graph and approved-case memory context while preserving advisory boundaries.
-- Improve report export formatting and presentation readiness.
+Future work should preserve the deterministic authority boundary while improving analyst usefulness:
+
+- additional defensive synthetic scenarios;
+- richer analyst timeline and event replay;
+- read-only graph and approved-case memory improvements;
+- report export polish;
+- packaging and release polish for public review.
 
 ## Conclusion
 
-Sentinel Project demonstrates a safe way to add AI/RAG assistance to SOC triage. Deterministic detection and policy remain the safety baseline, while advisory layers improve explanation, evidence review, knowledge lookup, comparison, and reporting.
+Sentinel Project implements a practical pattern for AI-assisted security triage: deterministic detection and policy remain authoritative, while AI/RAG components provide advisory context for human analysts. The result is a reviewable workflow where AI reduces analyst reading effort without becoming the final judge or an autonomous enforcement mechanism.

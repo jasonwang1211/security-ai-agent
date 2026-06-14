@@ -58,6 +58,14 @@ PAYLOAD_SIGNATURES = (
     "$(",
     "| nc",
 )
+# Safe, synthetic event markers used by the demo launcher. These are routed to
+# deterministic payload/event triage (not a question), so the synthetic HTTP/2
+# resource-exhaustion incident summary classifies via the rule-based detector.
+# This is a benign demo marker only -- it is not an attack payload, not a real
+# traffic signature, and generates no traffic.
+SAFE_SYNTHETIC_EVENT_MARKERS = (
+    "event_type=http2_resource_exhaustion_suspicion",
+)
 SECURITY_TOPIC_TERMS = (
     "xss",
     "sql injection",
@@ -300,7 +308,9 @@ def _looks_like_report_followup(text: str) -> bool:
 
 def _looks_like_payload_or_event(text: str) -> bool:
     normalized = text.casefold()
-    return any(signature in normalized for signature in PAYLOAD_SIGNATURES)
+    if any(signature in normalized for signature in PAYLOAD_SIGNATURES):
+        return True
+    return any(marker in normalized for marker in SAFE_SYNTHETIC_EVENT_MARKERS)
 
 
 def _looks_like_security_question(text: str) -> bool:

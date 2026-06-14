@@ -1,0 +1,15 @@
+id: HTTP2-RES-001
+title: HTTP/2 Resource Exhaustion Suspicion (synthetic demo marker)
+attack_type: HTTP/2 Resource Exhaustion Suspicion
+severity: MEDIUM
+confidence: 0.6
+patterns:
+  - "event_type=http2_resource_exhaustion_suspicion"
+match_mode: substring
+case_sensitive: false
+mitre_techniques:
+  - T1499
+references:
+  - knowledge/blue_team/report_explainer/http2_resource_exhaustion.md
+notes: "Synthetic, defensive demo marker only. Matches the safe synthetic HTTP/2 resource-exhaustion incident summary used by the demo launcher. It is not a real network/traffic signature, not an exploit indicator, and generates no traffic. Risk Level / Decision remain deterministic via the triage policy (MEDIUM -> MONITOR)."
+enabled: true
