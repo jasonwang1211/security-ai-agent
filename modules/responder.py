@@ -303,30 +303,20 @@ class Responder:
 
         return "The event contains behavior signals associated with suspicious activity."
 
-    def _derive_llm_suspicious_outcome(self, llm_result):
-        llm_result = llm_result or {}
-        try:
-            confidence = float(llm_result.get("confidence"))
-        except (TypeError, ValueError):
-            confidence = 0.0
+    def _derive_llm_suspicious_outcome(self, llm_result=None):
+        """Return the deterministic official Risk Level / Decision for a behavioral
+        suspicion that did NOT match a rule-based detection.
 
-        try:
-            anomaly_score = float(llm_result.get("anomaly_score"))
-        except (TypeError, ValueError):
-            anomaly_score = 0.0
-
-        llm_status = str(llm_result.get("llm_status") or "FALLBACK").upper()
-        llm_influenced_decision = llm_status != "FALLBACK" and confidence >= 0.85
-        anomaly_triggered = anomaly_score >= 0.8
-        final_risk = llm_result.get("recommended_risk", "MEDIUM") if llm_influenced_decision else "MEDIUM"
-        final_decision = llm_result.get("recommended_action", "MONITOR") if llm_influenced_decision else "MONITOR"
-
-        if anomaly_triggered:
-            final_risk = "HIGH"
-            if final_decision == "ALLOW":
-                final_decision = "MONITOR"
-
-        return final_risk, final_decision
+        The official verdict is fixed by conservative policy (MEDIUM -> MONITOR for
+        human review) and is never taken from the LLM. The LLM
+        ``recommended_risk`` / ``recommended_action`` / ``anomaly_score`` /
+        ``confidence`` remain advisory only (shown in the AI Assist section) and
+        cannot overwrite or become the official Risk Level / Decision. This keeps
+        the deterministic-verdict invariant: no rule match means the engine never
+        escalates beyond a conservative MONITOR based on LLM output.
+        """
+        del llm_result  # intentionally unused: LLM must not set the official verdict
+        return "MEDIUM", "MONITOR"
 
     def _format_detected_signals(self, signals=None, llm_result=None):
         detected_signals = []
@@ -392,7 +382,11 @@ class Responder:
         if llm_result.get("llm_status"):
             lines.append(f"LLM Status: {llm_result.get('llm_status')}")
 
-        lines.append("Note: Decision above is the final system decision; LLM Suggested Decision is AI assist only.")
+        lines.append(
+            "Note: Risk Level and Decision above are deterministic policy outputs; "
+            "LLM Suggested Risk / Decision are advisory only and do not override the "
+            "official Risk Level or Decision."
+        )
         return lines
 
     def _format_auth_failure_value(self, event, key):
@@ -497,7 +491,8 @@ class Responder:
             f"Attack Type: {attack_type_text}",
             f"Risk Level: {final_risk}",
             f"Decision: {final_decision}",
-            "Detection Source: llm_assist + signal_extraction",
+            "Detection Source: llm_assist + signal_extraction "
+            "(advisory finding; Risk Level / Decision set by deterministic policy)",
             "",
             "2. Evidence",
             "Input / Event:",

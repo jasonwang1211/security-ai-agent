@@ -135,7 +135,7 @@ Reference: [Case Draft / Export screenshot](screenshots/en/08_case_draft_export.
 | Item | Detail |
 |---|---|
 | User action | Return to the scenario launcher and load HTTP/2 Resource Exhaustion Suspicion. |
-| What appears | Textarea contains a synthetic incident summary; active context remains empty until Run input is clicked. |
+| What appears | Textarea contains a synthetic incident summary; active context is empty until Run input is clicked, after which it shows the deterministic verdict HTTP/2 Resource Exhaustion Suspicion / MEDIUM / MONITOR. |
 | What to say | This demonstrates resource-exhaustion triage without generating traffic. |
 | Safety note | The scenario provides no exploit, PoC, traffic generation, or real enforcement. |
 
