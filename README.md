@@ -83,10 +83,10 @@ Start with the documentation hub: [docs/README.md](docs/README.md).
 
 Last recorded v2.8 release-gate validation summary:
 
-- pytest: 1168 passed
+- pytest: `1178 passed`
 - ruff: passed
-- mypy: passed
-- gitleaks: passed with .gitleaksignore false-positive handling
+- mypy: passed, no issues found in 164 source files
+- gitleaks: no leaks found
 - screenshot language refresh: completed for English and Traditional Chinese screenshot sets
 
 These checks validate demo behavior and safety-boundary regressions. They do not claim production IDS/IPS effectiveness.
