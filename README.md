@@ -6,29 +6,41 @@ The repository is written for project review, demo walkthroughs, and portfolio d
 
 ## Screenshot Showcase
 
-### Streamlit Analyst Console
+### Analyst Console (overview)
 
-![Streamlit analyst console home](docs/screenshots/en/01_console_home.png)
+![Sentinel Project analyst console home](docs/screenshots/en/20_console_home_overview.png)
 
-The console is the main demo surface: scenario cards, language and mode controls, active context, deterministic results, and visible safety framing.
+The console is the main demo surface: scenario cards, language and mode controls, and visible safety framing. BLOCK / MONITOR / ALLOW are simulated; no real enforcement is executed.
 
-### AI Analyst Brief
+### Command Injection Result (overview)
 
-![AI Analyst Brief panel](docs/screenshots/en/03_ai_analyst_brief.png)
+![Command Injection deterministic result](docs/screenshots/en/21_command_injection_overview.png)
 
-The AI Analyst Brief explains the current event in analyst language while keeping the deterministic verdict separate from advisory context.
+Running `test; rm -rf /tmp/test` produces a deterministic verdict: Command Injection, Risk HIGH, simulated Decision BLOCK, backed by rule evidence CMD-001.
 
-### Evidence Gap Analyzer
+### Evidence-Grounded AI Brief — Official Verdict
 
-![Evidence Gap Analyzer panel](docs/screenshots/en/04_evidence_gap_analyzer.png)
+![Evidence-Grounded AI Brief official verdict detail](docs/screenshots/en/23_brief_official_verdict_detail.png)
 
-The Evidence Gap Analyzer separates confirmed facts, missing evidence, recommended checks, and unsafe assumptions.
+The brief copies the official deterministic verdict (Risk HIGH / Decision BLOCK) and is advisory only — `llm_status: not_used_deterministic_fallback` (no live LLM is wired).
 
-### HTTP/2 Resource Exhaustion Safe Demo
+### Evidence-Grounded AI Brief — Advisory Context
 
-![HTTP/2 Resource Exhaustion safe synthetic demo](docs/screenshots/en/09_http2_resource_exhaustion_demo.png)
+![Evidence-Grounded AI Brief advisory context detail](docs/screenshots/en/26_brief_advisory_context_detail.png)
 
-The HTTP/2 scenario is a safe synthetic incident summary. It does not generate traffic, provide exploit steps, or claim real enforcement.
+After Find Similar Cases, the brief cites structured advisory context: an approved similar case (`case-001`) that is not proof of compromise, and graph relationship context (`graph-001`) that is not a detection source.
+
+### Markdown Export — Evidence-Grounded Section
+
+![Markdown export Evidence-Grounded section](docs/screenshots/en/13_evidence_grounded_markdown_export.png)
+
+The Markdown export includes the Evidence-Grounded AI Brief section with schema version, official Risk Level / Decision, and `case-001` / `graph-001` citations. (Rendered from the real export markdown.)
+
+### HTTP/2 Resource Exhaustion Safe Demo (overview)
+
+![HTTP/2 Resource Exhaustion safe synthetic demo](docs/screenshots/en/29_http2_safe_demo_overview.png)
+
+A safe synthetic incident: deterministic verdict HTTP/2 Resource Exhaustion Suspicion, Risk MEDIUM, simulated Decision MONITOR (rule HTTP2-RES-001). No traffic is generated and no real enforcement occurs.
 
 ## Core Capabilities
 

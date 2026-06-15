@@ -25,6 +25,30 @@ Screenshots are public review aids and do not contain secrets or credentials.
 | [09_http2_resource_exhaustion_demo.png](en/09_http2_resource_exhaustion_demo.png) | HTTP/2 safe synthetic demo | Compact launcher preview, full synthetic input, and cleared stale context. | No exploit, PoC, or traffic generation. |
 | [10_full_ai_assisted_optional.png](en/10_full_ai_assisted_optional.png) | Optional Full AI-assisted mode | Optional AI/RAG-assisted mode selection. | Deterministic policy remains authoritative. |
 
+## v3.0 README Screenshots (current, readable)
+
+The current English screenshot set for the README, captured from the live console
+(system Chrome via Playwright). Overviews show layout; detail crops are element /
+clip captures at 2x device scale so panel text stays readable. The README main text
+uses the six starred (★) images; the rest are extended gallery references.
+
+| Screenshot | Type | What to look for |
+|---|---|---|
+| ★ [20_console_home_overview.png](en/20_console_home_overview.png) | overview | Console home: scenario cards, mode controls, and "BLOCK / MONITOR / ALLOW are simulated" framing. |
+| ★ [21_command_injection_overview.png](en/21_command_injection_overview.png) | overview | Command Injection result: Active Context HIGH / BLOCK / CMD-001. |
+| [22_ai_analyst_tab_overview.png](en/22_ai_analyst_tab_overview.png) | overview | AI Analyst tab: the full Evidence-Grounded AI Brief structure. |
+| ★ [23_brief_official_verdict_detail.png](en/23_brief_official_verdict_detail.png) | detail crop | Official Verdict (Risk HIGH / Decision BLOCK), llm_status fallback, schema chip. |
+| [24_brief_supporting_evidence_detail.png](en/24_brief_supporting_evidence_detail.png) | detail crop | Supporting Evidence with rule-001 / ev-001 / ev-002 citations. |
+| [25_brief_evidence_gap_detail.png](en/25_brief_evidence_gap_detail.png) | detail crop | Evidence Gap Summary (missing evidence) with gap-001 citations. |
+| ★ [26_brief_advisory_context_detail.png](en/26_brief_advisory_context_detail.png) | detail crop | Advisory Context: case-001 (not proof of compromise) and graph-001 (not a detection source). |
+| ★ [13_evidence_grounded_markdown_export.png](en/13_evidence_grounded_markdown_export.png) | detail (render) | Markdown export Evidence-Grounded section: schema_version, official_risk_level / official_decision, case-001 / graph-001. Rendered from the real export markdown. |
+| [28_knowledge_qa_detail.png](en/28_knowledge_qa_detail.png) | detail crop | Knowledge Q&A panel: advisory framing ("advisory only — it may return no answer"). |
+| ★ [29_http2_safe_demo_overview.png](en/29_http2_safe_demo_overview.png) | overview | HTTP/2 Resource Exhaustion Suspicion: MEDIUM / MONITOR / HTTP2-RES-001, no traffic / no real enforcement. |
+
+Detail crops are real-UI element / clip captures, except `13`, which is a faithful
+render of the export markdown (labeled). The earlier full-window captures (`14`–`17`)
+and the v2.9 panel renders (`11`–`13`) remain below as additional references.
+
 ## v2.9 Evidence-Grounded AI Brief (branch)
 
 These v2.9 images are rendered from the live Evidence-Grounded AI Brief panel markup and the console CSS, so they show the exact panel content the analyst sees (the surrounding Streamlit chrome is omitted). They reflect current `v2.9-evidence-grounded-ai-brief` branch behavior.
