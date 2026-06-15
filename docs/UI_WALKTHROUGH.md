@@ -180,5 +180,6 @@ The v2.9 Evidence-Grounded AI Brief panel images are captured under
 - `12_structured_similar_case_graph_context.png` — case-001 / graph-001 advisory context after Find Similar Cases.
 - `13_evidence_grounded_markdown_export.png` — the Markdown export brief section.
 
-Optional follow-ups (not blocking): full-window app captures that include the
-Streamlit chrome, and Traditional Chinese (`zh-TW/`) versions of these panels.
+Full-window app captures (with the Streamlit chrome) are now available too:
+`en/14`–`16` (English) and `zh-TW/17` (Traditional Chinese chrome with the
+English brief panel). See the [screenshot gallery](screenshots/README.md).

@@ -37,18 +37,23 @@ These v2.9 images are rendered from the live Evidence-Grounded AI Brief panel ma
 
 ## Traditional Chinese Screenshots
 
-Traditional Chinese UI screenshots are preserved under [zh-TW/](zh-TW/) using the same main file names where available. The Traditional Chinese documents under docs/zh-TW/ should point to that folder or describe it as the Traditional Chinese screenshot source. The v2.9 Evidence-Grounded AI Brief panel images above are English-only for now; a Traditional Chinese capture is an optional follow-up.
+Traditional Chinese UI screenshots are preserved under [zh-TW/](zh-TW/) using the same main file names where available. The Traditional Chinese documents under docs/zh-TW/ should point to that folder or describe it as the Traditional Chinese screenshot source. A Traditional Chinese full-window capture of the Evidence-Grounded AI Brief is available as [zh-TW/17_zh_tw_evidence_grounded_ai_brief.png](zh-TW/17_zh_tw_evidence_grounded_ai_brief.png) — note the brief panel strings render in English (only the surrounding UI chrome is Traditional Chinese).
 
-## v3.0 Full-Window Screenshots TODO
+## v3.0 Full-Window Screenshots
 
-The v2.9 Evidence-Grounded AI Brief images (`en/11`–`13`) are panel renders. For the
-v3.0 final presentation, capture full-window app screenshots (with the Streamlit
-chrome) once the UI and docs are frozen — do not re-shoot the whole set before then.
-Planned captures (see [../v3.0_final_polish_plan.md](../v3.0_final_polish_plan.md)):
+Full-window app captures (with the Streamlit chrome), driven through the live console.
+They complement the v2.9 panel renders above (`en/11`–`13`).
 
-- Full-window AI Analyst tab showing the Evidence-Grounded AI Brief in context.
-- Full-window view after Find Similar Cases showing `case-001` / `graph-001` advisory context.
-- Traditional Chinese (`zh-TW/`) equivalents of the above.
+| Screenshot | Feature area | What to look for | Safety note |
+|---|---|---|---|
+| [14_full_window_ai_analyst_evidence_grounded_brief.png](en/14_full_window_ai_analyst_evidence_grounded_brief.png) | Full-window AI Analyst tab | Active Context (Command Injection / HIGH / BLOCK / CMD-001) and the Evidence-Grounded AI Brief: Official Verdict HIGH / BLOCK, `llm_status: not_used_deterministic_fallback`, schema, rule-001 / ev-001 citations. | Advisory-only; the official verdict is copied from deterministic policy and cannot be overridden. |
+| [15_full_window_similar_case_graph_context.png](en/15_full_window_similar_case_graph_context.png) | Full-window after Find Similar Cases | The brief's Advisory Context cites case-001 ("not proof of current compromise") and graph-001 ("is not a detection source"), with matching Unsafe Assumptions. | Similar cases are not proof of compromise; graph context is not a detection source. |
+| [16_full_window_markdown_export.png](en/16_full_window_markdown_export.png) | Full-window Draft / Export | Markdown export preview with the `## Evidence-Grounded AI Brief` section: schema_version, official_risk_level / official_decision, and case-001 / graph-001 citations. | Export is for human review; it is not enforcement and does not write live knowledge. |
+| [zh-TW/17_zh_tw_evidence_grounded_ai_brief.png](zh-TW/17_zh_tw_evidence_grounded_ai_brief.png) | Traditional Chinese UI (full window) | zh-TW app chrome (tabs / controls) with the Evidence-Grounded AI Brief in context. | The brief panel strings are currently English-only (not yet localized); only the surrounding UI chrome is Traditional Chinese. |
+
+Note: the Evidence-Grounded AI Brief panel labels render in English regardless of UI
+language, so screenshot 17 shows Traditional Chinese chrome with an English brief
+panel. Localizing the brief panel strings is a possible follow-up.
 
 ## Safety Boundary
 
