@@ -26,19 +26,120 @@ LLMStatus = Literal[
     "invalid_json_fallback",
 ]
 
-UNSAFE_GENERATION_PATTERNS = (
-    re.compile(r"\b(run|execute|generate|provide|write|create)\b.{0,50}\b(exploit|poc|proof of concept|traffic generation|load test)", re.I),
-    re.compile(r"\b(hping3|slowloris|wrk|ab -n|attack script)\b", re.I),
-    re.compile(r"\b(firewall|waf|edr|soar|siem)\b.{0,60}\b(blocked|updated|executed|enforced|deployed|quarantined)", re.I),
-    re.compile(r"\b(reset|disable)\b.{0,30}\b(account|password|user)\b", re.I),
+# --- Guardrail language patterns (v2.9-M2 hardening) -----------------------
+#
+# Each pattern describes UNSAFE *assertive* content that an AI-generated brief
+# must not contain: offensive generation, real enforcement on a security
+# control, account/credential manipulation, "graph detected the attack", or
+# "similar cases prove compromise". Every pattern is evaluated in a
+# negation-aware way (see ``_has_non_negated_match``) so defensive negated
+# wording -- "do not run load testing", "graph is not the detection source",
+# "similar cases do not prove compromise" -- is explicitly allowed.
+#
+# Verb/object groups are alternation fragments (word boundaries applied at the
+# use site). Present, past, and -ing forms are included so both imperative
+# ("update the firewall") and completed-action ("the firewall was updated")
+# phrasings are caught.
+_OFFENSIVE_VERBS = (
+    r"run|running|execute|executing|launch|launching|perform|performing|"
+    r"generate|generating|provide|providing|write|writing|create|creating|"
+    r"build|building|produce|producing|deliver|delivering"
 )
-SIMILAR_CASE_PROOF_PATTERN = re.compile(
-    r"\bsimilar cases?\b.{0,80}\b(proves?|confirms?|is proof|are proof)\b",
-    re.I,
+_OFFENSIVE_OBJECTS = (
+    r"exploit|exploits|poc|pocs|proof[- ]of[- ]concept|traffic generation|"
+    r"load test|load testing|load-test|dos attack|ddos|reverse shell"
 )
-GRAPH_DETECTION_PATTERN = re.compile(
-    r"\bgraph\b.{0,80}\b(detected|confirmed the attack|is the detection source|was the detection source|acts as the detection source)\b",
-    re.I,
+_CONTROL_TARGETS = r"firewall|waf|edr|soar|siem|ids|ips"
+_ENFORCEMENT_ACTIONS = (
+    r"block|blocks|blocked|blocking|update|updates|updated|updating|"
+    r"execute|executes|executed|executing|enforce|enforces|enforced|enforcing|"
+    r"deploy|deploys|deployed|deploying|push|pushes|pushed|pushing|"
+    r"apply|applies|applied|applying|configure|configures|configured|configuring|"
+    r"modify|modifies|modified|modifying|quarantine|quarantines|quarantined|"
+    r"isolate|isolates|isolated|isolating"
+)
+_ACCOUNT_ACTIONS = (
+    r"reset|resets|disable|disables|disabled|enable|enables|enabled|"
+    r"change|changes|changed|modify|modifies|modified|alter|alters|altered|"
+    r"clear|clears|cleared|delete|deletes|deleted|remove|removes|removed|"
+    r"lock|locks|locked|unlock|unlocks|unlocked|suspend|suspends|suspended|"
+    r"revoke|revokes|revoked|rotate|rotates|rotated|expire|expires|expired"
+)
+_ACCOUNT_OBJECTS = (
+    r"account|accounts|password|passwords|credential|credentials|"
+    r"user|users|session|sessions"
+)
+_GRAPH_DETECTION_VERBS = (
+    r"detected|detects|identified|identifies|revealed|reveals|"
+    r"confirmed|confirms|showed|shows|uncovered|uncovers|"
+    r"pinpointed|pinpoints|flagged|flags|caught|found|discovered|discovers"
+)
+_THREAT_OBJECTS = (
+    r"the attack|an attack|attacks|the compromise|compromise|compromised|"
+    r"the intrusion|intrusion|the threat|the breach|malicious activity|"
+    r"the malicious (?:event|activity)"
+)
+_SIMILAR_PROOF_VERBS = (
+    r"prove|proves|proved|confirm|confirms|confirmed|indicate|indicates|indicated|"
+    r"suggest|suggests|suggested|demonstrate|demonstrates|demonstrated|"
+    r"establish|establishes|established|validate|validates|validated|"
+    r"support|supports|supported|is proof of|are proof of"
+)
+_SIMILAR_PROOF_OBJECTS = (
+    r"compromise|compromised|the attack|attacks|intrusion|breach|malicious|"
+    r"successful execution|current (?:event|incident)"
+)
+
+BLOCKED_LANGUAGE_PATTERNS = (
+    # Offensive generation: <verb> ... <exploit / PoC / traffic-gen / load-test>
+    re.compile(rf"\b(?:{_OFFENSIVE_VERBS})\b.{{0,60}}\b(?:{_OFFENSIVE_OBJECTS})\b", re.I),
+    # Named offensive tooling
+    re.compile(r"\b(?:hping3|slowloris|wrk|ab -n|attack script)\b", re.I),
+    # Real enforcement on a security control (control -> action)
+    re.compile(rf"\b(?:{_CONTROL_TARGETS})\b.{{0,60}}\b(?:{_ENFORCEMENT_ACTIONS})\b", re.I),
+    # Real enforcement on a security control (action -> control)
+    re.compile(rf"\b(?:{_ENFORCEMENT_ACTIONS})\b.{{0,40}}\b(?:{_CONTROL_TARGETS})\b", re.I),
+    # Account / credential manipulation
+    re.compile(rf"\b(?:{_ACCOUNT_ACTIONS})\b.{{0,30}}\b(?:{_ACCOUNT_OBJECTS})\b", re.I),
+    # Graph claimed as having detected the attack
+    re.compile(
+        rf"\bgraph\b.{{0,80}}\b(?:{_GRAPH_DETECTION_VERBS})\b.{{0,30}}\b(?:{_THREAT_OBJECTS})\b",
+        re.I,
+    ),
+    # Graph claimed as the detection source
+    re.compile(
+        r"\bgraph\b.{0,80}\b(?:is|was|are|were|acts as|act as|serves as|serve as|becomes|become)\b"
+        r".{0,20}\b(?:the )?detection source\b",
+        re.I,
+    ),
+    # Similar cases claimed as proof of compromise
+    re.compile(
+        rf"\b(?:similar|comparable|related)\s+cases?\b.{{0,80}}\b(?:{_SIMILAR_PROOF_VERBS})\b"
+        rf".{{0,40}}\b(?:{_SIMILAR_PROOF_OBJECTS})\b",
+        re.I,
+    ),
+)
+
+# Sentence/clause-level negation markers. If any appears in the clause around an
+# unsafe match, the match is treated as DEFENSIVE wording and allowed. Markers
+# carry a trailing space and the clause is space-padded before matching, so a
+# clause-final "not" is still detected without matching substrings of unrelated
+# words (e.g. "annotation"). "not " covers do/does/is/are/must/should/cannot
+# not; "n't " covers don't/doesn't/can't/shouldn't/...; "refrain " covers
+# "refrain from".
+NEGATION_MARKERS = (
+    "not ",
+    "n't ",
+    "never ",
+    "without ",
+    "avoid ",
+    "avoids ",
+    "avoiding ",
+    "prevent ",
+    "prevents ",
+    "preventing ",
+    "prevented ",
+    "refrain ",
 )
 
 
@@ -251,37 +352,37 @@ def _guardrail_status(
 
 def _contains_blocked_language(brief: GroundedAnalystBrief) -> bool:
     text = _guardrail_text(brief)
-    return (
-        any(_has_non_negated_match(text, pattern) for pattern in UNSAFE_GENERATION_PATTERNS)
-        or SIMILAR_CASE_PROOF_PATTERN.search(text) is not None
-        or GRAPH_DETECTION_PATTERN.search(text) is not None
-    )
+    return any(_has_non_negated_match(text, pattern) for pattern in BLOCKED_LANGUAGE_PATTERNS)
 
 
 def _has_non_negated_match(text: str, pattern: re.Pattern[str]) -> bool:
+    """True if ``pattern`` matches a clause that is not defensively negated."""
+
     for match in pattern.finditer(text):
-        sentence = _sentence_around(text, match.start(), match.end()).casefold()
-        if any(
-            marker in sentence
-            for marker in (
-                "do not ",
-                "does not ",
-                "must not ",
-                "should not ",
-                "cannot ",
-                "never ",
-                " no ",
-                "without ",
-            )
-        ):
+        clause = (_sentence_around(text, match.start(), match.end()) + " ").casefold()
+        if any(marker in clause for marker in NEGATION_MARKERS):
             continue
         return True
     return False
 
 
 def _sentence_around(text: str, start: int, end: int) -> str:
-    left = max(text.rfind(".", 0, start), text.rfind("\n", 0, start))
-    right_candidates = [pos for pos in (text.find(".", end), text.find("\n", end)) if pos != -1]
+    """Return the clause around a match, bounded by '.', ';', or newline.
+
+    Clause-level (not whole-text) scoping keeps a negation in one sentence from
+    masking an unsafe assertion in a different clause.
+    """
+
+    left = max(
+        text.rfind(".", 0, start),
+        text.rfind(";", 0, start),
+        text.rfind("\n", 0, start),
+    )
+    right_candidates = [
+        pos
+        for pos in (text.find(".", end), text.find(";", end), text.find("\n", end))
+        if pos != -1
+    ]
     right = min(right_candidates) if right_candidates else len(text)
     return text[left + 1 : right]
 
