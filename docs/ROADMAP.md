@@ -12,7 +12,24 @@ Sentinel Project currently includes a Streamlit analyst console, deterministic d
 - Public review and demo readiness checks.
 - Continued screenshot and documentation consistency checks.
 
-## v2.9 Candidate Work
+## v2.9 Branch: Evidence-Grounded AI Brief
+
+Work in progress on the `v2.9-evidence-grounded-ai-brief` branch (not yet merged,
+tagged, or released). Release-gate evidence: `docs/v2.9_release_gate.md`.
+
+Completed on the v2.9 branch:
+
+- M1 — Evidence-Grounded AI Brief MVP (deterministic bundle + structured brief with deterministic fallback; advisory-only; existing panels preserved).
+- M2 — Guardrail hardening before any live LLM (synonym-aware blocked language, defensive-negation allowance, official-verdict immutability).
+- M3/M4 — Structured Similar Cases / Graph context wired into the brief and Markdown export (`case-*` / `graph-*` citations), advisory-only and without re-triggering retrieval or parsing display text.
+
+Remaining for a v2.9 release candidate:
+
+- Optional live LLM client integration (still not wired; deterministic fallback only).
+- Release screenshots for the Evidence-Grounded AI Brief panel.
+- Release documentation / release-note finalization.
+
+Still-open / longer-term candidate ideas:
 
 - Analyst Timeline / Event Replay for clearer investigation storytelling.
 - More defensive synthetic scenarios.

@@ -22,6 +22,14 @@ Analyst-facing advisory output follows the selected UI language where supported.
 
 The AI Analyst Brief provides deterministic advisory context over the current analysis. It summarizes what happened, why it matters, the deterministic verdict, evidence gaps, suggested next review steps, and unsafe assumptions. It is advisory-only and does not use LLM authority for final decisions.
 
+## Evidence-Grounded AI Brief (v2.9 branch)
+
+The Evidence-Grounded AI Brief is the v2.9 evolution of the advisory analyst narrative, developed on the `v2.9-evidence-grounded-ai-brief` branch. A deterministic `EvidenceGroundingBundle` collects already-computed facts — the rule-based detection and official verdict, current evidence, evidence gaps, and optional RAG / approved similar-case / graph relationship context — with stable citation IDs (`ev-*`, `rule-*`, `gap-*`, `rag-*`, `case-*`, `graph-*`). A structured brief is then generated with a deterministic fallback.
+
+- The official Risk Level and Decision are copied from the bundle and can never be regenerated or overridden by generated content; a guardrail forces a deterministic fallback if generated text changes the verdict, overclaims advisory context, or uses unsafe enforcement / offensive wording.
+- Structured Similar Cases and Graph context are consumed as already-computed structured objects (no display-text parsing) and remain advisory only: similar cases are not proof of compromise, and graph context is not a detection source.
+- No live LLM client is wired; the brief currently runs as a deterministic fallback, and the guardrail is a pre-LLM safety layer.
+
 ## Evidence Gap Analyzer
 
 The Evidence Gap Analyzer lists missing or unconfirmed evidence that an analyst should review before making operational conclusions. It does not prove compromise, successful execution, or exploitation, and it does not override Risk Level or Decision.
