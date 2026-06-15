@@ -84,9 +84,7 @@ Reference: [AI Analyst Brief screenshot](screenshots/en/03_ai_analyst_brief.png)
 | What to say | The brief is grounded in the deterministic evidence and is cited; it is advisory analyst context, not an AI verdict. |
 | Safety note | Official Risk Level and Decision are copied from deterministic policy and cannot be overridden by the brief. No live LLM client is wired on this branch. |
 
-Note: This panel reflects current v2.9 branch behavior. A dedicated release
-screenshot is not captured yet (see the screenshots TODO at the end of this
-walkthrough).
+Reference: [Evidence-Grounded AI Brief screenshot](screenshots/en/11_evidence_grounded_ai_brief.png) (v2.9 branch; panel render)
 
 ## Step 8: Open Evidence Gap Analyzer
 
@@ -126,6 +124,8 @@ AI Brief from Step 7. Its Advisory Context now cites `case-001` (approved simila
 case — comparison context only, not proof of current compromise) and `graph-001`
 (relationship context — not a detection source). These are derived from the
 already-computed structured similar-case result, not from parsed display text.
+
+Reference: [Structured Similar Cases / Graph context screenshot](screenshots/en/12_structured_similar_case_graph_context.png)
 
 ## Step 11: Review Relationship Graph
 
@@ -171,11 +171,14 @@ Reference: [HTTP/2 safe demo screenshot](screenshots/en/09_http2_resource_exhaus
 
 Optional mode reference: [Full AI-assisted mode screenshot](screenshots/en/10_full_ai_assisted_optional.png)
 
-## Screenshots TODO (v2.9 branch)
+## v2.9 Screenshots
 
-Release screenshots for the v2.9 Evidence-Grounded AI Brief panel are not yet
-captured; the current `docs/screenshots/en/` set still reflects pre-v2.9 panels.
-A release-candidate pass should add one screenshot of the Evidence-Grounded AI
-Brief (Official Verdict, rule-001 / ev-001 citations, and — after Find Similar
-Cases — case-001 / graph-001 advisory context). Add only this new panel capture;
-do not regenerate the full screenshot set for this change.
+The v2.9 Evidence-Grounded AI Brief panel images are captured under
+`docs/screenshots/en/`, rendered from the live panel markup and console CSS:
+
+- `11_evidence_grounded_ai_brief.png` — Official Verdict, rule-001 / ev-001 citations, deterministic-fallback status.
+- `12_structured_similar_case_graph_context.png` — case-001 / graph-001 advisory context after Find Similar Cases.
+- `13_evidence_grounded_markdown_export.png` — the Markdown export brief section.
+
+Optional follow-ups (not blocking): full-window app captures that include the
+Streamlit chrome, and Traditional Chinese (`zh-TW/`) versions of these panels.
