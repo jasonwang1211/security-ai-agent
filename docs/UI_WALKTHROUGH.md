@@ -75,6 +75,17 @@ Reference: [Fast deterministic analysis screenshot](screenshots/en/02_fast_comma
 
 Reference: [AI Analyst Brief screenshot](screenshots/en/03_ai_analyst_brief.png)
 
+### Step 7 (v2.9 branch): Review The Evidence-Grounded AI Brief
+
+| Item | Detail |
+|---|---|
+| User action | At the top of the AI Analyst tab, review the Evidence-Grounded AI Brief panel. |
+| What appears | Official Verdict (Risk Level / Decision), supporting evidence with citations such as rule-001 and ev-001, an evidence-gap summary, advisory context, citations, and a Safety / Human Review Boundary. The panel shows `llm_status: not_used_deterministic_fallback`. |
+| What to say | The brief is grounded in the deterministic evidence and is cited; it is advisory analyst context, not an AI verdict. |
+| Safety note | Official Risk Level and Decision are copied from deterministic policy and cannot be overridden by the brief. No live LLM client is wired on this branch. |
+
+Reference: [Evidence-Grounded AI Brief screenshot](screenshots/en/11_evidence_grounded_ai_brief.png) (v2.9 branch; panel render)
+
 ## Step 8: Open Evidence Gap Analyzer
 
 | Item | Detail |
@@ -107,6 +118,14 @@ Reference: [Knowledge Q&A screenshot](screenshots/en/05_knowledge_qa_rag.png)
 | Safety note | Historical cases do not prove compromise or successful execution in the current event. |
 
 Reference: [Approved Similar Cases screenshot](screenshots/en/06_similar_cases.png)
+
+Observation (v2.9 branch): after Find Similar Cases, re-open the Evidence-Grounded
+AI Brief from Step 7. Its Advisory Context now cites `case-001` (approved similar
+case — comparison context only, not proof of current compromise) and `graph-001`
+(relationship context — not a detection source). These are derived from the
+already-computed structured similar-case result, not from parsed display text.
+
+Reference: [Structured Similar Cases / Graph context screenshot](screenshots/en/12_structured_similar_case_graph_context.png)
 
 ## Step 11: Review Relationship Graph
 
@@ -151,3 +170,15 @@ Reference: [HTTP/2 safe demo screenshot](screenshots/en/09_http2_resource_exhaus
 | Safety note | Human review remains required before any real operational action outside the demo. |
 
 Optional mode reference: [Full AI-assisted mode screenshot](screenshots/en/10_full_ai_assisted_optional.png)
+
+## v2.9 Screenshots
+
+The v2.9 Evidence-Grounded AI Brief panel images are captured under
+`docs/screenshots/en/`, rendered from the live panel markup and console CSS:
+
+- `11_evidence_grounded_ai_brief.png` — Official Verdict, rule-001 / ev-001 citations, deterministic-fallback status.
+- `12_structured_similar_case_graph_context.png` — case-001 / graph-001 advisory context after Find Similar Cases.
+- `13_evidence_grounded_markdown_export.png` — the Markdown export brief section.
+
+Optional follow-ups (not blocking): full-window app captures that include the
+Streamlit chrome, and Traditional Chinese (`zh-TW/`) versions of these panels.

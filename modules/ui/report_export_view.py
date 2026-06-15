@@ -13,6 +13,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 import re
 
+from modules.ai_advisory.grounded_brief import GroundedAnalystBrief, GroundedBriefItem
 from modules.ui.case_draft_view import CaseDraftDisplay
 from modules.ui.case_memory_view import CaseMemoryCorpusDisplay
 from modules.ui.console_state import ActiveContextSummary
@@ -59,6 +60,7 @@ _SECTION_HEADINGS: dict[str, dict[str, str]] = {
         "en": "Analysis Mode And Performance",
         "zh-TW": "分析模式與效能",
     },
+    "evidence_grounded_ai_brief": {"en": "Evidence-Grounded AI Brief", "zh-TW": "Evidence-Grounded AI Brief"},
     "analysis_report": {"en": "Analysis Report", "zh-TW": "分析報告"},
     "approved_similar_cases": {"en": "Approved Similar Cases", "zh-TW": "核准相似案例"},
     "graph_relationship": {
@@ -197,6 +199,7 @@ def build_markdown_report_export(
     generated_at: str,
     safety_boundary_text: str = "",
     language: str = DEFAULT_REPORT_LANGUAGE,
+    evidence_grounded_brief: GroundedAnalystBrief | None = None,
 ) -> MarkdownReportExport:
     """Build a deterministic Markdown report from existing UI display models."""
 
@@ -208,6 +211,7 @@ def build_markdown_report_export(
             _review_warning_section(lang),
             _active_context_section(active_context_summary, lang),
             _performance_section(runtime_timing_display, lang),
+            _evidence_grounded_brief_section(evidence_grounded_brief, lang),
             _analysis_report_section(report_sections.analysis_report, lang),
             _approved_similar_cases_section(report_sections.approved_similar_cases, lang),
             _graph_relationship_section(report_sections.graph_relationship_explanation, lang),
@@ -291,6 +295,52 @@ def _performance_section(display: RuntimeTimingDisplay, language: str) -> str:
     ]
     lines.extend(f"  - {note}" for note in display.notes)
     return "\n".join(lines)
+
+
+def _evidence_grounded_brief_section(
+    brief: GroundedAnalystBrief | None, language: str
+) -> str:
+    if brief is None:
+        return ""
+    lines = [
+        _heading("evidence_grounded_ai_brief", language),
+        f"- schema_version: {brief.schema_version}",
+        f"- llm_status: {brief.llm_status}",
+        f"- official_risk_level: {brief.official_verdict.risk_level or 'N/A'}",
+        f"- official_decision: {brief.official_verdict.decision or 'N/A'}",
+        f"- simulated_decision: {str(brief.official_verdict.simulated_decision).lower()}",
+        f"- authority: {brief.official_verdict.authority}",
+        "- executive_summary:",
+        *_brief_item_lines(brief.executive_summary),
+        "- supporting_evidence:",
+        *_brief_item_lines(brief.supporting_evidence),
+        "- evidence_gap_summary:",
+        *_brief_item_lines(brief.evidence_gap_summary),
+        "- advisory_context:",
+        *_brief_item_lines(brief.advisory_context),
+        "- recommended_next_steps:",
+        *_brief_item_lines(brief.recommended_next_steps),
+        "- unsafe_assumptions:",
+        *_brief_item_lines(brief.unsafe_assumptions),
+        "- citations:",
+        *[
+            f"  - {citation.citation_id}: {citation.kind} - {citation.label}"
+            for citation in brief.citations
+        ],
+        "- safety_boundary:",
+        *[f"  - {line}" for line in brief.safety_boundary],
+    ]
+    return "\n".join(lines)
+
+
+def _brief_item_lines(items: list[GroundedBriefItem]) -> list[str]:
+    if not items:
+        return ["  - None"]
+    lines = []
+    for item in items:
+        citations = f" [{', '.join(item.citation_ids)}]" if item.citation_ids else ""
+        lines.append(f"  - {item.text}{citations}")
+    return lines
 
 
 def _analysis_report_section(text: str, language: str) -> str:

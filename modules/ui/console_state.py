@@ -20,6 +20,13 @@ STATE_LAST_OUTPUT = "sentinel_last_output"
 STATE_LAST_SELECTED_ACTION = "sentinel_last_selected_action"
 STATE_ANALYSIS_OUTPUT = "sentinel_analysis_output"
 STATE_SIMILAR_CASE_OUTPUT = "sentinel_similar_case_output"
+# Already-computed structured advisory context (v2.9-M3/M4). These hold the
+# structured SimilarCaseResult and GraphSnapshot objects produced by the
+# Find Similar Cases action so the Evidence-Grounded AI Brief can consume them
+# directly, instead of re-parsing the display text. Both are advisory-only and
+# never override the official Risk Level or Decision.
+STATE_SIMILAR_CASE_RESULT = "sentinel_similar_case_result"
+STATE_GRAPH_SNAPSHOT = "sentinel_graph_snapshot"
 STATE_FOLLOWUP_QUESTION = "sentinel_followup_question"
 STATE_FOLLOWUP_OUTPUT = "sentinel_followup_output"
 STATE_FOLLOWUP_SKILL = "sentinel_followup_skill"
@@ -96,6 +103,8 @@ def bind_runtime(
     session_state.setdefault(STATE_KNOWLEDGE_QUESTION, "")
     session_state.setdefault(STATE_KNOWLEDGE_OUTPUT, "")
     session_state.setdefault(STATE_KNOWLEDGE_SKILL, "")
+    session_state.setdefault(STATE_SIMILAR_CASE_RESULT, None)
+    session_state.setdefault(STATE_GRAPH_SNAPSHOT, None)
     return cli_state
 
 
@@ -122,6 +131,10 @@ def record_analysis_output(session_state: MutableMapping[str, Any], response_tex
     session_state[STATE_FOLLOWUP_QUESTION] = ""
     session_state[STATE_FOLLOWUP_OUTPUT] = ""
     session_state[STATE_FOLLOWUP_SKILL] = ""
+    # Structured similar-case / graph advisory context is tied to the previous
+    # active context, so it is stale after a new analysis.
+    session_state[STATE_SIMILAR_CASE_RESULT] = None
+    session_state[STATE_GRAPH_SNAPSHOT] = None
 
 
 def record_similar_case_output(
@@ -131,6 +144,25 @@ def record_similar_case_output(
     """Store similar-case output for the current active context."""
 
     session_state[STATE_SIMILAR_CASE_OUTPUT] = response_text
+
+
+def record_structured_similar_case_context(
+    session_state: MutableMapping[str, Any],
+    *,
+    similar_case_result: Any | None,
+    graph_snapshot: Any | None,
+) -> None:
+    """Store the already-computed structured similar-case / graph advisory context.
+
+    These are opaque structured objects (a ``SimilarCaseResult`` and a
+    ``GraphSnapshot``) captured at the Find Similar Cases action so the
+    Evidence-Grounded AI Brief can consume them without re-running retrieval or
+    re-parsing display text. Both are advisory-only and never override the
+    official Risk Level or Decision.
+    """
+
+    session_state[STATE_SIMILAR_CASE_RESULT] = similar_case_result
+    session_state[STATE_GRAPH_SNAPSHOT] = graph_snapshot
 
 
 def record_draft_action_output(
@@ -247,6 +279,8 @@ def clear_active_context(session_state: MutableMapping[str, Any]) -> None:
     session_state[STATE_FOLLOWUP_SKILL] = ""
     session_state[STATE_KNOWLEDGE_QUESTION] = ""
     session_state[STATE_KNOWLEDGE_OUTPUT] = ""
+    session_state[STATE_SIMILAR_CASE_RESULT] = None
+    session_state[STATE_GRAPH_SNAPSHOT] = None
     session_state[STATE_KNOWLEDGE_SKILL] = ""
     session_state[STATE_LAST_SELECTED_ACTION] = "Clear Context"
 

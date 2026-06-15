@@ -1,6 +1,11 @@
-﻿import sys
+import sys
 from pathlib import Path
+from types import SimpleNamespace
 
+from modules.ai_advisory.evidence_bundle import build_evidence_grounding_bundle
+from modules.ai_advisory.grounded_brief import generate_grounded_analyst_brief
+from modules.ai_advisory.types import AIAdvisoryInput
+from modules.graph.types import GraphEdge, GraphEdgeKind, GraphNode, GraphNodeKind, GraphSnapshot
 from modules.ui.case_draft_view import CASE_DRAFT_SAFETY_NOTES, CaseDraftDisplay
 from modules.ui.case_memory_view import build_case_memory_display
 from modules.ui.console_state import ActiveContextSummary
@@ -86,7 +91,26 @@ _SAFETY_BOUNDARY_TEXT = (
 )
 
 
-def _export(sections: ParsedReportSections | None = None, language: str = "en"):
+def _grounded_brief():
+    bundle = build_evidence_grounding_bundle(
+        AIAdvisoryInput(
+            event_kind="payload_or_event",
+            attack_type="Command Injection",
+            risk_label="HIGH",
+            decision_label="BLOCK",
+            matched_rule_ids=["CMD-001"],
+            matched_signatures=["; rm -rf"],
+            evidence_labels=["shell_metacharacter_payload"],
+        )
+    )
+    return generate_grounded_analyst_brief(bundle)
+
+
+def _export(
+    sections: ParsedReportSections | None = None,
+    language: str = "en",
+    evidence_grounded_brief=None,
+):
     return build_markdown_report_export(
         active_context_summary=_active_context(),
         report_sections=sections or _sections(),
@@ -98,6 +122,7 @@ def _export(sections: ParsedReportSections | None = None, language: str = "en"):
         generated_at=GENERATED_AT,
         safety_boundary_text=_SAFETY_BOUNDARY_TEXT,
         language=language,
+        evidence_grounded_brief=evidence_grounded_brief,
     )
 
 
@@ -329,3 +354,84 @@ def test_export_includes_localized_similar_case_and_graph_sections() -> None:
     # dynamic values are preserved unchanged inside the localized wrapper.
     assert "CASE-SEED-001" in markdown
     assert "matched attack_types: Command Injection" in markdown
+
+
+
+def test_markdown_export_omits_evidence_grounded_brief_when_absent() -> None:
+    markdown = _export().markdown
+
+    assert "Evidence-Grounded AI Brief" not in markdown
+
+
+def test_markdown_export_includes_evidence_grounded_brief_when_present() -> None:
+    markdown = _export(evidence_grounded_brief=_grounded_brief()).markdown
+
+    assert "## Evidence-Grounded AI Brief" in markdown
+    assert "official_risk_level: HIGH" in markdown
+    assert "official_decision: BLOCK" in markdown
+    assert "llm_status: not_used_deterministic_fallback" in markdown
+    assert "CMD-001" in markdown
+    # Assert tokens that are rendered specifically inside the brief section
+    # (schema header, official-verdict fields, and the brief's own citation
+    # rendering) rather than a token that also appears in unrelated sections.
+    assert "schema_version: v2.9-ai-analyst-brief1" in markdown
+    assert "simulated_decision: true" in markdown
+    assert "rule-001: rule - Rule CMD-001" in markdown
+
+
+def _grounded_brief_with_structured_advisory():
+    """Brief whose bundle carries structured similar-case and graph context."""
+
+    similar_case_result = SimpleNamespace(
+        matches=[
+            SimpleNamespace(
+                seed=SimpleNamespace(
+                    case_id="CASE-SEED-001",
+                    title="Command Injection Payload",
+                    outcome="Blocked in demo.",
+                    analyst_conclusion="Payload was suspicious.",
+                ),
+                score=125,
+                reasons=("matched attack_types: Command Injection",),
+                differences=("Check execution telemetry.",),
+            )
+        ]
+    )
+    graph_snapshot = GraphSnapshot(
+        nodes=[
+            GraphNode(id="current_context", kind=GraphNodeKind.INCIDENT, label="Current Event"),
+            GraphNode(id="CASE-SEED-001", kind=GraphNodeKind.INCIDENT, label="CASE-SEED-001 - X"),
+        ],
+        edges=[
+            GraphEdge(
+                id="edge-1",
+                kind=GraphEdgeKind.RELATED_TO,
+                source_node_id="current_context",
+                target_node_id="CASE-SEED-001",
+            ),
+        ],
+    )
+    bundle = build_evidence_grounding_bundle(
+        AIAdvisoryInput(
+            event_kind="payload_or_event",
+            attack_type="Command Injection",
+            risk_label="HIGH",
+            decision_label="BLOCK",
+            matched_rule_ids=["CMD-001"],
+            matched_signatures=["; rm -rf"],
+            evidence_labels=["shell_metacharacter_payload"],
+        ),
+        similar_case_result=similar_case_result,
+        graph_snapshot=graph_snapshot,
+    )
+    return generate_grounded_analyst_brief(bundle)
+
+
+def test_markdown_export_includes_structured_similar_case_and_graph_citations() -> None:
+    markdown = _export(evidence_grounded_brief=_grounded_brief_with_structured_advisory()).markdown
+
+    assert "case-001" in markdown
+    assert "graph-001" in markdown
+    # advisory framing must travel with the citations
+    assert "not proof of current compromise" in markdown
+    assert "is not a detection source" in markdown
