@@ -1,6 +1,6 @@
 # Streamlit UI Walkthrough
 
-This walkthrough is the step-by-step demo path for the Streamlit analyst console. It is not a setup or troubleshooting guide; use [USER_OPERATION_GUIDE.md](USER_OPERATION_GUIDE.md) for environment and operational details.
+This walkthrough is the step-by-step demo path for the Streamlit analyst console. It is not a setup or troubleshooting guide; use [USER_OPERATION_GUIDE.md](USER_OPERATION_GUIDE.md) for environment and operational details. For a presenter narrative — timed 5-minute and 8–10-minute versions, per-panel talking points, reviewer Q&A, and a failure-recovery path — use the [v3.0 demo script](v3.0_demo_script.md).
 
 ## Step 1: Launch Streamlit
 

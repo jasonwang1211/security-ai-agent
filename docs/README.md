@@ -30,6 +30,7 @@ Use these documents when preparing or running the demo:
 
 - [User operation guide](USER_OPERATION_GUIDE.md): environment assumptions, launch commands, mode selection, lazy RAG behavior, troubleshooting, and safety reminders.
 - [UI walkthrough](UI_WALKTHROUGH.md): step-by-step Streamlit demo flow with what to click, what should appear, what to say, and the safety note for each major panel.
+- [v3.0 demo script](v3.0_demo_script.md): presenter narrative with timed 5-minute and 8–10-minute versions, exact payloads, expected outputs, per-panel talking points, reviewer Q&A, and a failure-recovery path.
 - [Screenshot feature gallery](screenshots/README.md): quick visual reference for each feature area.
 
 ## For Technical Review
