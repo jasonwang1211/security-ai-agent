@@ -28,11 +28,18 @@ def build_evidence_grounded_brief_from_cli_state(
     *,
     language: str = DEFAULT_LANGUAGE,
     rag_answer_text: str = "",
+    similar_case_result: Any | None = None,
+    graph_snapshot: Any | None = None,
 ) -> GroundedAnalystBrief | None:
     """Build a deterministic fallback brief from current active context.
 
     ``rag_answer_text`` is optional display-state context from the already-run
-    Knowledge Q&A panel. It does not trigger retrieval or LLM work.
+    Knowledge Q&A panel. ``similar_case_result`` / ``graph_snapshot`` are optional
+    already-computed structured advisory objects (a ``SimilarCaseResult`` and a
+    ``GraphSnapshot``) passed straight through to the bundle builder. None of
+    these trigger retrieval, graph computation, case lookup, or LLM work; they are
+    advisory only and never override the official Risk Level or Decision. When a
+    structured object is absent the bundle (and brief) simply omit that context.
     """
 
     advisory_input = build_advisory_input(cli_state)
@@ -43,6 +50,8 @@ def build_evidence_grounded_brief_from_cli_state(
         advisory_input,
         evidence_gap=evidence_gap,
         rag_answer=_rag_answer_from_text(rag_answer_text),
+        similar_case_result=similar_case_result,
+        graph_snapshot=graph_snapshot,
     )
     return generate_grounded_analyst_brief(bundle)
 
@@ -52,6 +61,8 @@ def render_evidence_grounded_brief_panel_html(
     *,
     language: str = DEFAULT_LANGUAGE,
     rag_answer_text: str = "",
+    similar_case_result: Any | None = None,
+    graph_snapshot: Any | None = None,
 ) -> str:
     """Return full panel HTML for the v2.9 grounded brief."""
 
@@ -59,6 +70,8 @@ def render_evidence_grounded_brief_panel_html(
         cli_state,
         language=language,
         rag_answer_text=rag_answer_text,
+        similar_case_result=similar_case_result,
+        graph_snapshot=graph_snapshot,
     )
     if brief is None:
         return build_empty_grounded_brief_html()

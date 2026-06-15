@@ -48,12 +48,16 @@ from modules.ui.demo_scenarios import (
     scenario_preview_text,
 )
 from modules.ui.console_state import (
+    ACTIVE_CONTEXT_KIND_KEY,
+    ACTIVE_EVENT_CONTEXT_KEY,
+    ACTIVE_INCIDENT_CONTEXT_KEY,
     SIMILAR_CASE_COMMAND,
     STATE_AGENT,
     STATE_CLI_STATE,
     STATE_FOLLOWUP_OUTPUT,
     STATE_FOLLOWUP_QUESTION,
     STATE_FOLLOWUP_SKILL,
+    STATE_GRAPH_SNAPSHOT,
     STATE_KNOWLEDGE_OUTPUT,
     STATE_KNOWLEDGE_QUESTION,
     STATE_KNOWLEDGE_SKILL,
@@ -61,6 +65,7 @@ from modules.ui.console_state import (
     STATE_LAST_OUTPUT,
     STATE_LAST_SELECTED_ACTION,
     STATE_ORCHESTRATOR,
+    STATE_SIMILAR_CASE_RESULT,
     bind_runtime,
     clear_active_context,
     combined_display_output,
@@ -70,7 +75,13 @@ from modules.ui.console_state import (
     record_knowledge_output,
     record_output,
     record_similar_case_output,
+    record_structured_similar_case_context,
     summarize_active_context,
+)
+from modules.ai_advisory.similar_case_graph import build_similar_case_graph_snapshot
+from modules.controller.approved_case_retrieval import (
+    load_approved_case_seeds,
+    retrieve_approved_similar_cases,
 )
 from modules.ui.ai_analyst import (
     AI_BADGE_FOLLOWUP_KEY,
@@ -362,6 +373,45 @@ def run_direct_input(user_input: str, analysis_mode: str = DEFAULT_ANALYSIS_MODE
         record_analysis_output(st.session_state, output.response_text)
 
 
+def _active_structured_context() -> Any | None:
+    """Return the current structured active context (event or incident), or None."""
+
+    state = st.session_state.get(STATE_CLI_STATE)
+    if not isinstance(state, dict):
+        return None
+    context_kind = str(state.get(ACTIVE_CONTEXT_KIND_KEY) or "")
+    if context_kind == "event":
+        return state.get(ACTIVE_EVENT_CONTEXT_KEY)
+    if context_kind == "incident":
+        return state.get(ACTIVE_INCIDENT_CONTEXT_KEY)
+    return None
+
+
+def _capture_structured_similar_case_context() -> None:
+    """Capture the Find Similar Cases action's structured result for the brief.
+
+    Stores the deterministic ``SimilarCaseResult`` (and a derived advisory
+    ``GraphSnapshot``) in session state so the Evidence-Grounded AI Brief can
+    consume already-computed structured advisory context instead of re-parsing
+    display text. This runs as part of the retrieval action the user invoked; the
+    brief/export path only reads the stored objects and never re-triggers
+    retrieval, graph computation, or case lookup. Both objects are advisory only.
+    """
+
+    context = _active_structured_context()
+    if context is None:
+        record_structured_similar_case_context(
+            st.session_state, similar_case_result=None, graph_snapshot=None
+        )
+        return
+    result = retrieve_approved_similar_cases(context, load_approved_case_seeds())
+    record_structured_similar_case_context(
+        st.session_state,
+        similar_case_result=result,
+        graph_snapshot=build_similar_case_graph_snapshot(result),
+    )
+
+
 def run_similar_case_lookup() -> None:
     """Issue the existing exact similar-case command against session context."""
 
@@ -377,6 +427,7 @@ def run_similar_case_lookup() -> None:
         selected_action=output.selected_tool,
     )
     record_similar_case_output(st.session_state, output.response_text)
+    _capture_structured_similar_case_context()
 
 
 def run_case_draft_command(command: str, action_label: str) -> None:
@@ -791,6 +842,8 @@ def build_current_markdown_export(sections: Any, combined_output: str) -> Any:
             st.session_state.get(STATE_CLI_STATE),
             language=language,
             rag_answer_text=str(st.session_state.get(STATE_KNOWLEDGE_OUTPUT) or ""),
+            similar_case_result=st.session_state.get(STATE_SIMILAR_CASE_RESULT),
+            graph_snapshot=st.session_state.get(STATE_GRAPH_SNAPSHOT),
         ),
     )
 
@@ -1098,6 +1151,8 @@ def render_report_sections() -> None:
                     st.session_state.get(STATE_CLI_STATE),
                     language=language,
                     rag_answer_text=str(st.session_state.get(STATE_KNOWLEDGE_OUTPUT) or ""),
+                    similar_case_result=st.session_state.get(STATE_SIMILAR_CASE_RESULT),
+                    graph_snapshot=st.session_state.get(STATE_GRAPH_SNAPSHOT),
                 ),
                 unsafe_allow_html=True,
             )

@@ -4,7 +4,14 @@ import subprocess
 import sys
 from pathlib import Path
 
+import pytest
+
+from modules.controller.approved_case_retrieval import (
+    load_approved_case_seeds,
+    retrieve_approved_similar_cases,
+)
 from modules.event_followup import ActiveEventContext
+from modules.graph.types import GraphEdge, GraphEdgeKind, GraphNode, GraphNodeKind, GraphSnapshot
 from modules.ui.console_state import (
     ACTIVE_CONTEXT_KIND_KEY,
     ACTIVE_EVENT_CONTEXT_KEY,
@@ -107,3 +114,80 @@ raise SystemExit(1 if loaded else 0)
     result = subprocess.run([sys.executable, "-c", code], text=True, capture_output=True, check=False)
 
     assert result.returncode == 0, result.stdout + result.stderr
+
+
+# --- v2.9-M3/M4 structured similar-case / graph context -------------------
+
+
+def _similar_case_result():
+    """Already-computed structured SimilarCaseResult for the command-injection context."""
+
+    context = command_state()[ACTIVE_EVENT_CONTEXT_KEY]
+    return retrieve_approved_similar_cases(context, load_approved_case_seeds())
+
+
+def _graph_snapshot() -> GraphSnapshot:
+    return GraphSnapshot(
+        nodes=[
+            GraphNode(id="current_context", kind=GraphNodeKind.INCIDENT, label="Current Event"),
+            GraphNode(id="CASE-SEED-001", kind=GraphNodeKind.INCIDENT, label="CASE-SEED-001 - Command Injection"),
+        ],
+        edges=[
+            GraphEdge(
+                id="edge-1",
+                kind=GraphEdgeKind.RELATED_TO,
+                source_node_id="current_context",
+                target_node_id="CASE-SEED-001",
+            ),
+        ],
+    )
+
+
+def test_structured_similar_case_result_produces_case_advisory_context() -> None:
+    result = _similar_case_result()
+    assert result.matches  # the curated corpus matches the command-injection context
+
+    html = render_evidence_grounded_brief_panel_html(
+        command_state(), similar_case_result=result
+    ).lower()
+
+    assert "case-001" in html
+    assert "not proof of current compromise" in html
+
+
+def test_structured_graph_snapshot_produces_graph_advisory_context() -> None:
+    html = render_evidence_grounded_brief_panel_html(
+        command_state(), graph_snapshot=_graph_snapshot()
+    ).lower()
+
+    assert "graph-001" in html
+    assert "is not a detection source" in html
+
+
+def test_brief_omits_structured_context_when_absent() -> None:
+    html = render_evidence_grounded_brief_panel_html(command_state()).lower()
+
+    assert "case-001" not in html
+    assert "graph-001" not in html
+
+
+def test_brief_path_does_not_retrigger_retrieval(monkeypatch: pytest.MonkeyPatch) -> None:
+    # Compute the structured objects up front (this models the Find Similar Cases
+    # action). The brief/export path must consume the already-computed objects and
+    # must never re-run retrieval / graph computation / case lookup.
+    result = _similar_case_result()
+    snapshot = _graph_snapshot()
+
+    import modules.controller.approved_case_retrieval as approved_case_retrieval
+
+    def _must_not_run(*_args: object, **_kwargs: object) -> object:
+        raise AssertionError("the brief path must not re-trigger similar-case retrieval")
+
+    monkeypatch.setattr(approved_case_retrieval, "retrieve_approved_similar_cases", _must_not_run)
+
+    html = render_evidence_grounded_brief_panel_html(
+        command_state(), similar_case_result=result, graph_snapshot=snapshot
+    ).lower()
+
+    assert "case-001" in html
+    assert "graph-001" in html
