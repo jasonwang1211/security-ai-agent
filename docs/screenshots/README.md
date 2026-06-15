@@ -39,6 +39,17 @@ These v2.9 images are rendered from the live Evidence-Grounded AI Brief panel ma
 
 Traditional Chinese UI screenshots are preserved under [zh-TW/](zh-TW/) using the same main file names where available. The Traditional Chinese documents under docs/zh-TW/ should point to that folder or describe it as the Traditional Chinese screenshot source. The v2.9 Evidence-Grounded AI Brief panel images above are English-only for now; a Traditional Chinese capture is an optional follow-up.
 
+## v3.0 Full-Window Screenshots TODO
+
+The v2.9 Evidence-Grounded AI Brief images (`en/11`–`13`) are panel renders. For the
+v3.0 final presentation, capture full-window app screenshots (with the Streamlit
+chrome) once the UI and docs are frozen — do not re-shoot the whole set before then.
+Planned captures (see [../v3.0_final_polish_plan.md](../v3.0_final_polish_plan.md)):
+
+- Full-window AI Analyst tab showing the Evidence-Grounded AI Brief in context.
+- Full-window view after Find Similar Cases showing `case-001` / `graph-001` advisory context.
+- Traditional Chinese (`zh-TW/`) equivalents of the above.
+
 ## Safety Boundary
 
 - Rule-Based Detector is the detection authority.

@@ -11,7 +11,7 @@ This hub is the main navigation page for Sentinel Project documentation. The roo
 | Portfolio or interview reviewer | [Repository README](../README.md), [project report](../REPORT.md), and [UI walkthrough](UI_WALKTHROUGH.md) |
 | Demo operator | [User operation guide](USER_OPERATION_GUIDE.md) and [UI walkthrough](UI_WALKTHROUGH.md) |
 | Technical reviewer | [Technical notes](TECH_NOTES.md) and [Code review audit](CODE_REVIEW_AUDIT.md) |
-| Validation reviewer | [Test report](TEST_REPORT.md) and [v2.8 release gate](v2.8_release_gate.md) |
+| Validation reviewer | [Test report](TEST_REPORT.md) and [v2.9 release gate](v2.9_release_gate.md) |
 | Traditional Chinese reader | [zh-TW overview](zh-TW/README.zh-TW.md) and [zh-TW project report](zh-TW/PROJECT_REPORT.zh-TW.md) |
 | Screenshot reviewer | [Screenshot feature gallery](screenshots/README.md) |
 
@@ -22,7 +22,7 @@ Read these in order:
 1. [Repository README](../README.md) for the project summary, screenshots, and safety boundary.
 2. [Project report](../REPORT.md) for formal motivation, architecture, scope, safety boundary, validation, and future work.
 3. [Screenshot feature gallery](screenshots/README.md) for visual evidence of the Streamlit analyst console.
-4. [Test report](TEST_REPORT.md) and [v2.8 release gate](v2.8_release_gate.md) for recorded validation evidence.
+4. [Test report](TEST_REPORT.md) and [v2.9 release gate](v2.9_release_gate.md) for recorded validation evidence.
 
 ## For Demo Operators
 
@@ -36,16 +36,16 @@ Use these documents when preparing or running the demo:
 
 Use these documents when evaluating architecture and code quality:
 
-- [Technical notes](TECH_NOTES.md): current v2.8 technical overview.
+- [Technical notes](TECH_NOTES.md): current technical overview (v2.9 baseline).
 - [Code review audit](CODE_REVIEW_AUDIT.md): code review and public-readiness findings.
-- [Roadmap](ROADMAP.md): current baseline, short-term polish, v2.9 candidates, long-term ideas, and non-goals.
+- [Roadmap](ROADMAP.md): current baseline, completed v2.9 work, v3.0 polish, long-term ideas, and non-goals.
 
 ## For Validation Evidence
 
 Use these documents when checking whether the demo-ready state was validated:
 
 - [Test report](TEST_REPORT.md)
-- [v2.8 release gate](v2.8_release_gate.md)
+- [v2.9 release gate](v2.9_release_gate.md)
 - [Screenshot feature gallery](screenshots/README.md)
 
 The validation summary is a recorded release-gate snapshot. A documentation-only patch does not imply pytest, ruff, mypy, or gitleaks were rerun unless explicitly stated.
@@ -67,7 +67,7 @@ Traditional Chinese UI screenshots are under [screenshots/zh-TW/](screenshots/zh
 
 ## Historical Documents
 
-Historical specifications, older release notes, planning artifacts, and previous technical notes are stored under [archive/](archive/). They are useful for project history, but they are not the main entry point for the current v2.8 demo-ready state.
+Historical specifications, older release notes, planning artifacts, and previous technical notes are stored under [archive/](archive/). They are useful for project history, but they are not the main entry point for the current v2.9 demo-ready state.
 
 Do not link public landing material to local-only demo helper files.
 

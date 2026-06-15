@@ -72,6 +72,7 @@ User input / demo scenario
   -> Deterministic Risk Level
   -> Simulated Decision
   -> Advisory context
+     -> Evidence-Grounded AI Brief (cited, structured, deterministic fallback)
      -> AI Analyst Brief
      -> Evidence Gap Analyzer
      -> Knowledge Q&A / RAG
@@ -90,6 +91,7 @@ The authority path ends at deterministic classification, Risk Level, and simulat
 | Risk / Decision policy | Computes deterministic Risk Level and simulated Decision. | Final demo verdict path. |
 | Controller / orchestration | Routes explicit commands and deterministic skill flows. | Does not use LLM routing as authority. |
 | AI advisory | Builds AI Analyst Brief and Evidence Gap summaries. | Advisory only; no LLM authority. |
+| Evidence-Grounded AI Brief | Builds a cited, structured brief over deterministic evidence, gaps, and optional similar-case / graph context, with a deterministic fallback and guardrail. | Advisory only; copies the official verdict and never overrides it. |
 | RAG / Knowledge Q&A | Retrieves approved defensive knowledge context. | Advisory only; no exploit guidance. |
 | Approved Similar Cases | Loads curated approved seed cases for comparison. | Historical cases do not prove current compromise. |
 | Relationship Graph | Displays read-only relationship context. | Explanatory only; not graph-based detection. |
@@ -112,20 +114,20 @@ For launch and troubleshooting details, use [docs/USER_OPERATION_GUIDE.md](docs/
 
 ## Testing and Validation
 
-Last recorded v2.8 release-gate validation summary:
+Last recorded v2.9 release-gate validation summary:
 
-- pytest: 1168 passed
+- pytest: 1236 passed
 - ruff: passed
-- mypy: passed
-- gitleaks: passed with .gitleaksignore false-positive handling
-- screenshot language refresh: completed
+- mypy: passed, no issues found in 172 source files
+- git diff --check: passed
+- AppTest UI smoke: Run -> Find Similar Cases -> case-001 / graph-001, 0 exceptions
 
 Validation covers deterministic behavior, safety-boundary regressions, UI helper behavior, RAG control, language-aware output, documentation links, and release-gate checks. It does not claim production IDS/IPS effectiveness.
 
 Supporting materials:
 
 - [Test report](docs/TEST_REPORT.md)
-- [v2.8 release gate](docs/v2.8_release_gate.md)
+- [v2.9 release gate](docs/v2.9_release_gate.md) and [v2.9 release notes](docs/v2.9_release_notes.md)
 - [Screenshot gallery](docs/screenshots/README.md)
 
 ## Safety Boundary

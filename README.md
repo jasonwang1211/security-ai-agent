@@ -39,6 +39,7 @@ The HTTP/2 scenario is a safe synthetic incident summary. It does not generate t
 | Fast deterministic mode | Quick demo path without optional AI/RAG warm-up. | Deterministic path |
 | Full AI-assisted mode | Optional AI/RAG explanation path. | Advisory only |
 | AI Analyst Brief | Event summary, why it matters, next steps, unsafe assumptions. | Advisory only |
+| Evidence-Grounded AI Brief | Cited, structured brief over deterministic evidence, gaps, and optional similar-case / graph context, with a deterministic fallback. | Advisory only |
 | Evidence Gap Analyzer | Confirmed facts, missing evidence, recommended checks. | Advisory only |
 | Knowledge Q&A / RAG | Defensive knowledge answers from approved context. | Advisory only |
 | Approved Similar Cases | Read-only comparison against approved seed cases. | Advisory only |
@@ -74,20 +75,20 @@ Start with the documentation hub: [docs/README.md](docs/README.md).
 | Demo operation and troubleshooting | [User operation guide](docs/USER_OPERATION_GUIDE.md) |
 | Step-by-step UI walkthrough | [UI walkthrough](docs/UI_WALKTHROUGH.md) |
 | Screenshots / feature gallery | [Screenshot gallery](docs/screenshots/README.md) |
-| Validation evidence | [Test report](docs/TEST_REPORT.md) and [v2.8 release gate](docs/v2.8_release_gate.md) |
+| Validation evidence | [Test report](docs/TEST_REPORT.md), [v2.9 release gate](docs/v2.9_release_gate.md), and [v2.9 release notes](docs/v2.9_release_notes.md) |
 | Technical architecture notes | [Technical notes](docs/TECH_NOTES.md) |
 | Roadmap | [Roadmap](docs/ROADMAP.md) |
 | Traditional Chinese materials | [zh-TW overview](docs/zh-TW/README.zh-TW.md) and [zh-TW report](docs/zh-TW/PROJECT_REPORT.zh-TW.md) |
 
 ## Validation Summary
 
-Last recorded v2.8 release-gate validation summary:
+Last recorded v2.9 release-gate validation summary:
 
-- pytest: `1178 passed`
+- pytest: `1236 passed`
 - ruff: passed
-- mypy: passed, no issues found in 164 source files
-- gitleaks: no leaks found
-- screenshot language refresh: completed for English and Traditional Chinese screenshot sets
+- mypy: passed, no issues found in 172 source files
+- git diff --check: passed
+- AppTest UI smoke: Run -> Find Similar Cases -> case-001 / graph-001, 0 exceptions
 
 These checks validate demo behavior and safety-boundary regressions. They do not claim production IDS/IPS effectiveness.
 
