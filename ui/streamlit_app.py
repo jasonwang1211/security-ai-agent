@@ -126,6 +126,10 @@ from modules.ui.performance_view import (
 from modules.ui.route_policy_view import build_route_policy_display
 from modules.ui.ai_analyst_brief_view import render_ai_analyst_brief_panel_html
 from modules.ui.ai_advisory_view import render_evidence_gap_panel_html
+from modules.ui.evidence_grounded_brief_view import (
+    build_evidence_grounded_brief_from_cli_state,
+    render_evidence_grounded_brief_panel_html,
+)
 from modules.ui.visual_style import (
     ADVISORY_COLOR,
     DETERMINISTIC_COLOR,
@@ -783,6 +787,11 @@ def build_current_markdown_export(sections: Any, combined_output: str) -> Any:
         generated_at=_current_timestamp(),
         safety_boundary_text=safety_text,
         language=language,
+        evidence_grounded_brief=build_evidence_grounded_brief_from_cli_state(
+            st.session_state.get(STATE_CLI_STATE),
+            language=language,
+            rag_answer_text=str(st.session_state.get(STATE_KNOWLEDGE_OUTPUT) or ""),
+        ),
     )
 
 
@@ -1079,6 +1088,20 @@ def render_report_sections() -> None:
 
     with ai_analyst_tab:
         st.caption(t("ai_analyst_caption", language))
+        with st.container(border=True):
+            render_panel_heading("Evidence-Grounded AI Brief")
+            st.caption(
+                "Structured analyst brief grounded in deterministic evidence, gaps, and optional advisory context."
+            )
+            st.markdown(
+                render_evidence_grounded_brief_panel_html(
+                    st.session_state.get(STATE_CLI_STATE),
+                    language=language,
+                    rag_answer_text=str(st.session_state.get(STATE_KNOWLEDGE_OUTPUT) or ""),
+                ),
+                unsafe_allow_html=True,
+            )
+
         with st.container(border=True):
             render_panel_heading(t("ai_analyst_brief_panel_title", language))
             st.caption(t("ai_analyst_brief_panel_subtitle", language))

@@ -580,6 +580,11 @@ def apply_console_css() -> str:
   color: #e6edf6;
   overflow-wrap: anywhere;
 }
+.sentinel-brief-citation {
+  font-size: 0.74rem;
+  font-weight: 600;
+  color: var(--sentinel-text-muted);
+}
 .sentinel-brief-boundary {
   border-left: 3px solid var(--sentinel-advisory);
   background: rgba(139, 92, 246, 0.10);
