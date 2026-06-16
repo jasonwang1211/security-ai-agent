@@ -54,8 +54,8 @@ A safe synthetic incident: deterministic verdict HTTP/2 Resource Exhaustion Susp
 | Evidence-Grounded AI Brief | Cited, structured brief over deterministic evidence, gaps, and optional similar-case / graph context, with a deterministic fallback. | Advisory only |
 | Evidence Gap Analyzer | Confirmed facts, missing evidence, recommended checks. | Advisory only |
 | Knowledge Q&A / RAG | Defensive knowledge answers from approved context. | Advisory only |
-| Approved Similar Cases | Read-only comparison against approved seed cases. | Advisory only |
-| Relationship Graph | Visual context for event, rule, risk, decision, and case links. | Advisory only |
+| Approved Similar Cases | Read-only comparison against hand-curated approved seed cases; not proof of compromise. | Advisory only |
+| Relationship Graph | Visual context for event, rule, risk, decision, and case links; not a detection source. | Advisory only |
 | Case Draft / Markdown Export | Human-reviewed report material. | Human review required |
 
 ## Quick Start
@@ -109,7 +109,10 @@ These checks validate demo behavior and safety-boundary regressions. They do not
 - Rule-Based Detector is the detection authority.
 - Risk Level / Decision are deterministic.
 - BLOCK / MONITOR / ALLOW are simulated decisions only.
-- RAG / LLM / AI Analyst Brief / Evidence Gap Analyzer / Similar Cases / Relationship Graph provide advisory context only.
+- RAG / LLM / AI Analyst Brief / Evidence-Grounded AI Brief / Evidence Gap Analyzer / Similar Cases / Relationship Graph provide advisory context only and do not override the official Risk Level or Decision.
+- Approved Similar Cases are comparison context only and do not prove current compromise or successful execution.
+- Relationship Graph context is for explanation only and is not a detection source.
+- No live LLM client is wired; the Evidence-Grounded AI Brief runs as a deterministic fallback.
 - No real firewall / WAF / EDR / account / cloud / SIEM / SOAR action is performed.
 - No exploit code, PoC generation, traffic generation, or offensive automation is provided.
 - Human review is required.

@@ -10,7 +10,9 @@ Screenshots are public review aids and do not contain secrets or credentials.
 - Traditional Chinese UI screenshots: [zh-TW/](zh-TW/) - screenshot source for Traditional Chinese docs.
 - Root docs/screenshots PNG files are legacy compatibility references and should not be the primary source for English public docs.
 
-## English Feature Gallery
+Where to look: the **v3.0 README Screenshots** section below is the current, readable set used by the root README (six starred images). **English Feature Gallery** is an extended feature index; the **v2.9 Evidence-Grounded AI Brief** and **v3.0 Full-Window** sections are additional references.
+
+## English Feature Gallery (extended feature index)
 
 | Screenshot | Feature area | What to look for | Safety note |
 |---|---|---|---|
