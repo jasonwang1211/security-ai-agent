@@ -111,6 +111,9 @@ python -m streamlit run ui/streamlit_app.py --server.fileWatcherType none
 - Risk Level / Decision 是 deterministic。
 - BLOCK / MONITOR / ALLOW 是 simulated decisions only。
 - RAG / LLM / AI Analyst Brief / Evidence Gap Analyzer / Similar Cases / Relationship Graph 只提供 advisory context。
+- 相似案例不是目前事件已被入侵或已成功執行的證明。
+- 關聯圖不是偵測來源。
+- 目前沒有接 live LLM client；Evidence-Grounded AI Brief 以 deterministic fallback 呈現。
 - 不做真實 firewall / WAF / EDR / account / cloud / SIEM / SOAR 動作。
 - 不提供 exploit code、PoC generation、traffic generation 或 offensive automation。
 - 需要 Human review。
