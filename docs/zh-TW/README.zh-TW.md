@@ -4,6 +4,29 @@
 
 Sentinel Project 是一個防禦導向的 AI-assisted blue-team security triage prototype。它以 Streamlit Analyst Console 串接 Rule-Based Detector、deterministic Risk Level / Decision、simulated decisions，以及 AI/RAG advisory context，重點是把偵測權威與 AI 輔助分析清楚分開。
 
+## v3.0 中文展示入口
+
+給教授審查與口頭報告使用的中文展示素材：
+
+- 中文展示稿 / demo 流程 / 常見問題 / 失敗備援：[v3.0 中文展示稿](v3.0_presentation_notes.zh-TW.md)
+- 繁中關鍵截圖（overview + 可讀 detail crop，`zh-TW/20`–`31`）：[截圖集](../screenshots/README.md)
+- 對照英文版：[v3.0 Demo Script](../v3.0_demo_script.md)、[UI Walkthrough](../UI_WALKTHROUGH.md)
+
+本次 demo 想讓審查者記住的重點：
+
+- 規則式偵測（Rule-Based Detector）是偵測權威，不是 AI。
+- Risk Level / Decision 是 deterministic，不由 LLM 決定。
+- BLOCK / MONITOR / ALLOW 是模擬決策。
+- Evidence-Grounded AI Brief 只供參考（advisory-only），不能覆蓋官方判定。
+- 相似案例（Similar Cases）不是目前已被入侵的證明。
+- 關聯圖（Relationship Graph）不是偵測來源。
+- 不執行真實阻擋 / WAF / EDR / SIEM / SOAR 等動作。
+- 目前沒有接 live LLM client；brief 以 deterministic fallback 呈現。
+
+> 已知限制：v2.9 的 Evidence-Grounded AI Brief 面板固定段落標籤目前仍是英文，
+> deterministic 路徑與 UI 外框已是繁體中文。中文截圖會看到中文 UI 外框 + 英文／中英混合的
+> brief 面板，請如實說明、不要宣稱已完全中文化（詳見展示稿第 9 節）。
+
 ## 專題動機
 
 這個 repo 同時是資安專題成果與個人 security engineering portfolio project。它不是要讓 AI 自動判斷攻擊，也不是要做真實 IDS/IPS；核心問題是如何在資安分流中使用 AI 輔助分析，同時避免 AI 直接成為最終裁決者。
@@ -105,6 +128,8 @@ python -m streamlit run ui/streamlit_app.py --server.fileWatcherType none
 
 ## 文件導覽
 
+- [v3.0 中文展示稿](v3.0_presentation_notes.zh-TW.md)
+- [繁中專題報告](PROJECT_REPORT.zh-TW.md)
 - [English README](../../README.md)
 - [English Project Report](../../REPORT.md)
 - [Documentation Hub](../README.md)
@@ -118,13 +143,13 @@ python -m streamlit run ui/streamlit_app.py --server.fileWatcherType none
 
 ## 測試與驗證
 
-最近一次記錄的 v2.8 release-gate 驗證摘要：
+最近一次本機重跑（v3.0 docs polish，基於 v2.9.0 baseline）的驗證摘要：
 
-- pytest：1168 passed
-- ruff：passed
-- mypy：passed
-- gitleaks：passed
-- screenshot language refresh：completed
+- pytest：1236 passed
+- ruff：All checks passed
+- mypy：no issues found in 172 source files
+- git diff --check：passed
+- zh-TW screenshot set：`zh-TW/20`–`31` 已更新
 
 這些驗證代表 demo behavior 與 safety boundary 有被測試，不代表 production IDS/IPS effectiveness。
 
