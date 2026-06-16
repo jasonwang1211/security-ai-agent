@@ -6,29 +6,41 @@ The repository is written for project review, demo walkthroughs, and portfolio d
 
 ## Screenshot Showcase
 
-### Streamlit Analyst Console
+### Analyst Console (overview)
 
-![Streamlit analyst console home](docs/screenshots/en/01_console_home.png)
+![Sentinel Project analyst console home](docs/screenshots/en/20_console_home_overview.png)
 
-The console is the main demo surface: scenario cards, language and mode controls, active context, deterministic results, and visible safety framing.
+The console is the main demo surface: scenario cards, language and mode controls, and visible safety framing. BLOCK / MONITOR / ALLOW are simulated; no real enforcement is executed.
 
-### AI Analyst Brief
+### Command Injection Result (overview)
 
-![AI Analyst Brief panel](docs/screenshots/en/03_ai_analyst_brief.png)
+![Command Injection deterministic result](docs/screenshots/en/21_command_injection_overview.png)
 
-The AI Analyst Brief explains the current event in analyst language while keeping the deterministic verdict separate from advisory context.
+Running `test; rm -rf /tmp/test` produces a deterministic verdict: Command Injection, Risk HIGH, simulated Decision BLOCK, backed by rule evidence CMD-001.
 
-### Evidence Gap Analyzer
+### Evidence-Grounded AI Brief — Official Verdict
 
-![Evidence Gap Analyzer panel](docs/screenshots/en/04_evidence_gap_analyzer.png)
+![Evidence-Grounded AI Brief official verdict detail](docs/screenshots/en/23_brief_official_verdict_detail.png)
 
-The Evidence Gap Analyzer separates confirmed facts, missing evidence, recommended checks, and unsafe assumptions.
+The brief copies the official deterministic verdict (Risk HIGH / Decision BLOCK) and is advisory only — `llm_status: not_used_deterministic_fallback` (no live LLM is wired).
 
-### HTTP/2 Resource Exhaustion Safe Demo
+### Evidence-Grounded AI Brief — Advisory Context
 
-![HTTP/2 Resource Exhaustion safe synthetic demo](docs/screenshots/en/09_http2_resource_exhaustion_demo.png)
+![Evidence-Grounded AI Brief advisory context detail](docs/screenshots/en/26_brief_advisory_context_detail.png)
 
-The HTTP/2 scenario is a safe synthetic incident summary. It does not generate traffic, provide exploit steps, or claim real enforcement.
+After Find Similar Cases, the brief cites structured advisory context: an approved similar case (`case-001`) that is not proof of compromise, and graph relationship context (`graph-001`) that is not a detection source.
+
+### Markdown Export — Evidence-Grounded Section
+
+![Markdown export Evidence-Grounded section](docs/screenshots/en/13_evidence_grounded_markdown_export.png)
+
+The Markdown export includes the Evidence-Grounded AI Brief section with schema version, official Risk Level / Decision, and `case-001` / `graph-001` citations. (Rendered from the real export markdown.)
+
+### HTTP/2 Resource Exhaustion Safe Demo (overview)
+
+![HTTP/2 Resource Exhaustion safe synthetic demo](docs/screenshots/en/29_http2_safe_demo_overview.png)
+
+A safe synthetic incident: deterministic verdict HTTP/2 Resource Exhaustion Suspicion, Risk MEDIUM, simulated Decision MONITOR (rule HTTP2-RES-001). No traffic is generated and no real enforcement occurs.
 
 ## Core Capabilities
 
@@ -39,10 +51,11 @@ The HTTP/2 scenario is a safe synthetic incident summary. It does not generate t
 | Fast deterministic mode | Quick demo path without optional AI/RAG warm-up. | Deterministic path |
 | Full AI-assisted mode | Optional AI/RAG explanation path. | Advisory only |
 | AI Analyst Brief | Event summary, why it matters, next steps, unsafe assumptions. | Advisory only |
+| Evidence-Grounded AI Brief | Cited, structured brief over deterministic evidence, gaps, and optional similar-case / graph context, with a deterministic fallback. | Advisory only |
 | Evidence Gap Analyzer | Confirmed facts, missing evidence, recommended checks. | Advisory only |
 | Knowledge Q&A / RAG | Defensive knowledge answers from approved context. | Advisory only |
-| Approved Similar Cases | Read-only comparison against approved seed cases. | Advisory only |
-| Relationship Graph | Visual context for event, rule, risk, decision, and case links. | Advisory only |
+| Approved Similar Cases | Read-only comparison against hand-curated approved seed cases; not proof of compromise. | Advisory only |
+| Relationship Graph | Visual context for event, rule, risk, decision, and case links; not a detection source. | Advisory only |
 | Case Draft / Markdown Export | Human-reviewed report material. | Human review required |
 
 ## Quick Start
@@ -74,20 +87,20 @@ Start with the documentation hub: [docs/README.md](docs/README.md).
 | Demo operation and troubleshooting | [User operation guide](docs/USER_OPERATION_GUIDE.md) |
 | Step-by-step UI walkthrough | [UI walkthrough](docs/UI_WALKTHROUGH.md) |
 | Screenshots / feature gallery | [Screenshot gallery](docs/screenshots/README.md) |
-| Validation evidence | [Test report](docs/TEST_REPORT.md) and [v2.8 release gate](docs/v2.8_release_gate.md) |
+| Validation evidence | [Test report](docs/TEST_REPORT.md), [v2.9 release gate](docs/v2.9_release_gate.md), and [v2.9 release notes](docs/v2.9_release_notes.md) |
 | Technical architecture notes | [Technical notes](docs/TECH_NOTES.md) |
 | Roadmap | [Roadmap](docs/ROADMAP.md) |
 | Traditional Chinese materials | [zh-TW overview](docs/zh-TW/README.zh-TW.md) and [zh-TW report](docs/zh-TW/PROJECT_REPORT.zh-TW.md) |
 
 ## Validation Summary
 
-Last recorded v2.8 release-gate validation summary:
+Last recorded v2.9 release-gate validation summary:
 
-- pytest: `1178 passed`
+- pytest: `1236 passed`
 - ruff: passed
-- mypy: passed, no issues found in 164 source files
-- gitleaks: no leaks found
-- screenshot language refresh: completed for English and Traditional Chinese screenshot sets
+- mypy: passed, no issues found in 172 source files
+- git diff --check: passed
+- AppTest UI smoke: Run -> Find Similar Cases -> case-001 / graph-001, 0 exceptions
 
 These checks validate demo behavior and safety-boundary regressions. They do not claim production IDS/IPS effectiveness.
 
@@ -96,7 +109,10 @@ These checks validate demo behavior and safety-boundary regressions. They do not
 - Rule-Based Detector is the detection authority.
 - Risk Level / Decision are deterministic.
 - BLOCK / MONITOR / ALLOW are simulated decisions only.
-- RAG / LLM / AI Analyst Brief / Evidence Gap Analyzer / Similar Cases / Relationship Graph provide advisory context only.
+- RAG / LLM / AI Analyst Brief / Evidence-Grounded AI Brief / Evidence Gap Analyzer / Similar Cases / Relationship Graph provide advisory context only and do not override the official Risk Level or Decision.
+- Approved Similar Cases are comparison context only and do not prove current compromise or successful execution.
+- Relationship Graph context is for explanation only and is not a detection source.
+- No live LLM client is wired; the Evidence-Grounded AI Brief runs as a deterministic fallback.
 - No real firewall / WAF / EDR / account / cloud / SIEM / SOAR action is performed.
 - No exploit code, PoC generation, traffic generation, or offensive automation is provided.
 - Human review is required.

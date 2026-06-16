@@ -1,6 +1,6 @@
 # Technical Notes
 
-Current baseline: v2.8 demo-ready.
+Current baseline: v2.9.0 (Evidence-Grounded AI Brief merged into main; internal stable milestone).
 
 These notes summarize the current architecture at a public, implementation-oriented level. Historical implementation plans and older release notes are kept in `docs/archive/`.
 
@@ -22,9 +22,9 @@ Analyst-facing advisory output follows the selected UI language where supported.
 
 The AI Analyst Brief provides deterministic advisory context over the current analysis. It summarizes what happened, why it matters, the deterministic verdict, evidence gaps, suggested next review steps, and unsafe assumptions. It is advisory-only and does not use LLM authority for final decisions.
 
-## Evidence-Grounded AI Brief (v2.9 branch)
+## Evidence-Grounded AI Brief (v2.9)
 
-The Evidence-Grounded AI Brief is the v2.9 evolution of the advisory analyst narrative, developed on the `v2.9-evidence-grounded-ai-brief` branch. A deterministic `EvidenceGroundingBundle` collects already-computed facts — the rule-based detection and official verdict, current evidence, evidence gaps, and optional RAG / approved similar-case / graph relationship context — with stable citation IDs (`ev-*`, `rule-*`, `gap-*`, `rag-*`, `case-*`, `graph-*`). A structured brief is then generated with a deterministic fallback.
+The Evidence-Grounded AI Brief is the v2.9 evolution of the advisory analyst narrative, merged into `main` and tagged `v2.9.0`. A deterministic `EvidenceGroundingBundle` collects already-computed facts — the rule-based detection and official verdict, current evidence, evidence gaps, and optional RAG / approved similar-case / graph relationship context — with stable citation IDs (`ev-*`, `rule-*`, `gap-*`, `rag-*`, `case-*`, `graph-*`). A structured brief is then generated with a deterministic fallback.
 
 - The official Risk Level and Decision are copied from the bundle and can never be regenerated or overridden by generated content; a guardrail forces a deterministic fallback if generated text changes the verdict, overclaims advisory context, or uses unsafe enforcement / offensive wording.
 - Structured Similar Cases and Graph context are consumed as already-computed structured objects (no display-text parsing) and remain advisory only: similar cases are not proof of compromise, and graph context is not a detection source.
@@ -66,4 +66,4 @@ The HTTP/2 Resource Exhaustion scenario is a safe synthetic incident summary. It
 
 ## Validation Summary
 
-The current public validation summary is maintained in `docs/TEST_REPORT.md` and the v2.8 release gate evidence is maintained in `docs/v2.8_release_gate.md`.
+The current public validation summary is maintained in `docs/TEST_REPORT.md`, and the latest release-gate evidence is in `docs/v2.9_release_gate.md` (with `docs/v2.8_release_gate.md` kept as the prior v2.8 record).
