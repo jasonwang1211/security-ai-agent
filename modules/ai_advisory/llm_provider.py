@@ -7,6 +7,7 @@ guardrail the returned text before using it.
 
 from __future__ import annotations
 
+import importlib
 import json
 import os
 from collections.abc import Callable, Mapping
@@ -105,9 +106,9 @@ class LocalLLMProvider(BaseLLMProvider):
                 error_message="Local provider requires a model name.",
             )
         try:
-            from langchain_community.chat_models import ChatOllama
-
-            llm = ChatOllama(model=self.model_name, temperature=request_payload.temperature)
+            chat_models: Any = importlib.import_module("langchain_community.chat_models")
+            chat_ollama: Any = chat_models.ChatOllama
+            llm = chat_ollama(model=self.model_name, temperature=request_payload.temperature)
             response = llm.invoke(
                 f"{request_payload.system_prompt}\n\n{request_payload.user_prompt}"
             )

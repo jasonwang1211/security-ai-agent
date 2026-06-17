@@ -113,7 +113,8 @@ def answer_event_aware_question(
         )
 
     selected_provider = provider or request.provider or build_default_provider()
-    provider_response = selected_provider.generate(
+    generate = selected_provider.generate
+    provider_response = generate(
         LLMProviderRequest(
             system_prompt=build_soc_copilot_system_prompt(request.language),
             user_prompt=_event_qa_user_prompt(request),

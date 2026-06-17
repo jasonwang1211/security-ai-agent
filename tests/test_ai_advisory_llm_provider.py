@@ -122,6 +122,7 @@ raise SystemExit(1 if loaded else 0)
 
 
 def test_local_provider_does_not_import_chatollama_until_call_path() -> None:
+    sys.modules.pop("langchain_community.chat_models", None)
     module = importlib.import_module("modules.ai_advisory.llm_provider")
 
     assert hasattr(module, "LocalLLMProvider")

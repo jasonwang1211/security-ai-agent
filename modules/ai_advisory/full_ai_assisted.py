@@ -84,7 +84,8 @@ def run_full_ai_assisted(
     """Run optional AI generation and always return a guarded advisory result."""
 
     selected_provider = provider or request.provider or build_default_provider()
-    provider_response = selected_provider.generate(
+    generate = selected_provider.generate
+    provider_response = generate(
         LLMProviderRequest(
             system_prompt=build_soc_copilot_system_prompt(request.language),
             user_prompt=build_grounded_brief_user_prompt(request.bundle, request.language),
