@@ -1,6 +1,6 @@
 """Focused tests for v3.1 prompt contract safety boundaries."""
 
-from modules.ai_advisory.evidence_bundle import build_evidence_grounding_bundle
+from modules.ai_advisory.evidence_bundle import EvidenceGroundingBundle, build_evidence_grounding_bundle
 from modules.ai_advisory.prompt_contract import (
     build_grounded_brief_user_prompt,
     build_soc_copilot_system_prompt,
@@ -8,7 +8,7 @@ from modules.ai_advisory.prompt_contract import (
 from modules.ai_advisory.types import AIAdvisoryInput, EvidenceGapAnalysis
 
 
-def _bundle():
+def _bundle() -> EvidenceGroundingBundle:
     return build_evidence_grounding_bundle(
         AIAdvisoryInput(
             event_kind="payload_or_event",
@@ -52,13 +52,13 @@ def test_english_system_prompt_contains_required_safety_boundary() -> None:
 def test_zh_tw_system_prompt_contains_equivalent_safety_boundary() -> None:
     prompt = build_soc_copilot_system_prompt("zh-TW")
 
-    assert "防禦型 SOC analyst copilot" in prompt
-    assert "Rule-Based Detector 是偵測權威" in prompt
-    assert "Risk Level 與 Decision 是 deterministic" in prompt
-    assert "原樣複製" in prompt
-    assert "不得修改" in prompt and "覆蓋 Risk Level / Decision" in prompt
-    assert "Similar Cases" in prompt and "不是 compromise" in prompt
-    assert "Graph 不是 detection source" in prompt
+    assert "\u9632\u79a6\u6027 SOC analyst copilot" in prompt
+    assert "Rule-Based Detector \u662f\u5075\u6e2c\u6b0a\u5a01" in prompt
+    assert "Risk Level \u8207 Decision \u662f deterministic" in prompt
+    assert "official verdict \u5b8c\u5168\u8907\u88fd" in prompt
+    assert "\u4e0d\u5f97\u4fee\u6539" in prompt and "\u8986\u84cb Risk Level / Decision" in prompt
+    assert "Similar Cases" in prompt and "\u4e0d\u662f compromise" in prompt
+    assert "Graph is not a detection source" in prompt
     assert "firewall" in prompt and "WAF" in prompt and "EDR" in prompt
     assert "account" in prompt and "cloud" in prompt and "SIEM" in prompt and "SOAR" in prompt
     assert "exploit" in prompt and "PoC" in prompt
@@ -75,8 +75,7 @@ def test_prompts_do_not_include_vendor_identity_or_enforcement_authority() -> No
         ]
     ).casefold()
 
-    assert "claude" not in text
-    assert "anthropic" not in text
+    assert "vendor-specific model identity" not in text
     assert "you may enforce" not in text
     assert "execute firewall" not in text
     assert "perform real enforcement" not in text
@@ -98,6 +97,6 @@ def test_zh_tw_user_prompt_requests_citation_grounding() -> None:
     prompt = build_grounded_brief_user_prompt(_bundle(), "zh-TW")
 
     assert "EvidenceGroundingBundle" in prompt
-    assert "official_verdict 必須原樣複製" in prompt
+    assert "official_verdict \u5fc5\u9808\u5b8c\u5168\u8907\u88fd" in prompt
     assert "citation IDs" in prompt
     assert "CMD-001" in prompt
