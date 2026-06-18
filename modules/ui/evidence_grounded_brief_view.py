@@ -12,7 +12,10 @@ from collections.abc import Mapping
 from types import SimpleNamespace
 from typing import Any
 
-from modules.ai_advisory.evidence_bundle import build_evidence_grounding_bundle
+from modules.ai_advisory.evidence_bundle import (
+    EvidenceGroundingBundle,
+    build_evidence_grounding_bundle,
+)
 from modules.ai_advisory.evidence_gap import analyze_evidence_gap
 from modules.ai_advisory.grounded_brief import (
     GroundedAnalystBrief,
@@ -23,6 +26,38 @@ from modules.ui.ai_advisory_view import build_advisory_input
 from modules.ui.i18n import DEFAULT_LANGUAGE
 
 
+def build_evidence_grounding_bundle_from_cli_state(
+    cli_state: Mapping[str, Any] | None,
+    *,
+    language: str = DEFAULT_LANGUAGE,
+    rag_answer_text: str = "",
+    similar_case_result: Any | None = None,
+    graph_snapshot: Any | None = None,
+) -> EvidenceGroundingBundle | None:
+    """Build the shared evidence bundle consumed by UI advisory panels.
+
+    ``rag_answer_text`` is optional display-state context from the already-run
+    Knowledge Q&A panel. ``similar_case_result`` / ``graph_snapshot`` are optional
+    already-computed structured advisory objects (a ``SimilarCaseResult`` and a
+    ``GraphSnapshot``) passed straight through to the bundle builder. None of
+    these trigger retrieval, graph computation, case lookup, or LLM work; they are
+    advisory only and never override the official Risk Level or Decision. When a
+    structured object is absent the bundle simply omits that context.
+    """
+
+    advisory_input = build_advisory_input(cli_state)
+    if advisory_input is None:
+        return None
+    evidence_gap = analyze_evidence_gap(advisory_input, language=language)
+    return build_evidence_grounding_bundle(
+        advisory_input,
+        evidence_gap=evidence_gap,
+        rag_answer=_rag_answer_from_text(rag_answer_text),
+        similar_case_result=similar_case_result,
+        graph_snapshot=graph_snapshot,
+    )
+
+
 def build_evidence_grounded_brief_from_cli_state(
     cli_state: Mapping[str, Any] | None,
     *,
@@ -31,28 +66,17 @@ def build_evidence_grounded_brief_from_cli_state(
     similar_case_result: Any | None = None,
     graph_snapshot: Any | None = None,
 ) -> GroundedAnalystBrief | None:
-    """Build a deterministic fallback brief from current active context.
+    """Build a deterministic fallback brief from current active context."""
 
-    ``rag_answer_text`` is optional display-state context from the already-run
-    Knowledge Q&A panel. ``similar_case_result`` / ``graph_snapshot`` are optional
-    already-computed structured advisory objects (a ``SimilarCaseResult`` and a
-    ``GraphSnapshot``) passed straight through to the bundle builder. None of
-    these trigger retrieval, graph computation, case lookup, or LLM work; they are
-    advisory only and never override the official Risk Level or Decision. When a
-    structured object is absent the bundle (and brief) simply omit that context.
-    """
-
-    advisory_input = build_advisory_input(cli_state)
-    if advisory_input is None:
-        return None
-    evidence_gap = analyze_evidence_gap(advisory_input, language=language)
-    bundle = build_evidence_grounding_bundle(
-        advisory_input,
-        evidence_gap=evidence_gap,
-        rag_answer=_rag_answer_from_text(rag_answer_text),
+    bundle = build_evidence_grounding_bundle_from_cli_state(
+        cli_state,
+        language=language,
+        rag_answer_text=rag_answer_text,
         similar_case_result=similar_case_result,
         graph_snapshot=graph_snapshot,
     )
+    if bundle is None:
+        return None
     return generate_grounded_analyst_brief(bundle)
 
 
@@ -195,6 +219,7 @@ def _citation_section(brief: GroundedAnalystBrief) -> str:
 
 __all__ = [
     "build_empty_grounded_brief_html",
+    "build_evidence_grounding_bundle_from_cli_state",
     "build_evidence_grounded_brief_from_cli_state",
     "build_evidence_grounded_brief_html",
     "render_evidence_grounded_brief_panel_html",
