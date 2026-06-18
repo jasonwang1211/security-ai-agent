@@ -94,15 +94,28 @@ Start with the documentation hub: [docs/README.md](docs/README.md).
 
 ## Validation Summary
 
-Last recorded v2.9 release-gate validation summary:
+Latest v3.1 branch validation rerun for this documentation patch:
 
-- pytest: `1236 passed`
+- pytest: `1268 passed`
 - ruff: passed
-- mypy: passed, no issues found in 172 source files
+- mypy: passed, no issues found in 180 source files
 - git diff --check: passed
-- AppTest UI smoke: Run -> Find Similar Cases -> case-001 / graph-001, 0 exceptions
 
-These checks validate demo behavior and safety-boundary regressions. They do not claim production IDS/IPS effectiveness.
+Validation is organized around deterministic authority, advisory AI safety, provider fallback behavior, and UI/reporting smoke paths. These checks support demo correctness and safety-boundary regression control; they do not claim production IDS/IPS effectiveness.
+
+### Test Coverage / Validation Matrix
+
+| Area | What is verified | Why it matters |
+|---|---|---|
+| Deterministic detection and triage policy | Rule-based classification, deterministic Risk Level / Decision, and HIGH -> BLOCK / MEDIUM -> MONITOR / LOW -> ALLOW style policy behavior. | Keeps the official verdict path reproducible; does not prove production IDS/IPS effectiveness. |
+| Evidence bundle and Evidence-Grounded AI Brief | Official verdict, rule IDs, evidence IDs, citation IDs, evidence gaps, and unsafe assumptions are preserved in structured advisory output. | Prevents AI/report text from becoming the source of truth. |
+| AI guardrails and safety boundary | Verdict override, Similar Cases-as-proof, Graph-as-detection-source, enforcement wording, exploit / PoC / traffic generation / load testing are blocked or fall back. | Keeps AI/RAG/Graph/Similar Cases advisory-only. |
+| v3.1 Full AI-assisted foundation | Prompt contract, disabled default provider, fake test injection, optional local/openai-compatible modes, invalid JSON, missing citations, provider failures, and exceptions. | CI requires no live LLM, API key, Ollama, Chroma, embeddings, or network access. |
+| Event-aware Q&A backend | Answers use current deterministic context, evidence gaps, optional RAG, Similar Cases, and Graph context; unsafe questions are refused before provider calls. | Enables incident-aware questions without allowing AI to alter the verdict or perform enforcement. |
+| Similar Cases and Relationship Graph | Similar Cases remain advisory comparisons; Graph remains read-only explanatory context. | Historical cases do not prove compromise, and Graph is not a detection source. |
+| RAG / Knowledge Q&A controls | RAG is optional, advisory, lazy-loaded where applicable, and unavailable/no-answer paths degrade safely. | Retrieval context does not modify the official verdict. |
+| UI helper / Streamlit smoke paths | Key helper paths and AppTest smoke flows, including Run -> Find Similar Cases -> case-001 / graph-001. | Supports demo workflow confidence; does not prove production deployment readiness. |
+| Documentation / release-gate consistency | Validation wording, screenshot references, release notes, and safety-boundary language stay aligned. | Keeps public review material consistent; does not replace manual review. |
 
 ## Safety Boundary
 

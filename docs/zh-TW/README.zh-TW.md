@@ -144,17 +144,29 @@ python -m streamlit run ui/streamlit_app.py --server.fileWatcherType none
 
 繁中 UI 截圖保留於 docs/screenshots/zh-TW/；英文 UI 截圖保留於 docs/screenshots/en/。
 
-## 測試與驗證
+## Test Coverage / Validation Matrix
 
-最近一次本機重跑（v3.0 docs polish，基於 v2.9.0 baseline）的驗證摘要：
+Latest v3.1 branch validation rerun for this documentation patch:
 
-- pytest：1236 passed
-- ruff：All checks passed
-- mypy：no issues found in 172 source files
-- git diff --check：passed
-- zh-TW screenshot set：`zh-TW/20`–`31` 已更新
+- pytest: `1268 passed`
+- ruff: passed
+- mypy: no issues found in 180 source files
+- git diff --check: passed
 
-這些驗證代表 demo behavior 與 safety boundary 有被測試，不代表 production IDS/IPS effectiveness。
+Validation focuses on deterministic authority, advisory AI safety, provider fallback behavior, and UI/reporting smoke paths. The tests support demo correctness and safety-boundary regression control; they do not claim production IDS/IPS effectiveness.
+
+| Area | What is verified | Why it matters |
+|---|---|---|
+| Deterministic detection / policy | Rule-Based Detector, deterministic Risk Level / Decision, simulated BLOCK / MONITOR / ALLOW behavior. | Official verdict stays reproducible; not a production IDS/IPS accuracy claim. |
+| Evidence bundle / Evidence-Grounded AI Brief | Official verdict, rule IDs, evidence IDs, citation IDs, missing evidence, and unsafe assumptions are preserved. | AI/report output remains advisory and does not become the source of truth. |
+| AI guardrails | Verdict override, Similar Cases-as-proof, Graph-as-detection-source, enforcement wording, exploit / PoC / traffic generation / load testing. | Keeps AI/RAG/Similar Cases/Graph advisory-only. |
+| v3.1 Full AI-assisted foundation | Prompt contract, disabled default provider, fake test injection, optional local/openai-compatible contracts, provider failures and exceptions. | CI does not require live LLM, API key, Ollama, Chroma, embeddings, or network access. |
+| Event-aware Q&A | Current deterministic context, rule/evidence IDs, evidence gaps, optional RAG, Similar Cases, Graph context, zh-TW and English wrappers. | Unsafe questions are refused before provider calls; official verdict is unchanged. |
+| Similar Cases / Graph | Approved cases and graph context are read-only advisory context. | Similar Cases are not proof; Graph is not a detection source. |
+| RAG / Knowledge Q&A | Optional advisory retrieval, controlled no-answer/unavailable behavior, lazy startup expectations. | Retrieval context does not modify Risk Level / Decision. |
+| UI / reporting smoke | Streamlit helper paths, panels, export view, Run -> Find Similar Cases -> case-001 / graph-001. | Supports demo workflow confidence; not production deployment proof. |
+| Docs consistency | Validation wording, screenshot references, release notes, safety-boundary language. | Keeps public review material aligned; does not replace manual review. |
+
 
 ## 限制與未來工作
 

@@ -66,4 +66,19 @@ The HTTP/2 Resource Exhaustion scenario is a safe synthetic incident summary. It
 
 ## Validation Summary
 
-The current public validation summary is maintained in `docs/TEST_REPORT.md`, and the latest release-gate evidence is in `docs/v2.9_release_gate.md` (with `docs/v2.8_release_gate.md` kept as the prior v2.8 record).
+The latest v3.1 branch validation rerun for this documentation patch records:
+
+- pytest: 1268 passed
+- ruff: passed
+- mypy: passed, no issues found in 180 source files
+- git diff --check: passed
+
+Validation is organized around deterministic authority, advisory AI safety, provider fallback behavior, event-aware Q&A contracts, controlled retrieval, UI/reporting smoke paths, and documentation consistency. These checks support demo correctness and safety-boundary regression control; they do not claim production IDS/IPS effectiveness, real-world attack coverage, or real enforcement readiness.
+
+| Area | Coverage focus | Boundary retained |
+|---|---|---|
+| Deterministic detector / policy | Rule IDs, matched evidence, Risk Level, simulated Decision. | Rule-Based Detector remains authority. |
+| Evidence-Grounded AI Brief | EvidenceBundle schema, citation preservation, deterministic fallback, unsafe-assumption separation. | AI output stays advisory and cannot rewrite official verdict. |
+| v3.1 Full AI-assisted contracts | Prompt contract, provider modes, invalid JSON, missing citations, failures, exceptions, safe fallback. | CI requires no live LLM/API key/Ollama/Chroma/embeddings/network. |
+| Event-aware Q&A | Current-context answers, optional RAG/Similar Cases/Graph context, zh-TW and English wrappers, unsafe question refusal. | Similar Cases are not proof; Graph is not detection source. |
+| RAG / graph / UI smoke | Controlled retrieval, lazy startup, read-only graph/case context, AppTest helper paths. | Advisory context does not perform enforcement or change decisions. |
