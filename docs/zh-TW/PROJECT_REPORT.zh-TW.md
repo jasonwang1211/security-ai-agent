@@ -155,7 +155,7 @@ Latest v3.1 branch validation rerun for this documentation patch:
 - mypy: no issues found in 180 source files
 - git diff --check: passed
 
-The test suite verifies bounded demo behavior, contract stability, fallback behavior, and safety-boundary regressions. It does not measure real-world detection accuracy, live SOC effectiveness, production traffic coverage, or real enforcement effectiveness.
+The test suite verifies bounded demo behavior, contract stability, fallback behavior, and safety-boundary regressions. It does not measure real-world detection accuracy, live SOC effectiveness, production traffic coverage, or real enforcement effectiveness. 公開展示與截圖路徑仍以 deterministic fallback 為主；v3.1 provider contracts 屬於後端基礎建設，預設停用，不需要 live LLM / API key 才能通過 CI；若要宣稱 live provider 可用，需另外執行 manual smoke testing。
 
 | Test category | Representative behavior verified | Safety / architecture boundary verified | Example modules or tests | Limitation |
 |---|---|---|---|---|

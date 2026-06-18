@@ -125,7 +125,7 @@ Validation is organized around deterministic authority, advisory AI safety, prov
 - RAG / LLM / AI Analyst Brief / Evidence-Grounded AI Brief / Evidence Gap Analyzer / Similar Cases / Relationship Graph provide advisory context only and do not override the official Risk Level or Decision.
 - Approved Similar Cases are comparison context only and do not prove current compromise or successful execution.
 - Relationship Graph context is for explanation only and is not a detection source.
-- No live LLM client is wired; the Evidence-Grounded AI Brief runs as a deterministic fallback.
+- No live LLM client is required for the public Streamlit showcase or CI validation; the screenshotted Evidence-Grounded AI Brief path uses deterministic fallback. v3.1 backend provider contracts are optional, disabled by default, and require separate manual smoke testing before being presented as live-provider behavior.
 - No real firewall / WAF / EDR / account / cloud / SIEM / SOAR action is performed.
 - No exploit code, PoC generation, traffic generation, or offensive automation is provided.
 - Human review is required.

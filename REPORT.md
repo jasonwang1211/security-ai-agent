@@ -122,7 +122,7 @@ Latest v3.1 branch validation rerun for this documentation patch:
 - git diff --check: passed
 - Disallowed wording scan for vendor/trailer text: no matches
 
-The test suite verifies bounded demo behavior, contract stability, fallback behavior, and safety-boundary regressions. It does not measure real-world detection accuracy, live SOC effectiveness, production traffic coverage, or real enforcement effectiveness.
+The test suite verifies bounded demo behavior, contract stability, fallback behavior, and safety-boundary regressions. It does not measure real-world detection accuracy, live SOC effectiveness, production traffic coverage, or real enforcement effectiveness. v3.1 provider contracts are backend foundation work; live-provider quality and availability require separate manual smoke testing.
 
 ### Validation Matrix
 

@@ -21,7 +21,7 @@ Sentinel Project 是一個防禦導向的 AI-assisted blue-team security triage 
 - 相似案例（Similar Cases）不是目前已被入侵的證明。
 - 關聯圖（Relationship Graph）不是偵測來源。
 - 不執行真實阻擋 / WAF / EDR / SIEM / SOAR 等動作。
-- 目前沒有接 live LLM client；brief 以 deterministic fallback 呈現。
+- 公開展示與截圖路徑仍以 deterministic fallback 為主；v3.1 的 provider contracts 屬於後端基礎建設，預設停用，不需要 live LLM / API key 才能通過 CI。若要宣稱 live provider 可用，需另外執行 manual smoke testing。
 
 > 已知限制：v2.9 的 Evidence-Grounded AI Brief 面板固定段落標籤目前仍是英文，
 > deterministic 路徑與 UI 外框已是繁體中文。中文截圖會看到中文 UI 外框 + 英文／中英混合的
@@ -113,7 +113,7 @@ python -m streamlit run ui/streamlit_app.py --server.fileWatcherType none
 - RAG / LLM / AI Analyst Brief / Evidence Gap Analyzer / Similar Cases / Relationship Graph 只提供 advisory context。
 - 相似案例不是目前事件已被入侵或已成功執行的證明。
 - 關聯圖不是偵測來源。
-- 目前沒有接 live LLM client；Evidence-Grounded AI Brief 以 deterministic fallback 呈現。
+- 公開展示與截圖路徑仍以 deterministic fallback 為主；v3.1 的 provider contracts 屬於後端基礎建設，預設停用，不需要 live LLM / API key 才能通過 CI。若要宣稱 live provider 可用，需另外執行 manual smoke testing。
 - 不做真實 firewall / WAF / EDR / account / cloud / SIEM / SOAR 動作。
 - 不提供 exploit code、PoC generation、traffic generation 或 offensive automation。
 - 需要 Human review。
