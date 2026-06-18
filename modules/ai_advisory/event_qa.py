@@ -298,7 +298,7 @@ def _deterministic_answer_zh(bundle: EvidenceGroundingBundle) -> str:
     if bundle.graph_context:
         lines.append("Graph context \u53ea\u80fd\u4f5c\u70ba advisory context\uff0c\u4e0d\u662f detection source\u3002")
     lines.append("\u4e0d\u6703\u57f7\u884c\u771f\u5be6 enforcement\uff1b\u9700\u8981 Human review\u3002")
-    return "\\n".join(lines)
+    return "\n".join(lines)
 
 
 def _refusal_answer(language: PromptLanguage) -> str:
