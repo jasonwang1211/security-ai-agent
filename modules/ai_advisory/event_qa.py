@@ -33,11 +33,19 @@ _UNSAFE_QUESTION_PATTERNS = (
     re.compile(r"\b(update|deploy|configure|block|quarantine|isolate)\b.{0,50}\b(firewall|waf|edr|siem|soar)\b", re.I),
     re.compile(r"\b(reset|disable|lock|revoke|delete|remove|rotate)\b.{0,40}\b(account|password|credential|user|session)\b", re.I),
     re.compile(r"\b(change|override|lower|raise|set)\b.{0,40}\b(risk level|decision|verdict)\b", re.I),
+    re.compile(r"(?:\u7522\u751f|\u751f\u6210|\u88fd\u4f5c|\u63d0\u4f9b).{0,20}(?:\u653b\u64ca\u6d41\u91cf|exploit|PoC)", re.I),
+    re.compile(r"(?:\u58d3\u529b\u6e2c\u8a66|\u8ca0\u8f09\u6e2c\u8a66|\u653b\u64ca\u6d41\u91cf|\u6d41\u91cf\u6e2c\u8a66)", re.I),
+    re.compile(r"(?:\u5c01\u9396|\u4fee\u6539|\u8a2d\u5b9a|\u90e8\u7f72).{0,30}(?:\u9632\u706b\u7246|firewall|WAF|EDR|SIEM|SOAR)", re.I),
+    re.compile(r"(?:\u505c\u7528|\u91cd\u8a2d|\u64a4\u92b7|\u522a\u9664).{0,30}(?:\u5e33\u865f|\u5bc6\u78bc|\u6191\u8b49|session|\u4f7f\u7528\u8005|token)", re.I),
+    re.compile(r"(?:\u6539\u5224\u5b9a|\u8986\u84cb\u98a8\u96aa|\u8986\u84cb\u5224\u5b9a|\u8b8a\u66f4\u5224\u5b9a|\u4fee\u6539\u5224\u5b9a|\u628a\s*Risk Level\s*\u6539\u6210\s*LOW)", re.I),
 )
 _ANSWER_UNSAFE_PATTERNS = _UNSAFE_QUESTION_PATTERNS + (
     re.compile(r"\bsimilar cases?\b.{0,80}\b(proves?|confirms?|are proof|is proof)\b", re.I),
     re.compile(r"\bgraph\b.{0,80}\b(detected|confirmed|is the detection source|was the detection source)\b", re.I),
+    re.compile(r"(?:\u76f8\u4f3c\u6848\u4f8b|Similar Cases).{0,40}(?:\u8b49\u660e|\u78ba\u8a8d).{0,20}(?:\u5df2\u5165\u4fb5|\u5165\u4fb5|compromise)", re.I),
+    re.compile(r"(?:Graph|\u5716\u8b5c).{0,30}(?:\u662f|\u4f5c\u70ba).{0,15}(?:\u5075\u6e2c\u4f86\u6e90|detection source)", re.I),
 )
+
 
 
 def _require_non_blank(value: str, field_name: str) -> str:
@@ -114,13 +122,22 @@ def answer_event_aware_question(
 
     selected_provider = provider or request.provider or build_default_provider()
     generate = selected_provider.generate
-    provider_response = generate(
-        LLMProviderRequest(
-            system_prompt=build_soc_copilot_system_prompt(request.language),
-            user_prompt=_event_qa_user_prompt(request),
-            temperature=0.0,
+    try:
+        provider_response = generate(
+            LLMProviderRequest(
+                system_prompt=build_soc_copilot_system_prompt(request.language),
+                user_prompt=_event_qa_user_prompt(request),
+                temperature=0.0,
+            )
         )
-    )
+    except Exception:
+        return _deterministic_result(
+            request,
+            provider_mode=getattr(selected_provider, "mode", "disabled"),
+            provider_status="unavailable",
+            llm_status="unavailable_fallback",
+            safety_findings=[],
+        )
     if not provider_response.ok:
         status: LLMStatus = (
             "not_used_deterministic_fallback"

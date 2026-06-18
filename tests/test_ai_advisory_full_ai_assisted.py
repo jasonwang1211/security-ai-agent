@@ -10,7 +10,13 @@ from modules.ai_advisory.full_ai_assisted import (
     run_full_ai_assisted,
 )
 from modules.ai_advisory.grounded_brief import generate_grounded_analyst_brief
-from modules.ai_advisory.llm_provider import FakeLLMProvider
+from modules.ai_advisory.llm_provider import (
+    BaseLLMProvider,
+    FakeLLMProvider,
+    LLMProviderRequest,
+    LLMProviderResponse,
+    ProviderMode,
+)
 from modules.ai_advisory.types import AIAdvisoryInput, EvidenceGapAnalysis
 
 
@@ -80,6 +86,14 @@ def valid_payload():
         {"text": "Provider generated a cited advisory summary.", "citation_ids": ["rule-001"]}
     ]
     return payload
+
+
+class RaisingProvider(BaseLLMProvider):
+    mode: ProviderMode = "fake"
+
+    def generate(self, request_payload: LLMProviderRequest) -> LLMProviderResponse:
+        del request_payload
+        raise RuntimeError("provider crashed")
 
 
 def test_disabled_provider_returns_deterministic_fallback() -> None:
@@ -158,6 +172,20 @@ def test_invalid_json_or_provider_failure_returns_fallback() -> None:
     assert invalid.guardrail_status == "fallback"
     assert failure.llm_status == "unavailable_fallback"
     assert failure.provider_status == "unavailable"
+
+
+def test_provider_exception_returns_unavailable_fallback_without_changing_verdict() -> None:
+    result = run_full_ai_assisted(
+        FullAiAssistedRequest(bundle=bundle()),
+        provider=RaisingProvider(),
+    )
+
+    assert result.provider_mode == "fake"
+    assert result.provider_status == "unavailable"
+    assert result.llm_status == "unavailable_fallback"
+    assert result.guardrail_status == "not_run"
+    assert result.official_verdict.risk_level == "HIGH"
+    assert result.official_verdict.decision == "BLOCK"
 
 
 def test_result_includes_context_lists_and_serializes() -> None:

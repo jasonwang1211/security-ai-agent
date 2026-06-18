@@ -85,13 +85,22 @@ def run_full_ai_assisted(
 
     selected_provider = provider or request.provider or build_default_provider()
     generate = selected_provider.generate
-    provider_response = generate(
-        LLMProviderRequest(
-            system_prompt=build_soc_copilot_system_prompt(request.language),
-            user_prompt=build_grounded_brief_user_prompt(request.bundle, request.language),
-            temperature=0.0,
+    try:
+        provider_response = generate(
+            LLMProviderRequest(
+                system_prompt=build_soc_copilot_system_prompt(request.language),
+                user_prompt=build_grounded_brief_user_prompt(request.bundle, request.language),
+                temperature=0.0,
+            )
         )
-    )
+    except Exception:
+        return _result_from_brief(
+            build_deterministic_grounded_brief(request.bundle, "unavailable_fallback"),
+            request.bundle,
+            provider_mode=getattr(selected_provider, "mode", "disabled"),
+            provider_status="unavailable",
+            guardrail_status="not_run",
+        )
     if not provider_response.ok:
         status: LLMStatus = (
             "not_used_deterministic_fallback"
