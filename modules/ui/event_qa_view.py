@@ -143,7 +143,7 @@ def _labels(language: str) -> dict[str, str]:
             "answer": "\u56de\u7b54",
             "safety": "\u5b89\u5168\u6aa2\u67e5",
             "citations": "\u5f15\u7528\u4f9d\u64da",
-            "boundary": "?? / Human Review Boundary",
+            "boundary": "\u5b89\u5168 / Human Review Boundary",
         }
     return {
         "chip": "Event-aware advisory Q&A",

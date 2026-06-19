@@ -140,6 +140,8 @@ def test_unsafe_zh_tw_question_is_refused_and_preserves_verdict() -> None:
     assert result.official_verdict.risk_level == "HIGH"
     assert result.official_verdict.decision == "BLOCK"
     assert "\u5b98\u65b9 deterministic verdict" in html
+    assert "??" not in html
+    assert "\u5b89\u5168 / Human Review Boundary" in html
 
 
 def test_optional_context_is_answered_as_advisory_only() -> None:

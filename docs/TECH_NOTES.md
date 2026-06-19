@@ -72,14 +72,14 @@ The HTTP/2 Resource Exhaustion scenario is a safe synthetic incident summary. It
 
 ## Validation Summary
 
-The latest v3.1 branch validation rerun for this documentation patch records:
+The latest v3.2 branch validation records:
 
-- pytest: 1268 passed
+- pytest: 1285 passed
 - ruff: passed
-- mypy: passed, no issues found in 180 source files
+- mypy: passed, no issues found in 184 source files
 - git diff --check: passed
 
-Validation is organized around deterministic authority, advisory AI safety, provider fallback behavior, event-aware Q&A contracts, controlled retrieval, UI/reporting smoke paths, and documentation consistency. These checks support demo correctness and safety-boundary regression control; they do not claim production IDS/IPS effectiveness, real-world attack coverage, or real enforcement readiness.
+Validation is organized around deterministic authority, bounded demo behavior, UI/helper contracts, provider fallback behavior, event-aware Q&A contracts, controlled retrieval, and safety-boundary regression control. These checks do not prove production IDS/IPS effectiveness, real-world attack coverage, live-provider quality, or real enforcement readiness.
 
 | Area | Coverage focus | Boundary retained |
 |---|---|---|
