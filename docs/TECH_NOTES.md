@@ -74,7 +74,7 @@ The HTTP/2 Resource Exhaustion scenario is a safe synthetic incident summary. It
 
 The latest v3.2 branch validation records:
 
-- pytest: 1285 passed
+- pytest: 1289 passed
 - ruff: passed
 - mypy: passed, no issues found in 184 source files
 - git diff --check: passed

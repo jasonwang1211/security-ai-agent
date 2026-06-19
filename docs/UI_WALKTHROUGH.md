@@ -89,7 +89,7 @@ Reference: [Evidence-Grounded AI Brief screenshot](screenshots/en/11_evidence_gr
 
 ### v3.2 Development Branch Note: Full AI-Assisted Advisory Result
 
-On `v3.2-full-ai-assisted-showcase`, the AI Analyst tab also includes a Full AI-Assisted Advisory Result panel above the Evidence-Grounded AI Brief, plus an Event-Aware Q&A panel below Evidence Gap Analyzer. These panels use the current EvidenceGroundingBundle and default to provider-disabled deterministic fallback. They do not prove compromise, do not treat Graph as a detection source, and do not change the official Risk Level or Decision. Screenshot refresh is intentionally deferred.
+On `v3.2-full-ai-assisted-showcase`, the AI Analyst tab now uses the Full AI-Assisted Advisory Result as the main visible panel. The Evidence-Grounded AI Brief remains available directly below it as a collapsed detailed supporting expander, and Event-Aware Q&A remains below Evidence Gap Analyzer. These panels use the current EvidenceGroundingBundle and default to provider-disabled deterministic fallback. They do not prove compromise, do not treat Graph as a detection source, and do not change the official Risk Level or Decision. The refreshed v3.2 screenshot references are available as the `40`-series images under `docs/screenshots/en/` and `docs/screenshots/zh-TW/`.
 
 ## Step 8: Open Evidence Gap Analyzer
 

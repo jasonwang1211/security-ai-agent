@@ -12,6 +12,37 @@ Screenshots are public review aids and do not contain secrets or credentials.
 
 Where to look: the **v3.0 README Screenshots** section below is the current, readable set used by the root README (six starred images). **English Feature Gallery** is an extended feature index; the **v2.9 Evidence-Grounded AI Brief** and **v3.0 Full-Window** sections are additional references. For Traditional Chinese demos, use the **v3.0 Traditional Chinese (zh-TW) Key Screenshots** section (`zh-TW/20`–`31`).
 
+
+## v3.2 Full AI-Assisted Showcase Screenshots (40-series)
+
+These screenshots were captured from the live Streamlit console on `v3.2-full-ai-assisted-showcase` using Fast deterministic mode and the default provider-disabled deterministic fallback. They do not demonstrate live-provider behavior and do not require an API key, Ollama, Chroma, embeddings, or network access. Similar Cases are advisory comparisons, not proof of compromise; Graph context is not a detection source.
+
+### English 40-series
+
+| Screenshot | Type | What to look for | Safety note |
+|---|---|---|---|
+| [40_ai_analyst_full_ai_hero_overview.png](en/40_ai_analyst_full_ai_hero_overview.png) | overview | Full AI-Assisted Advisory Result as the main AI Analyst panel. | Provider is disabled/default; official verdict remains deterministic. |
+| [41_full_ai_official_verdict_provider_detail.png](en/41_full_ai_official_verdict_provider_detail.png) | detail crop | Official deterministic verdict plus provider_mode, provider_status, llm_status, and guardrail_status. | AI output does not own Risk Level or Decision. |
+| [42_full_ai_investigation_evidence_gaps_detail.png](en/42_full_ai_investigation_evidence_gaps_detail.png) | detail crop | Investigation Plan and Evidence Gaps. | Missing evidence requires human review. |
+| [43_full_ai_safety_advisory_boundary_detail.png](en/43_full_ai_safety_advisory_boundary_detail.png) | detail crop | Safety / Human Review Boundary. | No real enforcement, exploit, PoC, traffic generation, or load testing. |
+| [44_event_qa_safe_answer_detail.png](en/44_event_qa_safe_answer_detail.png) | detail crop | Event-Aware Q&A safe answer grounded in the current event. | Answer uses deterministic context and citations. |
+| [45_event_qa_unsafe_refusal_detail.png](en/45_event_qa_unsafe_refusal_detail.png) | detail crop | Unsafe Event-Aware Q&A refusal. | Official HIGH / BLOCK stays unchanged; unsafe request is refused before provider use. |
+| [46_full_ai_similar_case_graph_detail.png](en/46_full_ai_similar_case_graph_detail.png) | detail crop | Similar Case and Graph citations after Find Similar Cases. | Similar Cases are not proof; Graph is not a detection source. |
+| [47_evidence_grounded_brief_collapsed_expander.png](en/47_evidence_grounded_brief_collapsed_expander.png) | detail crop | Evidence-Grounded AI Brief remains available as a collapsed detailed supporting view. | It is not a second official verdict source. |
+
+### Traditional Chinese 40-series
+
+| Screenshot | Type | What to look for | Safety note |
+|---|---|---|---|
+| [40_ai_analyst_full_ai_hero_overview.png](zh-TW/40_ai_analyst_full_ai_hero_overview.png) | overview | zh-TW AI Analyst tab with Full AI-Assisted Advisory Result as the main visible panel. | Provider is disabled/default; official verdict remains deterministic. |
+| [41_full_ai_official_verdict_provider_detail.png](zh-TW/41_full_ai_official_verdict_provider_detail.png) | detail crop | Official deterministic verdict plus provider / LLM / guardrail status. | AI output does not own Risk Level or Decision. |
+| [42_full_ai_investigation_evidence_gaps_detail.png](zh-TW/42_full_ai_investigation_evidence_gaps_detail.png) | detail crop | Investigation Plan and Evidence Gaps in zh-TW UI mode. | Missing evidence requires human review. |
+| [43_full_ai_safety_advisory_boundary_detail.png](zh-TW/43_full_ai_safety_advisory_boundary_detail.png) | detail crop | Safety / Human Review Boundary. | No real enforcement, exploit, PoC, traffic generation, or load testing. |
+| [44_event_qa_safe_answer_detail.png](zh-TW/44_event_qa_safe_answer_detail.png) | detail crop | Event-Aware Q&A safe answer in zh-TW UI mode. | Answer uses deterministic context and citations. |
+| [45_event_qa_unsafe_refusal_detail.png](zh-TW/45_event_qa_unsafe_refusal_detail.png) | detail crop | Unsafe Event-Aware Q&A refusal in zh-TW UI mode. | Official HIGH / BLOCK stays unchanged; unsafe request is refused before provider use. |
+| [46_full_ai_similar_case_graph_detail.png](zh-TW/46_full_ai_similar_case_graph_detail.png) | detail crop | Similar Case and Graph citations after Find Similar Cases. | Similar Cases are not proof; Graph is not a detection source. |
+| [47_evidence_grounded_brief_collapsed_expander.png](zh-TW/47_evidence_grounded_brief_collapsed_expander.png) | detail crop | Evidence-Grounded AI Brief remains available as a collapsed detailed supporting view. | It is not a second official verdict source. |
+
 ## English Feature Gallery (extended feature index)
 
 | Screenshot | Feature area | What to look for | Safety note |
