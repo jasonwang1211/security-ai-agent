@@ -16,6 +16,7 @@ from modules.ui.console_state import (
     record_analysis_output,
     record_event_qa_result,
 )
+from modules.ui.i18n import t
 from modules.ui.event_qa_view import (
     build_event_aware_qa_result_from_cli_state,
     render_event_aware_qa_panel_html,
@@ -139,9 +140,12 @@ def test_unsafe_zh_tw_question_is_refused_and_preserves_verdict() -> None:
     assert "deterministic Risk Level / Decision" in result.answer
     assert result.official_verdict.risk_level == "HIGH"
     assert result.official_verdict.decision == "BLOCK"
-    assert "\u5b98\u65b9 deterministic verdict" in html
+    assert "\u5b98\u65b9\u78ba\u5b9a\u6027\u5224\u5b9a" in html
+    assert "\u56de\u7b54" in html
+    assert "\u5b89\u5168\u6aa2\u67e5" in html
+    assert "\u5f15\u7528\u4f9d\u64da" in html
     assert "??" not in html
-    assert "\u5b89\u5168 / Human Review Boundary" in html
+    assert "\u5b89\u5168 / \u4eba\u5de5\u8907\u6838\u908a\u754c" in html
 
 
 def test_optional_context_is_answered_as_advisory_only() -> None:
@@ -232,6 +236,19 @@ def test_streamlit_ai_analyst_tab_wires_v3_2_panels_in_order() -> None:
     knowledge_index = source.index("render_knowledge_qa_panel(language)", tab_index)
 
     assert full_index < grounded_index < gap_index < event_qa_index < followup_index < knowledge_index
-    assert "Full AI-Assisted Advisory Result" in source
-    assert "Event-Aware Q&A" in source
+    assert 'render_panel_heading(t("full_ai_assisted_panel_title", language))' in source
+    assert 'render_panel_heading(t("event_qa_panel_title", language))' in source
+    assert 'st.text_input(t("event_qa_input", language)' in source
+    assert 'st.button(t("event_qa_submit", language)' in source
+    assert 'render_panel_heading("Full AI-Assisted Advisory Result")' not in source
+    assert 'render_panel_heading("Event-Aware Q&A")' not in source
+    assert 'st.text_input("Ask about the current event"' not in source
+    assert 'st.button("Ask Event-aware Q&A"' not in source
     assert "provider selector" not in source.casefold()
+
+
+def test_event_qa_streamlit_i18n_keys_have_zh_tw_values() -> None:
+    assert t("event_qa_panel_title", "zh-TW") == "\u4e8b\u4ef6\u8108\u7d61\u554f\u7b54"
+    assert t("event_qa_input", "zh-TW") == "\u8a62\u554f\u76ee\u524d\u4e8b\u4ef6"
+    assert t("event_qa_submit", "zh-TW") == "\u9001\u51fa\u4e8b\u4ef6\u8108\u7d61\u554f\u7b54"
+    assert "deterministic verdict" in t("event_qa_caption", "zh-TW")

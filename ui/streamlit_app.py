@@ -1090,12 +1090,9 @@ def render_knowledge_qa_panel(language: str) -> None:
 def render_event_aware_qa_panel(language: str) -> None:
     """Advisory Q&A over the current evidence-grounded active context."""
 
-    st.caption(
-        "Ask about the current event using deterministic verdict, evidence gaps, "
-        "and already-loaded advisory RAG / Similar Cases / Graph context."
-    )
-    question = st.text_input("Ask about the current event", key=EVENT_QA_INPUT_KEY)
-    if st.button("Ask Event-aware Q&A", key="sentinel_event_qa_submit"):
+    st.caption(t("event_qa_caption", language))
+    question = st.text_input(t("event_qa_input", language), key=EVENT_QA_INPUT_KEY)
+    if st.button(t("event_qa_submit", language), key="sentinel_event_qa_submit"):
         result = build_event_aware_qa_result_from_cli_state(
             st.session_state.get(STATE_CLI_STATE),
             question=question,
@@ -1178,11 +1175,8 @@ def render_report_sections() -> None:
     with ai_analyst_tab:
         st.caption(t("ai_analyst_caption", language))
         with st.container(border=True):
-            render_panel_heading("Full AI-Assisted Advisory Result")
-            st.caption(
-                "Provider-disabled deterministic fallback over the current evidence bundle. "
-                "Advisory only; official Risk Level / Decision remain deterministic."
-            )
+            render_panel_heading(t("full_ai_assisted_panel_title", language))
+            st.caption(t("full_ai_assisted_panel_caption", language))
             st.markdown(
                 render_full_ai_assisted_panel_html(
                     st.session_state.get(STATE_CLI_STATE),
@@ -1221,7 +1215,7 @@ def render_report_sections() -> None:
             )
 
         with st.container(border=True):
-            render_panel_heading("Event-Aware Q&A")
+            render_panel_heading(t("event_qa_panel_title", language))
             render_event_aware_qa_panel(language)
 
         with st.container(border=True):

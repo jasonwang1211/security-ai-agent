@@ -72,25 +72,31 @@ def render_full_ai_assisted_panel_html(
         provider=provider,
     )
     if result is None:
-        return build_empty_full_ai_assisted_html()
-    return build_full_ai_assisted_result_html(result)
+        return build_empty_full_ai_assisted_html(language)
+    return build_full_ai_assisted_result_html(result, language=language)
 
 
-def build_empty_full_ai_assisted_html() -> str:
+def build_empty_full_ai_assisted_html(language: str = DEFAULT_LANGUAGE) -> str:
+    message = _labels(language)["empty"]
     return (
         '<div class="sentinel-empty-card">'
         '<span class="sentinel-empty-icon">&#128203;</span>'
-        "Run an analysis first to generate a Full AI-assisted advisory result."
+        f"{html.escape(message)}"
         "</div>"
     )
 
 
-def build_full_ai_assisted_result_html(result: FullAiAssistedResult) -> str:
+def build_full_ai_assisted_result_html(
+    result: FullAiAssistedResult,
+    *,
+    language: str = DEFAULT_LANGUAGE,
+) -> str:
     """Render a guarded FullAiAssistedResult as escaped HTML."""
 
+    labels = _labels(language)
     meta = (
         '<div class="sentinel-brief-meta">'
-        '<span class="sentinel-brief-chip det">Full AI-assisted advisory</span>'
+        f'<span class="sentinel-brief-chip det">{html.escape(labels["chip"])}</span>'
         f'<span class="sentinel-brief-chip">provider_mode: {html.escape(result.provider_mode)}</span>'
         f'<span class="sentinel-brief-chip">provider_status: {html.escape(result.provider_status)}</span>'
         f'<span class="sentinel-brief-chip">llm_status: {html.escape(result.llm_status)}</span>'
@@ -101,7 +107,7 @@ def build_full_ai_assisted_result_html(result: FullAiAssistedResult) -> str:
     )
     verdict = (
         '<div class="sentinel-brief-section deterministic">'
-        '<div class="sentinel-brief-h">Official Deterministic Verdict</div>'
+        f'<div class="sentinel-brief-h">{html.escape(labels["verdict"])}</div>'
         "<ul>"
         f"<li>Risk Level: {html.escape(str(result.official_verdict.risk_level or 'N/A'))}</li>"
         f"<li>Decision: {html.escape(str(result.official_verdict.decision or 'N/A'))}</li>"
@@ -112,15 +118,15 @@ def build_full_ai_assisted_result_html(result: FullAiAssistedResult) -> str:
     )
     body = "".join(
         [
-            _item_section("Advisory Summary", result.generated_summary, "advisory"),
-            _item_section("Investigation Plan", result.generated_investigation_plan, "deterministic"),
-            _plain_section("Evidence Gaps", result.evidence_gaps, "gap"),
-            _plain_section("Unsafe Assumptions", result.unsafe_assumptions, "unsafe"),
-            _rag_source_section(result),
-            _plain_section("Similar Case Context (advisory; not proof)", result.similar_case_context, "advisory"),
-            _plain_section("Graph Context (advisory; not a detection source)", result.graph_context, "advisory"),
-            _citation_section(result),
-            _plain_section("Safety / Human Review Boundary", result.advisory_boundary, "unsafe"),
+            _item_section(labels["advisory_summary"], result.generated_summary, "advisory"),
+            _item_section(labels["investigation_plan"], result.generated_investigation_plan, "deterministic"),
+            _plain_section(labels["evidence_gaps"], result.evidence_gaps, "gap"),
+            _plain_section(labels["unsafe_assumptions"], result.unsafe_assumptions, "unsafe"),
+            _rag_source_section(result, labels["rag_sources"]),
+            _plain_section(labels["similar_case_context"], result.similar_case_context, "advisory"),
+            _plain_section(labels["graph_context"], result.graph_context, "advisory"),
+            _citation_section(result, labels["citations"]),
+            _plain_section(labels["boundary"], result.advisory_boundary, "unsafe"),
         ]
     )
     return f'<div class="sentinel-brief">{meta}{verdict}{body}</div>'
@@ -128,6 +134,38 @@ def build_full_ai_assisted_result_html(result: FullAiAssistedResult) -> str:
 
 def _prompt_language(language: str) -> PromptLanguage:
     return "zh-TW" if language == "zh-TW" else "en"
+
+
+def _labels(language: str) -> dict[str, str]:
+    if language == "zh-TW":
+        return {
+            "chip": "\u5b8c\u6574 AI \u8f14\u52a9\u5efa\u8b70",
+            "empty": "\u8acb\u5148\u57f7\u884c\u4e00\u6b21\u5206\u6790\uff0c\u624d\u80fd\u7522\u751f\u5b8c\u6574 AI \u8f14\u52a9\u5efa\u8b70\u7d50\u679c\u3002",
+            "verdict": "\u5b98\u65b9\u78ba\u5b9a\u6027\u5224\u5b9a",
+            "advisory_summary": "\u5efa\u8b70\u6458\u8981",
+            "investigation_plan": "\u8abf\u67e5\u5efa\u8b70",
+            "evidence_gaps": "\u8b49\u64da\u7f3a\u53e3",
+            "unsafe_assumptions": "\u4e0d\u5b89\u5168\u5047\u8a2d",
+            "rag_sources": "RAG \u4f86\u6e90\uff08\u50c5\u4f9b\u53c3\u8003\uff09",
+            "similar_case_context": "\u76f8\u4f3c\u6848\u4f8b\u8108\u7d61\uff08\u50c5\u4f9b\u53c3\u8003\uff1b\u4e0d\u662f\u8b49\u660e\uff09",
+            "graph_context": "Graph \u8108\u7d61\uff08\u50c5\u4f9b\u53c3\u8003\uff1b\u4e0d\u662f\u5075\u6e2c\u4f86\u6e90\uff09",
+            "citations": "\u5f15\u7528\u4f9d\u64da",
+            "boundary": "\u5b89\u5168 / \u4eba\u5de5\u8907\u6838\u908a\u754c",
+        }
+    return {
+        "chip": "Full AI-assisted advisory",
+        "empty": "Run an analysis first to generate a Full AI-assisted advisory result.",
+        "verdict": "Official Deterministic Verdict",
+        "advisory_summary": "Advisory Summary",
+        "investigation_plan": "Investigation Plan",
+        "evidence_gaps": "Evidence Gaps",
+        "unsafe_assumptions": "Unsafe Assumptions",
+        "rag_sources": "RAG Sources (advisory only)",
+        "similar_case_context": "Similar Case Context (advisory; not proof)",
+        "graph_context": "Graph Context (advisory; not a detection source)",
+        "citations": "Grounded Citations",
+        "boundary": "Safety / Human Review Boundary",
+    }
 
 
 def _item_section(title: str, items: list[GroundedBriefItem], variant: str) -> str:
@@ -166,7 +204,7 @@ def _plain_section(title: str, items: list[str], variant: str) -> str:
     )
 
 
-def _rag_source_section(result: FullAiAssistedResult) -> str:
+def _rag_source_section(result: FullAiAssistedResult, title: str) -> str:
     rows = []
     for source in result.rag_sources:
         citation_id = html.escape(str(source.get("citation_id") or "N/A"))
@@ -181,13 +219,13 @@ def _rag_source_section(result: FullAiAssistedResult) -> str:
         return ""
     return (
         '<div class="sentinel-brief-section advisory">'
-        '<div class="sentinel-brief-h">RAG Sources (advisory only)</div>'
+        f'<div class="sentinel-brief-h">{html.escape(title)}</div>'
         f"<ul>{''.join(rows)}</ul>"
         "</div>"
     )
 
 
-def _citation_section(result: FullAiAssistedResult) -> str:
+def _citation_section(result: FullAiAssistedResult, title: str) -> str:
     rows = "".join(
         "<li>"
         f"{html.escape(citation.citation_id)} - {html.escape(citation.kind)} - "
@@ -199,7 +237,7 @@ def _citation_section(result: FullAiAssistedResult) -> str:
         return ""
     return (
         '<div class="sentinel-brief-section neutral">'
-        '<div class="sentinel-brief-h">Grounded Citations</div>'
+        f'<div class="sentinel-brief-h">{html.escape(title)}</div>'
         f"<ul>{rows}</ul>"
         "</div>"
     )

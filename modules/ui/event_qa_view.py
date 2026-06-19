@@ -138,12 +138,12 @@ def _prompt_language(language: str) -> PromptLanguage:
 def _labels(language: str) -> dict[str, str]:
     if language == "zh-TW":
         return {
-            "chip": "Event-aware advisory Q&A",
-            "verdict": "\u5b98\u65b9 deterministic verdict",
+            "chip": "\u4e8b\u4ef6\u8108\u7d61\u554f\u7b54",
+            "verdict": "\u5b98\u65b9\u78ba\u5b9a\u6027\u5224\u5b9a",
             "answer": "\u56de\u7b54",
             "safety": "\u5b89\u5168\u6aa2\u67e5",
             "citations": "\u5f15\u7528\u4f9d\u64da",
-            "boundary": "\u5b89\u5168 / Human Review Boundary",
+            "boundary": "\u5b89\u5168 / \u4eba\u5de5\u8907\u6838\u908a\u754c",
         }
     return {
         "chip": "Event-aware advisory Q&A",

@@ -11,6 +11,7 @@ from modules.ui.console_state import (
     ACTIVE_EVENT_CONTEXT_KEY,
     ACTIVE_INCIDENT_CONTEXT_KEY,
 )
+from modules.ui.i18n import t
 from modules.ui.full_ai_assisted_view import (
     build_full_ai_assisted_result_from_cli_state,
     render_full_ai_assisted_panel_html,
@@ -75,15 +76,15 @@ def graph_snapshot() -> SimpleNamespace:
 def test_no_active_context_returns_empty_state() -> None:
     assert build_full_ai_assisted_result_from_cli_state({}) is None
 
-    html = render_full_ai_assisted_panel_html({})
+    html = render_full_ai_assisted_panel_html({}, language="en")
 
     assert "Run an analysis first" in html
     assert "sentinel-empty-card" in html
 
 
 def test_disabled_provider_renders_deterministic_fallback_status() -> None:
-    result = build_full_ai_assisted_result_from_cli_state(command_state())
-    html = render_full_ai_assisted_panel_html(command_state()).lower()
+    result = build_full_ai_assisted_result_from_cli_state(command_state(), language="en")
+    html = render_full_ai_assisted_panel_html(command_state(), language="en").lower()
 
     assert result is not None
     assert result.provider_mode == "disabled"
@@ -97,7 +98,7 @@ def test_disabled_provider_renders_deterministic_fallback_status() -> None:
 
 
 def test_official_verdict_appears_before_advisory_text() -> None:
-    html = render_full_ai_assisted_panel_html(command_state()).lower()
+    html = render_full_ai_assisted_panel_html(command_state(), language="en").lower()
 
     assert "official deterministic verdict" in html
     assert "advisory summary" in html
@@ -110,6 +111,7 @@ def test_official_verdict_appears_before_advisory_text() -> None:
 def test_optional_context_is_rendered_as_advisory_not_authority() -> None:
     html = render_full_ai_assisted_panel_html(
         command_state(),
+        language="en",
         rag_answer_text="Defensive RAG answer about telemetry.",
         similar_case_result=similar_case_result(),
         graph_snapshot=graph_snapshot(),
@@ -123,8 +125,29 @@ def test_optional_context_is_rendered_as_advisory_not_authority() -> None:
     assert "case-seed-001" in html
 
 
+def test_zh_tw_full_ai_labels_are_localized_and_keep_official_verdict() -> None:
+    html = render_full_ai_assisted_panel_html(command_state(), language="zh-TW")
+
+    assert "\u5b98\u65b9\u78ba\u5b9a\u6027\u5224\u5b9a" in html
+    assert "\u5efa\u8b70\u6458\u8981" in html
+    assert "\u8abf\u67e5\u5efa\u8b70" in html
+    assert "\u8b49\u64da\u7f3a\u53e3" in html
+    assert "\u4e0d\u5b89\u5168\u5047\u8a2d" in html
+    assert "\u5f15\u7528\u4f9d\u64da" in html
+    assert "\u5b89\u5168 / \u4eba\u5de5\u8907\u6838\u908a\u754c" in html
+    assert "Risk Level: HIGH" in html
+    assert "Decision: BLOCK" in html
+    assert "??" not in html
+
+
+def test_full_ai_streamlit_i18n_keys_have_zh_tw_values() -> None:
+    assert t("full_ai_assisted_panel_title", "zh-TW") == "\u5b8c\u6574 AI \u8f14\u52a9\u5efa\u8b70\u7d50\u679c"
+    assert "deterministic fallback" in t("full_ai_assisted_panel_caption", "zh-TW")
+    assert "Risk Level / Decision" in t("full_ai_assisted_panel_caption", "zh-TW")
+
+
 def test_full_ai_panel_preserves_safety_boundary() -> None:
-    html = render_full_ai_assisted_panel_html(command_state()).lower()
+    html = render_full_ai_assisted_panel_html(command_state(), language="en").lower()
 
     assert "simulated decisions only" in html
     assert "llm output must not override" in html

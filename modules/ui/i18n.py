@@ -805,6 +805,36 @@ _TRANSLATIONS: dict[str, dict[str, str]] = {
         "en": "Unsafe assumptions",
         "bilingual": "不安全的假設 / Unsafe assumptions",
     },
+    "full_ai_assisted_panel_title": {
+        "zh-TW": "\u5b8c\u6574 AI \u8f14\u52a9\u5efa\u8b70\u7d50\u679c",
+        "en": "Full AI-Assisted Advisory Result",
+        "bilingual": "\u5b8c\u6574 AI \u8f14\u52a9\u5efa\u8b70\u7d50\u679c / Full AI-Assisted Advisory Result",
+    },
+    "full_ai_assisted_panel_caption": {
+        "zh-TW": "Provider \u9810\u8a2d\u505c\u7528\uff0c\u4f7f\u7528\u76ee\u524d evidence bundle \u7684 deterministic fallback\u3002\u6b64\u7d50\u679c\u50c5\u4f9b\u53c3\u8003\uff1b\u5b98\u65b9 Risk Level / Decision \u4ecd\u7531 deterministic logic \u6c7a\u5b9a\u3002",
+        "en": "Provider-disabled deterministic fallback over the current evidence bundle. Advisory only; official Risk Level / Decision remain deterministic.",
+        "bilingual": "Provider \u9810\u8a2d\u505c\u7528\uff0c\u4f7f\u7528 deterministic fallback / provider-disabled deterministic fallback. Advisory only; official Risk Level / Decision remain deterministic.",
+    },
+    "event_qa_panel_title": {
+        "zh-TW": "\u4e8b\u4ef6\u8108\u7d61\u554f\u7b54",
+        "en": "Event-Aware Q&A",
+        "bilingual": "\u4e8b\u4ef6\u8108\u7d61\u554f\u7b54 / Event-Aware Q&A",
+    },
+    "event_qa_caption": {
+        "zh-TW": "\u91dd\u5c0d\u76ee\u524d\u4e8b\u4ef6\u63d0\u554f\uff1b\u56de\u7b54\u53ea\u4f7f\u7528 deterministic verdict\u3001\u8b49\u64da\u7f3a\u53e3\u8207\u5df2\u8f09\u5165\u7684 RAG / Similar Cases / Graph advisory context\u3002",
+        "en": "Ask about the current event using deterministic verdict, evidence gaps, and already-loaded advisory RAG / Similar Cases / Graph context.",
+        "bilingual": "\u91dd\u5c0d\u76ee\u524d\u4e8b\u4ef6\u63d0\u554f / ask about the current event using deterministic verdict, evidence gaps, and advisory context.",
+    },
+    "event_qa_input": {
+        "zh-TW": "\u8a62\u554f\u76ee\u524d\u4e8b\u4ef6",
+        "en": "Ask about the current event",
+        "bilingual": "\u8a62\u554f\u76ee\u524d\u4e8b\u4ef6 / Ask about the current event",
+    },
+    "event_qa_submit": {
+        "zh-TW": "\u9001\u51fa\u4e8b\u4ef6\u8108\u7d61\u554f\u7b54",
+        "en": "Ask Event-aware Q&A",
+        "bilingual": "\u9001\u51fa\u4e8b\u4ef6\u8108\u7d61\u554f\u7b54 / Ask Event-aware Q&A",
+    },
     "evidence_gap_panel_title": {
         "zh-TW": "證據缺口分析",
         "en": "Evidence Gap Analyzer",
