@@ -6,41 +6,39 @@ The repository is written for project review, demo walkthroughs, and portfolio d
 
 ## Screenshot Showcase
 
-### Analyst Console (overview)
+The console is the main demo surface: scenario cards, language and mode controls, deterministic analysis output, and visible safety framing. A typical Command Injection run (`test; rm -rf /tmp/test`) produces a deterministic verdict: Risk HIGH, simulated Decision BLOCK, backed by rule evidence CMD-001. Console overview, deterministic result, and HTTP/2 safe-demo screenshots remain available in the [screenshot gallery](docs/screenshots/README.md).
 
-![Sentinel Project analyst console home](docs/screenshots/en/20_console_home_overview.png)
+### v3.2 Full AI-Assisted Showcase
 
-The console is the main demo surface: scenario cards, language and mode controls, and visible safety framing. BLOCK / MONITOR / ALLOW are simulated; no real enforcement is executed.
+The v3.2 AI Analyst tab makes the Full AI-Assisted Advisory Result the main visible AI panel. It still uses the provider-disabled deterministic fallback path for the public showcase and CI: the official Risk Level / Decision are copied from deterministic policy, provider status is visible, and AI/RAG/Similar Cases/Graph context remains advisory only.
 
-### Command Injection Result (overview)
+![v3.2 Full AI-Assisted Advisory Result overview](docs/screenshots/en/40_ai_analyst_full_ai_hero_overview.png)
 
-![Command Injection deterministic result](docs/screenshots/en/21_command_injection_overview.png)
+The main panel shows the official deterministic verdict first, followed by provider/LLM/guardrail status, advisory summary, investigation plan, evidence gaps, citations, unsafe assumptions, and the safety boundary.
 
-Running `test; rm -rf /tmp/test` produces a deterministic verdict: Command Injection, Risk HIGH, simulated Decision BLOCK, backed by rule evidence CMD-001.
+![Official deterministic verdict and provider-disabled status](docs/screenshots/en/41_full_ai_official_verdict_provider_detail.png)
 
-### Evidence-Grounded AI Brief — Official Verdict
+Provider mode/status, LLM status, and guardrail status are visible. This screenshot path uses `provider_mode: disabled`; it does not claim live-provider behavior.
 
-![Evidence-Grounded AI Brief official verdict detail](docs/screenshots/en/23_brief_official_verdict_detail.png)
+![Investigation plan and evidence gaps](docs/screenshots/en/42_full_ai_investigation_evidence_gaps_detail.png)
 
-The brief copies the official deterministic verdict (Risk HIGH / Decision BLOCK) and is advisory only — `llm_status: not_used_deterministic_fallback` (no live LLM is wired).
+The advisory output focuses on investigation planning and missing evidence rather than claiming execution or compromise.
 
-### Evidence-Grounded AI Brief — Advisory Context
+![Unsafe Event-Aware Q&A refusal](docs/screenshots/en/45_event_qa_unsafe_refusal_detail.png)
 
-![Evidence-Grounded AI Brief advisory context detail](docs/screenshots/en/26_brief_advisory_context_detail.png)
+Event-Aware Q&A answers against the current evidence bundle and refuses unsafe requests such as exploit/PoC generation, traffic generation, real enforcement, or verdict override.
 
-After Find Similar Cases, the brief cites structured advisory context: an approved similar case (`case-001`) that is not proof of compromise, and graph relationship context (`graph-001`) that is not a detection source.
+![Similar Cases and Graph advisory context](docs/screenshots/en/46_full_ai_similar_case_graph_detail.png)
 
-### Markdown Export — Evidence-Grounded Section
+Similar Cases and Graph context are cited as advisory context only: similar cases are not proof of compromise, and Graph is not a detection source.
 
-![Markdown export Evidence-Grounded section](docs/screenshots/en/13_evidence_grounded_markdown_export.png)
+![Evidence-Grounded AI Brief collapsed supporting view](docs/screenshots/en/47_evidence_grounded_brief_collapsed_expander.png)
 
-The Markdown export includes the Evidence-Grounded AI Brief section with schema version, official Risk Level / Decision, and `case-001` / `graph-001` citations. (Rendered from the real export markdown.)
+The existing Evidence-Grounded AI Brief remains available as a collapsed detailed supporting view, not as a second official verdict source.
 
-### HTTP/2 Resource Exhaustion Safe Demo (overview)
+See the [screenshot gallery](docs/screenshots/README.md) for the full v3.2 `40`-series English and Traditional Chinese screenshot set.
 
-![HTTP/2 Resource Exhaustion safe synthetic demo](docs/screenshots/en/29_http2_safe_demo_overview.png)
-
-A safe synthetic incident: deterministic verdict HTTP/2 Resource Exhaustion Suspicion, Risk MEDIUM, simulated Decision MONITOR (rule HTTP2-RES-001). No traffic is generated and no real enforcement occurs.
+The HTTP/2 Resource Exhaustion safe synthetic demo remains part of the public demo path: Risk MEDIUM, simulated Decision MONITOR (rule HTTP2-RES-001), no traffic generation, and no real enforcement.
 
 ## Core Capabilities
 
@@ -49,10 +47,12 @@ A safe synthetic incident: deterministic verdict HTTP/2 Resource Exhaustion Susp
 | Rule-Based Detector | Reproducible classification for supported payload and incident patterns. | Detection authority |
 | Deterministic Risk / Decision | Deterministic Risk Level plus simulated BLOCK / MONITOR / ALLOW. | Decision authority |
 | Fast deterministic mode | Quick demo path without optional AI/RAG warm-up. | Deterministic path |
-| Full AI-assisted mode | Optional AI/RAG explanation path. | Advisory only |
+| Full AI-assisted mode | Optional AI/RAG explanation path with provider-disabled deterministic fallback for the public showcase. | Advisory only |
+| Full AI-Assisted Advisory Result | v3.2 structured advisory panel with official verdict copy, provider status, investigation plan, evidence gaps, citations, and guardrail status. | Advisory only |
 | AI Analyst Brief | Event summary, why it matters, next steps, unsafe assumptions. | Advisory only |
 | Evidence-Grounded AI Brief | Cited, structured brief over deterministic evidence, gaps, and optional similar-case / graph context, with a deterministic fallback. | Advisory only |
 | Evidence Gap Analyzer | Confirmed facts, missing evidence, recommended checks. | Advisory only |
+| Event-Aware Q&A | Current-event questions answered from the active evidence bundle with unsafe-question refusal. | Advisory only |
 | Knowledge Q&A / RAG | Defensive knowledge answers from approved context. | Advisory only |
 | Approved Similar Cases | Read-only comparison against hand-curated approved seed cases; not proof of compromise. | Advisory only |
 | Relationship Graph | Visual context for event, rule, risk, decision, and case links; not a detection source. | Advisory only |
@@ -94,14 +94,14 @@ Start with the documentation hub: [docs/README.md](docs/README.md).
 
 ## Validation Summary
 
-Latest v3.1 branch validation rerun for this documentation patch:
+Latest v3.2 branch validation record:
 
-- pytest: `1268 passed`
+- pytest: `1289 passed`
 - ruff: passed
-- mypy: passed, no issues found in 180 source files
+- mypy: passed, no issues found in 184 source files
 - git diff --check: passed
 
-Validation is organized around deterministic authority, advisory AI safety, provider fallback behavior, and UI/reporting smoke paths. These checks support demo correctness and safety-boundary regression control; they do not claim production IDS/IPS effectiveness.
+Validation is organized around deterministic authority, bounded demo behavior, UI/helper contracts, provider fallback behavior, and safety-boundary regression control. These checks support demo correctness; they do not prove production IDS/IPS effectiveness, live SOC effectiveness, production traffic coverage, real enforcement effectiveness, or live-provider quality.
 
 ### Test Coverage / Validation Matrix
 
@@ -111,6 +111,7 @@ Validation is organized around deterministic authority, advisory AI safety, prov
 | Evidence bundle and Evidence-Grounded AI Brief | Official verdict, rule IDs, evidence IDs, citation IDs, evidence gaps, and unsafe assumptions are preserved in structured advisory output. | Prevents AI/report text from becoming the source of truth. |
 | AI guardrails and safety boundary | Verdict override, Similar Cases-as-proof, Graph-as-detection-source, enforcement wording, exploit / PoC / traffic generation / load testing are blocked or fall back. | Keeps AI/RAG/Graph/Similar Cases advisory-only. |
 | v3.1 Full AI-assisted foundation | Prompt contract, disabled default provider, fake test injection, optional local/openai-compatible modes, invalid JSON, missing citations, provider failures, and exceptions. | CI requires no live LLM, API key, Ollama, Chroma, embeddings, or network access. |
+| v3.2 Full AI-assisted UI showcase | Full AI panel rendering, provider-disabled fallback status, Event-Aware Q&A, collapsed Evidence-Grounded supporting view, and stale context clearing. | Public screenshots use deterministic fallback and do not claim live-provider quality. |
 | Event-aware Q&A backend | Answers use current deterministic context, evidence gaps, optional RAG, Similar Cases, and Graph context; unsafe questions are refused before provider calls. | Enables incident-aware questions without allowing AI to alter the verdict or perform enforcement. |
 | Similar Cases and Relationship Graph | Similar Cases remain advisory comparisons; Graph remains read-only explanatory context. | Historical cases do not prove compromise, and Graph is not a detection source. |
 | RAG / Knowledge Q&A controls | RAG is optional, advisory, lazy-loaded where applicable, and unavailable/no-answer paths degrade safely. | Retrieval context does not modify the official verdict. |
@@ -125,7 +126,7 @@ Validation is organized around deterministic authority, advisory AI safety, prov
 - RAG / LLM / AI Analyst Brief / Evidence-Grounded AI Brief / Evidence Gap Analyzer / Similar Cases / Relationship Graph provide advisory context only and do not override the official Risk Level or Decision.
 - Approved Similar Cases are comparison context only and do not prove current compromise or successful execution.
 - Relationship Graph context is for explanation only and is not a detection source.
-- No live LLM client is required for the public Streamlit showcase or CI validation; the screenshotted Evidence-Grounded AI Brief path uses deterministic fallback. v3.1 backend provider contracts are optional, disabled by default, and require separate manual smoke testing before being presented as live-provider behavior.
+- No live LLM client is required for the public Streamlit showcase or CI validation; the v3.2 screenshotted Full AI-Assisted Advisory Result path uses provider-disabled deterministic fallback. v3.1/v3.2 backend provider contracts are optional, disabled by default, and require separate manual smoke testing before being presented as live-provider behavior.
 - No real firewall / WAF / EDR / account / cloud / SIEM / SOAR action is performed.
 - No exploit code, PoC generation, traffic generation, or offensive automation is provided.
 - Human review is required.
