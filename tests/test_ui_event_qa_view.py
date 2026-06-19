@@ -216,3 +216,20 @@ raise SystemExit(1 if loaded else 0)
     result = subprocess.run([sys.executable, "-c", code], text=True, capture_output=True, check=False)
 
     assert result.returncode == 0, result.stdout + result.stderr
+
+
+def test_streamlit_ai_analyst_tab_wires_v3_2_panels_in_order() -> None:
+    source = Path("ui/streamlit_app.py").read_text(encoding="utf-8")
+
+    tab_index = source.index("with ai_analyst_tab:")
+    full_index = source.index("render_full_ai_assisted_panel_html", tab_index)
+    grounded_index = source.index("render_evidence_grounded_brief_panel_html", tab_index)
+    gap_index = source.index("render_evidence_gap_panel_html", tab_index)
+    event_qa_index = source.index("render_event_aware_qa_panel(language)", tab_index)
+    followup_index = source.index("render_followup_assistant_panel(language)", tab_index)
+    knowledge_index = source.index("render_knowledge_qa_panel(language)", tab_index)
+
+    assert full_index < grounded_index < gap_index < event_qa_index < followup_index < knowledge_index
+    assert "Full AI-Assisted Advisory Result" in source
+    assert "Event-Aware Q&A" in source
+    assert "provider selector" not in source.casefold()

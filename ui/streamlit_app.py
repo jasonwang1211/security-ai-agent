@@ -54,6 +54,7 @@ from modules.ui.console_state import (
     SIMILAR_CASE_COMMAND,
     STATE_AGENT,
     STATE_CLI_STATE,
+    STATE_EVENT_QA_RESULT,
     STATE_FOLLOWUP_OUTPUT,
     STATE_FOLLOWUP_QUESTION,
     STATE_FOLLOWUP_SKILL,
@@ -71,6 +72,7 @@ from modules.ui.console_state import (
     combined_display_output,
     record_analysis_output,
     record_draft_action_output,
+    record_event_qa_result,
     record_followup_output,
     record_knowledge_output,
     record_output,
@@ -135,12 +137,17 @@ from modules.ui.performance_view import (
     record_runtime_timing,
 )
 from modules.ui.route_policy_view import build_route_policy_display
-from modules.ui.ai_analyst_brief_view import render_ai_analyst_brief_panel_html
 from modules.ui.ai_advisory_view import render_evidence_gap_panel_html
 from modules.ui.evidence_grounded_brief_view import (
     build_evidence_grounded_brief_from_cli_state,
     render_evidence_grounded_brief_panel_html,
 )
+from modules.ui.event_qa_view import (
+    build_empty_event_qa_html,
+    build_event_aware_qa_result_from_cli_state,
+    build_event_aware_qa_result_html,
+)
+from modules.ui.full_ai_assisted_view import render_full_ai_assisted_panel_html
 from modules.ui.visual_style import (
     ADVISORY_COLOR,
     DETERMINISTIC_COLOR,
@@ -154,6 +161,7 @@ from modules.ui.visual_style import (
 PAGE_TITLE = "Security AI Agent Console"
 TEXT_AREA_KEY = "sentinel_console_input"
 STATE_SCENARIO_NOTE = "sentinel_scenario_note"
+EVENT_QA_INPUT_KEY = "sentinel_event_qa_input"
 # UI-only: remembers the analysis mode that produced the current active context
 # so the hero / report banner can show Fast vs Full even after later actions
 # (Find Similar / AI Analyst) overwrite the shared runtime-timing display.
@@ -1079,6 +1087,34 @@ def render_knowledge_qa_panel(language: str) -> None:
         )
 
 
+def render_event_aware_qa_panel(language: str) -> None:
+    """Advisory Q&A over the current evidence-grounded active context."""
+
+    st.caption(
+        "Ask about the current event using deterministic verdict, evidence gaps, "
+        "and already-loaded advisory RAG / Similar Cases / Graph context."
+    )
+    question = st.text_input("Ask about the current event", key=EVENT_QA_INPUT_KEY)
+    if st.button("Ask Event-aware Q&A", key="sentinel_event_qa_submit"):
+        result = build_event_aware_qa_result_from_cli_state(
+            st.session_state.get(STATE_CLI_STATE),
+            question=question,
+            language=language,
+            rag_answer_text=str(st.session_state.get(STATE_KNOWLEDGE_OUTPUT) or ""),
+            similar_case_result=st.session_state.get(STATE_SIMILAR_CASE_RESULT),
+            graph_snapshot=st.session_state.get(STATE_GRAPH_SNAPSHOT),
+        )
+        record_event_qa_result(st.session_state, question=question, result=result)
+
+    result = st.session_state.get(STATE_EVENT_QA_RESULT)
+    html_output = (
+        build_event_aware_qa_result_html(result, language=language)
+        if result is not None
+        else build_empty_event_qa_html(language)
+    )
+    st.markdown(html_output, unsafe_allow_html=True)
+
+
 def render_report_sections() -> None:
     language = current_language()
     combined_output = combined_display_output(st.session_state)
@@ -1142,6 +1178,23 @@ def render_report_sections() -> None:
     with ai_analyst_tab:
         st.caption(t("ai_analyst_caption", language))
         with st.container(border=True):
+            render_panel_heading("Full AI-Assisted Advisory Result")
+            st.caption(
+                "Provider-disabled deterministic fallback over the current evidence bundle. "
+                "Advisory only; official Risk Level / Decision remain deterministic."
+            )
+            st.markdown(
+                render_full_ai_assisted_panel_html(
+                    st.session_state.get(STATE_CLI_STATE),
+                    language=language,
+                    rag_answer_text=str(st.session_state.get(STATE_KNOWLEDGE_OUTPUT) or ""),
+                    similar_case_result=st.session_state.get(STATE_SIMILAR_CASE_RESULT),
+                    graph_snapshot=st.session_state.get(STATE_GRAPH_SNAPSHOT),
+                ),
+                unsafe_allow_html=True,
+            )
+
+        with st.container(border=True):
             render_panel_heading("Evidence-Grounded AI Brief")
             st.caption(
                 "Structured analyst brief grounded in deterministic evidence, gaps, and optional advisory context."
@@ -1158,16 +1211,6 @@ def render_report_sections() -> None:
             )
 
         with st.container(border=True):
-            render_panel_heading(t("ai_analyst_brief_panel_title", language))
-            st.caption(t("ai_analyst_brief_panel_subtitle", language))
-            st.markdown(
-                render_ai_analyst_brief_panel_html(
-                    st.session_state.get(STATE_CLI_STATE), language=language
-                ),
-                unsafe_allow_html=True,
-            )
-
-        with st.container(border=True):
             render_panel_heading(t("evidence_gap_panel_title", language))
             st.caption(t("evidence_gap_panel_subtitle", language))
             st.markdown(
@@ -1176,6 +1219,10 @@ def render_report_sections() -> None:
                 ),
                 unsafe_allow_html=True,
             )
+
+        with st.container(border=True):
+            render_panel_heading("Event-Aware Q&A")
+            render_event_aware_qa_panel(language)
 
         with st.container(border=True):
             render_panel_heading(translated_label(FOLLOWUP_ASSISTANT_PANEL, language))
