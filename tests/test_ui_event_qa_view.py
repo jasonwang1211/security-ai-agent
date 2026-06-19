@@ -12,6 +12,11 @@ from modules.ui.console_state import (
     ACTIVE_INCIDENT_CONTEXT_KEY,
     STATE_EVENT_QA_QUESTION,
     STATE_EVENT_QA_RESULT,
+    STATE_GRAPH_SNAPSHOT,
+    STATE_KNOWLEDGE_OUTPUT,
+    STATE_KNOWLEDGE_QUESTION,
+    STATE_KNOWLEDGE_SKILL,
+    STATE_SIMILAR_CASE_RESULT,
     clear_active_context,
     record_analysis_output,
     record_event_qa_result,
@@ -175,22 +180,38 @@ def test_optional_context_is_answered_as_advisory_only() -> None:
     assert "not a detection source" in html
 
 
-def test_recorded_event_qa_state_clears_on_new_analysis_and_clear_context() -> None:
-    session_state = {ACTIVE_CONTEXT_KIND_KEY: "event"}
+def test_recorded_advisory_state_clears_on_new_analysis_and_clear_context() -> None:
+    session_state: dict[str, object] = {ACTIVE_CONTEXT_KIND_KEY: "event"}
     result = build_event_aware_qa_result_from_cli_state(
         command_state(), question="What should we check next?", language="en"
     )
 
+    session_state[STATE_KNOWLEDGE_QUESTION] = "old knowledge question"
+    session_state[STATE_KNOWLEDGE_OUTPUT] = "EVENT_A_RAG_ANSWER"
+    session_state[STATE_KNOWLEDGE_SKILL] = "KnowledgeQASkill"
+    session_state[STATE_SIMILAR_CASE_RESULT] = similar_case_result()
+    session_state[STATE_GRAPH_SNAPSHOT] = graph_snapshot()
     record_event_qa_result(session_state, question="What should we check next?", result=result)
     assert session_state[STATE_EVENT_QA_QUESTION] == "What should we check next?"
     assert session_state[STATE_EVENT_QA_RESULT] is result
 
     record_analysis_output(session_state, "[Security Triage Report]\nnew analysis")
+    assert session_state[STATE_KNOWLEDGE_QUESTION] == ""
+    assert session_state[STATE_KNOWLEDGE_OUTPUT] == ""
+    assert session_state[STATE_KNOWLEDGE_SKILL] == ""
     assert session_state[STATE_EVENT_QA_QUESTION] == ""
     assert session_state[STATE_EVENT_QA_RESULT] is None
+    assert session_state[STATE_SIMILAR_CASE_RESULT] is None
+    assert session_state[STATE_GRAPH_SNAPSHOT] is None
 
+    session_state[STATE_KNOWLEDGE_QUESTION] = "old knowledge question"
+    session_state[STATE_KNOWLEDGE_OUTPUT] = "EVENT_A_RAG_ANSWER"
+    session_state[STATE_KNOWLEDGE_SKILL] = "KnowledgeQASkill"
     record_event_qa_result(session_state, question="Again?", result=result)
     clear_active_context(session_state)
+    assert session_state[STATE_KNOWLEDGE_QUESTION] == ""
+    assert session_state[STATE_KNOWLEDGE_OUTPUT] == ""
+    assert session_state[STATE_KNOWLEDGE_SKILL] == ""
     assert session_state[STATE_EVENT_QA_QUESTION] == ""
     assert session_state[STATE_EVENT_QA_RESULT] is None
 

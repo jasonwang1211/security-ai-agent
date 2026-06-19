@@ -127,14 +127,17 @@ def record_output(
 
 
 def record_analysis_output(session_state: MutableMapping[str, Any], response_text: str) -> None:
-    """Store a new analysis output and clear stale similar-case / follow-up state."""
+    """Store a new analysis output and clear stale context-specific advisory state."""
 
     session_state[STATE_ANALYSIS_OUTPUT] = response_text
     session_state[STATE_SIMILAR_CASE_OUTPUT] = ""
-    # A new analysis means the previous context-specific AI follow-up is stale.
+    # A new analysis means the previous context-specific AI / RAG answers are stale.
     session_state[STATE_FOLLOWUP_QUESTION] = ""
     session_state[STATE_FOLLOWUP_OUTPUT] = ""
     session_state[STATE_FOLLOWUP_SKILL] = ""
+    session_state[STATE_KNOWLEDGE_QUESTION] = ""
+    session_state[STATE_KNOWLEDGE_OUTPUT] = ""
+    session_state[STATE_KNOWLEDGE_SKILL] = ""
     session_state[STATE_EVENT_QA_QUESTION] = ""
     session_state[STATE_EVENT_QA_RESULT] = None
     # Structured similar-case / graph advisory context is tied to the previous
