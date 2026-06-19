@@ -250,18 +250,24 @@ def test_streamlit_ai_analyst_tab_wires_v3_2_panels_in_order() -> None:
 
     tab_index = source.index("with ai_analyst_tab:")
     full_index = source.index("render_full_ai_assisted_panel_html", tab_index)
+    grounded_expander_index = source.index(
+        'st.expander(\n            t("evidence_grounded_brief_expander_title", language)', tab_index
+    )
     grounded_index = source.index("render_evidence_grounded_brief_panel_html", tab_index)
     gap_index = source.index("render_evidence_gap_panel_html", tab_index)
     event_qa_index = source.index("render_event_aware_qa_panel(language)", tab_index)
     followup_index = source.index("render_followup_assistant_panel(language)", tab_index)
     knowledge_index = source.index("render_knowledge_qa_panel(language)", tab_index)
 
-    assert full_index < grounded_index < gap_index < event_qa_index < followup_index < knowledge_index
+    assert full_index < grounded_expander_index < grounded_index < gap_index
+    assert gap_index < event_qa_index < followup_index < knowledge_index
+    assert 'expanded=False' in source[grounded_expander_index:grounded_index]
     assert 'render_panel_heading(t("full_ai_assisted_panel_title", language))' in source
     assert 'render_panel_heading(t("event_qa_panel_title", language))' in source
     assert 'st.text_input(t("event_qa_input", language)' in source
     assert 'st.button(t("event_qa_submit", language)' in source
     assert 'render_panel_heading("Full AI-Assisted Advisory Result")' not in source
+    assert 'render_panel_heading("Evidence-Grounded AI Brief")' not in source
     assert 'render_panel_heading("Event-Aware Q&A")' not in source
     assert 'st.text_input("Ask about the current event"' not in source
     assert 'st.button("Ask Event-aware Q&A"' not in source
@@ -273,3 +279,15 @@ def test_event_qa_streamlit_i18n_keys_have_zh_tw_values() -> None:
     assert t("event_qa_input", "zh-TW") == "\u8a62\u554f\u76ee\u524d\u4e8b\u4ef6"
     assert t("event_qa_submit", "zh-TW") == "\u9001\u51fa\u4e8b\u4ef6\u8108\u7d61\u554f\u7b54"
     assert "deterministic verdict" in t("event_qa_caption", "zh-TW")
+
+
+def test_evidence_grounded_expander_i18n_labels() -> None:
+    assert t("evidence_grounded_brief_expander_title", "en") == (
+        "Evidence-Grounded AI Brief (detailed supporting view)"
+    )
+    assert t("evidence_grounded_brief_expander_title", "zh-TW") == (
+        "Evidence-Grounded AI Brief（詳細備查）"
+    )
+    caption = t("evidence_grounded_brief_expander_caption", "en")
+    assert "Advisory only" in caption
+    assert "not a second official verdict source" in caption

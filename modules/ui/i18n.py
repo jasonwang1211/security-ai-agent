@@ -815,6 +815,16 @@ _TRANSLATIONS: dict[str, dict[str, str]] = {
         "en": "Provider-disabled deterministic fallback over the current evidence bundle. Advisory only; official Risk Level / Decision remain deterministic.",
         "bilingual": "Provider \u9810\u8a2d\u505c\u7528\uff0c\u4f7f\u7528 deterministic fallback / provider-disabled deterministic fallback. Advisory only; official Risk Level / Decision remain deterministic.",
     },
+    "evidence_grounded_brief_expander_title": {
+        "zh-TW": "Evidence-Grounded AI Brief（詳細備查）",
+        "en": "Evidence-Grounded AI Brief (detailed supporting view)",
+        "bilingual": "Evidence-Grounded AI Brief（詳細備查） / Evidence-Grounded AI Brief (detailed supporting view)",
+    },
+    "evidence_grounded_brief_expander_caption": {
+        "zh-TW": "此檢視彙整 deterministic evidence、證據缺口與已載入的 advisory context；僅供輔助複核，不是第二個官方 verdict。",
+        "en": "Detailed view grounded in deterministic evidence, evidence gaps, and already-loaded advisory context. Advisory only; it is not a second official verdict source.",
+        "bilingual": "此檢視彙整 deterministic evidence 與 advisory context / detailed supporting view; advisory only and not a second official verdict source.",
+    },
     "event_qa_panel_title": {
         "zh-TW": "\u4e8b\u4ef6\u8108\u7d61\u554f\u7b54",
         "en": "Event-Aware Q&A",

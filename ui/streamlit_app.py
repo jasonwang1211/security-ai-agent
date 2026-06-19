@@ -1188,11 +1188,10 @@ def render_report_sections() -> None:
                 unsafe_allow_html=True,
             )
 
-        with st.container(border=True):
-            render_panel_heading("Evidence-Grounded AI Brief")
-            st.caption(
-                "Structured analyst brief grounded in deterministic evidence, gaps, and optional advisory context."
-            )
+        with st.expander(
+            t("evidence_grounded_brief_expander_title", language), expanded=False
+        ):
+            st.caption(t("evidence_grounded_brief_expander_caption", language))
             st.markdown(
                 render_evidence_grounded_brief_panel_html(
                     st.session_state.get(STATE_CLI_STATE),
