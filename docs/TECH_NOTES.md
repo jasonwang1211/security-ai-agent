@@ -1,6 +1,6 @@
 # Technical Notes
 
-Current public main baseline: v2.9.0 Evidence-Grounded AI Brief milestone, with later v3.0 documentation polish on the active showcase path. Current development branch covered by the v3.1 validation notes: `v3.1-full-ai-assisted-foundation`.
+Current public main baseline: v2.9.0 Evidence-Grounded AI Brief milestone, with later v3.0 documentation polish on the active showcase path. Current development work builds from the v3.1 backend foundation into the `v3.2-full-ai-assisted-showcase` UI wiring branch.
 
 These notes summarize the current architecture at a public, implementation-oriented level. Historical implementation plans and older release notes are kept in `docs/archive/`.
 
@@ -29,6 +29,12 @@ The Evidence-Grounded AI Brief is the v2.9 evolution of the advisory analyst nar
 - The official Risk Level and Decision are copied from the bundle and can never be regenerated or overridden by generated content; a guardrail forces a deterministic fallback if generated text changes the verdict, overclaims advisory context, or uses unsafe enforcement / offensive wording.
 - Structured Similar Cases and Graph context are consumed as already-computed structured objects (no display-text parsing) and remain advisory only: similar cases are not proof of compromise, and graph context is not a detection source.
 - The public Streamlit screenshot showcase uses deterministic fallback and no live LLM client. v3.1 backend provider contracts are optional, disabled by default, and require separate manual smoke testing before being presented as live-provider behavior.
+
+## Full AI-Assisted Showcase UI Wiring (v3.2)
+
+v3.2 exposes the v3.1 backend contracts in the Streamlit AI Analyst tab. The new Full AI-Assisted Advisory Result panel renders the official deterministic verdict first, followed by provider status, LLM status, guardrail status, cited advisory summary, investigation plan, evidence gaps, unsafe assumptions, and safety boundary. Provider mode remains disabled by default, so the public UI path uses deterministic fallback unless a separate live-provider manual smoke is performed.
+
+The Event-Aware Q&A panel answers questions about the current active evidence bundle only. It can use already-loaded RAG, Similar Cases, and Graph context as advisory context, but Similar Cases are not proof of compromise and Graph is not a detection source. The panel does not create controller skill wiring, retrieve new knowledge, perform enforcement, or change Risk Level / Decision.
 
 ## Evidence Gap Analyzer
 
