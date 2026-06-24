@@ -7,9 +7,11 @@ from typing import TypeVar
 
 from pydantic import BaseModel
 
+from .extractor import evaluate_note_safety_flags
 from .types import (
     ApprovedKnowledgeNote,
     CandidateKnowledgeNote,
+    FLAG_MISSING_PROVENANCE,
     KnowledgeCaptureSafetyError,
     RejectedKnowledgeNote,
     utc_now,
@@ -58,24 +60,41 @@ class KnowledgeCaptureStore:
             raise KnowledgeCaptureSafetyError(
                 "Flagged knowledge notes cannot be approved.", list(note.safety_flags)
             )
+        reviewer = str(approved_by or "").strip()
+        if not reviewer:
+            raise KnowledgeCaptureSafetyError(
+                "approved_by is required before knowledge note approval.",
+                [FLAG_MISSING_PROVENANCE],
+            )
+        approved_body = (edited_body if edited_body is not None else note.body).strip()
+        approval_flags = evaluate_note_safety_flags(
+            title=note.title,
+            body=approved_body,
+            provenance=note.provenance,
+        )
+        if approval_flags:
+            raise KnowledgeCaptureSafetyError(
+                "Edited knowledge note failed approval safety validation.", approval_flags
+            )
         approved_at = utc_now()
         approved_provenance = note.provenance.model_copy(
             update={
                 "status": "approved",
                 "approved_at": approved_at,
-                "approved_by": approved_by,
+                "approved_by": reviewer,
+                "safety_flags": [],
             }
         )
         approved = ApprovedKnowledgeNote(
             note_id=note.note_id,
             source_candidate_id=note.note_id,
             title=note.title,
-            body=(edited_body if edited_body is not None else note.body).strip(),
+            body=approved_body,
             provenance=approved_provenance,
             approved_at=approved_at,
-            approved_by=approved_by,
+            approved_by=reviewer,
             approval_notes=approval_notes,
-            safety_flags=list(note.safety_flags),
+            safety_flags=[],
         )
         self._write_models(self.pending_path, [item for item in pending if item.note_id != note.note_id])
         self._append_model(self.approved_path, approved)

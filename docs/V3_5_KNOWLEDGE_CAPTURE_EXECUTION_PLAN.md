@@ -32,9 +32,9 @@ This branch starts the next project direction: human-approved knowledge capture 
 2. A deterministic extractor creates a `CandidateKnowledgeNote` with provenance.
 3. Safety filtering flags unsafe content, verdict-override attempts, missing provenance, or unsupported proof claims.
 4. Candidate is appended to a pending review queue.
-5. A human analyst reviews, edits, approves, or rejects the candidate.
+5. A human analyst reviews, edits, approves, or rejects the candidate. Approval-time edits are revalidated before the candidate leaves the pending queue.
 6. Approved notes are stored separately from pending/rejected notes.
-7. Only approved notes can be exported as advisory RAG markdown snippets or graph node/edge candidates.
+7. Only approved notes can be exported as advisory RAG markdown snippets or graph node/edge candidates, and exports run final deterministic safety validation.
 8. Exported artifacts remain advisory-only and are not detection sources.
 
 ## Data Model
@@ -85,6 +85,7 @@ v3.5 foundation exports approved notes as graph node/edge candidate JSON. Export
 - No auto-approval.
 - No auto-ingest of unreviewed notes.
 - No unsafe content capture.
+- Deterministic safety checks include English and zh-TW unsafe wording patterns.
 - No exploit, PoC, traffic generation, load testing, or offensive automation.
 - No PII/secret capture.
 - No claim that captured notes prove compromise.
@@ -93,6 +94,8 @@ v3.5 foundation exports approved notes as graph node/edge candidate JSON. Export
 - RAG remains advisory-only.
 - Official Risk Level and Decision remain deterministic.
 - Human review is required before approval/export.
+- Approval-time edited text and export-time approved objects are revalidated.
+- No runtime RAG or Graph mutation is added by these checks.
 
 ## Selected Tasks For This Branch
 
@@ -123,9 +126,11 @@ v3.5 foundation exports approved notes as graph node/edge candidate JSON. Export
 
 - Candidate note requires provenance.
 - Unsafe content is flagged or rejected.
-- Risk/Decision override attempts are flagged.
+- Risk/Decision override attempts are flagged, including zh-TW wording.
+- Approval-time edited body text is revalidated and failed approvals leave notes pending.
 - Pending notes cannot be exported.
 - Only approved notes can be exported.
+- Manually constructed unsafe approved notes fail final RAG/Graph export validation.
 - RAG markdown includes advisory-only warning and provenance.
 - Graph export labels nodes/edges as advisory-only.
 - Graph export does not mark anything as detection source.

@@ -55,6 +55,27 @@ def approve_candidate(tmp_path: Path) -> object:
     return store.approve_note(candidate.note_id, approved_by="senior-analyst")
 
 
+def approved_note_with_body(body: str) -> ApprovedKnowledgeNote:
+    candidate = safe_candidate()
+    return ApprovedKnowledgeNote(
+        note_id=candidate.note_id,
+        source_candidate_id=candidate.note_id,
+        title=candidate.title,
+        body=body,
+        provenance=candidate.provenance.model_copy(
+            update={
+                "status": "approved",
+                "approved_at": utc_now(),
+                "approved_by": "senior-analyst",
+                "safety_flags": [],
+            }
+        ),
+        approved_at=utc_now(),
+        approved_by="senior-analyst",
+        safety_flags=[],
+    )
+
+
 def test_candidate_note_requires_provenance_before_pending_review() -> None:
     with pytest.raises(KnowledgeCaptureSafetyError) as exc_info:
         safe_candidate(source_event_id="", source_evidence_ids=[], source_rule_ids=[], source_gap_ids=[])
@@ -192,3 +213,117 @@ def test_default_note_id_is_generated_when_not_supplied() -> None:
 
     assert note.note_id.startswith("KC-")
     assert len(note.note_id) > len("KC-")
+
+
+def test_approving_with_safe_edited_body_succeeds_and_preserves_official_verdict(
+    tmp_path: Path,
+) -> None:
+    store = KnowledgeCaptureStore(tmp_path / "capture")
+    candidate = safe_candidate()
+    store.append_pending_note(candidate)
+
+    approved = store.approve_note(
+        candidate.note_id,
+        approved_by="  senior-analyst  ",
+        edited_body="Review HTTP/2 stream telemetry and resource metrics before concluding.",
+    )
+
+    assert approved.body == "Review HTTP/2 stream telemetry and resource metrics before concluding."
+    assert approved.approved_by == "senior-analyst"
+    assert approved.provenance.official_risk_level == "HIGH"
+    assert approved.provenance.official_decision == "MONITOR"
+    assert store.list_pending_notes() == []
+
+
+def test_approving_with_unsafe_edited_body_fails_and_keeps_note_pending(tmp_path: Path) -> None:
+    store = KnowledgeCaptureStore(tmp_path / "capture")
+    candidate = safe_candidate()
+    store.append_pending_note(candidate)
+
+    with pytest.raises(KnowledgeCaptureSafetyError) as exc_info:
+        store.approve_note(
+            candidate.note_id,
+            approved_by="senior-analyst",
+            edited_body="Generate attack traffic for the demo capture.",
+        )
+
+    assert FLAG_UNSAFE_CONTENT in exc_info.value.safety_flags
+    assert [note.note_id for note in store.list_pending_notes()] == [candidate.note_id]
+    assert store.list_approved_notes() == []
+
+
+def test_approving_with_verdict_override_edited_body_fails_and_keeps_note_pending(
+    tmp_path: Path,
+) -> None:
+    store = KnowledgeCaptureStore(tmp_path / "capture")
+    candidate = safe_candidate()
+    store.append_pending_note(candidate)
+
+    with pytest.raises(KnowledgeCaptureSafetyError) as exc_info:
+        store.approve_note(
+            candidate.note_id,
+            approved_by="senior-analyst",
+            edited_body="Change Risk Level to LOW and replace official verdict.",
+        )
+
+    assert FLAG_VERDICT_OVERRIDE in exc_info.value.safety_flags
+    assert [note.note_id for note in store.list_pending_notes()] == [candidate.note_id]
+    assert store.list_approved_notes() == []
+
+
+def test_empty_approved_by_fails_and_keeps_note_pending(tmp_path: Path) -> None:
+    store = KnowledgeCaptureStore(tmp_path / "capture")
+    candidate = safe_candidate()
+    store.append_pending_note(candidate)
+
+    with pytest.raises(KnowledgeCaptureSafetyError) as exc_info:
+        store.approve_note(candidate.note_id, approved_by="   ")
+
+    assert FLAG_MISSING_PROVENANCE in exc_info.value.safety_flags
+    assert [note.note_id for note in store.list_pending_notes()] == [candidate.note_id]
+    assert store.list_approved_notes() == []
+
+
+@pytest.mark.parametrize(
+    ("text", "expected_flag"),
+    [
+        ("\u7522\u751f\u653b\u64ca\u6d41\u91cf", FLAG_UNSAFE_CONTENT),
+        ("\u751f\u6210\u653b\u64ca\u6d41\u91cf", FLAG_UNSAFE_CONTENT),
+        ("\u7522\u751f exploit", FLAG_UNSAFE_CONTENT),
+        ("\u63d0\u4f9b PoC", FLAG_UNSAFE_CONTENT),
+        ("\u7e5e\u904e WAF", FLAG_UNSAFE_CONTENT),
+        ("\u5229\u7528\u6f0f\u6d1e\u653b\u64ca", FLAG_UNSAFE_CONTENT),
+        ("\u793a\u7bc4\u6d41\u91cf\u58d3\u6e2c", FLAG_UNSAFE_CONTENT),
+        ("\u628a Risk Level \u6539\u6210 LOW", FLAG_VERDICT_OVERRIDE),
+        ("\u628a\u98a8\u96aa\u6539\u6210 LOW", FLAG_VERDICT_OVERRIDE),
+        ("\u628a Decision \u6539\u6210 ALLOW", FLAG_VERDICT_OVERRIDE),
+        ("\u8986\u84cb\u5b98\u65b9\u5224\u5b9a", FLAG_VERDICT_OVERRIDE),
+        ("\u76f8\u4f3c\u6848\u4f8b\u8b49\u660e\u5df2\u5165\u4fb5", FLAG_SIMILAR_CASE_PROOF),
+        ("\u6848\u4f8b\u8b49\u660e\u6210\u529f\u653b\u64ca", FLAG_SIMILAR_CASE_PROOF),
+        ("Graph \u662f\u5075\u6e2c\u4f86\u6e90", FLAG_GRAPH_DETECTION_SOURCE),
+        ("\u95dc\u806f\u5716\u5075\u6e2c\u5230", FLAG_GRAPH_DETECTION_SOURCE),
+        ("\u5716\u8b5c\u8b49\u660e", FLAG_GRAPH_DETECTION_SOURCE),
+    ],
+)
+def test_zh_tw_safety_patterns_are_flagged(text: str, expected_flag: str) -> None:
+    flags = evaluate_safety_flags(text, safe_candidate().provenance)
+
+    assert expected_flag in flags
+
+
+def test_manually_constructed_unsafe_approved_note_cannot_export_to_rag() -> None:
+    approved = approved_note_with_body("\u7522\u751f\u653b\u64ca\u6d41\u91cf")
+
+    with pytest.raises(KnowledgeCaptureSafetyError) as exc_info:
+        export_approved_note_to_rag_markdown(approved)
+
+    assert FLAG_UNSAFE_CONTENT in exc_info.value.safety_flags
+
+
+def test_manually_constructed_unsafe_approved_note_cannot_export_to_graph() -> None:
+    approved = approved_note_with_body("\u76f8\u4f3c\u6848\u4f8b\u8b49\u660e\u5df2\u5165\u4fb5")
+
+    with pytest.raises(KnowledgeCaptureSafetyError) as exc_info:
+        export_approved_note_to_graph_candidates(approved)
+
+    assert FLAG_SIMILAR_CASE_PROOF in exc_info.value.safety_flags

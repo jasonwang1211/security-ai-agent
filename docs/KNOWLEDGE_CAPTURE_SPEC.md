@@ -75,6 +75,7 @@ User question / analyst note / AI advisory answer
 - No auto-approve.
 - No auto-ingest of unreviewed notes.
 - No unsafe content.
+- Deterministic safety checks include English and zh-TW unsafe wording patterns.
 - No exploit, PoC, traffic generation, load testing, or offensive automation.
 - No PII or secret capture.
 - No claim that captured notes prove compromise.
@@ -119,9 +120,12 @@ The extractor must not call live LLM providers. It may summarize only provided s
 - Pending notes are not exportable.
 - Approved notes are exportable.
 - Rejected notes are not exportable.
-- Approval requires `approved_by` and `approved_at`.
+- Approval requires non-empty `approved_by` and `approved_at`.
+- If an approver edits note body text during approval, the edited text is revalidated before the pending note is moved.
+- Approval-time revalidation preserves the original provenance and copied official Risk Level / Decision.
+- If approval-time validation fails, the candidate remains pending and no approved note is written.
 - Rejection requires `rejected_by`, `rejected_at`, and a reason.
-- Safety flags must be preserved even after approval.
+- Safety flags must be preserved and block approval/export.
 
 ## RAG Export Rules
 
@@ -129,6 +133,7 @@ The extractor must not call live LLM providers. It may summarize only provided s
 - Include an advisory-only warning.
 - Include provenance header fields.
 - Include official Risk Level / Decision as copied context, not as editable conclusions.
+- Run final deterministic safety validation before export so manually constructed unsafe approved objects cannot be exported.
 - Do not run ingestion, Chroma, embeddings, or network calls.
 
 ## Graph Export Rules
@@ -137,6 +142,7 @@ The extractor must not call live LLM providers. It may summarize only provided s
 - Nodes/edges must be marked `advisory_only: true`.
 - Nodes/edges must be marked `not_detection_source: true`.
 - Similar Case references must be marked `not_proof: true`.
+- Run final deterministic safety validation before export so manually constructed unsafe approved objects cannot be exported.
 - Exports are candidates only and are not official graph facts.
 
 ## v3.5 Non-Goals
