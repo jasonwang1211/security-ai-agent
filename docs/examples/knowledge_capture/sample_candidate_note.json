@@ -1,0 +1,48 @@
+{
+  "note_id": "KC-SAMPLE-CANDIDATE001",
+  "title": "Synthetic HTTP/2 resource exhaustion triage note",
+  "body": "Review proxy, CDN, and application server telemetry for HTTP/2 stream reset patterns, flow-control pressure, CPU and memory saturation, and request concurrency. This note is advisory only and does not override the deterministic verdict.",
+  "provenance": {
+    "source_event_id": "synthetic-http2-resource-exhaustion-001",
+    "source_question": "What defensive evidence should be reviewed for this synthetic HTTP/2 event?",
+    "source_answer_summary": "Review server resource metrics, proxy/CDN telemetry, stream reset patterns, and existing deterministic evidence gaps before making any conclusion.",
+    "source_evidence_ids": [
+      "evidence-http2-reset-rate",
+      "evidence-server-resource-metrics"
+    ],
+    "source_rule_ids": [
+      "HTTP2-RESOURCE-EXHAUSTION"
+    ],
+    "source_gap_ids": [
+      "gap-origin-server-telemetry",
+      "gap-client-distribution"
+    ],
+    "source_rag_ids": [
+      "rag-http2-resource-exhaustion-defensive-guidance"
+    ],
+    "source_case_ids": [
+      "CASE-SEED-003"
+    ],
+    "source_graph_ids": [
+      "graph-current-event",
+      "graph-related-http2-context"
+    ],
+    "official_risk_level": "HIGH",
+    "official_decision": "MONITOR",
+    "created_at": "2026-06-24T08:00:00Z",
+    "created_by": "sample-analyst",
+    "approved_at": null,
+    "approved_by": null,
+    "rejected_at": null,
+    "rejected_by": null,
+    "status": "pending_review",
+    "confidence_label": "MEDIUM",
+    "safety_flags": []
+  },
+  "status": "pending_review",
+  "safety_flags": [],
+  "advisory_only": true,
+  "not_detection_source": true,
+  "not_proof": true,
+  "advisory_boundary": "Human-approved advisory knowledge only. This note is not a detection source, does not prove compromise, does not override deterministic Risk Level or Decision, and requires human review before operational use."
+}

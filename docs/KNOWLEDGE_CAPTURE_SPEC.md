@@ -103,6 +103,19 @@ If example data is needed, use synthetic examples under:
 docs/examples/knowledge_capture/
 ```
 
+
+## Demo and Review Artifacts
+
+v3.5 includes synthetic review artifacts under `docs/examples/knowledge_capture/` and an offline demo script at `scripts/demo_knowledge_capture.py`.
+
+These artifacts are for reviewer understanding only:
+
+- They use synthetic defensive data.
+- They do not contain real user/private captured content.
+- They do not call live LLMs, APIs, Chroma, embeddings, network services, runtime RAG ingest, or graph mutation.
+- They demonstrate candidate creation, local JSONL review storage, approval, rejection, RAG markdown export candidates, and Graph node/edge export candidates.
+- They preserve the same advisory-only boundary as the foundation modules.
+
 ## Candidate Extraction Rules
 
 A candidate may be created only when it has:

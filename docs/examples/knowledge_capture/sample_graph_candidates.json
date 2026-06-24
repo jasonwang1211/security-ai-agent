@@ -1,0 +1,100 @@
+{
+  "nodes": [
+    {
+      "node_id": "knowledge-note:KC-SAMPLE-APPROVED001",
+      "source_note_id": "KC-SAMPLE-APPROVED001",
+      "label": "Synthetic HTTP/2 resource exhaustion triage note",
+      "node_type": "knowledge_note_candidate",
+      "summary": "Review proxy, CDN, and application server telemetry for HTTP/2 stream reset patterns, flow-control pressure, CPU and memory saturation, and request concurrency. Treat this as advisory context only; it is not proof of compromise and does not override the deterministic Risk Level or Decision. No real enforcement is authorized.",
+      "provenance": {
+        "source_event_id": "synthetic-http2-resource-exhaustion-001",
+        "source_question": "What defensive evidence should be reviewed for this synthetic HTTP/2 event?",
+        "source_answer_summary": "Review server resource metrics, proxy/CDN telemetry, stream reset patterns, and existing deterministic evidence gaps before making any conclusion.",
+        "source_evidence_ids": [
+          "evidence-http2-reset-rate",
+          "evidence-server-resource-metrics"
+        ],
+        "source_rule_ids": [
+          "HTTP2-RESOURCE-EXHAUSTION"
+        ],
+        "source_gap_ids": [
+          "gap-origin-server-telemetry",
+          "gap-client-distribution"
+        ],
+        "source_rag_ids": [
+          "rag-http2-resource-exhaustion-defensive-guidance"
+        ],
+        "source_case_ids": [
+          "CASE-SEED-003"
+        ],
+        "source_graph_ids": [
+          "graph-current-event",
+          "graph-related-http2-context"
+        ],
+        "official_risk_level": "HIGH",
+        "official_decision": "MONITOR",
+        "created_at": "2026-06-24T08:00:00Z",
+        "created_by": "sample-analyst",
+        "approved_at": "2026-06-24T08:05:00Z",
+        "approved_by": "sample-reviewer",
+        "rejected_at": null,
+        "rejected_by": null,
+        "status": "approved",
+        "confidence_label": "MEDIUM",
+        "safety_flags": []
+      },
+      "advisory_only": true,
+      "not_detection_source": true,
+      "not_proof": true
+    }
+  ],
+  "edges": [
+    {
+      "edge_id": "knowledge-edge:KC-SAMPLE-APPROVED001:source-event",
+      "source_note_id": "KC-SAMPLE-APPROVED001",
+      "source_node_id": "synthetic-http2-resource-exhaustion-001",
+      "target_node_id": "knowledge-note:KC-SAMPLE-APPROVED001",
+      "relation": "ADVISORY_CONTEXT_FOR",
+      "provenance": {
+        "source_event_id": "synthetic-http2-resource-exhaustion-001",
+        "source_question": "What defensive evidence should be reviewed for this synthetic HTTP/2 event?",
+        "source_answer_summary": "Review server resource metrics, proxy/CDN telemetry, stream reset patterns, and existing deterministic evidence gaps before making any conclusion.",
+        "source_evidence_ids": [
+          "evidence-http2-reset-rate",
+          "evidence-server-resource-metrics"
+        ],
+        "source_rule_ids": [
+          "HTTP2-RESOURCE-EXHAUSTION"
+        ],
+        "source_gap_ids": [
+          "gap-origin-server-telemetry",
+          "gap-client-distribution"
+        ],
+        "source_rag_ids": [
+          "rag-http2-resource-exhaustion-defensive-guidance"
+        ],
+        "source_case_ids": [
+          "CASE-SEED-003"
+        ],
+        "source_graph_ids": [
+          "graph-current-event",
+          "graph-related-http2-context"
+        ],
+        "official_risk_level": "HIGH",
+        "official_decision": "MONITOR",
+        "created_at": "2026-06-24T08:00:00Z",
+        "created_by": "sample-analyst",
+        "approved_at": "2026-06-24T08:05:00Z",
+        "approved_by": "sample-reviewer",
+        "rejected_at": null,
+        "rejected_by": null,
+        "status": "approved",
+        "confidence_label": "MEDIUM",
+        "safety_flags": []
+      },
+      "advisory_only": true,
+      "not_detection_source": true,
+      "not_proof": true
+    }
+  ]
+}
