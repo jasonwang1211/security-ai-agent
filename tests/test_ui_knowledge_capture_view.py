@@ -12,6 +12,7 @@ from modules.knowledge_capture import (
     build_candidate_knowledge_note,
 )
 from modules.knowledge_capture.types import FLAG_UNSAFE_CONTENT
+from modules.ui.i18n import t
 from modules.ui.knowledge_capture_view import (
     DEFAULT_KNOWLEDGE_CAPTURE_UI_STORE,
     approve_pending_note,
@@ -170,7 +171,7 @@ def test_review_ui_source_has_safe_default_store_and_no_forbidden_actions() -> N
     app_source = (ROOT / "ui" / "streamlit_app.py").read_text(encoding="utf-8")
     combined = source + "\n" + app_source
 
-    assert DEFAULT_KNOWLEDGE_CAPTURE_UI_STORE.as_posix() == ".tmp/knowledge_capture_ui"
+    assert DEFAULT_KNOWLEDGE_CAPTURE_UI_STORE.as_posix() == ".tmp/knowledge_capture_ui/capture_store"
     assert "data/knowledge_capture" not in combined
     assert "Sentinel_Final_Submission_Package" not in combined
     assert "auto-approve" not in combined.lower()
@@ -188,3 +189,42 @@ def test_streamlit_ai_analyst_tab_wires_collapsed_review_expander() -> None:
     assert "render_knowledge_capture_review_panel(language)" in app_source
     assert "DEFAULT_KNOWLEDGE_CAPTURE_UI_STORE" in app_source
     assert "st.expander(t(\"knowledge_capture_review_expander_title\", language), expanded=False)" in app_source
+
+def test_empty_state_demo_command_matches_default_store_parent(tmp_path: Path) -> None:
+    store = load_knowledge_capture_store(tmp_path / "empty")
+
+    html = build_knowledge_capture_review_queue_html(store, language="en")
+
+    assert "--output-dir .tmp/knowledge_capture_ui --clean" in html
+    assert DEFAULT_KNOWLEDGE_CAPTURE_UI_STORE.parent.as_posix() == ".tmp/knowledge_capture_ui"
+    assert DEFAULT_KNOWLEDGE_CAPTURE_UI_STORE.name == "capture_store"
+
+
+def test_zh_tw_review_ui_labels_are_readable_and_not_mojibake(tmp_path: Path) -> None:
+    store = KnowledgeCaptureStore(tmp_path / "capture")
+    store.append_pending_note(candidate())
+
+    html = build_knowledge_capture_review_queue_html(store, language="zh-TW")
+    source = (ROOT / "modules" / "ui" / "knowledge_capture_view.py").read_text(encoding="utf-8")
+
+    assert "\u5f85\u5be9\u6838\u77e5\u8b58\u7b46\u8a18" in html
+    assert "\u4e0d\u662f\u5075\u6e2c\u4f86\u6e90" in html
+    assert "\u4e0d\u8986\u84cb deterministic Risk Level / Decision" in html
+    assert "\ufffd" not in html
+    assert "\ufffd" not in source
+
+
+def test_knowledge_capture_i18n_labels_are_readable() -> None:
+    assert "\u672c\u6a5f\u5be9\u6838\u4f47\u5217" in t("knowledge_capture_review_expander_title", "zh-TW")
+    assert "\u6838\u51c6\u7b46\u8a18" in t("knowledge_capture_approve_note", "zh-TW")
+    assert "\u62d2\u7d55\u7b46\u8a18" in t("knowledge_capture_reject_note", "zh-TW")
+    for key in (
+        "knowledge_capture_review_expander_title",
+        "knowledge_capture_review_caption",
+        "knowledge_capture_reviewer",
+        "knowledge_capture_edited_body",
+        "knowledge_capture_approve_note",
+        "knowledge_capture_reject_note",
+    ):
+        assert "\ufffd" not in t(key, "zh-TW")
+        assert t(key, "en").strip()

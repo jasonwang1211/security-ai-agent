@@ -25,7 +25,7 @@ from modules.knowledge_capture import (
 )
 from modules.ui.i18n import DEFAULT_LANGUAGE
 
-DEFAULT_KNOWLEDGE_CAPTURE_UI_STORE = Path(".tmp") / "knowledge_capture_ui"
+DEFAULT_KNOWLEDGE_CAPTURE_UI_STORE = Path(".tmp") / "knowledge_capture_ui" / "capture_store"
 
 
 @dataclass(frozen=True)
@@ -292,18 +292,18 @@ def _plain_section(title: str, items: list[str], variant: str) -> str:
 def _labels(language: str) -> dict[str, str]:
     if language == "zh-TW":
         return {
-            "pending": "Pending knowledge notes / 待審核知識筆記",
-            "approved": "Approved knowledge notes / 已核准知識筆記",
-            "rejected": "Rejected knowledge notes / 已拒絕知識筆記",
-            "empty": "No local knowledge capture notes yet. Generate synthetic demo notes with:",
-            "boundary": "Safety / Human Review Boundary",
-            "advisory_only": "Advisory-only; human review required.",
-            "not_detection_source": "Not a detection source.",
-            "not_proof": "Not proof of compromise.",
-            "no_verdict_override": "Does not override deterministic Risk Level / Decision.",
-            "no_enforcement": "No real firewall / WAF / EDR / account / cloud / SIEM / SOAR action.",
-            "no_auto_ingest": "No automatic RAG ingestion or Graph mutation.",
-            "provenance": "Provenance / 來源脈絡",
+            "pending": "Pending knowledge notes / \u5f85\u5be9\u6838\u77e5\u8b58\u7b46\u8a18",
+            "approved": "Approved knowledge notes / \u5df2\u6838\u51c6\u77e5\u8b58\u7b46\u8a18",
+            "rejected": "Rejected knowledge notes / \u5df2\u62d2\u7d55\u77e5\u8b58\u7b46\u8a18",
+            "empty": "\u76ee\u524d\u6c92\u6709\u672c\u6a5f knowledge capture \u7b46\u8a18\u3002\u53ef\u4f7f\u7528\u4ee5\u4e0b\u6307\u4ee4\u7522\u751f synthetic demo notes\uff1a",
+            "boundary": "\u5b89\u5168 / \u4eba\u5de5\u8907\u6838\u908a\u754c",
+            "advisory_only": "\u50c5\u4f9b\u53c3\u8003\uff1b\u9700\u8981 human review\u3002",
+            "not_detection_source": "\u4e0d\u662f\u5075\u6e2c\u4f86\u6e90\u3002",
+            "not_proof": "\u4e0d\u662f compromise \u6216\u6210\u529f\u653b\u64ca\u7684\u8b49\u660e\u3002",
+            "no_verdict_override": "\u4e0d\u8986\u84cb deterministic Risk Level / Decision\u3002",
+            "no_enforcement": "\u4e0d\u57f7\u884c\u771f\u5be6 firewall / WAF / EDR / account / cloud / SIEM / SOAR \u52d5\u4f5c\u3002",
+            "no_auto_ingest": "\u4e0d\u81ea\u52d5\u9032\u884c RAG ingestion \u6216 Graph mutation\u3002",
+            "provenance": "Provenance / \u4f86\u6e90\u8108\u7d61",
             "source_event": "source_event_id",
             "source_question": "source_question",
             "source_answer": "source_answer_summary",
@@ -311,11 +311,12 @@ def _labels(language: str) -> dict[str, str]:
             "decision": "Official Decision",
             "copied_context": "copied deterministic context",
             "rejection_reason": "rejection_reason",
-            "exports": "Approved export previews / 核准後匯出預覽",
-            "export_boundary": "Preview only; does not run RAG ingestion or mutate Graph runtime facts.",
+            "exports": "Approved export previews / \u6838\u51c6\u5f8c\u532f\u51fa\u9810\u89bd",
+            "export_boundary": "\u50c5\u9810\u89bd\uff1b\u4e0d\u57f7\u884c RAG ingestion\uff0c\u4e5f\u4e0d\u4fee\u6539 Graph runtime facts\u3002",
             "rag_preview": "RAG markdown preview",
             "graph_preview": "Graph candidate JSON preview",
         }
+
     return {
         "pending": "Pending knowledge notes",
         "approved": "Approved knowledge notes",
