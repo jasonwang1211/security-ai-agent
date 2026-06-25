@@ -148,6 +148,14 @@ from modules.ui.event_qa_view import (
     build_event_aware_qa_result_html,
 )
 from modules.ui.full_ai_assisted_view import render_full_ai_assisted_panel_html
+from modules.ui.knowledge_capture_view import (
+    DEFAULT_KNOWLEDGE_CAPTURE_UI_STORE,
+    approve_pending_note,
+    build_approved_note_export_preview,
+    build_knowledge_capture_review_queue_html,
+    load_knowledge_capture_store,
+    reject_pending_note,
+)
 from modules.ui.visual_style import (
     ADVISORY_COLOR,
     DETERMINISTIC_COLOR,
@@ -1112,6 +1120,95 @@ def render_event_aware_qa_panel(language: str) -> None:
     st.markdown(html_output, unsafe_allow_html=True)
 
 
+def render_knowledge_capture_review_panel(language: str) -> None:
+    """Local advisory review queue for human-approved knowledge capture."""
+
+    store = load_knowledge_capture_store(DEFAULT_KNOWLEDGE_CAPTURE_UI_STORE)
+    st.caption(t("knowledge_capture_review_caption", language))
+    st.caption(
+        f"{t('knowledge_capture_store_path', language)}: "
+        f"`{DEFAULT_KNOWLEDGE_CAPTURE_UI_STORE.as_posix()}`"
+    )
+    st.markdown(
+        build_knowledge_capture_review_queue_html(store, language=language),
+        unsafe_allow_html=True,
+    )
+
+    pending_notes = store.list_pending_notes()
+    approved_notes = store.list_approved_notes()
+    if pending_notes:
+        reviewer = st.text_input(
+            t("knowledge_capture_reviewer", language),
+            key="sentinel_kc_reviewer",
+        )
+        for note in pending_notes:
+            with st.expander(f"{note.note_id} - {note.title}", expanded=False):
+                edited_body = st.text_area(
+                    t("knowledge_capture_edited_body", language),
+                    value=note.body,
+                    key=f"sentinel_kc_edit_{note.note_id}",
+                )
+                approval_notes = st.text_input(
+                    t("knowledge_capture_approval_notes", language),
+                    key=f"sentinel_kc_approval_notes_{note.note_id}",
+                )
+                approve_clicked = st.button(
+                    t("knowledge_capture_approve_note", language),
+                    key=f"sentinel_kc_approve_{note.note_id}",
+                )
+                rejection_reason = st.text_input(
+                    t("knowledge_capture_reject_reason", language),
+                    key=f"sentinel_kc_reject_reason_{note.note_id}",
+                )
+                reject_clicked = st.button(
+                    t("knowledge_capture_reject_note", language),
+                    key=f"sentinel_kc_reject_{note.note_id}",
+                )
+                if approve_clicked:
+                    result = approve_pending_note(
+                        store,
+                        note.note_id,
+                        approved_by=reviewer,
+                        edited_body=edited_body,
+                        approval_notes=approval_notes or None,
+                    )
+                    _render_knowledge_capture_action_result(result, language)
+                if reject_clicked:
+                    result = reject_pending_note(
+                        store,
+                        note.note_id,
+                        rejected_by=reviewer,
+                        rejection_reason=rejection_reason,
+                    )
+                    _render_knowledge_capture_action_result(result, language)
+
+    if approved_notes:
+        for approved_note in approved_notes:
+            with st.expander(f"{approved_note.note_id} - {approved_note.title}", expanded=False):
+                try:
+                    preview = build_approved_note_export_preview(approved_note)
+                except Exception as error:  # pragma: no cover - surfaced in manual UI smoke
+                    st.error(str(error))
+                else:
+                    st.code(preview.rag_markdown, language="markdown")
+                    st.json(preview.graph_candidates)
+
+
+def _render_knowledge_capture_action_result(
+    result: Any,
+    language: str,
+) -> None:
+    if result.ok:
+        st.success(result.message)
+        return
+    st.error(result.message)
+    if result.safety_flags:
+        st.warning(
+            f"{t('knowledge_capture_action_safety_flags', language)}: "
+            f"{', '.join(result.safety_flags)}"
+        )
+
+
 def render_report_sections() -> None:
     language = current_language()
     combined_output = combined_display_output(st.session_state)
@@ -1216,6 +1313,9 @@ def render_report_sections() -> None:
         with st.container(border=True):
             render_panel_heading(t("event_qa_panel_title", language))
             render_event_aware_qa_panel(language)
+
+        with st.expander(t("knowledge_capture_review_expander_title", language), expanded=False):
+            render_knowledge_capture_review_panel(language)
 
         with st.container(border=True):
             render_panel_heading(translated_label(FOLLOWUP_ASSISTANT_PANEL, language))

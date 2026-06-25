@@ -845,6 +845,56 @@ _TRANSLATIONS: dict[str, dict[str, str]] = {
         "en": "Ask Event-aware Q&A",
         "bilingual": "\u9001\u51fa\u4e8b\u4ef6\u8108\u7d61\u554f\u7b54 / Ask Event-aware Q&A",
     },
+    "knowledge_capture_review_expander_title": {
+        "zh-TW": "Knowledge Capture Review（本機審核佇列）",
+        "en": "Knowledge Capture Review (local queue)",
+        "bilingual": "Knowledge Capture Review（本機審核佇列） / Knowledge Capture Review (local queue)",
+    },
+    "knowledge_capture_review_caption": {
+        "zh-TW": "本區只讀取本機 .tmp review queue；核准後只提供 RAG markdown 與 Graph candidate 預覽，不會自動 ingest 或修改 runtime graph。",
+        "en": "Reads the local .tmp review queue only. Approved notes show RAG markdown and Graph candidate previews, with no automatic ingest or runtime graph mutation.",
+        "bilingual": "本區只讀取本機 .tmp review queue / local .tmp review queue only; previews do not ingest into RAG or mutate runtime graph.",
+    },
+    "knowledge_capture_store_path": {
+        "zh-TW": "Review store path",
+        "en": "Review store path",
+        "bilingual": "Review store path",
+    },
+    "knowledge_capture_reviewer": {
+        "zh-TW": "Reviewer name / 審核者",
+        "en": "Reviewer name",
+        "bilingual": "Reviewer name / 審核者",
+    },
+    "knowledge_capture_edited_body": {
+        "zh-TW": "Edited note body / 編輯後內容",
+        "en": "Edited note body",
+        "bilingual": "Edited note body / 編輯後內容",
+    },
+    "knowledge_capture_approval_notes": {
+        "zh-TW": "Approval notes / 核准備註（選填）",
+        "en": "Approval notes (optional)",
+        "bilingual": "Approval notes / 核准備註（optional）",
+    },
+    "knowledge_capture_approve_note": {
+        "zh-TW": "Approve note / 核准筆記",
+        "en": "Approve note",
+        "bilingual": "Approve note / 核准筆記",
+    },
+    "knowledge_capture_reject_reason": {
+        "zh-TW": "Reject reason / 拒絕原因",
+        "en": "Reject reason",
+        "bilingual": "Reject reason / 拒絕原因",
+    },
+    "knowledge_capture_reject_note": {
+        "zh-TW": "Reject note / 拒絕筆記",
+        "en": "Reject note",
+        "bilingual": "Reject note / 拒絕筆記",
+    },
+    "knowledge_capture_action_safety_flags": {
+        "zh-TW": "Safety flags / 安全檢查旗標",
+        "en": "Safety flags",
+        "bilingual": "Safety flags / 安全檢查旗標",
+    },
     "evidence_gap_panel_title": {
         "zh-TW": "證據缺口分析",
         "en": "Evidence Gap Analyzer",

@@ -158,6 +158,19 @@ The extractor must not call live LLM providers. It may summarize only provided s
 - Run final deterministic safety validation before export so manually constructed unsafe approved objects cannot be exported.
 - Exports are candidates only and are not official graph facts.
 
+
+## Local Review UI Prototype
+
+v3.6 adds a local Streamlit review queue prototype for the existing v3.5 foundation. The review queue is intentionally scoped to local files and preview-only exports:
+
+- It defaults to `.tmp/knowledge_capture_ui/` instead of `data/knowledge_capture/`.
+- It can display pending, approved, and rejected notes from `KnowledgeCaptureStore`.
+- Approval still calls `approve_note(...)`, so edited body text is revalidated before approval.
+- Rejection still calls `reject_note(...)` and requires a reason at the UI/helper boundary.
+- Approved RAG markdown and Graph JSON are previews only.
+- The UI does not run Chroma, embeddings, live RAG ingest, Graph mutation, LLM extraction, network calls, API keys, or real enforcement.
+- Official Risk Level / Decision remain copied deterministic context and are not editable by the review UI.
+
 ## v3.5 Non-Goals
 
 - No Streamlit review UI unless separately approved.
