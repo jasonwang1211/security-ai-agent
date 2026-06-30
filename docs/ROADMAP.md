@@ -33,7 +33,7 @@ Presentation and documentation polish on top of v2.9.0; no new major features. S
 - README / REPORT / docs sync to the v2.9 baseline (done).
 - Final demo path confirmation in the UI walkthrough.
 - v3.0 full-window screenshots (deferred until UI/docs freeze; see the plan + screenshot gallery TODO).
-- Optional live LLM client integration remains out of scope (deterministic fallback only).
+- Live-provider presentation remains manual-smoke gated. The public showcase defaults to provider-disabled fallback, while optional provider contracts and RAG / Knowledge Q&A have separate runtime-readiness requirements.
 
 
 ## v3.2: Full AI-Assisted Showcase UI Wiring (development branch)

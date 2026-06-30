@@ -2,7 +2,7 @@
 
 Current public main baseline: v2.9.0 Evidence-Grounded AI Brief milestone, with later v3.0 documentation polish on the active showcase path. Current development work builds from the v3.1 backend foundation into the `v3.2-full-ai-assisted-showcase` UI wiring branch.
 
-These notes summarize the current architecture at a public, implementation-oriented level. Historical implementation plans and older release notes are kept in `docs/archive/`.
+These notes summarize the current architecture at a public, implementation-oriented level. Historical implementation plans and older release notes are kept in `docs/archive/`. For post-final runtime wording, use [RUNTIME_MODE_MATRIX.md](RUNTIME_MODE_MATRIX.md) as the source of truth: the project is mixed-runtime, with provider-disabled fallback paths and separate RAG / Knowledge Q&A readiness requirements.
 
 ## Detection and Decision Authority
 
