@@ -19,6 +19,7 @@ from modules.ui.console_state import (
 )
 from modules.ui.evidence_grounded_brief_view import (
     build_evidence_grounded_brief_from_cli_state,
+    build_evidence_grounding_bundle_from_cli_state,
     render_evidence_grounded_brief_panel_html,
 )
 
@@ -51,6 +52,41 @@ def test_no_active_context_returns_empty_state() -> None:
 
     assert "Run an analysis first" in html
     assert "sentinel-empty-card" in html
+
+
+def test_shared_bundle_helper_copies_official_verdict_and_ids() -> None:
+    bundle = build_evidence_grounding_bundle_from_cli_state(command_state())
+
+    assert bundle is not None
+    assert bundle.official_verdict.risk_level == "HIGH"
+    assert bundle.official_verdict.decision == "BLOCK"
+    assert bundle.official_detection.matched_rule_ids == ["CMD-001"]
+    assert {citation.citation_id for citation in bundle.citations} >= {"rule-001", "ev-001"}
+
+
+def test_shared_bundle_helper_includes_optional_advisory_context() -> None:
+    bundle = build_evidence_grounding_bundle_from_cli_state(
+        command_state(),
+        rag_answer_text="Defensive RAG answer about HTTP/2 telemetry.",
+        similar_case_result=_similar_case_result(),
+        graph_snapshot=_graph_snapshot(),
+    )
+
+    assert bundle is not None
+    assert bundle.rag_context and bundle.rag_context[0].citation_id == "rag-001"
+    assert bundle.similar_cases and bundle.similar_cases[0].citation_id == "case-001"
+    assert bundle.similar_cases[0].not_proof is True
+    assert bundle.graph_context and bundle.graph_context[0].citation_id == "graph-001"
+    assert bundle.graph_context[0].not_detection_source is True
+
+
+def test_shared_bundle_helper_omits_optional_context_when_missing() -> None:
+    bundle = build_evidence_grounding_bundle_from_cli_state(command_state())
+
+    assert bundle is not None
+    assert bundle.rag_context == []
+    assert bundle.similar_cases == []
+    assert bundle.graph_context == []
 
 
 def test_panel_renders_official_verdict_advisory_context_and_citations() -> None:

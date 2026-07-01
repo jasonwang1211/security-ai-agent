@@ -805,6 +805,96 @@ _TRANSLATIONS: dict[str, dict[str, str]] = {
         "en": "Unsafe assumptions",
         "bilingual": "不安全的假設 / Unsafe assumptions",
     },
+    "full_ai_assisted_panel_title": {
+        "zh-TW": "\u5b8c\u6574 AI \u8f14\u52a9\u5efa\u8b70\u7d50\u679c",
+        "en": "Full AI-Assisted Advisory Result",
+        "bilingual": "\u5b8c\u6574 AI \u8f14\u52a9\u5efa\u8b70\u7d50\u679c / Full AI-Assisted Advisory Result",
+    },
+    "full_ai_assisted_panel_caption": {
+        "zh-TW": "Provider \u9810\u8a2d\u505c\u7528\uff0c\u4f7f\u7528\u76ee\u524d evidence bundle \u7684 deterministic fallback\u3002\u6b64\u7d50\u679c\u50c5\u4f9b\u53c3\u8003\uff1b\u5b98\u65b9 Risk Level / Decision \u4ecd\u7531 deterministic logic \u6c7a\u5b9a\u3002",
+        "en": "Provider-disabled deterministic fallback over the current evidence bundle. Advisory only; official Risk Level / Decision remain deterministic.",
+        "bilingual": "Provider \u9810\u8a2d\u505c\u7528\uff0c\u4f7f\u7528 deterministic fallback / provider-disabled deterministic fallback. Advisory only; official Risk Level / Decision remain deterministic.",
+    },
+    "evidence_grounded_brief_expander_title": {
+        "zh-TW": "Evidence-Grounded AI Brief（詳細備查）",
+        "en": "Evidence-Grounded AI Brief (detailed supporting view)",
+        "bilingual": "Evidence-Grounded AI Brief（詳細備查） / Evidence-Grounded AI Brief (detailed supporting view)",
+    },
+    "evidence_grounded_brief_expander_caption": {
+        "zh-TW": "此檢視彙整 deterministic evidence、證據缺口與已載入的 advisory context；僅供輔助複核，不是第二個官方 verdict。",
+        "en": "Detailed view grounded in deterministic evidence, evidence gaps, and already-loaded advisory context. Advisory only; it is not a second official verdict source.",
+        "bilingual": "此檢視彙整 deterministic evidence 與 advisory context / detailed supporting view; advisory only and not a second official verdict source.",
+    },
+    "event_qa_panel_title": {
+        "zh-TW": "\u4e8b\u4ef6\u8108\u7d61\u554f\u7b54",
+        "en": "Event-Aware Q&A",
+        "bilingual": "\u4e8b\u4ef6\u8108\u7d61\u554f\u7b54 / Event-Aware Q&A",
+    },
+    "event_qa_caption": {
+        "zh-TW": "\u91dd\u5c0d\u76ee\u524d\u4e8b\u4ef6\u63d0\u554f\uff1b\u56de\u7b54\u53ea\u4f7f\u7528 deterministic verdict\u3001\u8b49\u64da\u7f3a\u53e3\u8207\u5df2\u8f09\u5165\u7684 RAG / Similar Cases / Graph advisory context\u3002",
+        "en": "Ask about the current event using deterministic verdict, evidence gaps, and already-loaded advisory RAG / Similar Cases / Graph context.",
+        "bilingual": "\u91dd\u5c0d\u76ee\u524d\u4e8b\u4ef6\u63d0\u554f / ask about the current event using deterministic verdict, evidence gaps, and advisory context.",
+    },
+    "event_qa_input": {
+        "zh-TW": "\u8a62\u554f\u76ee\u524d\u4e8b\u4ef6",
+        "en": "Ask about the current event",
+        "bilingual": "\u8a62\u554f\u76ee\u524d\u4e8b\u4ef6 / Ask about the current event",
+    },
+    "event_qa_submit": {
+        "zh-TW": "\u9001\u51fa\u4e8b\u4ef6\u8108\u7d61\u554f\u7b54",
+        "en": "Ask Event-aware Q&A",
+        "bilingual": "\u9001\u51fa\u4e8b\u4ef6\u8108\u7d61\u554f\u7b54 / Ask Event-aware Q&A",
+    },
+    "knowledge_capture_review_expander_title": {
+        "zh-TW": "Knowledge Capture Review\uff08\u672c\u6a5f\u5be9\u6838\u4f47\u5217\uff09",
+        "en": "Knowledge Capture Review (local queue)",
+        "bilingual": "Knowledge Capture Review\uff08\u672c\u6a5f\u5be9\u6838\u4f47\u5217\uff09 / Knowledge Capture Review (local queue)",
+    },
+    "knowledge_capture_review_caption": {
+        "zh-TW": "\u672c\u5340\u53ea\u8b80\u53d6\u672c\u6a5f .tmp review queue\uff1b\u6838\u51c6\u5f8c\u53ea\u63d0\u4f9b RAG markdown \u8207 Graph candidate \u9810\u89bd\uff0c\u4e0d\u6703\u81ea\u52d5 ingest \u6216\u4fee\u6539 runtime graph\u3002",
+        "en": "Reads the local .tmp review queue only. Approved notes show RAG markdown and Graph candidate previews, with no automatic ingest or runtime graph mutation.",
+        "bilingual": "\u672c\u5340\u53ea\u8b80\u53d6\u672c\u6a5f .tmp review queue / local .tmp review queue only; previews do not ingest into RAG or mutate runtime graph.",
+    },
+    "knowledge_capture_store_path": {
+        "zh-TW": "Review store path",
+        "en": "Review store path",
+        "bilingual": "Review store path",
+    },
+    "knowledge_capture_reviewer": {
+        "zh-TW": "Reviewer name / \u5be9\u6838\u8005",
+        "en": "Reviewer name",
+        "bilingual": "Reviewer name / \u5be9\u6838\u8005",
+    },
+    "knowledge_capture_edited_body": {
+        "zh-TW": "Edited note body / \u7de8\u8f2f\u5f8c\u5167\u5bb9",
+        "en": "Edited note body",
+        "bilingual": "Edited note body / \u7de8\u8f2f\u5f8c\u5167\u5bb9",
+    },
+    "knowledge_capture_approval_notes": {
+        "zh-TW": "Approval notes / \u6838\u51c6\u5099\u8a3b\uff08\u9078\u586b\uff09",
+        "en": "Approval notes (optional)",
+        "bilingual": "Approval notes / \u6838\u51c6\u5099\u8a3b\uff08optional\uff09",
+    },
+    "knowledge_capture_approve_note": {
+        "zh-TW": "Approve note / \u6838\u51c6\u7b46\u8a18",
+        "en": "Approve note",
+        "bilingual": "Approve note / \u6838\u51c6\u7b46\u8a18",
+    },
+    "knowledge_capture_reject_reason": {
+        "zh-TW": "Reject reason / \u62d2\u7d55\u539f\u56e0",
+        "en": "Reject reason",
+        "bilingual": "Reject reason / \u62d2\u7d55\u539f\u56e0",
+    },
+    "knowledge_capture_reject_note": {
+        "zh-TW": "Reject note / \u62d2\u7d55\u7b46\u8a18",
+        "en": "Reject note",
+        "bilingual": "Reject note / \u62d2\u7d55\u7b46\u8a18",
+    },
+    "knowledge_capture_action_safety_flags": {
+        "zh-TW": "Safety flags / \u5b89\u5168\u6aa2\u67e5\u65d7\u6a19",
+        "en": "Safety flags",
+        "bilingual": "Safety flags / \u5b89\u5168\u6aa2\u67e5\u65d7\u6a19",
+    },
     "evidence_gap_panel_title": {
         "zh-TW": "證據缺口分析",
         "en": "Evidence Gap Analyzer",

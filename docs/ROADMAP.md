@@ -33,7 +33,19 @@ Presentation and documentation polish on top of v2.9.0; no new major features. S
 - README / REPORT / docs sync to the v2.9 baseline (done).
 - Final demo path confirmation in the UI walkthrough.
 - v3.0 full-window screenshots (deferred until UI/docs freeze; see the plan + screenshot gallery TODO).
-- Optional live LLM client integration remains out of scope (deterministic fallback only).
+- Live-provider presentation remains manual-smoke gated. The public showcase defaults to provider-disabled fallback, while optional provider contracts and RAG / Knowledge Q&A have separate runtime-readiness requirements.
+
+
+## v3.2: Full AI-Assisted Showcase UI Wiring (development branch)
+
+The `v3.2-full-ai-assisted-showcase` branch wires the v3.1 backend contracts into the existing AI Analyst tab without changing detector authority or adding live-provider requirements. The public path remains deterministic fallback by default; screenshots and README showcase refresh are deferred until the UI is manually reviewed.
+
+Completed in this branch:
+
+- Full AI-Assisted Advisory Result panel over the current EvidenceGroundingBundle.
+- Event-Aware Q&A panel over the active deterministic context.
+- State clearing for stale Event-aware Q&A output when the active analysis changes.
+- Focused tests for advisory boundaries, fallback behavior, optional RAG / Similar Cases / Graph context, and lazy startup.
 
 ## Long-Term Ideas
 

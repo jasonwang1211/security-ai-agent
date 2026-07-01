@@ -1,8 +1,8 @@
 # Technical Notes
 
-Current baseline: v2.9.0 (Evidence-Grounded AI Brief merged into main; internal stable milestone).
+Current public main baseline: v2.9.0 Evidence-Grounded AI Brief milestone, with later v3.0 documentation polish on the active showcase path. Current development work builds from the v3.1 backend foundation into the `v3.2-full-ai-assisted-showcase` UI wiring branch.
 
-These notes summarize the current architecture at a public, implementation-oriented level. Historical implementation plans and older release notes are kept in `docs/archive/`.
+These notes summarize the current architecture at a public, implementation-oriented level. Historical implementation plans and older release notes are kept in `docs/archive/`. For post-final runtime wording, use [RUNTIME_MODE_MATRIX.md](RUNTIME_MODE_MATRIX.md) as the source of truth: the project is mixed-runtime, with provider-disabled fallback paths and separate RAG / Knowledge Q&A readiness requirements.
 
 ## Detection and Decision Authority
 
@@ -28,7 +28,13 @@ The Evidence-Grounded AI Brief is the v2.9 evolution of the advisory analyst nar
 
 - The official Risk Level and Decision are copied from the bundle and can never be regenerated or overridden by generated content; a guardrail forces a deterministic fallback if generated text changes the verdict, overclaims advisory context, or uses unsafe enforcement / offensive wording.
 - Structured Similar Cases and Graph context are consumed as already-computed structured objects (no display-text parsing) and remain advisory only: similar cases are not proof of compromise, and graph context is not a detection source.
-- No live LLM client is wired; the brief currently runs as a deterministic fallback, and the guardrail is a pre-LLM safety layer.
+- The public Streamlit screenshot showcase uses deterministic fallback and no live LLM client. v3.1 backend provider contracts are optional, disabled by default, and require separate manual smoke testing before being presented as live-provider behavior.
+
+## Full AI-Assisted Showcase UI Wiring (v3.2)
+
+v3.2 exposes the v3.1 backend contracts in the Streamlit AI Analyst tab. The new Full AI-Assisted Advisory Result panel renders the official deterministic verdict first, followed by provider status, LLM status, guardrail status, cited advisory summary, investigation plan, evidence gaps, unsafe assumptions, and safety boundary. Provider mode remains disabled by default, so the public UI path uses deterministic fallback unless a separate live-provider manual smoke is performed.
+
+The Event-Aware Q&A panel answers questions about the current active evidence bundle only. It can use already-loaded RAG, Similar Cases, and Graph context as advisory context, but Similar Cases are not proof of compromise and Graph is not a detection source. The panel does not create controller skill wiring, retrieve new knowledge, perform enforcement, or change Risk Level / Decision.
 
 ## Evidence Gap Analyzer
 
@@ -66,4 +72,19 @@ The HTTP/2 Resource Exhaustion scenario is a safe synthetic incident summary. It
 
 ## Validation Summary
 
-The current public validation summary is maintained in `docs/TEST_REPORT.md`, and the latest release-gate evidence is in `docs/v2.9_release_gate.md` (with `docs/v2.8_release_gate.md` kept as the prior v2.8 record).
+The latest v3.2 branch validation records:
+
+- pytest: 1289 passed
+- ruff: passed
+- mypy: passed, no issues found in 184 source files
+- git diff --check: passed
+
+Validation is organized around deterministic authority, bounded demo behavior, UI/helper contracts, provider fallback behavior, event-aware Q&A contracts, controlled retrieval, and safety-boundary regression control. These checks do not prove production IDS/IPS effectiveness, real-world attack coverage, live-provider quality, or real enforcement readiness.
+
+| Area | Coverage focus | Boundary retained |
+|---|---|---|
+| Deterministic detector / policy | Rule IDs, matched evidence, Risk Level, simulated Decision. | Rule-Based Detector remains authority. |
+| Evidence-Grounded AI Brief | EvidenceBundle schema, citation preservation, deterministic fallback, unsafe-assumption separation. | AI output stays advisory and cannot rewrite official verdict. |
+| v3.1 Full AI-assisted contracts | Prompt contract, provider modes, invalid JSON, missing citations, failures, exceptions, safe fallback. | CI requires no live LLM/API key/Ollama/Chroma/embeddings/network. |
+| Event-aware Q&A | Current-context answers, optional RAG/Similar Cases/Graph context, zh-TW and English wrappers, unsafe question refusal. | Similar Cases are not proof; Graph is not detection source. |
+| RAG / graph / UI smoke | Controlled retrieval, lazy startup, read-only graph/case context, AppTest helper paths. | Advisory context does not perform enforcement or change decisions. |

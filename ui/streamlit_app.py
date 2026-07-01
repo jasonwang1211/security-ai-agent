@@ -54,6 +54,7 @@ from modules.ui.console_state import (
     SIMILAR_CASE_COMMAND,
     STATE_AGENT,
     STATE_CLI_STATE,
+    STATE_EVENT_QA_RESULT,
     STATE_FOLLOWUP_OUTPUT,
     STATE_FOLLOWUP_QUESTION,
     STATE_FOLLOWUP_SKILL,
@@ -71,6 +72,7 @@ from modules.ui.console_state import (
     combined_display_output,
     record_analysis_output,
     record_draft_action_output,
+    record_event_qa_result,
     record_followup_output,
     record_knowledge_output,
     record_output,
@@ -127,6 +129,11 @@ from modules.ui.report_export_view import build_markdown_report_export
 from modules.ui.interactive_relationship_graph_view import (
     build_interactive_relationship_graph_display,
 )
+from modules.ui.runtime_health_view import (
+    build_runtime_health_panel_html,
+    collect_live_ollama_runtime_health,
+    collect_passive_runtime_health,
+)
 from modules.ui.performance_view import (
     OUTPUT_KIND_ANALYSIS,
     OUTPUT_KIND_DRAFT,
@@ -135,11 +142,24 @@ from modules.ui.performance_view import (
     record_runtime_timing,
 )
 from modules.ui.route_policy_view import build_route_policy_display
-from modules.ui.ai_analyst_brief_view import render_ai_analyst_brief_panel_html
 from modules.ui.ai_advisory_view import render_evidence_gap_panel_html
 from modules.ui.evidence_grounded_brief_view import (
     build_evidence_grounded_brief_from_cli_state,
     render_evidence_grounded_brief_panel_html,
+)
+from modules.ui.event_qa_view import (
+    build_empty_event_qa_html,
+    build_event_aware_qa_result_from_cli_state,
+    build_event_aware_qa_result_html,
+)
+from modules.ui.full_ai_assisted_view import render_full_ai_assisted_panel_html
+from modules.ui.knowledge_capture_view import (
+    DEFAULT_KNOWLEDGE_CAPTURE_UI_STORE,
+    approve_pending_note,
+    build_approved_note_export_preview,
+    build_knowledge_capture_review_queue_html,
+    load_knowledge_capture_store,
+    reject_pending_note,
 )
 from modules.ui.visual_style import (
     ADVISORY_COLOR,
@@ -154,6 +174,7 @@ from modules.ui.visual_style import (
 PAGE_TITLE = "Security AI Agent Console"
 TEXT_AREA_KEY = "sentinel_console_input"
 STATE_SCENARIO_NOTE = "sentinel_scenario_note"
+EVENT_QA_INPUT_KEY = "sentinel_event_qa_input"
 # UI-only: remembers the analysis mode that produced the current active context
 # so the hero / report banner can show Fast vs Full even after later actions
 # (Find Similar / AI Analyst) overwrite the shared runtime-timing display.
@@ -1079,6 +1100,120 @@ def render_knowledge_qa_panel(language: str) -> None:
         )
 
 
+def render_event_aware_qa_panel(language: str) -> None:
+    """Advisory Q&A over the current evidence-grounded active context."""
+
+    st.caption(t("event_qa_caption", language))
+    question = st.text_input(t("event_qa_input", language), key=EVENT_QA_INPUT_KEY)
+    if st.button(t("event_qa_submit", language), key="sentinel_event_qa_submit"):
+        result = build_event_aware_qa_result_from_cli_state(
+            st.session_state.get(STATE_CLI_STATE),
+            question=question,
+            language=language,
+            rag_answer_text=str(st.session_state.get(STATE_KNOWLEDGE_OUTPUT) or ""),
+            similar_case_result=st.session_state.get(STATE_SIMILAR_CASE_RESULT),
+            graph_snapshot=st.session_state.get(STATE_GRAPH_SNAPSHOT),
+        )
+        record_event_qa_result(st.session_state, question=question, result=result)
+
+    result = st.session_state.get(STATE_EVENT_QA_RESULT)
+    html_output = (
+        build_event_aware_qa_result_html(result, language=language)
+        if result is not None
+        else build_empty_event_qa_html(language)
+    )
+    st.markdown(html_output, unsafe_allow_html=True)
+
+
+def render_knowledge_capture_review_panel(language: str) -> None:
+    """Local advisory review queue for human-approved knowledge capture."""
+
+    store = load_knowledge_capture_store(DEFAULT_KNOWLEDGE_CAPTURE_UI_STORE)
+    st.caption(t("knowledge_capture_review_caption", language))
+    st.caption(
+        f"{t('knowledge_capture_store_path', language)}: "
+        f"`{DEFAULT_KNOWLEDGE_CAPTURE_UI_STORE.as_posix()}`"
+    )
+    st.markdown(
+        build_knowledge_capture_review_queue_html(store, language=language),
+        unsafe_allow_html=True,
+    )
+
+    pending_notes = store.list_pending_notes()
+    approved_notes = store.list_approved_notes()
+    if pending_notes:
+        reviewer = st.text_input(
+            t("knowledge_capture_reviewer", language),
+            key="sentinel_kc_reviewer",
+        )
+        for note in pending_notes:
+            with st.expander(f"{note.note_id} - {note.title}", expanded=False):
+                edited_body = st.text_area(
+                    t("knowledge_capture_edited_body", language),
+                    value=note.body,
+                    key=f"sentinel_kc_edit_{note.note_id}",
+                )
+                approval_notes = st.text_input(
+                    t("knowledge_capture_approval_notes", language),
+                    key=f"sentinel_kc_approval_notes_{note.note_id}",
+                )
+                approve_clicked = st.button(
+                    t("knowledge_capture_approve_note", language),
+                    key=f"sentinel_kc_approve_{note.note_id}",
+                )
+                rejection_reason = st.text_input(
+                    t("knowledge_capture_reject_reason", language),
+                    key=f"sentinel_kc_reject_reason_{note.note_id}",
+                )
+                reject_clicked = st.button(
+                    t("knowledge_capture_reject_note", language),
+                    key=f"sentinel_kc_reject_{note.note_id}",
+                )
+                if approve_clicked:
+                    result = approve_pending_note(
+                        store,
+                        note.note_id,
+                        approved_by=reviewer,
+                        edited_body=edited_body,
+                        approval_notes=approval_notes or None,
+                    )
+                    _render_knowledge_capture_action_result(result, language)
+                if reject_clicked:
+                    result = reject_pending_note(
+                        store,
+                        note.note_id,
+                        rejected_by=reviewer,
+                        rejection_reason=rejection_reason,
+                    )
+                    _render_knowledge_capture_action_result(result, language)
+
+    if approved_notes:
+        for approved_note in approved_notes:
+            with st.expander(f"{approved_note.note_id} - {approved_note.title}", expanded=False):
+                try:
+                    preview = build_approved_note_export_preview(approved_note)
+                except Exception as error:  # pragma: no cover - surfaced in manual UI smoke
+                    st.error(str(error))
+                else:
+                    st.code(preview.rag_markdown, language="markdown")
+                    st.json(preview.graph_candidates)
+
+
+def _render_knowledge_capture_action_result(
+    result: Any,
+    language: str,
+) -> None:
+    if result.ok:
+        st.success(result.message)
+        return
+    st.error(result.message)
+    if result.safety_flags:
+        st.warning(
+            f"{t('knowledge_capture_action_safety_flags', language)}: "
+            f"{', '.join(result.safety_flags)}"
+        )
+
+
 def render_report_sections() -> None:
     language = current_language()
     combined_output = combined_display_output(st.session_state)
@@ -1142,12 +1277,10 @@ def render_report_sections() -> None:
     with ai_analyst_tab:
         st.caption(t("ai_analyst_caption", language))
         with st.container(border=True):
-            render_panel_heading("Evidence-Grounded AI Brief")
-            st.caption(
-                "Structured analyst brief grounded in deterministic evidence, gaps, and optional advisory context."
-            )
+            render_panel_heading(t("full_ai_assisted_panel_title", language))
+            st.caption(t("full_ai_assisted_panel_caption", language))
             st.markdown(
-                render_evidence_grounded_brief_panel_html(
+                render_full_ai_assisted_panel_html(
                     st.session_state.get(STATE_CLI_STATE),
                     language=language,
                     rag_answer_text=str(st.session_state.get(STATE_KNOWLEDGE_OUTPUT) or ""),
@@ -1157,12 +1290,17 @@ def render_report_sections() -> None:
                 unsafe_allow_html=True,
             )
 
-        with st.container(border=True):
-            render_panel_heading(t("ai_analyst_brief_panel_title", language))
-            st.caption(t("ai_analyst_brief_panel_subtitle", language))
+        with st.expander(
+            t("evidence_grounded_brief_expander_title", language), expanded=False
+        ):
+            st.caption(t("evidence_grounded_brief_expander_caption", language))
             st.markdown(
-                render_ai_analyst_brief_panel_html(
-                    st.session_state.get(STATE_CLI_STATE), language=language
+                render_evidence_grounded_brief_panel_html(
+                    st.session_state.get(STATE_CLI_STATE),
+                    language=language,
+                    rag_answer_text=str(st.session_state.get(STATE_KNOWLEDGE_OUTPUT) or ""),
+                    similar_case_result=st.session_state.get(STATE_SIMILAR_CASE_RESULT),
+                    graph_snapshot=st.session_state.get(STATE_GRAPH_SNAPSHOT),
                 ),
                 unsafe_allow_html=True,
             )
@@ -1178,6 +1316,13 @@ def render_report_sections() -> None:
             )
 
         with st.container(border=True):
+            render_panel_heading(t("event_qa_panel_title", language))
+            render_event_aware_qa_panel(language)
+
+        with st.expander(t("knowledge_capture_review_expander_title", language), expanded=False):
+            render_knowledge_capture_review_panel(language)
+
+        with st.container(border=True):
             render_panel_heading(translated_label(FOLLOWUP_ASSISTANT_PANEL, language))
             render_followup_assistant_panel(language)
 
@@ -1187,6 +1332,15 @@ def render_report_sections() -> None:
 
     with system_debug_tab:
         st.caption(t("system_debug_caption", language))
+        with st.container(border=True):
+            render_panel_heading("Runtime Health")
+            st.caption("Passive by default. Optional live check uses short-timeout Ollama/model status only.")
+            if st.button("Check live Ollama / models", key="sentinel_runtime_health_live_check"):
+                runtime_health = collect_live_ollama_runtime_health()
+            else:
+                runtime_health = collect_passive_runtime_health()
+            st.markdown(build_runtime_health_panel_html(runtime_health), unsafe_allow_html=True)
+
         with st.container(border=True):
             render_panel_heading(translated_label(PERFORMANCE_PANEL, language))
             render_performance_panel()

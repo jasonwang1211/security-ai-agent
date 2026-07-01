@@ -82,9 +82,14 @@ Reference: [AI Analyst Brief screenshot](screenshots/en/03_ai_analyst_brief.png)
 | User action | At the top of the AI Analyst tab, review the Evidence-Grounded AI Brief panel. |
 | What appears | Official Verdict (Risk Level / Decision), supporting evidence with citations such as rule-001 and ev-001, an evidence-gap summary, advisory context, citations, and a Safety / Human Review Boundary. The panel shows `llm_status: not_used_deterministic_fallback`. |
 | What to say | The brief is grounded in the deterministic evidence and is cited; it is advisory analyst context, not an AI verdict. |
-| Safety note | Official Risk Level and Decision are copied from deterministic policy and cannot be overridden by the brief. No live LLM client is wired on this branch. |
+| Safety note | Official Risk Level and Decision are copied from deterministic policy and cannot be overridden by the brief. The public walkthrough uses provider-disabled fallback; optional provider and RAG paths have separate runtime-readiness requirements. |
 
 Reference: [Evidence-Grounded AI Brief screenshot](screenshots/en/11_evidence_grounded_ai_brief.png) (v2.9 branch; panel render)
+
+
+### v3.2 Development Branch Note: Full AI-Assisted Advisory Result
+
+On `v3.2-full-ai-assisted-showcase`, the AI Analyst tab now uses the Full AI-Assisted Advisory Result as the main visible panel. The Evidence-Grounded AI Brief remains available directly below it as a collapsed detailed supporting expander, and Event-Aware Q&A remains below Evidence Gap Analyzer. These panels use the current EvidenceGroundingBundle and default to provider-disabled deterministic fallback. They do not prove compromise, do not treat Graph as a detection source, and do not change the official Risk Level or Decision. The refreshed v3.2 screenshot references are available as the `40`-series images under `docs/screenshots/en/` and `docs/screenshots/zh-TW/`.
 
 ## Step 8: Open Evidence Gap Analyzer
 

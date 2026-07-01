@@ -33,6 +33,8 @@ STATE_FOLLOWUP_SKILL = "sentinel_followup_skill"
 STATE_KNOWLEDGE_QUESTION = "sentinel_knowledge_question"
 STATE_KNOWLEDGE_OUTPUT = "sentinel_knowledge_output"
 STATE_KNOWLEDGE_SKILL = "sentinel_knowledge_skill"
+STATE_EVENT_QA_QUESTION = "sentinel_event_qa_question"
+STATE_EVENT_QA_RESULT = "sentinel_event_qa_result"
 
 ACTIVE_EVENT_CONTEXT_KEY = "active_event_context"
 ACTIVE_INCIDENT_CONTEXT_KEY = "active_incident_context"
@@ -103,6 +105,8 @@ def bind_runtime(
     session_state.setdefault(STATE_KNOWLEDGE_QUESTION, "")
     session_state.setdefault(STATE_KNOWLEDGE_OUTPUT, "")
     session_state.setdefault(STATE_KNOWLEDGE_SKILL, "")
+    session_state.setdefault(STATE_EVENT_QA_QUESTION, "")
+    session_state.setdefault(STATE_EVENT_QA_RESULT, None)
     session_state.setdefault(STATE_SIMILAR_CASE_RESULT, None)
     session_state.setdefault(STATE_GRAPH_SNAPSHOT, None)
     return cli_state
@@ -123,14 +127,19 @@ def record_output(
 
 
 def record_analysis_output(session_state: MutableMapping[str, Any], response_text: str) -> None:
-    """Store a new analysis output and clear stale similar-case / follow-up state."""
+    """Store a new analysis output and clear stale context-specific advisory state."""
 
     session_state[STATE_ANALYSIS_OUTPUT] = response_text
     session_state[STATE_SIMILAR_CASE_OUTPUT] = ""
-    # A new analysis means the previous context-specific AI follow-up is stale.
+    # A new analysis means the previous context-specific AI / RAG answers are stale.
     session_state[STATE_FOLLOWUP_QUESTION] = ""
     session_state[STATE_FOLLOWUP_OUTPUT] = ""
     session_state[STATE_FOLLOWUP_SKILL] = ""
+    session_state[STATE_KNOWLEDGE_QUESTION] = ""
+    session_state[STATE_KNOWLEDGE_OUTPUT] = ""
+    session_state[STATE_KNOWLEDGE_SKILL] = ""
+    session_state[STATE_EVENT_QA_QUESTION] = ""
+    session_state[STATE_EVENT_QA_RESULT] = None
     # Structured similar-case / graph advisory context is tied to the previous
     # active context, so it is stale after a new analysis.
     session_state[STATE_SIMILAR_CASE_RESULT] = None
@@ -163,6 +172,18 @@ def record_structured_similar_case_context(
 
     session_state[STATE_SIMILAR_CASE_RESULT] = similar_case_result
     session_state[STATE_GRAPH_SNAPSHOT] = graph_snapshot
+
+
+def record_event_qa_result(
+    session_state: MutableMapping[str, Any],
+    *,
+    question: str,
+    result: Any | None,
+) -> None:
+    """Record a UI-only Event-aware Q&A result for the current context."""
+
+    session_state[STATE_EVENT_QA_QUESTION] = question
+    session_state[STATE_EVENT_QA_RESULT] = result
 
 
 def record_draft_action_output(
@@ -279,6 +300,8 @@ def clear_active_context(session_state: MutableMapping[str, Any]) -> None:
     session_state[STATE_FOLLOWUP_SKILL] = ""
     session_state[STATE_KNOWLEDGE_QUESTION] = ""
     session_state[STATE_KNOWLEDGE_OUTPUT] = ""
+    session_state[STATE_EVENT_QA_QUESTION] = ""
+    session_state[STATE_EVENT_QA_RESULT] = None
     session_state[STATE_SIMILAR_CASE_RESULT] = None
     session_state[STATE_GRAPH_SNAPSHOT] = None
     session_state[STATE_KNOWLEDGE_SKILL] = ""
