@@ -4,6 +4,7 @@ import json
 from pathlib import Path
 import subprocess
 import sys
+from typing import Literal
 
 import pytest
 
@@ -18,6 +19,7 @@ from modules.runtime_health import (
     RuntimeHealthStatus,
 )
 from modules.ui.runtime_health_view import (
+    ACTIVE_HEALTH_BOUNDARY,
     PASSIVE_HEALTH_BOUNDARY,
     build_runtime_health_panel_html,
     collect_live_ollama_runtime_health,
@@ -30,16 +32,11 @@ ROOT = Path(__file__).resolve().parents[1]
 def test_runtime_health_renderer_formats_passive_statuses() -> None:
     html = build_runtime_health_panel_html(_health())
 
-    assert "Provider mode" in html
-    assert "disabled" in html
-    assert "Fallback" in html
-    assert "available" in html
-    assert "Ollama server" in html
-    assert "not_checked" in html
-    assert "RAG runtime" in html
-    assert "lazy_not_initialized" in html
-    assert "Embeddings" in html
-    assert "configured" in html
+    assert "Provider mode: disabled" in html
+    assert "Fallback: available" in html
+    assert "Ollama server: not_checked" in html
+    assert "RAG runtime: lazy_not_initialized" in html
+    assert "Embeddings: configured" in html
     assert PASSIVE_HEALTH_BOUNDARY in html
 
 
@@ -107,7 +104,17 @@ def test_live_wrapper_enables_ollama_and_model_checks(monkeypatch: pytest.Monkey
     monkeypatch.setattr(view, "collect_runtime_health", fake_collect)
 
     assert collect_live_ollama_runtime_health() is health
-    assert calls == [{"check_ollama": True, "check_models": True}]
+    assert calls == [{"passive": False, "check_ollama": True, "check_models": True}]
+
+
+def test_runtime_health_renderer_formats_active_live_check_boundary() -> None:
+    html = build_runtime_health_panel_html(_health(passive=False, ollama_status="reachable"))
+
+    assert "runtime_health: active_live_check" in html
+    assert ACTIVE_HEALTH_BOUNDARY in html
+    assert "contacts Ollama /api/tags only" in html
+    assert "does not initialize RAG, Chroma, embeddings" in html
+    assert "Ollama server: reachable" in html
 
 
 def test_streamlit_app_wires_passive_and_explicit_live_health_paths() -> None:
@@ -145,7 +152,11 @@ print(json.dumps(touched))
     assert json.loads(result.stdout.strip().splitlines()[-1]) == []
 
 
-def _health() -> RuntimeHealthStatus:
+def _health(
+    *,
+    passive: bool = True,
+    ollama_status: Literal["not_checked", "reachable", "unreachable"] = "not_checked",
+) -> RuntimeHealthStatus:
     return RuntimeHealthStatus(
         provider_mode="disabled",
         config=RuntimeHealthConfig(
@@ -156,9 +167,9 @@ def _health() -> RuntimeHealthStatus:
             top_k=5,
         ),
         ollama_server=OllamaHealth(
-            status="not_checked",
+            status=ollama_status,
             endpoint="http://localhost:11434",
-            checked=False,
+            checked=ollama_status != "not_checked",
         ),
         primary_model=ModelHealth(
             status="not_checked",
@@ -178,5 +189,5 @@ def _health() -> RuntimeHealthStatus:
             checked=False,
         ),
         fallback=FallbackHealth(status="available", detail="fallback available"),
-        passive=True,
+        passive=passive,
     )

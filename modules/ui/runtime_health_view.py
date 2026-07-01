@@ -16,6 +16,10 @@ PASSIVE_HEALTH_BOUNDARY = (
     "Passive health check does not start Ollama, initialize Chroma, initialize "
     "embeddings, or call RAGQA.is_ready()."
 )
+ACTIVE_HEALTH_BOUNDARY = (
+    "Live health check contacts Ollama /api/tags only; it does not initialize "
+    "RAG, Chroma, embeddings, or call RAGQA.is_ready()."
+)
 
 
 def collect_passive_runtime_health() -> RuntimeHealthStatus:
@@ -27,7 +31,7 @@ def collect_passive_runtime_health() -> RuntimeHealthStatus:
 def collect_live_ollama_runtime_health() -> RuntimeHealthStatus:
     """Collect explicitly requested local Ollama/model status."""
 
-    return collect_runtime_health(check_ollama=True, check_models=True)
+    return collect_runtime_health(passive=False, check_ollama=True, check_models=True)
 
 
 def build_runtime_health_panel_html(health: RuntimeHealthStatus) -> str:
@@ -44,7 +48,8 @@ def build_runtime_health_panel_html(health: RuntimeHealthStatus) -> str:
         ("RAG runtime", health.rag_runtime.status),
     ]
     row_html = "".join(_status_row(label, value) for label, value in rows)
-    mode_label = "passive" if health.passive else "active"
+    mode_label = "passive" if health.passive else "active_live_check"
+    boundary = PASSIVE_HEALTH_BOUNDARY if health.passive else ACTIVE_HEALTH_BOUNDARY
     return (
         '<div class="sentinel-brief runtime-health">'
         '<div class="sentinel-brief-meta">'
@@ -52,7 +57,7 @@ def build_runtime_health_panel_html(health: RuntimeHealthStatus) -> str:
         f'<span class="sentinel-brief-chip">fallback: {html.escape(health.fallback.status)}</span>'
         "</div>"
         '<div class="sentinel-section-title">Runtime Health</div>'
-        f'<div class="sentinel-muted">{html.escape(PASSIVE_HEALTH_BOUNDARY)}</div>'
+        f'<div class="sentinel-muted">{html.escape(boundary)}</div>'
         '<div class="sentinel-kv-grid">'
         f"{row_html}"
         "</div>"
@@ -68,15 +73,17 @@ def _model_status(model_name: str, status: str) -> str:
 
 
 def _status_row(label: str, value: str) -> str:
+    readable = f"{label}: {value}"
     return (
-        '<div class="sentinel-kv-row">'
-        f'<span class="sentinel-kv-label">{html.escape(label)}</span>'
+        f'<div class="sentinel-kv-row" aria-label="{html.escape(readable)}">'
+        f'<span class="sentinel-kv-label">{html.escape(label)}:</span> '
         f'<span class="sentinel-kv-value">{html.escape(value)}</span>'
         "</div>"
     )
 
 
 __all__ = [
+    "ACTIVE_HEALTH_BOUNDARY",
     "PASSIVE_HEALTH_BOUNDARY",
     "build_runtime_health_panel_html",
     "collect_live_ollama_runtime_health",

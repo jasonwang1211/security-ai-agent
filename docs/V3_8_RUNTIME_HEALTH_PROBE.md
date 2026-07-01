@@ -103,8 +103,12 @@ Default behavior:
 Optional live check:
 
 - the `Check live Ollama / models` button calls
-  `collect_runtime_health(check_ollama=True, check_models=True)`;
-- the check uses the short timeout from `modules/runtime_health.py`;
+  `collect_runtime_health(passive=False, check_ollama=True, check_models=True)`;
+- active results are displayed as `runtime_health: active_live_check`, not passive;
+- the check contacts Ollama `/api/tags` only and uses the short timeout from
+  `modules/runtime_health.py`;
+- no model generation or inference is performed;
+- no RAG, Chroma, or embedding initialization is performed;
 - unreachable Ollama or missing models are displayed as structured status values,
   not as unhandled exceptions.
 
