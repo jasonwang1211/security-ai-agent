@@ -86,3 +86,31 @@ The probe supports the v3.7 mixed-runtime documentation:
 `RAGQA.is_ready()` calls `_ensure_initialized()`. That can import and initialize embeddings, ChatOllama, and Chroma. A passive health probe must be safe for CI and Streamlit startup, so it reports RAG as `lazy_not_initialized` rather than triggering runtime initialization.
 
 A future explicit active RAG health check may be added, but it should be manual, clearly labeled, short-timeout, and separate from default UI startup.
+
+## Streamlit Runtime Health Panel
+
+The Streamlit console now includes a small Runtime Health panel under the
+System / Debug tab.
+
+Default behavior:
+
+- calls `collect_runtime_health()` with passive defaults;
+- does not check Ollama or models;
+- does not initialize Chroma, embeddings, or RAG;
+- does not call `RAGQA.is_ready()`;
+- shows `not_checked`, `lazy_not_initialized`, and `configured` statuses plainly.
+
+Optional live check:
+
+- the `Check live Ollama / models` button calls
+  `collect_runtime_health(check_ollama=True, check_models=True)`;
+- the check uses the short timeout from `modules/runtime_health.py`;
+- unreachable Ollama or missing models are displayed as structured status values,
+  not as unhandled exceptions.
+
+Windows launch note:
+
+```powershell
+$env:PYTHONPATH = (Get-Location).Path
+python -m streamlit run .\ui\streamlit_app.py
+```

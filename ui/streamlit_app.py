@@ -129,6 +129,11 @@ from modules.ui.report_export_view import build_markdown_report_export
 from modules.ui.interactive_relationship_graph_view import (
     build_interactive_relationship_graph_display,
 )
+from modules.ui.runtime_health_view import (
+    build_runtime_health_panel_html,
+    collect_live_ollama_runtime_health,
+    collect_passive_runtime_health,
+)
 from modules.ui.performance_view import (
     OUTPUT_KIND_ANALYSIS,
     OUTPUT_KIND_DRAFT,
@@ -1327,6 +1332,15 @@ def render_report_sections() -> None:
 
     with system_debug_tab:
         st.caption(t("system_debug_caption", language))
+        with st.container(border=True):
+            render_panel_heading("Runtime Health")
+            st.caption("Passive by default. Optional live check uses short-timeout Ollama/model status only.")
+            if st.button("Check live Ollama / models", key="sentinel_runtime_health_live_check"):
+                runtime_health = collect_live_ollama_runtime_health()
+            else:
+                runtime_health = collect_passive_runtime_health()
+            st.markdown(build_runtime_health_panel_html(runtime_health), unsafe_allow_html=True)
+
         with st.container(border=True):
             render_panel_heading(translated_label(PERFORMANCE_PANEL, language))
             render_performance_panel()
